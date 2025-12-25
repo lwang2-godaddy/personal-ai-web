@@ -104,6 +104,74 @@ export class FirestoreService {
   async updateUserData(userId: string, data: any): Promise<void> {
     await this.setDocument('users', userId, data);
   }
+
+  /**
+   * Get health data for a user
+   */
+  async getHealthData(userId: string, limitCount: number = 50): Promise<any[]> {
+    return this.getDocuments('health_data', [
+      where('userId', '==', userId),
+      orderBy('startDate', 'desc'),
+      firestoreLimit(limitCount),
+    ]);
+  }
+
+  /**
+   * Get location data for a user
+   */
+  async getLocationData(userId: string, limitCount: number = 50): Promise<any[]> {
+    return this.getDocuments('location_data', [
+      where('userId', '==', userId),
+      orderBy('timestamp', 'desc'),
+      firestoreLimit(limitCount),
+    ]);
+  }
+
+  /**
+   * Get voice notes for a user
+   */
+  async getVoiceNotes(userId: string, limitCount: number = 50): Promise<any[]> {
+    return this.getDocuments('voice_notes', [
+      where('userId', '==', userId),
+      orderBy('createdAt', 'desc'),
+      firestoreLimit(limitCount),
+    ]);
+  }
+
+  /**
+   * Get photo memories for a user
+   */
+  async getPhotoMemories(userId: string, limitCount: number = 50): Promise<any[]> {
+    return this.getDocuments('photo_memories', [
+      where('userId', '==', userId),
+      orderBy('takenAt', 'desc'),
+      firestoreLimit(limitCount),
+    ]);
+  }
+
+  /**
+   * Get data statistics for dashboard
+   */
+  async getDataStats(userId: string): Promise<{
+    healthCount: number;
+    locationCount: number;
+    voiceCount: number;
+    photoCount: number;
+  }> {
+    const [health, locations, voice, photos] = await Promise.all([
+      this.getDocuments('health_data', [where('userId', '==', userId)]),
+      this.getDocuments('location_data', [where('userId', '==', userId)]),
+      this.getDocuments('voice_notes', [where('userId', '==', userId)]),
+      this.getDocuments('photo_memories', [where('userId', '==', userId)]),
+    ]);
+
+    return {
+      healthCount: health.length,
+      locationCount: locations.length,
+      voiceCount: voice.length,
+      photoCount: photos.length,
+    };
+  }
 }
 
 // Export singleton instance

@@ -1,9 +1,20 @@
 'use client';
 
-import { useAppSelector } from '@/lib/store/hooks';
+import { useEffect } from 'react';
+import { useAppDispatch, useAppSelector } from '@/lib/store/hooks';
+import { fetchDashboardData } from '@/lib/store/slices/dashboardSlice';
 
 export default function DashboardPage() {
+  const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
+  const { stats, isLoading, error } = useAppSelector((state) => state.dashboard);
+
+  // Fetch dashboard data on mount
+  useEffect(() => {
+    if (user?.uid) {
+      dispatch(fetchDashboardData(user.uid));
+    }
+  }, [user?.uid, dispatch]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -17,29 +28,38 @@ export default function DashboardPage() {
         </p>
       </div>
 
+      {/* Error Display */}
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+          <p className="text-sm text-red-600 dark:text-red-400">
+            <strong>Error:</strong> {error}
+          </p>
+        </div>
+      )}
+
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard
           title="Health Data"
-          value="0"
+          value={isLoading ? '...' : stats.healthCount.toString()}
           subtitle="Records synced"
           icon="💪"
         />
         <StatCard
           title="Locations"
-          value="0"
+          value={isLoading ? '...' : stats.locationCount.toString()}
           subtitle="Places visited"
           icon="📍"
         />
         <StatCard
           title="Voice Notes"
-          value="0"
+          value={isLoading ? '...' : stats.voiceCount.toString()}
           subtitle="Recordings"
           icon="🎤"
         />
         <StatCard
           title="Photos"
-          value="0"
+          value={isLoading ? '...' : stats.photoCount.toString()}
           subtitle="Memories"
           icon="📸"
         />
