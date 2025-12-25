@@ -11,18 +11,19 @@ import {
 } from 'redux-persist';
 import storage from 'redux-persist/lib/storage'; // localStorage for web
 import authReducer from './slices/authSlice';
+import chatReducer from './slices/chatSlice';
 
 // Persist configuration
 const persistConfig = {
   key: 'root',
   storage,
-  whitelist: ['auth'], // Only persist auth state
+  whitelist: ['auth'], // Only persist auth state (not chat history)
 };
 
 // Root reducer
 const rootReducer = combineReducers({
   auth: authReducer,
-  // More slices will be added here (chat, search, etc.)
+  chat: chatReducer,
 });
 
 // Persisted reducer

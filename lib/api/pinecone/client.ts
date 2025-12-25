@@ -3,14 +3,22 @@ import { PineconeVector, PineconeQueryResult, VectorMetadata } from '@/lib/model
 
 export class PineconeService {
   private static instance: PineconeService;
-  private client: Pinecone;
+  private client: Pinecone | null = null;
   private indexName: string;
 
   private constructor() {
-    this.client = new Pinecone({
-      apiKey: process.env.NEXT_PUBLIC_PINECONE_API_KEY!,
-    });
     this.indexName = process.env.NEXT_PUBLIC_PINECONE_INDEX || 'personal-ai-data';
+  }
+
+  private getClient(): Pinecone {
+    if (!this.client) {
+      const apiKey = process.env.NEXT_PUBLIC_PINECONE_API_KEY;
+      if (!apiKey) {
+        throw new Error('NEXT_PUBLIC_PINECONE_API_KEY is not set');
+      }
+      this.client = new Pinecone({ apiKey });
+    }
+    return this.client;
   }
 
   static getInstance(): PineconeService {
@@ -26,11 +34,12 @@ export class PineconeService {
    */
   async initializeIndex(): Promise<void> {
     try {
-      const indexes = await this.client.listIndexes();
+      const client = this.getClient();
+      const indexes = await client.listIndexes();
       const indexExists = indexes.indexes?.some((index) => index.name === this.indexName);
 
       if (!indexExists) {
-        await this.client.createIndex({
+        await client.createIndex({
           name: this.indexName,
           dimension: 1536, // text-embedding-3-small dimension
           metric: 'cosine',
@@ -57,7 +66,8 @@ export class PineconeService {
    */
   async upsertVector(vector: PineconeVector): Promise<string> {
     try {
-      const index = this.client.Index(this.indexName);
+      const client = this.getClient();
+      const index = client.Index(this.indexName);
 
       await index.upsert([
         {
@@ -79,7 +89,8 @@ export class PineconeService {
    */
   async upsertVectorsBatch(vectors: PineconeVector[]): Promise<void> {
     try {
-      const index = this.client.Index(this.indexName);
+      const client = this.getClient();
+      const index = client.Index(this.indexName);
 
       // Pinecone recommends batching in groups of 100
       const batchSize = 100;
@@ -112,7 +123,8 @@ export class PineconeService {
     filter?: Record<string, any>,
   ): Promise<PineconeQueryResult[]> {
     try {
-      const index = this.client.Index(this.indexName);
+      const client = this.getClient();
+      const index = client.Index(this.indexName);
 
       const queryFilter: Record<string, any> = {
         userId: { $eq: userId },
@@ -191,7 +203,8 @@ export class PineconeService {
    */
   async deleteVector(vectorId: string): Promise<void> {
     try {
-      const index = this.client.Index(this.indexName);
+      const client = this.getClient();
+      const index = client.Index(this.indexName);
       await index.deleteOne(vectorId);
     } catch (error) {
       console.error('Pinecone delete error:', error);
@@ -204,7 +217,8 @@ export class PineconeService {
    */
   async deleteUserData(userId: string): Promise<void> {
     try {
-      const index = this.client.Index(this.indexName);
+      const client = this.getClient();
+      const index = client.Index(this.indexName);
       await index.deleteMany({
         userId: { $eq: userId },
       });
@@ -220,7 +234,8 @@ export class PineconeService {
    */
   async getIndexStats(): Promise<any> {
     try {
-      const index = this.client.Index(this.indexName);
+      const client = this.getClient();
+      const index = client.Index(this.indexName);
       return await index.describeIndexStats();
     } catch (error) {
       console.error('Pinecone stats error:', error);
@@ -233,7 +248,8 @@ export class PineconeService {
    */
   async fetchVectors(ids: string[]): Promise<Record<string, PineconeVector>> {
     try {
-      const index = this.client.Index(this.indexName);
+      const client = this.getClient();
+      const index = client.Index(this.indexName);
       const response = await index.fetch(ids);
 
       const result: Record<string, PineconeVector> = {};
@@ -267,7 +283,8 @@ export class PineconeService {
     additionalFilter?: Record<string, any>,
   ): Promise<PineconeQueryResult[]> {
     try {
-      const index = this.client.Index(this.indexName);
+      const client = this.getClient();
+      const index = client.Index(this.indexName);
 
       // Build filter for multiple users
       const queryFilter: Record<string, any> = {
@@ -305,7 +322,8 @@ export class PineconeService {
     additionalFilter?: Record<string, any>,
   ): Promise<PineconeQueryResult[]> {
     try {
-      const index = this.client.Index(this.indexName);
+      const client = this.getClient();
+      const index = client.Index(this.indexName);
 
       const queryFilter: Record<string, any> = {
         type: { $eq: 'shared_activity' },
@@ -345,7 +363,8 @@ export class PineconeService {
     metadata: Record<string, any>;
   }): Promise<void> {
     try {
-      const visualIndex = this.client.Index('personal-ai-visual');
+      const client = this.getClient();
+      const visualIndex = client.Index('personal-ai-visual');
       await visualIndex.upsert([
         {
           id: vector.id,
@@ -370,7 +389,8 @@ export class PineconeService {
     topK: number = 10,
   ): Promise<PineconeQueryResult[]> {
     try {
-      const visualIndex = this.client.Index('personal-ai-visual');
+      const client = this.getClient();
+      const visualIndex = client.Index('personal-ai-visual');
       const queryResponse = await visualIndex.query({
         vector: queryEmbedding,
         topK,
@@ -399,7 +419,8 @@ export class PineconeService {
    */
   async deleteVisualVector(vectorId: string): Promise<void> {
     try {
-      const visualIndex = this.client.Index('personal-ai-visual');
+      const client = this.getClient();
+      const visualIndex = client.Index('personal-ai-visual');
       await visualIndex.deleteOne(vectorId);
       console.log(`Deleted visual vector: ${vectorId}`);
     } catch (error) {
@@ -413,7 +434,8 @@ export class PineconeService {
    */
   async deleteUserVisualData(userId: string): Promise<void> {
     try {
-      const visualIndex = this.client.Index('personal-ai-visual');
+      const client = this.getClient();
+      const visualIndex = client.Index('personal-ai-visual');
       await visualIndex.deleteMany({
         userId: { $eq: userId },
       });
