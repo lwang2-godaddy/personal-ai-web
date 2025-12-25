@@ -1,36 +1,239 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# PersonalAI Web Dashboard
+
+Web application companion to the PersonalAI mobile app. View and interact with your personal data through an AI-powered dashboard.
+
+## Overview
+
+This web app shares **100% of the backend** (Firebase, OpenAI, Pinecone) with the PersonalAI mobile app. Data collection happens on mobile, while the web provides:
+
+- 💬 **AI Chat** - RAG-powered conversations about your personal data
+- 📊 **Dashboard** - View health, location, voice, and photo data
+- 🔍 **Search** - Advanced filters to find specific activities
+- 🤝 **Social** - Friends, challenges, and shared activities
+
+## Tech Stack
+
+- **Framework:** Next.js 16 (App Router)
+- **UI:** Tailwind CSS 4
+- **State:** Redux Toolkit + Redux Persist (localStorage)
+- **Backend:** Firebase Web SDK (Auth, Firestore, Storage)
+- **AI:** OpenAI (GPT-4, Embeddings)
+- **Vector DB:** Pinecone
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- Node.js 20+
+- npm or yarn
+- Firebase project (shared with mobile app)
+- OpenAI API key
+- Pinecone API key
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone <repo-url>
+   cd personal-ai-web
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Configure environment variables**
+
+   Copy `.env.local` and fill in your credentials:
+
+   ```bash
+   # Firebase Configuration (from Firebase Console)
+   NEXT_PUBLIC_FIREBASE_API_KEY=your_firebase_api_key
+   NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+   NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+   NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+   NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+   NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+
+   # OpenAI Configuration
+   NEXT_PUBLIC_OPENAI_API_KEY=sk-...
+
+   # Pinecone Configuration
+   NEXT_PUBLIC_PINECONE_API_KEY=your_pinecone_key
+   NEXT_PUBLIC_PINECONE_INDEX=personal-ai-data
+   NEXT_PUBLIC_PINECONE_ENVIRONMENT=us-east-1-aws
+   ```
+
+4. **Run the development server**
+   ```bash
+   npm run dev
+   ```
+
+5. **Open your browser**
+
+   Navigate to [http://localhost:3000](http://localhost:3000)
+
+## Project Structure
+
+```
+personal-ai-web/
+├── app/                    # Next.js App Router
+│   ├── (auth)/            # Auth pages (login, signup)
+│   ├── (dashboard)/       # Protected dashboard pages
+│   └── layout.tsx         # Root layout with Redux provider
+├── lib/                   # Business logic
+│   ├── api/               # API clients
+│   │   ├── firebase/      # Firebase Auth, Firestore, Storage
+│   │   ├── openai/        # OpenAI client (to be ported)
+│   │   └── pinecone/      # Pinecone client (to be ported)
+│   ├── services/          # Business logic services
+│   │   ├── rag/           # RAGEngine (to be ported)
+│   │   ├── search/        # SearchService (to be ported)
+│   │   └── social/        # SocialService (to be ported)
+│   ├── store/             # Redux store
+│   │   └── slices/        # Redux slices (auth, chat, search, social)
+│   └── models/            # TypeScript interfaces
+├── components/            # React components
+│   ├── auth/              # AuthGuard, etc.
+│   ├── chat/              # Chat UI components
+│   └── ui/                # Reusable UI components
+└── .env.local             # Environment variables
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Features Status
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### ✅ Phase 1 Complete (Week 1)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- [x] Next.js 16 project initialized
+- [x] Firebase Web SDK configured
+- [x] Authentication (Google + Email/Password)
+- [x] Redux store with persist
+- [x] Protected routes
+- [x] Login page with form validation
+- [x] Dashboard layout with navigation
 
-## Learn More
+### 🚧 In Progress (Week 2)
 
-To learn more about Next.js, take a look at the following resources:
+- [ ] Port TypeScript models from mobile app
+- [ ] Port RAGEngine service
+- [ ] Port SearchService
+- [ ] Port SocialService
+- [ ] Adapt OpenAI and Pinecone clients for web
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 📅 Upcoming (Weeks 3-10)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Week 3:** Chat interface with RAG
+- **Week 4:** Dashboard with data viewing
+- **Week 5:** Search functionality
+- **Week 6:** Data visualizations
+- **Week 7:** Social features
+- **Week 8:** Settings and profile
+- **Week 9-10:** Polish, testing, deployment
 
-## Deploy on Vercel
+## Development
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Available Scripts
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run dev      # Start development server
+npm run build    # Build for production
+npm run start    # Start production server
+npm run lint     # Run ESLint
+```
+
+### Code Style
+
+- TypeScript with strict mode
+- ESLint with Next.js config
+- Tailwind CSS for styling
+- Client components with 'use client' directive
+
+## Architecture
+
+### Authentication Flow
+
+1. User visits `/` → Redirects to `/login` or `/dashboard`
+2. Login page offers Google OAuth or email/password
+3. On successful auth, Redux stores user data in localStorage
+4. Protected routes use `AuthGuard` to check authentication
+5. Dashboard provides navigation to all features
+
+### Data Flow
+
+```
+Mobile App (Data Collection)
+    ↓
+Firebase Firestore + Storage
+    ↓
+Cloud Functions (Embedding Generation)
+    ↓
+Pinecone Vector DB
+    ↓
+Web App (Query & View)
+    ↓
+RAGEngine + GPT-4
+    ↓
+User Chat Interface
+```
+
+### Key Adaptations from Mobile
+
+| Mobile (React Native) | Web (Next.js) |
+|----------------------|----------------|
+| AsyncStorage | localStorage |
+| @react-native-firebase | firebase (web SDK) |
+| NetInfo | navigator.onLine |
+| React Navigation | Next.js App Router |
+| react-native components | React + Tailwind |
+
+## Environment Variables
+
+All environment variables must be prefixed with `NEXT_PUBLIC_` to be exposed to the browser.
+
+**Security Note:** Never commit `.env.local` to version control. The file is included in `.gitignore`.
+
+## Deployment
+
+### Vercel (Recommended)
+
+1. Push code to GitHub
+2. Import repository in Vercel
+3. Add environment variables in Vercel dashboard
+4. Deploy automatically on push to `main`
+
+### Other Platforms
+
+This is a standard Next.js app and can be deployed to:
+- Netlify
+- AWS Amplify
+- Google Cloud Run
+- Self-hosted with Node.js
+
+## Troubleshooting
+
+### "Firebase: Error (auth/...)"
+
+Check that Firebase credentials in `.env.local` are correct and that the Firebase project has Google Sign-In enabled in Authentication settings.
+
+### "Module not found: Can't resolve '@/...'"
+
+The `@/` alias is configured in `tsconfig.json` to point to the root directory. Make sure you're importing from the correct path.
+
+### Build errors
+
+Run `npm run build` to check for TypeScript errors. All errors must be resolved before deployment.
+
+## Contributing
+
+This project is part of the PersonalAI ecosystem. See the main repository for contribution guidelines.
+
+## License
+
+See main repository for license information.
+
+## Related Documentation
+
+- **Implementation Guide:** `../PersonalAIApp/docs/planning/WEB_APP_IMPLEMENTATION_GUIDE.md`
+- **Mobile App Docs:** `../PersonalAIApp/CLAUDE.md`
+- **Mobile Knowledge Base:** `../PersonalAIApp/KNOWLEDGE_BASE.md`
