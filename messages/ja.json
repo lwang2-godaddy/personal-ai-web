@@ -1,0 +1,92 @@
+{
+  "common": {
+    "signOut": "ログアウト",
+    "loading": "読み込み中...",
+    "error": "エラー",
+    "welcome": "おかえりなさい、{name}さん！",
+    "personalAI": "PersonalAI"
+  },
+  "nav": {
+    "dashboard": "ダッシュボード",
+    "chat": "チャット",
+    "search": "検索",
+    "settings": "設定"
+  },
+  "auth": {
+    "signIn": "ログイン",
+    "signInWithGoogle": "Googleでログイン",
+    "signInWithEmail": "メールでログイン",
+    "email": "メール",
+    "password": "パスワード",
+    "welcomeTitle": "PersonalAIへようこそ",
+    "welcomeSubtitle": "あなたのインテリジェントな個人データアシスタント",
+    "signInPrompt": "ログインしてダッシュボードにアクセス"
+  },
+  "dashboard": {
+    "title": "あなたのパーソナルAIダッシュボード",
+    "stats": {
+      "healthData": "健康データ",
+      "healthSubtitle": "同期されたレコード",
+      "locations": "場所",
+      "locationsSubtitle": "訪問した場所",
+      "voiceNotes": "音声メモ",
+      "voiceNotesSubtitle": "録音",
+      "photos": "写真",
+      "photosSubtitle": "思い出"
+    },
+    "dataCollection": {
+      "title": "📱 データ収集",
+      "description": "このWebダッシュボードは表示専用です。健康データ、位置履歴、音声メモ、写真を収集するには、PersonalAIモバイルアプリをご使用ください。",
+      "syncInfo": "モバイルでデータを収集すると、自動的に同期され、分析とチャットのためにここに表示されます。"
+    },
+    "quickActions": {
+      "chat": {
+        "title": "AIとチャット",
+        "description": "個人データについて質問する"
+      },
+      "search": {
+        "title": "データを検索",
+        "description": "特定の活動や思い出を見つける"
+      },
+      "settings": {
+        "title": "設定",
+        "description": "設定とアカウントを管理"
+      }
+    },
+    "recentActivity": "最近のアクティビティ",
+    "recentHealth": "💪 最近の健康データ",
+    "recentLocations": "📍 最近の場所",
+    "recentVoiceNotes": "🎤 最近の音声メモ",
+    "recentPhotos": "📸 最近の写真",
+    "noHealthData": "健康データがまだありません。モバイルアプリを使用してHealthKitまたはGoogle Fitから健康データを同期してください。",
+    "noLocationData": "位置データがまだありません。モバイルアプリで位置追跡を有効にして、訪問した場所を確認してください。",
+    "noVoiceNotes": "音声メモがまだありません。モバイルアプリを使用して音声メモを録音および文字起こししてください。",
+    "noPhotos": "写真がまだありません。モバイルアプリを使用して写真の思い出をキャプチャして同期してください。",
+    "visits": "訪問",
+    "duration": "期間",
+    "unknownActivity": "不明なアクティビティ",
+    "noTranscription": "利用可能な文字起こしはありません"
+  },
+  "chat": {
+    "title": "AIチャット",
+    "subtitle": "個人データについて質問する",
+    "clearChat": "チャットをクリア",
+    "clearConfirm": "すべてのメッセージをクリアしますか？",
+    "placeholder": "データについて何でも聞いてください...",
+    "send": "送信",
+    "emptyState": {
+      "title": "会話を開始",
+      "description": "個人データについて何でも質問してください。AIを使用して関連情報を見つけ、正確な回答を提供します。",
+      "tryAsking": "試しに聞いてみてください：",
+      "suggestions": [
+        "今年バドミントンを何回しましたか？",
+        "ワークアウト履歴を見せて",
+        "健康トレンドは？",
+        "先月どこに行きましたか？"
+      ],
+      "note": "💡 注意：モバイルアプリで収集したデータに関する質問にのみ回答できます。まだデータを追加していない場合は、お伝えすることはあまりありません！"
+    },
+    "sources": "📚 ソース ({count})",
+    "match": "一致"
+  }
+}

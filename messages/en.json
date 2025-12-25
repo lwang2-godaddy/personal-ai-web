@@ -1,0 +1,92 @@
+{
+  "common": {
+    "signOut": "Sign Out",
+    "loading": "Loading...",
+    "error": "Error",
+    "welcome": "Welcome back, {name}!",
+    "personalAI": "PersonalAI"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "chat": "Chat",
+    "search": "Search",
+    "settings": "Settings"
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signInWithGoogle": "Sign in with Google",
+    "signInWithEmail": "Sign in with Email",
+    "email": "Email",
+    "password": "Password",
+    "welcomeTitle": "Welcome to PersonalAI",
+    "welcomeSubtitle": "Your intelligent personal data assistant",
+    "signInPrompt": "Sign in to access your dashboard"
+  },
+  "dashboard": {
+    "title": "Your personal AI dashboard",
+    "stats": {
+      "healthData": "Health Data",
+      "healthSubtitle": "Records synced",
+      "locations": "Locations",
+      "locationsSubtitle": "Places visited",
+      "voiceNotes": "Voice Notes",
+      "voiceNotesSubtitle": "Recordings",
+      "photos": "Photos",
+      "photosSubtitle": "Memories"
+    },
+    "dataCollection": {
+      "title": "📱 Data Collection",
+      "description": "This web dashboard is view-only for your data. To collect health data, location history, voice notes, and photos, please use the PersonalAI mobile app.",
+      "syncInfo": "Once you've collected data on mobile, it will automatically sync and appear here for analysis and chat."
+    },
+    "quickActions": {
+      "chat": {
+        "title": "Chat with AI",
+        "description": "Ask questions about your personal data"
+      },
+      "search": {
+        "title": "Search Data",
+        "description": "Find specific activities and memories"
+      },
+      "settings": {
+        "title": "Settings",
+        "description": "Manage your preferences and account"
+      }
+    },
+    "recentActivity": "Recent Activity",
+    "recentHealth": "💪 Recent Health Data",
+    "recentLocations": "📍 Recent Locations",
+    "recentVoiceNotes": "🎤 Recent Voice Notes",
+    "recentPhotos": "📸 Recent Photos",
+    "noHealthData": "No health data collected yet. Use the mobile app to sync health data from HealthKit or Google Fit.",
+    "noLocationData": "No location data collected yet. Enable location tracking in the mobile app to see where you've been.",
+    "noVoiceNotes": "No voice notes recorded yet. Use the mobile app to record and transcribe voice notes.",
+    "noPhotos": "No photos uploaded yet. Use the mobile app to capture and sync your photo memories.",
+    "visits": "Visits",
+    "duration": "Duration",
+    "unknownActivity": "Unknown Activity",
+    "noTranscription": "No transcription available"
+  },
+  "chat": {
+    "title": "AI Chat",
+    "subtitle": "Ask questions about your personal data",
+    "clearChat": "Clear Chat",
+    "clearConfirm": "Clear all messages?",
+    "placeholder": "Ask me anything about your data...",
+    "send": "Send",
+    "emptyState": {
+      "title": "Start a conversation",
+      "description": "Ask me anything about your personal data. I'll use AI to find relevant information and give you accurate answers.",
+      "tryAsking": "Try asking:",
+      "suggestions": [
+        "How many times did I play badminton this year?",
+        "Show me my workout history",
+        "What are my health trends?",
+        "Where did I visit last month?"
+      ],
+      "note": "💡 Note: I can only answer questions about data you've collected on the mobile app. If you haven't added any data yet, I won't have much to tell you!"
+    },
+    "sources": "📚 Sources ({count})",
+    "match": "match"
+  }
+}

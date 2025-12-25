@@ -1,0 +1,92 @@
+{
+  "common": {
+    "signOut": "Abmelden",
+    "loading": "Laden...",
+    "error": "Fehler",
+    "welcome": "Willkommen zurück, {name}!",
+    "personalAI": "PersonalAI"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "chat": "Chat",
+    "search": "Suchen",
+    "settings": "Einstellungen"
+  },
+  "auth": {
+    "signIn": "Anmelden",
+    "signInWithGoogle": "Mit Google anmelden",
+    "signInWithEmail": "Mit E-Mail anmelden",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "welcomeTitle": "Willkommen bei PersonalAI",
+    "welcomeSubtitle": "Ihr intelligenter persönlicher Datenassistent",
+    "signInPrompt": "Melden Sie sich an, um auf Ihr Dashboard zuzugreifen"
+  },
+  "dashboard": {
+    "title": "Ihr persönliches KI-Dashboard",
+    "stats": {
+      "healthData": "Gesundheitsdaten",
+      "healthSubtitle": "Datensätze synchronisiert",
+      "locations": "Standorte",
+      "locationsSubtitle": "Besuchte Orte",
+      "voiceNotes": "Sprachnotizen",
+      "voiceNotesSubtitle": "Aufnahmen",
+      "photos": "Fotos",
+      "photosSubtitle": "Erinnerungen"
+    },
+    "dataCollection": {
+      "title": "📱 Datenerfassung",
+      "description": "Dieses Web-Dashboard ist schreibgeschützt. Um Gesundheitsdaten, Standortverlauf, Sprachnotizen und Fotos zu sammeln, verwenden Sie bitte die PersonalAI Mobile App.",
+      "syncInfo": "Sobald Sie Daten auf dem Handy gesammelt haben, werden sie automatisch synchronisiert und hier angezeigt."
+    },
+    "quickActions": {
+      "chat": {
+        "title": "Chat mit KI",
+        "description": "Stellen Sie Fragen zu Ihren persönlichen Daten"
+      },
+      "search": {
+        "title": "Daten Suchen",
+        "description": "Finden Sie bestimmte Aktivitäten und Erinnerungen"
+      },
+      "settings": {
+        "title": "Einstellungen",
+        "description": "Verwalten Sie Ihre Präferenzen und Ihr Konto"
+      }
+    },
+    "recentActivity": "Letzte Aktivität",
+    "recentHealth": "💪 Aktuelle Gesundheitsdaten",
+    "recentLocations": "📍 Aktuelle Standorte",
+    "recentVoiceNotes": "🎤 Aktuelle Sprachnotizen",
+    "recentPhotos": "📸 Aktuelle Fotos",
+    "noHealthData": "Keine Gesundheitsdaten vorhanden. Verwenden Sie die Mobile App, um Daten von HealthKit oder Google Fit zu synchronisieren.",
+    "noLocationData": "Keine Standortdaten vorhanden. Aktivieren Sie die Standortverfolgung in der Mobile App.",
+    "noVoiceNotes": "Keine Sprachnotizen vorhanden. Verwenden Sie die Mobile App, um Sprachnotizen aufzunehmen und zu transkribieren.",
+    "noPhotos": "Keine Fotos vorhanden. Verwenden Sie die Mobile App, um Ihre Foto-Erinnerungen zu erfassen und zu synchronisieren.",
+    "visits": "Besuche",
+    "duration": "Dauer",
+    "unknownActivity": "Unbekannte Aktivität",
+    "noTranscription": "Keine Transkription verfügbar"
+  },
+  "chat": {
+    "title": "KI-Chat",
+    "subtitle": "Stellen Sie Fragen zu Ihren persönlichen Daten",
+    "clearChat": "Chat Löschen",
+    "clearConfirm": "Alle Nachrichten löschen?",
+    "placeholder": "Fragen Sie mich alles über Ihre Daten...",
+    "send": "Senden",
+    "emptyState": {
+      "title": "Beginnen Sie ein Gespräch",
+      "description": "Fragen Sie mich alles über Ihre persönlichen Daten. Ich werde KI verwenden, um relevante Informationen zu finden und Ihnen genaue Antworten zu geben.",
+      "tryAsking": "Versuchen Sie zu fragen:",
+      "suggestions": [
+        "Wie oft habe ich dieses Jahr Badminton gespielt?",
+        "Zeig mir meine Trainingshistorie",
+        "Was sind meine Gesundheitstrends?",
+        "Wo war ich letzten Monat?"
+      ],
+      "note": "💡 Hinweis: Ich kann nur Fragen zu Daten beantworten, die Sie in der Mobile App gesammelt haben."
+    },
+    "sources": "📚 Quellen ({count})",
+    "match": "Übereinstimmung"
+  }
+}

@@ -1,0 +1,92 @@
+{
+  "common": {
+    "signOut": "退出登录",
+    "loading": "加载中...",
+    "error": "错误",
+    "welcome": "欢迎回来，{name}！",
+    "personalAI": "PersonalAI"
+  },
+  "nav": {
+    "dashboard": "仪表板",
+    "chat": "聊天",
+    "search": "搜索",
+    "settings": "设置"
+  },
+  "auth": {
+    "signIn": "登录",
+    "signInWithGoogle": "使用 Google 登录",
+    "signInWithEmail": "使用邮箱登录",
+    "email": "邮箱",
+    "password": "密码",
+    "welcomeTitle": "欢迎来到 PersonalAI",
+    "welcomeSubtitle": "您的智能个人数据助手",
+    "signInPrompt": "登录以访问您的仪表板"
+  },
+  "dashboard": {
+    "title": "您的个人 AI 仪表板",
+    "stats": {
+      "healthData": "健康数据",
+      "healthSubtitle": "已同步记录",
+      "locations": "位置",
+      "locationsSubtitle": "访问过的地点",
+      "voiceNotes": "语音笔记",
+      "voiceNotesSubtitle": "录音",
+      "photos": "照片",
+      "photosSubtitle": "回忆"
+    },
+    "dataCollection": {
+      "title": "📱 数据收集",
+      "description": "此网页仪表板仅供查看。要收集健康数据、位置历史、语音笔记和照片，请使用 PersonalAI 移动应用。",
+      "syncInfo": "一旦您在移动设备上收集了数据，它将自动同步并显示在这里以供分析和聊天。"
+    },
+    "quickActions": {
+      "chat": {
+        "title": "与 AI 聊天",
+        "description": "询问有关您的个人数据的问题"
+      },
+      "search": {
+        "title": "搜索数据",
+        "description": "查找特定的活动和回忆"
+      },
+      "settings": {
+        "title": "设置",
+        "description": "管理您的偏好设置和帐户"
+      }
+    },
+    "recentActivity": "最近活动",
+    "recentHealth": "💪 最近的健康数据",
+    "recentLocations": "📍 最近的位置",
+    "recentVoiceNotes": "🎤 最近的语音笔记",
+    "recentPhotos": "📸 最近的照片",
+    "noHealthData": "尚无健康数据。使用移动应用从 HealthKit 或 Google Fit 同步健康数据。",
+    "noLocationData": "尚无位置数据。在移动应用中启用位置跟踪以查看您去过的地方。",
+    "noVoiceNotes": "尚无语音笔记。使用移动应用录制和转录语音笔记。",
+    "noPhotos": "尚无照片。使用移动应用捕获和同步您的照片回忆。",
+    "visits": "访问",
+    "duration": "时长",
+    "unknownActivity": "未知活动",
+    "noTranscription": "无可用转录"
+  },
+  "chat": {
+    "title": "AI 聊天",
+    "subtitle": "询问有关您的个人数据的问题",
+    "clearChat": "清除聊天",
+    "clearConfirm": "清除所有消息？",
+    "placeholder": "询问我关于您的数据的任何问题...",
+    "send": "发送",
+    "emptyState": {
+      "title": "开始对话",
+      "description": "询问我关于您的个人数据的任何问题。我将使用 AI 查找相关信息并为您提供准确的答案。",
+      "tryAsking": "尝试询问：",
+      "suggestions": [
+        "我今年打了多少次羽毛球？",
+        "显示我的锻炼历史",
+        "我的健康趋势是什么？",
+        "我上个月去了哪里？"
+      ],
+      "note": "💡 注意：我只能回答您在移动应用中收集的数据的问题。如果您还没有添加任何数据，我就没有太多可以告诉您的！"
+    },
+    "sources": "📚 来源 ({count})",
+    "match": "匹配"
+  }
+}

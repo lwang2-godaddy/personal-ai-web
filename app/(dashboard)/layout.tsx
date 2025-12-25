@@ -1,6 +1,7 @@
 'use client';
 
 import { AuthGuard } from '@/components/auth/AuthGuard';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { useAppDispatch, useAppSelector } from '@/lib/store/hooks';
 import { signOutThunk } from '@/lib/store/slices/authSlice';
 import Link from 'next/link';
@@ -64,7 +65,8 @@ export default function DashboardLayout({
 
               {/* User menu */}
               <div className="flex items-center">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <LanguageSwitcher />
                   <span className="text-sm text-gray-700 dark:text-gray-300">
                     {user?.displayName || user?.email}
                   </span>

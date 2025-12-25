@@ -1,0 +1,92 @@
+{
+  "common": {
+    "signOut": "Cerrar Sesión",
+    "loading": "Cargando...",
+    "error": "Error",
+    "welcome": "¡Bienvenido, {name}!",
+    "personalAI": "PersonalAI"
+  },
+  "nav": {
+    "dashboard": "Panel",
+    "chat": "Chat",
+    "search": "Buscar",
+    "settings": "Configuración"
+  },
+  "auth": {
+    "signIn": "Iniciar Sesión",
+    "signInWithGoogle": "Iniciar sesión con Google",
+    "signInWithEmail": "Iniciar sesión con Email",
+    "email": "Correo Electrónico",
+    "password": "Contraseña",
+    "welcomeTitle": "Bienvenido a PersonalAI",
+    "welcomeSubtitle": "Tu asistente inteligente de datos personales",
+    "signInPrompt": "Inicia sesión para acceder a tu panel"
+  },
+  "dashboard": {
+    "title": "Tu panel de IA personal",
+    "stats": {
+      "healthData": "Datos de Salud",
+      "healthSubtitle": "Registros sincronizados",
+      "locations": "Ubicaciones",
+      "locationsSubtitle": "Lugares visitados",
+      "voiceNotes": "Notas de Voz",
+      "voiceNotesSubtitle": "Grabaciones",
+      "photos": "Fotos",
+      "photosSubtitle": "Recuerdos"
+    },
+    "dataCollection": {
+      "title": "📱 Recopilación de Datos",
+      "description": "Este panel web es solo de lectura. Para recopilar datos de salud, historial de ubicación, notas de voz y fotos, utiliza la aplicación móvil PersonalAI.",
+      "syncInfo": "Una vez que hayas recopilado datos en móvil, se sincronizarán automáticamente y aparecerán aquí."
+    },
+    "quickActions": {
+      "chat": {
+        "title": "Chat con IA",
+        "description": "Haz preguntas sobre tus datos personales"
+      },
+      "search": {
+        "title": "Buscar Datos",
+        "description": "Encuentra actividades y recuerdos específicos"
+      },
+      "settings": {
+        "title": "Configuración",
+        "description": "Gestiona tus preferencias y cuenta"
+      }
+    },
+    "recentActivity": "Actividad Reciente",
+    "recentHealth": "💪 Datos de Salud Recientes",
+    "recentLocations": "📍 Ubicaciones Recientes",
+    "recentVoiceNotes": "🎤 Notas de Voz Recientes",
+    "recentPhotos": "📸 Fotos Recientes",
+    "noHealthData": "No hay datos de salud. Usa la app móvil para sincronizar datos de HealthKit o Google Fit.",
+    "noLocationData": "No hay datos de ubicación. Activa el seguimiento de ubicación en la app móvil.",
+    "noVoiceNotes": "No hay notas de voz. Usa la app móvil para grabar y transcribir notas de voz.",
+    "noPhotos": "No hay fotos. Usa la app móvil para capturar y sincronizar tus recuerdos fotográficos.",
+    "visits": "Visitas",
+    "duration": "Duración",
+    "unknownActivity": "Actividad Desconocida",
+    "noTranscription": "No hay transcripción disponible"
+  },
+  "chat": {
+    "title": "Chat IA",
+    "subtitle": "Haz preguntas sobre tus datos personales",
+    "clearChat": "Limpiar Chat",
+    "clearConfirm": "¿Borrar todos los mensajes?",
+    "placeholder": "Pregúntame lo que quieras sobre tus datos...",
+    "send": "Enviar",
+    "emptyState": {
+      "title": "Comienza una conversación",
+      "description": "Pregúntame lo que quieras sobre tus datos personales. Usaré IA para encontrar información relevante y darte respuestas precisas.",
+      "tryAsking": "Intenta preguntar:",
+      "suggestions": [
+        "¿Cuántas veces jugué bádminton este año?",
+        "Muéstrame mi historial de entrenamientos",
+        "¿Cuáles son mis tendencias de salud?",
+        "¿Dónde visité el mes pasado?"
+      ],
+      "note": "💡 Nota: Solo puedo responder preguntas sobre datos que has recopilado en la app móvil."
+    },
+    "sources": "📚 Fuentes ({count})",
+    "match": "coincidencia"
+  }
+}
