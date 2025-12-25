@@ -3,11 +3,25 @@
 import { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '@/lib/store/hooks';
 import { fetchDashboardData } from '@/lib/store/slices/dashboardSlice';
+import {
+  HealthDataCard,
+  LocationDataCard,
+  VoiceNoteCard,
+  PhotoCard,
+} from '@/components/dashboard';
 
 export default function DashboardPage() {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
-  const { stats, isLoading, error } = useAppSelector((state) => state.dashboard);
+  const {
+    stats,
+    recentHealth,
+    recentLocations,
+    recentVoiceNotes,
+    recentPhotos,
+    isLoading,
+    error,
+  } = useAppSelector((state) => state.dashboard);
 
   // Fetch dashboard data on mount
   useEffect(() => {
@@ -81,7 +95,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Quick Actions */}
-      <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <ActionCard
           title="Chat with AI"
           description="Ask questions about your personal data"
@@ -101,6 +115,21 @@ export default function DashboardPage() {
           icon="⚙️"
         />
       </div>
+
+      {/* Recent Data Section */}
+      {!isLoading && (
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+            Recent Activity
+          </h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <HealthDataCard data={recentHealth} />
+            <LocationDataCard data={recentLocations} />
+            <VoiceNoteCard data={recentVoiceNotes} />
+            <PhotoCard data={recentPhotos} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
