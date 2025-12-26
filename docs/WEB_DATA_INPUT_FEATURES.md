@@ -846,22 +846,89 @@ All Cloud Functions already exist in mobile app (`PersonalAIApp/firebase/functio
 
 ---
 
+## Deployment & Setup
+
+### Initial Setup Steps
+
+**1. Deploy Firestore Rules (REQUIRED)**
+
+The web app shares the same Firebase project as the mobile app (`personalaiapp-90131`). Before using any features, you MUST deploy the Firestore security rules:
+
+```bash
+cd /path/to/personal-ai-web
+
+# Deploy Firestore rules
+firebase deploy --only firestore:rules
+
+# Deploy Firestore indexes (optional, but recommended)
+firebase deploy --only firestore:indexes
+```
+
+**Expected output:**
+```
+✔  cloud.firestore: rules file firestore.rules compiled successfully
+✔  firestore: released rules firestore.rules to cloud.firestore
+✔  Deploy complete!
+```
+
+**2. Verify Environment Variables**
+
+Check your `.env.local` file has all required variables:
+
+```bash
+# Firebase Configuration (required for browser)
+NEXT_PUBLIC_FIREBASE_API_KEY=...
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=...
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=personalaiapp-90131
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=...
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=...
+NEXT_PUBLIC_FIREBASE_APP_ID=...
+
+# OpenAI (for API routes - server-side only)
+OPENAI_API_KEY=sk-...
+```
+
+**3. Start Development Server**
+
+```bash
+npm run dev
+```
+
+**4. Sign In First**
+
+- Navigate to `http://localhost:3000`
+- Click "Sign in with Google"
+- Grant authentication permissions
+- **IMPORTANT:** You must be signed in before accessing `/create`
+
+**5. Grant Browser Permissions**
+
+When prompted, allow:
+- **Microphone access** (for voice recording)
+- **Location access** (for photo tagging - optional)
+
+---
+
 ## Testing Guide
 
 ### Prerequisites
 
 1. **Firebase Setup:**
-   - Valid Firebase project
-   - Storage bucket configured
-   - Firestore rules deployed
-   - Cloud Functions deployed
+   - ✅ Valid Firebase project (personalaiapp-90131)
+   - ✅ Storage bucket configured
+   - ✅ **Firestore rules deployed** (see "Deployment & Setup" above)
+   - ✅ Cloud Functions deployed (already exists from mobile app)
 
 2. **API Keys:**
-   - OpenAI API key in `.env`
-   - Firebase credentials in `.env`
-   - Pinecone credentials (for Cloud Functions)
+   - ✅ OpenAI API key in `.env.local` (OPENAI_API_KEY)
+   - ✅ Firebase credentials in `.env.local` (NEXT_PUBLIC_FIREBASE_*)
+   - ✅ Pinecone credentials in Cloud Functions (already configured)
 
-3. **Browser Permissions:**
+3. **Authentication:**
+   - ✅ **Signed in with Google** (CRITICAL - must do this first!)
+   - ✅ User account exists in Firestore `users` collection
+
+4. **Browser Permissions:**
    - Microphone access (for voice recording)
    - Location access (for photo tagging)
 
@@ -982,7 +1049,57 @@ All Cloud Functions already exist in mobile app (`PersonalAIApp/firebase/functio
 
 ### Common Issues
 
-#### 1. "Microphone permission denied"
+#### 1. "FirebaseError: Missing or insufficient permissions"
+
+**This is the most common error when first using the app!**
+
+**Cause:** Firestore security rules not deployed, or user not authenticated
+
+**Solutions:**
+
+**A. Deploy Firestore Rules (if you haven't already):**
+```bash
+cd /path/to/personal-ai-web
+firebase deploy --only firestore:rules
+```
+
+**B. Sign In First:**
+1. Navigate to `http://localhost:3000`
+2. Click "Sign in with Google"
+3. Grant authentication
+4. **THEN** go to `/create`
+
+**C. Refresh Browser After Deployment:**
+- Hard refresh: `Ctrl+Shift+R` (Windows/Linux) or `Cmd+Shift+R` (Mac)
+- Or clear browser cache
+
+**D. Verify Environment Variables:**
+```bash
+# Check .env.local has all required Firebase variables
+cat .env.local | grep NEXT_PUBLIC_FIREBASE
+```
+
+**E. Check Browser Console:**
+- Open DevTools (F12)
+- Look for Firebase initialization errors
+- Verify `auth.currentUser` is not null
+
+**F. Restart Dev Server:**
+```bash
+# Stop current server (Ctrl+C)
+npm run dev
+```
+
+**Verify Rules Are Deployed:**
+```bash
+# View deployed rules
+firebase firestore:rules get
+
+# Or check Firebase Console
+open https://console.firebase.google.com/project/personalaiapp-90131/firestore/rules
+```
+
+#### 2. "Microphone permission denied"
 
 **Cause:** User denied browser microphone access
 

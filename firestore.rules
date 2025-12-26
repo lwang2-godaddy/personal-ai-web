@@ -125,6 +125,30 @@ service cloud.firestore {
       allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
+    // Text Notes (Diary) collection
+    match /textNotes/{noteId} {
+      // Allow read if user owns the data
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      // Allow create if user is authenticated and creating their own data
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+
+      // Allow update if user owns the data OR if Cloud Functions is adding embedding
+      allow update: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        // Allow Cloud Functions to add embedding fields
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'embeddingId',
+          'embeddingCreatedAt',
+          'embeddingError',
+          'embeddingErrorAt'
+        ])
+      );
+
+      // Allow delete if user owns the data
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
     // Chat History collection
     match /chatHistory/{chatId} {
       // Allow read if user owns the data
