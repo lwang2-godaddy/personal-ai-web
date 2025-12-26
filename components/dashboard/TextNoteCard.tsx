@@ -1,18 +1,33 @@
+'use client';
+
 import { TextNote } from '@/lib/models';
+import { useAppDispatch } from '@/lib/store/hooks';
+import { openQuickCreate } from '@/lib/store/slices/quickCreateSlice';
+import { PanelHeader } from './PanelHeader';
 
 interface TextNoteCardProps {
   data: TextNote[];
 }
 
 export function TextNoteCard({ data }: TextNoteCardProps) {
+  const dispatch = useAppDispatch();
+
+  const handleCreateClick = () => {
+    dispatch(openQuickCreate('diary'));
+  };
+
   if (data.length === 0) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          📝 Recent Diary Entries
-        </h3>
+        <PanelHeader
+          title="Recent Diary Entries"
+          emoji="📝"
+          actionType="create"
+          onActionClick={handleCreateClick}
+          ariaLabel="Create new diary entry"
+        />
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          No diary entries yet. Click &quot;Create&quot; to start writing your first entry.
+          No diary entries yet. Click the &apos;+&apos; icon above to start writing your first entry.
         </p>
       </div>
     );
@@ -20,9 +35,13 @@ export function TextNoteCard({ data }: TextNoteCardProps) {
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-        📝 Recent Diary Entries
-      </h3>
+      <PanelHeader
+        title="Recent Diary Entries"
+        emoji="📝"
+        actionType="create"
+        onActionClick={handleCreateClick}
+        ariaLabel="Create new diary entry"
+      />
       <div className="space-y-3">
         {data.slice(0, 5).map((item) => (
           <div

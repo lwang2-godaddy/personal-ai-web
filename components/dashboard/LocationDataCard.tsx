@@ -1,28 +1,72 @@
+'use client';
+
+import { useState } from 'react';
 import { LocationData } from '@/lib/models';
+import { PanelHeader } from './PanelHeader';
+import { InfoModal } from './InfoModal';
 
 interface LocationDataCardProps {
   data: LocationData[];
 }
 
 export function LocationDataCard({ data }: LocationDataCardProps) {
+  const [showInfoModal, setShowInfoModal] = useState(false);
+
+  const handleInfoClick = () => {
+    setShowInfoModal(true);
+  };
+
   if (data.length === 0) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          📍 Recent Locations
-        </h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          No location data collected yet. Enable location tracking in the mobile app to see where you've been.
-        </p>
-      </div>
+      <>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+          <PanelHeader
+            title="Recent Locations"
+            emoji="📍"
+            actionType="info"
+            onActionClick={handleInfoClick}
+            ariaLabel="Learn about location data collection"
+          />
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            No location data collected yet. Click the &apos;i&apos; icon above to learn how to start tracking.
+          </p>
+        </div>
+
+        {showInfoModal && (
+          <InfoModal
+            title="Location Data Collection"
+            onClose={() => setShowInfoModal(false)}
+          >
+            <p className="mb-4">
+              Location data is collected via the mobile app with background location tracking.
+            </p>
+            <p className="mb-4">
+              To enable location tracking:
+            </p>
+            <ul className="list-disc list-inside space-y-2 mb-4">
+              <li>Download the SirCharge mobile app</li>
+              <li>Enable location permissions (Always)</li>
+              <li>The app will track significant locations automatically</li>
+            </ul>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Location data includes: addresses, visit counts, duration, and activity detection.
+            </p>
+          </InfoModal>
+        )}
+      </>
     );
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-        📍 Recent Locations
-      </h3>
+    <>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <PanelHeader
+          title="Recent Locations"
+          emoji="📍"
+          actionType="info"
+          onActionClick={handleInfoClick}
+          ariaLabel="Learn about location data collection"
+        />
       <div className="space-y-3">
         {data.slice(0, 5).map((item) => (
           <div
@@ -56,5 +100,28 @@ export function LocationDataCard({ data }: LocationDataCardProps) {
         ))}
       </div>
     </div>
+
+    {showInfoModal && (
+      <InfoModal
+        title="Location Data Collection"
+        onClose={() => setShowInfoModal(false)}
+      >
+        <p className="mb-4">
+          Location data is collected via the mobile app with background location tracking.
+        </p>
+        <p className="mb-4">
+          To enable location tracking:
+        </p>
+        <ul className="list-disc list-inside space-y-2 mb-4">
+          <li>Download the SirCharge mobile app</li>
+          <li>Enable location permissions (Always)</li>
+          <li>The app will track significant locations automatically</li>
+        </ul>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Location data includes: addresses, visit counts, duration, and activity detection.
+        </p>
+      </InfoModal>
+    )}
+  </>
   );
 }

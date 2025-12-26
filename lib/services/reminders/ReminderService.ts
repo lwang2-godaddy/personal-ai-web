@@ -66,7 +66,7 @@ export class ReminderService {
    */
   async removeReminder(eventId: string, reminderId: string): Promise<void> {
     try {
-      const event = await FirestoreService.getDocument('events', eventId);
+      const event = await FirestoreService.getDocument('events', eventId) as Event;
       const reminders = (event.reminders || []).filter((r: EventReminder) => r.id !== reminderId);
 
       await FirestoreService.updateDocument('events', eventId, {

@@ -3,3 +3,6 @@ export { LocationDataCard } from './LocationDataCard';
 export { VoiceNoteCard } from './VoiceNoteCard';
 export { PhotoCard } from './PhotoCard';
 export { TextNoteCard } from './TextNoteCard';
+export { PanelHeader } from './PanelHeader';
+export { InfoModal } from './InfoModal';
+export { QuickThoughtPanel } from './QuickThoughtPanel';

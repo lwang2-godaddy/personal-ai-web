@@ -8,14 +8,14 @@ import { getAdminFirestore } from '@/lib/api/firebase/admin';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
     // Verify admin role
     const { user, response: authResponse } = await requireAdmin(request);
     if (authResponse) return authResponse;
 
-    const { userId } = params;
+    const { userId } = await params;
     const db = getAdminFirestore();
 
     // Get user data
@@ -74,14 +74,14 @@ export async function GET(
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
     // Verify admin role
     const { user, response: authResponse } = await requireAdmin(request);
     if (authResponse) return authResponse;
 
-    const { userId } = params;
+    const { userId } = await params;
     const body = await request.json();
     const db = getAdminFirestore();
 

@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { Event, EventsState, EventType, EventStatus } from '@/lib/models/Event';
 import FirestoreService from '@/lib/api/firebase/firestore';
+import { where, orderBy, QueryConstraint } from 'firebase/firestore';
 
 const initialState: EventsState = {
   events: [],
@@ -31,18 +32,19 @@ export const fetchEvents = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const query: any[] = [['userId', '==', userId]];
+      const constraints: QueryConstraint[] = [where('userId', '==', userId)];
 
       if (startDate) {
-        query.push(['datetime', '>=', startDate]);
+        constraints.push(where('datetime', '>=', startDate));
       }
       if (endDate) {
-        query.push(['datetime', '<=', endDate]);
+        constraints.push(where('datetime', '<=', endDate));
       }
+      constraints.push(orderBy('datetime', 'desc'));
 
-      const docs = await FirestoreService.queryDocuments('events', query);
+      const docs = await FirestoreService.getDocuments<any>('events', constraints);
 
-      const events: Event[] = docs.map((doc) => ({
+      const events: Event[] = docs.map((doc: any) => ({
         id: doc.id,
         userId: doc.userId,
         title: doc.title,

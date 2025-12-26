@@ -1,28 +1,72 @@
+'use client';
+
+import { useState } from 'react';
 import { HealthData } from '@/lib/models';
+import { PanelHeader } from './PanelHeader';
+import { InfoModal } from './InfoModal';
 
 interface HealthDataCardProps {
   data: HealthData[];
 }
 
 export function HealthDataCard({ data }: HealthDataCardProps) {
+  const [showInfoModal, setShowInfoModal] = useState(false);
+
+  const handleInfoClick = () => {
+    setShowInfoModal(true);
+  };
+
   if (data.length === 0) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          💪 Recent Health Data
-        </h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          No health data collected yet. Use the mobile app to sync health data from HealthKit or Google Fit.
-        </p>
-      </div>
+      <>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+          <PanelHeader
+            title="Recent Health Data"
+            emoji="💪"
+            actionType="info"
+            onActionClick={handleInfoClick}
+            ariaLabel="Learn about health data collection"
+          />
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            No health data collected yet. Click the &apos;i&apos; icon above to learn how to start tracking.
+          </p>
+        </div>
+
+        {showInfoModal && (
+          <InfoModal
+            title="Health Data Collection"
+            onClose={() => setShowInfoModal(false)}
+          >
+            <p className="mb-4">
+              Health data is collected via the mobile app using <strong>HealthKit</strong> (iOS) or <strong>Google Fit</strong> (Android).
+            </p>
+            <p className="mb-4">
+              To start tracking your health data:
+            </p>
+            <ul className="list-disc list-inside space-y-2 mb-4">
+              <li>Download the SirCharge mobile app</li>
+              <li>Grant health permissions when prompted</li>
+              <li>Your data will automatically sync to this dashboard</li>
+            </ul>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Tracked data includes: steps, workouts, sleep, heart rate, and more.
+            </p>
+          </InfoModal>
+        )}
+      </>
     );
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-        💪 Recent Health Data
-      </h3>
+    <>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <PanelHeader
+          title="Recent Health Data"
+          emoji="💪"
+          actionType="info"
+          onActionClick={handleInfoClick}
+          ariaLabel="Learn about health data collection"
+        />
       <div className="space-y-3">
         {data.slice(0, 5).map((item) => (
           <div
@@ -56,5 +100,28 @@ export function HealthDataCard({ data }: HealthDataCardProps) {
         ))}
       </div>
     </div>
+
+    {showInfoModal && (
+      <InfoModal
+        title="Health Data Collection"
+        onClose={() => setShowInfoModal(false)}
+      >
+        <p className="mb-4">
+          Health data is collected via the mobile app using <strong>HealthKit</strong> (iOS) or <strong>Google Fit</strong> (Android).
+        </p>
+        <p className="mb-4">
+          To start tracking your health data:
+        </p>
+        <ul className="list-disc list-inside space-y-2 mb-4">
+          <li>Download the SirCharge mobile app</li>
+          <li>Grant health permissions when prompted</li>
+          <li>Your data will automatically sync to this dashboard</li>
+        </ul>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Tracked data includes: steps, workouts, sleep, heart rate, and more.
+        </p>
+      </InfoModal>
+    )}
+  </>
   );
 }

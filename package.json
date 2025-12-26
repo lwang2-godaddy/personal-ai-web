@@ -10,6 +10,7 @@
     "migrate:users": "tsx scripts/migrate-users.ts"
   },
   "dependencies": {
+    "@headlessui/react": "^2.2.9",
     "@pinecone-database/pinecone": "^6.1.3",
     "@reduxjs/toolkit": "^2.11.2",
     "dotenv": "^17.2.3",

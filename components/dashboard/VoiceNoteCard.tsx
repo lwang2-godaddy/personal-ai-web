@@ -1,10 +1,21 @@
+'use client';
+
 import { VoiceNote } from '@/lib/models';
+import { useAppDispatch } from '@/lib/store/hooks';
+import { openQuickCreate } from '@/lib/store/slices/quickCreateSlice';
+import { PanelHeader } from './PanelHeader';
 
 interface VoiceNoteCardProps {
   data: VoiceNote[];
 }
 
 export function VoiceNoteCard({ data }: VoiceNoteCardProps) {
+  const dispatch = useAppDispatch();
+
+  const handleCreateClick = () => {
+    dispatch(openQuickCreate('voice'));
+  };
+
   const formatDuration = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
@@ -14,11 +25,15 @@ export function VoiceNoteCard({ data }: VoiceNoteCardProps) {
   if (data.length === 0) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          🎤 Recent Voice Notes
-        </h3>
+        <PanelHeader
+          title="Recent Voice Notes"
+          emoji="🎤"
+          actionType="create"
+          onActionClick={handleCreateClick}
+          ariaLabel="Create new voice note"
+        />
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          No voice notes recorded yet. Use the mobile app to record and transcribe voice notes.
+          No voice notes recorded yet. Click the &apos;+&apos; icon above to record and transcribe a voice note.
         </p>
       </div>
     );
@@ -26,9 +41,13 @@ export function VoiceNoteCard({ data }: VoiceNoteCardProps) {
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-        🎤 Recent Voice Notes
-      </h3>
+      <PanelHeader
+        title="Recent Voice Notes"
+        emoji="🎤"
+        actionType="create"
+        onActionClick={handleCreateClick}
+        ariaLabel="Create new voice note"
+      />
       <div className="space-y-3">
         {data.slice(0, 5).map((item) => (
           <div

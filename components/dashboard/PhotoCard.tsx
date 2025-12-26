@@ -1,4 +1,9 @@
+'use client';
+
 import { PhotoMemory } from '@/lib/models';
+import { useAppDispatch } from '@/lib/store/hooks';
+import { openQuickCreate } from '@/lib/store/slices/quickCreateSlice';
+import { PanelHeader } from './PanelHeader';
 import Image from 'next/image';
 
 interface PhotoCardProps {
@@ -6,14 +11,24 @@ interface PhotoCardProps {
 }
 
 export function PhotoCard({ data }: PhotoCardProps) {
+  const dispatch = useAppDispatch();
+
+  const handleCreateClick = () => {
+    dispatch(openQuickCreate('photo'));
+  };
+
   if (data.length === 0) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          📸 Recent Photos
-        </h3>
+        <PanelHeader
+          title="Recent Photos"
+          emoji="📸"
+          actionType="create"
+          onActionClick={handleCreateClick}
+          ariaLabel="Upload new photo"
+        />
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          No photos uploaded yet. Use the mobile app to capture and sync your photo memories.
+          No photos uploaded yet. Click the &apos;+&apos; icon above to upload and describe your photo memories.
         </p>
       </div>
     );
@@ -21,9 +36,13 @@ export function PhotoCard({ data }: PhotoCardProps) {
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-        📸 Recent Photos
-      </h3>
+      <PanelHeader
+        title="Recent Photos"
+        emoji="📸"
+        actionType="create"
+        onActionClick={handleCreateClick}
+        ariaLabel="Upload new photo"
+      />
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
         {data.slice(0, 6).map((item) => (
           <div
