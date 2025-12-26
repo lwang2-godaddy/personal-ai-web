@@ -12,6 +12,12 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    // Helper function to check if user has admin role
+    function isAdmin() {
+      return isSignedIn() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
     // SOCIAL FEATURES: Check if two users are friends
     function areFriends(userId, friendId) {
       return exists(/databases/$(database)/documents/friends/$(userId + '_' + friendId)) ||
@@ -29,8 +35,21 @@ service cloud.firestore {
 
     // Users collection
     match /users/{userId} {
-      // Users can read and write their own profile
-      allow read, write: if isOwner(userId);
+      // Users can read their own profile, admins can read all profiles
+      allow read: if isOwner(userId) || isAdmin();
+
+      // Users can create their own profile
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+
+      // Users can update their own profile (excluding role/accountStatus)
+      allow update: if isOwner(userId) &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'accountStatus']);
+
+      // Admins can update any user (including role/accountStatus)
+      allow update: if isAdmin();
+
+      // Users can delete their own profile, admins can delete any profile
+      allow delete: if isOwner(userId) || isAdmin();
 
       // Saved Searches subcollection
       match /savedSearches/{searchId} {
@@ -337,6 +356,38 @@ service cloud.firestore {
     match /users/{userId}/custom_activities/{activityId} {
       // Users can read and write their own custom activities
       allow read, write: if isOwner(userId);
+    }
+
+    // USAGE TRACKING: Usage Events collection
+    match /usageEvents/{eventId} {
+      // Only admins can read usage events
+      allow read: if isAdmin();
+
+      // Only server (Cloud Functions/API routes) can write usage events
+      // Users and admins cannot directly create/update/delete usage events
+      allow write: if false;
+    }
+
+    // USAGE TRACKING: Daily Usage Stats collection
+    match /usageDaily/{docId} {
+      // Users can read their own daily usage, admins can read all
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || isAdmin()
+      );
+
+      // Only server (Cloud Functions/API routes) can write daily usage stats
+      allow write: if false;
+    }
+
+    // USAGE TRACKING: Monthly Usage Stats collection
+    match /usageMonthly/{docId} {
+      // Users can read their own monthly usage, admins can read all
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || isAdmin()
+      );
+
+      // Only server (Cloud Functions/API routes) can write monthly usage stats
+      allow write: if false;
     }
 
     // Deny all other requests by default
