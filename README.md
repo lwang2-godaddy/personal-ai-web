@@ -49,6 +49,7 @@ This web app shares **100% of the backend** (Firebase, OpenAI, Pinecone) with th
 
    ```bash
    # Firebase Configuration (from Firebase Console)
+   # These are safe to expose (NEXT_PUBLIC_) - Firebase security rules protect data
    NEXT_PUBLIC_FIREBASE_API_KEY=your_firebase_api_key
    NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
    NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
@@ -56,13 +57,12 @@ This web app shares **100% of the backend** (Firebase, OpenAI, Pinecone) with th
    NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
    NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
 
-   # OpenAI Configuration
-   NEXT_PUBLIC_OPENAI_API_KEY=sk-...
-
-   # Pinecone Configuration
-   NEXT_PUBLIC_PINECONE_API_KEY=your_pinecone_key
-   NEXT_PUBLIC_PINECONE_INDEX=personal-ai-data
-   NEXT_PUBLIC_PINECONE_ENVIRONMENT=us-east-1-aws
+   # 🔒 CRITICAL: OpenAI/Pinecone keys are SERVER-ONLY (NO NEXT_PUBLIC_ prefix!)
+   # These MUST NEVER be exposed to the browser
+   OPENAI_API_KEY=sk-...
+   PINECONE_API_KEY=your_pinecone_key
+   PINECONE_INDEX=personal-ai-data
+   PINECONE_ENVIRONMENT=us-east-1-aws
    ```
 
 4. **Run the development server**
@@ -189,9 +189,58 @@ User Chat Interface
 
 ## Environment Variables
 
-All environment variables must be prefixed with `NEXT_PUBLIC_` to be exposed to the browser.
+**🔒 CRITICAL SECURITY:**
+- **NEVER** prefix secret API keys with `NEXT_PUBLIC_` - they will be exposed to browsers!
+- **ONLY** use `NEXT_PUBLIC_` for non-sensitive config (Firebase project IDs, etc.)
+- See [Security Guide](docs/security/PREVENTING_API_KEY_EXPOSURE.md) for details
+
+| Variable Type | Prefix | Example | Exposed to Browser? |
+|--------------|--------|---------|---------------------|
+| Firebase config | `NEXT_PUBLIC_` | `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | ✅ Yes (protected by security rules) |
+| OpenAI API key | ❌ **NO PREFIX** | `OPENAI_API_KEY` | ❌ No (server-only) |
+| Pinecone API key | ❌ **NO PREFIX** | `PINECONE_API_KEY` | ❌ No (server-only) |
 
 **Security Note:** Never commit `.env.local` to version control. The file is included in `.gitignore`.
+
+## Security
+
+### API Key Protection
+
+**⚠️ CRITICAL:** This application has multiple layers of protection to prevent API key exposure:
+
+1. **ESLint Rules** - Automatically blocks dangerous imports at dev time
+2. **Security Check Script** - Run `./scripts/check-api-exposure.sh` before commits
+3. **GitHub Actions** - Automated checks on every PR
+4. **Server-only Files** - Use `.server.ts` suffix for server-only code
+
+**Before Every Commit:**
+```bash
+./scripts/check-api-exposure.sh  # Must pass
+npm run lint                      # Must pass
+npm run build                     # Must pass
+```
+
+**Documentation:**
+- 📚 [Full Security Guide](docs/security/PREVENTING_API_KEY_EXPOSURE.md)
+- ⚡ [Quick Reference](docs/security/SECURITY_QUICK_REFERENCE.md)
+- 🔒 [User Data Isolation](docs/security/USER_DATA_ISOLATION.md)
+
+### Common Security Mistakes to Avoid
+
+❌ **NEVER DO THIS:**
+```typescript
+// In Redux slice or component
+import OpenAIService from '@/lib/api/openai/client'; // EXPOSES KEY!
+```
+
+✅ **ALWAYS DO THIS:**
+```typescript
+// In Redux slice or component
+const response = await fetch('/api/chat', {
+  method: 'POST',
+  body: JSON.stringify({ message })
+}); // SAFE - API route handles service calls
+```
 
 ## Deployment
 

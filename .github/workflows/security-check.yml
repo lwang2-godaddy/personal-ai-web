@@ -1,0 +1,65 @@
+name: Security - API Key Exposure Check
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "lib/**"
+      - "components/**"
+      - "app/**"
+      - ".env.local"
+  push:
+    branches: [main]
+    paths:
+      - "lib/**"
+      - "components/**"
+      - "app/**"
+
+jobs:
+  check-api-key-exposure:
+    name: Check for API Key Exposure
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run security check script
+        run: |
+          chmod +x scripts/check-api-exposure.sh
+          ./scripts/check-api-exposure.sh
+
+      - name: Security check failed
+        if: failure()
+        run: |
+          echo "::error::Security violations detected! API keys may be exposed to browser."
+          echo "::error::Review the log above and fix the issues before merging."
+          echo "::error::Read docs/security/PREVENTING_API_KEY_EXPOSURE.md for guidance."
+          exit 1
+
+  lint-check:
+    name: ESLint Security Rules
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Lint check failed
+        if: failure()
+        run: |
+          echo "::error::ESLint detected security violations in import patterns."
+          echo "::error::Fix the issues reported above before merging."
+          exit 1

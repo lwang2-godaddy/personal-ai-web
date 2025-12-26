@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import RAGEngine from '@/lib/services/rag/RAGEngine';
+import RAGEngine from '@/lib/services/rag/RAGEngine.server';
 import { requireAuth } from '@/lib/middleware/auth';
 import UsageTracker from '@/lib/services/usage/UsageTracker';
 
