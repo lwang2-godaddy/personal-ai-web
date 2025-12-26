@@ -1,13 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import RAGEngine from '@/lib/services/rag/RAGEngine';
+import { requireAuth } from '@/lib/middleware/auth';
+import UsageTracker from '@/lib/services/usage/UsageTracker';
 
 // Force dynamic rendering (don't pre-render at build time)
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
+    // Verify authentication
+    const { user, response: authResponse } = await requireAuth(request);
+    if (authResponse) return authResponse;
+
     const body = await request.json();
-    const { message, userId, conversationHistory } = body;
+    const { message, conversationHistory } = body;
+    const userId = user.uid;
 
     console.log('[Chat API] Received request:', {
       message: message?.substring(0, 50) + '...',
@@ -16,11 +23,21 @@ export async function POST(request: NextRequest) {
       historyLength: conversationHistory?.length || 0,
     });
 
-    if (!message || !userId) {
-      console.error('[Chat API] Missing required fields:', { message: !!message, userId: !!userId });
+    if (!message) {
+      console.error('[Chat API] Missing required field: message');
       return NextResponse.json(
-        { error: 'Message and userId are required' },
+        { error: 'Message is required' },
         { status: 400 }
+      );
+    }
+
+    // Check usage limits before proceeding
+    const canProceed = await UsageTracker.checkLimits(userId);
+    if (!canProceed) {
+      console.warn('[Chat API] User', userId, 'exceeded usage limits');
+      return NextResponse.json(
+        { error: 'Usage limit exceeded. Please upgrade your plan or wait until the next billing cycle.' },
+        { status: 429 }
       );
     }
 

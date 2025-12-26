@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/middleware/auth';
+import UsageTracker from '@/lib/services/usage/UsageTracker';
 import OpenAI from 'openai';
 
-// Initialize OpenAI client
+// Initialize OpenAI client for direct API calls
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
@@ -18,6 +20,21 @@ const openai = new OpenAI({
  */
 export async function POST(request: NextRequest) {
   try {
+    // Verify authentication
+    const { user, response: authResponse } = await requireAuth(request);
+    if (authResponse) return authResponse;
+
+    const userId = user.uid;
+
+    // Check usage limits
+    const canProceed = await UsageTracker.checkLimits(userId);
+    if (!canProceed) {
+      return NextResponse.json(
+        { error: 'Usage limit exceeded' },
+        { status: 429 }
+      );
+    }
+
     const { imageUrl } = await request.json();
 
     if (!imageUrl || typeof imageUrl !== 'string') {
@@ -67,6 +84,11 @@ export async function POST(request: NextRequest) {
         { status: 422 }
       );
     }
+
+    // Track usage
+    const promptTokens = response.usage?.prompt_tokens || 0;
+    const completionTokens = response.usage?.completion_tokens || 0;
+    await UsageTracker.trackImageDescription(userId, promptTokens, completionTokens, 'api_describe_image');
 
     console.log('[DescribeImage] Generated description:', {
       length: description.length,

@@ -162,23 +162,13 @@ export class OpenAIService {
       });
 
       // Track usage if userId provided (TTS charged per character)
-      if (userId && typeof window === 'undefined') {
-        const characters = text.length;
-        // TTS pricing: $15 per 1M characters
-        const cost = (characters / 1_000_000) * 15.0;
-        const UsageTracker = (await import('@/lib/services/usage/UsageTracker')).default;
-        await UsageTracker.logUsageEvent({
-          userId,
-          timestamp: new Date().toISOString(),
-          operation: 'tts',
-          provider: 'openai',
-          model: 'tts-1',
-          totalTokens: characters,
-          estimatedCostUSD: cost,
-          endpoint: endpoint || 'tts',
-          metadata: { voice, characterCount: characters },
-        });
-      }
+      // TODO: Implement TTS usage tracking when trackTTS method is added to UsageTracker
+      // if (userId && typeof window === 'undefined') {
+      //   const characters = text.length;
+      //   const cost = (characters / 1_000_000) * 15.0;
+      //   const UsageTracker = (await import('@/lib/services/usage/UsageTracker')).default;
+      //   await UsageTracker.trackTTS(userId, characters, 'tts-1', { voice });
+      // }
 
       // Convert response to Blob for web playback
       const arrayBuffer = await response.arrayBuffer();

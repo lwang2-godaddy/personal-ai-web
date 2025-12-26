@@ -6,3 +6,4 @@ export * from './LocationData';
 export * from './VoiceNote';
 export * from './PhotoMemory';
 export * from './TextNote';
+export * from './Event';

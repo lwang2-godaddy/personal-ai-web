@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { FirestoreService } from '@/lib/api/firebase/firestore';
+import { requireAuth } from '@/lib/middleware/auth';
 
 const firestoreService = FirestoreService.getInstance();
 
@@ -17,6 +18,10 @@ const firestoreService = FirestoreService.getInstance();
  */
 export async function POST(request: NextRequest) {
   try {
+    // Verify authentication
+    const { user, response: authResponse } = await requireAuth(request);
+    if (authResponse) return authResponse;
+
     const { photoId, photoMemory } = await request.json();
 
     // Validate required fields
@@ -50,6 +55,14 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
+    }
+
+    // Verify userId matches authenticated user
+    if (photoMemory.userId !== user.uid) {
+      return NextResponse.json(
+        { error: 'Unauthorized: userId mismatch' },
+        { status: 403 }
+      );
     }
 
     if (typeof photoMemory.userId !== 'string' || photoMemory.userId.trim().length === 0) {

@@ -16,6 +16,7 @@ import dashboardReducer from './slices/dashboardSlice';
 import inputReducer from './slices/inputSlice';
 import quickCreateReducer from './slices/quickCreateSlice';
 import toastReducer from './slices/toastSlice';
+// import eventsReducer from './slices/eventsSlice'; // Temporarily disabled
 
 // Persist configuration
 const persistConfig = {
@@ -32,6 +33,7 @@ const rootReducer = combineReducers({
   input: inputReducer,
   quickCreate: quickCreateReducer,
   toast: toastReducer,
+  // events: eventsReducer, // Temporarily disabled
 });
 
 // Persisted reducer

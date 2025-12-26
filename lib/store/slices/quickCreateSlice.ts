@@ -6,7 +6,6 @@ import { addToast } from './toastSlice';
 import type { RootState } from '../index';
 import FirebaseStorage from '@/lib/api/firebase/storage';
 import FirestoreService from '@/lib/api/firebase/firestore';
-import OpenAIService from '@/lib/api/openai/client';
 import type { PhotoMemory } from '@/lib/models/PhotoMemory';
 
 export type CreateType = 'diary' | 'thought' | 'voice' | 'photo';
@@ -92,8 +91,21 @@ export const submitQuickVoice = createAsyncThunk(
       const path = `voice-notes/${userId}/${timestamp}.webm`;
       const audioUrl = await FirebaseStorage.uploadFile(path, audioFile);
 
-      // Transcribe audio using OpenAI Whisper
-      const transcription = await OpenAIService.transcribeAudio(audioFile);
+      // Transcribe audio using API route (keeps API key server-side)
+      const formData = new FormData();
+      formData.append('audioFile', audioFile);
+
+      const transcribeResponse = await fetch('/api/transcribe', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!transcribeResponse.ok) {
+        const error = await transcribeResponse.json();
+        throw new Error(error.error || 'Failed to transcribe audio');
+      }
+
+      const { transcription } = await transcribeResponse.json();
 
       // Save voice note to Firestore
       const voiceNoteId = `voice_${timestamp}`;

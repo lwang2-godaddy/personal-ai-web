@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/middleware/auth';
+import UsageTracker from '@/lib/services/usage/UsageTracker';
 import OpenAI from 'openai';
 
-// Initialize OpenAI client
+// Initialize OpenAI client for direct API calls
+// Note: We use this instead of OpenAIService to get detailed response with duration/language
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
@@ -22,6 +25,21 @@ const openai = new OpenAI({
  */
 export async function POST(request: NextRequest) {
   try {
+    // Verify authentication
+    const { user, response: authResponse } = await requireAuth(request);
+    if (authResponse) return authResponse;
+
+    const userId = user.uid;
+
+    // Check usage limits
+    const canProceed = await UsageTracker.checkLimits(userId);
+    if (!canProceed) {
+      return NextResponse.json(
+        { error: 'Usage limit exceeded' },
+        { status: 429 }
+      );
+    }
+
     const contentType = request.headers.get('content-type') || '';
 
     let audioBlob: Blob;
@@ -109,6 +127,9 @@ export async function POST(request: NextRequest) {
       duration,
       language,
     });
+
+    // Track usage
+    await UsageTracker.trackTranscription(userId, Math.round(duration), 'api_transcribe');
 
     if (text.trim().length === 0) {
       return NextResponse.json(
