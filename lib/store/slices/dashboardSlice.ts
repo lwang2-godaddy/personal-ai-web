@@ -5,6 +5,7 @@ import {
   LocationData,
   VoiceNote,
   PhotoMemory,
+  TextNote,
 } from '@/lib/models';
 
 export interface DashboardState {
@@ -13,11 +14,13 @@ export interface DashboardState {
     locationCount: number;
     voiceCount: number;
     photoCount: number;
+    textNoteCount: number;
   };
   recentHealth: HealthData[];
   recentLocations: LocationData[];
   recentVoiceNotes: VoiceNote[];
   recentPhotos: PhotoMemory[];
+  recentTextNotes: TextNote[];
   isLoading: boolean;
   error: string | null;
 }
@@ -28,11 +31,13 @@ const initialState: DashboardState = {
     locationCount: 0,
     voiceCount: 0,
     photoCount: 0,
+    textNoteCount: 0,
   },
   recentHealth: [],
   recentLocations: [],
   recentVoiceNotes: [],
   recentPhotos: [],
+  recentTextNotes: [],
   isLoading: false,
   error: null,
 };
@@ -118,6 +123,22 @@ export const fetchRecentPhotos = createAsyncThunk(
 );
 
 /**
+ * Fetch recent text notes
+ */
+export const fetchRecentTextNotes = createAsyncThunk(
+  'dashboard/fetchRecentTextNotes',
+  async (userId: string, { rejectWithValue }) => {
+    try {
+      const textNotes = await FirestoreService.getTextNotes(userId, 10);
+      return textNotes as TextNote[];
+    } catch (error: any) {
+      console.error('Fetch text notes error:', error);
+      return rejectWithValue(error.message || 'Failed to fetch text notes');
+    }
+  }
+);
+
+/**
  * Fetch all dashboard data at once
  */
 export const fetchDashboardData = createAsyncThunk(
@@ -129,6 +150,7 @@ export const fetchDashboardData = createAsyncThunk(
       dispatch(fetchRecentLocations(userId)),
       dispatch(fetchRecentVoiceNotes(userId)),
       dispatch(fetchRecentPhotos(userId)),
+      dispatch(fetchRecentTextNotes(userId)),
     ]);
   }
 );
@@ -143,6 +165,7 @@ const dashboardSlice = createSlice({
       state.recentLocations = [];
       state.recentVoiceNotes = [];
       state.recentPhotos = [];
+      state.recentTextNotes = [];
       state.error = null;
     },
     clearError: (state) => {
@@ -186,6 +209,11 @@ const dashboardSlice = createSlice({
     // Fetch photos
     builder.addCase(fetchRecentPhotos.fulfilled, (state, action) => {
       state.recentPhotos = action.payload;
+    });
+
+    // Fetch text notes
+    builder.addCase(fetchRecentTextNotes.fulfilled, (state, action) => {
+      state.recentTextNotes = action.payload;
     });
   },
 });

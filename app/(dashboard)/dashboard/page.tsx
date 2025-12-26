@@ -8,6 +8,7 @@ import {
   LocationDataCard,
   VoiceNoteCard,
   PhotoCard,
+  TextNoteCard,
 } from '@/components/dashboard';
 
 export default function DashboardPage() {
@@ -19,6 +20,7 @@ export default function DashboardPage() {
     recentLocations,
     recentVoiceNotes,
     recentPhotos,
+    recentTextNotes,
     isLoading,
     error,
   } = useAppSelector((state) => state.dashboard);
@@ -52,7 +54,7 @@ export default function DashboardPage() {
       )}
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
         <StatCard
           title="Health Data"
           value={isLoading ? '...' : stats.healthCount.toString()}
@@ -76,6 +78,12 @@ export default function DashboardPage() {
           value={isLoading ? '...' : stats.photoCount.toString()}
           subtitle="Memories"
           icon="📸"
+        />
+        <StatCard
+          title="Diary"
+          value={isLoading ? '...' : stats.textNoteCount.toString()}
+          subtitle="Entries"
+          icon="📝"
         />
       </div>
 
@@ -123,6 +131,7 @@ export default function DashboardPage() {
             Recent Activity
           </h2>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <TextNoteCard data={recentTextNotes} />
             <HealthDataCard data={recentHealth} />
             <LocationDataCard data={recentLocations} />
             <VoiceNoteCard data={recentVoiceNotes} />
