@@ -152,7 +152,7 @@ export class OpenAIService {
       ];
 
       const response = await this.client.chat.completions.create({
-        model: 'gpt-4',
+        model: 'gpt-4o',
         messages: formattedMessages as any,
         temperature: options?.temperature ?? 0.7,
         max_tokens: options?.maxTokens ?? 500,
@@ -194,7 +194,7 @@ export class OpenAIService {
       ];
 
       const response = await this.client.chat.completions.create({
-        model: 'gpt-4',
+        model: 'gpt-4o',
         messages: formattedMessages as any,
         temperature: options?.temperature ?? 0.7,
         max_tokens: options?.maxTokens ?? 500,
@@ -239,7 +239,7 @@ export class OpenAIService {
       ];
 
       const stream = await this.client.chat.completions.create({
-        model: 'gpt-4',
+        model: 'gpt-4o',
         messages: formattedMessages as any,
         temperature: options?.temperature ?? 0.7,
         max_tokens: options?.maxTokens ?? 500,
@@ -265,7 +265,7 @@ export class OpenAIService {
   async describeImage(imageUrl: string): Promise<string> {
     try {
       const response = await this.client.chat.completions.create({
-        model: 'gpt-4-vision-preview',
+        model: 'gpt-4o',
         messages: [
           {
             role: 'user',

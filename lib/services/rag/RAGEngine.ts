@@ -46,28 +46,37 @@ export class RAGEngine {
     contextUsed: ContextReference[];
   }> {
     try {
-      console.log(`RAG Query from user ${userId}: "${userMessage}"`);
+      console.log(`[RAGEngine] Query from user ${userId}: "${userMessage}"`);
 
       // 1. Generate embedding for user query
+      console.log('[RAGEngine] Step 1: Calling OpenAI to generate embedding...');
+      const embeddingStart = Date.now();
       const queryEmbedding = await this.openAIService.generateEmbedding(userMessage);
+      console.log(`[RAGEngine] ✓ Embedding generated in ${Date.now() - embeddingStart}ms (dimension: ${queryEmbedding.length})`);
 
       // 2. Query Pinecone for relevant vectors
+      console.log('[RAGEngine] Step 2: Querying Pinecone vector database...');
+      const pineconeStart = Date.now();
       const relevantVectors = await this.pineconeService.queryVectors(
         queryEmbedding,
         userId,
         RAG_TOP_K_RESULTS,
       );
-
-      console.log(`Found ${relevantVectors.length} relevant data points`);
+      console.log(`[RAGEngine] ✓ Pinecone returned ${relevantVectors.length} relevant data points in ${Date.now() - pineconeStart}ms`);
 
       // 3. Build context from retrieved data
+      console.log('[RAGEngine] Step 3: Building context from retrieved data...');
       const context = this.buildContext(relevantVectors);
+      console.log(`[RAGEngine] ✓ Context built (length: ${context.length} chars)`);
 
-      // 4. Generate response with GPT-4
+      // 4. Generate response with GPT-4o
+      console.log('[RAGEngine] Step 4: Calling OpenAI GPT-4o for response...');
+      const gptStart = Date.now();
       const response = await this.openAIService.chatCompletion(
         [{ role: 'user', content: userMessage, timestamp: new Date().toISOString() }],
         context,
       );
+      console.log(`[RAGEngine] ✓ GPT-4o responded in ${Date.now() - gptStart}ms (length: ${response.length} chars)`);
 
       // 5. Create context references for UI
       const contextUsed: ContextReference[] = relevantVectors.map((vector) => ({
@@ -77,14 +86,14 @@ export class RAGEngine {
         snippet: vector.metadata.text,
       }));
 
-      console.log(`Generated response with ${contextUsed.length} context references`);
+      console.log(`[RAGEngine] Query complete. Used ${contextUsed.length} context references`);
 
       return {
         response,
         contextUsed,
       };
     } catch (error) {
-      console.error('RAG query error:', error);
+      console.error('[RAGEngine] Error:', error);
       throw error;
     }
   }

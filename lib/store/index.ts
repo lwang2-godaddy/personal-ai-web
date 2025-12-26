@@ -13,6 +13,7 @@ import storage from 'redux-persist/lib/storage'; // localStorage for web
 import authReducer from './slices/authSlice';
 import chatReducer from './slices/chatSlice';
 import dashboardReducer from './slices/dashboardSlice';
+import inputReducer from './slices/inputSlice';
 
 // Persist configuration
 const persistConfig = {
@@ -26,6 +27,7 @@ const rootReducer = combineReducers({
   auth: authReducer,
   chat: chatReducer,
   dashboard: dashboardReducer,
+  input: inputReducer,
 });
 
 // Persisted reducer

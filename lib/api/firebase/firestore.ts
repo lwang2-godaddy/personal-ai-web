@@ -109,7 +109,7 @@ export class FirestoreService {
    * Get health data for a user
    */
   async getHealthData(userId: string, limitCount: number = 50): Promise<any[]> {
-    return this.getDocuments('health_data', [
+    return this.getDocuments('healthData', [
       where('userId', '==', userId),
       orderBy('startDate', 'desc'),
       firestoreLimit(limitCount),
@@ -120,7 +120,7 @@ export class FirestoreService {
    * Get location data for a user
    */
   async getLocationData(userId: string, limitCount: number = 50): Promise<any[]> {
-    return this.getDocuments('location_data', [
+    return this.getDocuments('locationData', [
       where('userId', '==', userId),
       orderBy('timestamp', 'desc'),
       firestoreLimit(limitCount),
@@ -128,10 +128,17 @@ export class FirestoreService {
   }
 
   /**
+   * Create a voice note
+   */
+  async createVoiceNote(noteId: string, voiceNote: any): Promise<void> {
+    await this.setDocument('voiceNotes', noteId, voiceNote);
+  }
+
+  /**
    * Get voice notes for a user
    */
   async getVoiceNotes(userId: string, limitCount: number = 50): Promise<any[]> {
-    return this.getDocuments('voice_notes', [
+    return this.getDocuments('voiceNotes', [
       where('userId', '==', userId),
       orderBy('createdAt', 'desc'),
       firestoreLimit(limitCount),
@@ -139,14 +146,60 @@ export class FirestoreService {
   }
 
   /**
+   * Create a photo memory
+   */
+  async createPhotoMemory(photoId: string, photoMemory: any): Promise<void> {
+    await this.setDocument('photoMemories', photoId, photoMemory);
+  }
+
+  /**
    * Get photo memories for a user
    */
   async getPhotoMemories(userId: string, limitCount: number = 50): Promise<any[]> {
-    return this.getDocuments('photo_memories', [
+    return this.getDocuments('photoMemories', [
       where('userId', '==', userId),
       orderBy('takenAt', 'desc'),
       firestoreLimit(limitCount),
     ]);
+  }
+
+  /**
+   * Get text notes (diary entries) for a user
+   */
+  async getTextNotes(userId: string, limitCount: number = 50): Promise<any[]> {
+    return this.getDocuments('textNotes', [
+      where('userId', '==', userId),
+      orderBy('createdAt', 'desc'),
+      firestoreLimit(limitCount),
+    ]);
+  }
+
+  /**
+   * Create a text note (diary entry)
+   */
+  async createTextNote(noteId: string, textNote: any): Promise<void> {
+    await this.setDocument('textNotes', noteId, textNote);
+  }
+
+  /**
+   * Update a text note (diary entry)
+   */
+  async updateTextNote(noteId: string, updates: any): Promise<void> {
+    await this.updateDocument('textNotes', noteId, updates);
+  }
+
+  /**
+   * Delete a text note (diary entry)
+   */
+  async deleteTextNote(noteId: string): Promise<void> {
+    await this.deleteDocument('textNotes', noteId);
+  }
+
+  /**
+   * Get a single text note by ID
+   */
+  async getTextNoteById(noteId: string): Promise<any> {
+    return this.getDocument('textNotes', noteId);
   }
 
   /**
@@ -157,12 +210,14 @@ export class FirestoreService {
     locationCount: number;
     voiceCount: number;
     photoCount: number;
+    textNoteCount: number;
   }> {
-    const [health, locations, voice, photos] = await Promise.all([
-      this.getDocuments('health_data', [where('userId', '==', userId)]),
-      this.getDocuments('location_data', [where('userId', '==', userId)]),
-      this.getDocuments('voice_notes', [where('userId', '==', userId)]),
-      this.getDocuments('photo_memories', [where('userId', '==', userId)]),
+    const [health, locations, voice, photos, textNotes] = await Promise.all([
+      this.getDocuments('healthData', [where('userId', '==', userId)]),
+      this.getDocuments('locationData', [where('userId', '==', userId)]),
+      this.getDocuments('voiceNotes', [where('userId', '==', userId)]),
+      this.getDocuments('photoMemories', [where('userId', '==', userId)]),
+      this.getDocuments('textNotes', [where('userId', '==', userId)]),
     ]);
 
     return {
@@ -170,6 +225,7 @@ export class FirestoreService {
       locationCount: locations.length,
       voiceCount: voice.length,
       photoCount: photos.length,
+      textNoteCount: textNotes.length,
     };
   }
 }
