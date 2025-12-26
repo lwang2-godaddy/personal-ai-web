@@ -79,6 +79,7 @@ export function DiaryEditor() {
             latitude: parseFloat(manualLocation.latitude) || 0,
             longitude: parseFloat(manualLocation.longitude) || 0,
             address: manualLocation.address || null,
+            locationId: null, // Will be null in draft
           }
         : undefined,
       lastSaved: new Date().toISOString(),
@@ -103,6 +104,7 @@ export function DiaryEditor() {
               latitude: parseFloat(manualLocation.latitude) || 0,
               longitude: parseFloat(manualLocation.longitude) || 0,
               address: manualLocation.address || null,
+              locationId: null, // Will be null in draft
             }
           : undefined,
       })

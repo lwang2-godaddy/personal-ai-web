@@ -4,7 +4,7 @@
     "loading": "Loading...",
     "error": "Error",
     "welcome": "Welcome back, {name}!",
-    "personalAI": "PersonalAI"
+    "personalAI": "SirCharge"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -18,12 +18,12 @@
     "signInWithEmail": "Sign in with Email",
     "email": "Email",
     "password": "Password",
-    "welcomeTitle": "Welcome to PersonalAI",
+    "welcomeTitle": "Welcome to SirCharge",
     "welcomeSubtitle": "Your intelligent personal data assistant",
     "signInPrompt": "Sign in to access your dashboard"
   },
   "dashboard": {
-    "title": "Your personal AI dashboard",
+    "title": "Your SirCharge dashboard",
     "stats": {
       "healthData": "Health Data",
       "healthSubtitle": "Records synced",
@@ -36,7 +36,7 @@
     },
     "dataCollection": {
       "title": "📱 Data Collection",
-      "description": "This web dashboard is view-only for your data. To collect health data, location history, voice notes, and photos, please use the PersonalAI mobile app.",
+      "description": "This web dashboard is view-only for your data. To collect health data, location history, voice notes, and photos, please use the SirCharge mobile app.",
       "syncInfo": "Once you've collected data on mobile, it will automatically sync and appear here for analysis and chat."
     },
     "quickActions": {

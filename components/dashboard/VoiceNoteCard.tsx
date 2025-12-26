@@ -36,9 +36,24 @@ export function VoiceNoteCard({ data }: VoiceNoteCardProps) {
             className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600"
           >
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-900 dark:text-white">
-                {formatDuration(item.duration)}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                  {formatDuration(item.duration)}
+                </span>
+                {item.embeddingId ? (
+                  <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-2 py-0.5 rounded flex items-center gap-1">
+                    ✓ Indexed
+                  </span>
+                ) : item.embeddingError ? (
+                  <span className="text-xs bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 px-2 py-0.5 rounded flex items-center gap-1" title={item.embeddingError}>
+                    ✗ Failed
+                  </span>
+                ) : (
+                  <span className="text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 px-2 py-0.5 rounded flex items-center gap-1">
+                    ⏳ Processing...
+                  </span>
+                )}
+              </div>
               <span className="text-xs text-gray-500 dark:text-gray-400">
                 {new Date(item.createdAt).toLocaleDateString()}
               </span>

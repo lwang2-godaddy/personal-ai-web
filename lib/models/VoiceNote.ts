@@ -8,6 +8,9 @@ export interface VoiceNote {
   createdAt: string;
   tags: string[];
   embeddingId: string | null;
+  embeddingCreatedAt?: string;
+  embeddingError?: string;
+  embeddingErrorAt?: string;
   updatedAt?: string;
 }
 

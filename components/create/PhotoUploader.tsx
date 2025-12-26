@@ -14,8 +14,8 @@ import { useAppDispatch, useAppSelector } from '@/lib/store/hooks';
 import ImageProcessorService from '@/lib/services/imageProcessor';
 import GeolocationService from '@/lib/services/geolocation';
 import LocationCorrelationService from '@/lib/services/locationCorrelation';
-import { StorageService } from '@/lib/api/firebase/storage';
-import { FirestoreService } from '@/lib/api/firebase/firestore';
+import StorageService from '@/lib/api/firebase/storage';
+import FirestoreService from '@/lib/api/firebase/firestore';
 
 export function PhotoUploader() {
   const dispatch = useAppDispatch();
@@ -50,11 +50,11 @@ export function PhotoUploader() {
   const [currentStep, setCurrentStep] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const imageProcessor = ImageProcessorService.getInstance();
-  const geolocationService = GeolocationService.getInstance();
-  const locationCorrelation = LocationCorrelationService.getInstance();
-  const storageService = StorageService.getInstance();
-  const firestoreService = FirestoreService.getInstance();
+  const imageProcessor = ImageProcessorService;
+  const geolocationService = GeolocationService;
+  const locationCorrelation = LocationCorrelationService;
+  const storageService = StorageService;
+  const firestoreService = FirestoreService;
 
   // Cleanup preview URLs
   useEffect(() => {

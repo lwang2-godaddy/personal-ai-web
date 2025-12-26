@@ -40,7 +40,7 @@ export default function DashboardPage() {
           Welcome back, {user?.displayName || 'User'}!
         </h1>
         <p className="text-gray-600 dark:text-gray-400">
-          Your personal AI dashboard
+          Your SirCharge dashboard
         </p>
       </div>
 
@@ -94,7 +94,7 @@ export default function DashboardPage() {
         </h2>
         <p className="text-blue-800 dark:text-blue-200 mb-4">
           This web dashboard is <strong>view-only</strong> for your data. To collect health data,
-          location history, voice notes, and photos, please use the PersonalAI mobile app.
+          location history, voice notes, and photos, please use the SirCharge mobile app.
         </p>
         <p className="text-sm text-blue-700 dark:text-blue-300">
           Once you&apos;ve collected data on mobile, it will automatically sync and appear here for

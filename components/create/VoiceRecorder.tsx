@@ -22,7 +22,7 @@ export function VoiceRecorder() {
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
 
-  const voiceRecorder = VoiceRecorderService.getInstance();
+  const voiceRecorder = VoiceRecorderService;
 
   // Subscribe to recorder state changes
   useEffect(() => {
@@ -117,7 +117,7 @@ export function VoiceRecorder() {
       handleCancel();
       dispatch(resetVoiceState());
 
-      alert('Voice note saved successfully!');
+      alert('Voice note saved successfully! It\'s being indexed for search - check the Dashboard to see when it\'s ready.');
     } catch (error: any) {
       console.error('Failed to upload voice note:', error);
       alert(`Failed to upload: ${error.message || 'Unknown error'}`);

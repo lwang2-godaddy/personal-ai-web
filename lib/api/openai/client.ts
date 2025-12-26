@@ -7,9 +7,20 @@ export class OpenAIService {
   private embeddingCache: Map<string, number[]>;
 
   private constructor() {
+    // CRITICAL: This service must ONLY run on the server
+    // If you see this error in browser, you're importing it in a client component!
+    if (typeof window !== 'undefined') {
+      throw new Error(
+        'OpenAIService cannot run in the browser! ' +
+        'API keys must stay on the server. ' +
+        'Use it only in API routes (app/api/**/route.ts).'
+      );
+    }
+
+    // Server-side only - API key is NOT exposed to browser
+    // This service should only be used in API routes, never in client components
     this.client = new OpenAI({
-      apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
-      dangerouslyAllowBrowser: true, // Required for client-side usage in Next.js
+      apiKey: process.env.OPENAI_API_KEY,
     });
     this.embeddingCache = new Map();
   }
@@ -23,7 +34,7 @@ export class OpenAIService {
 
   /**
    * Generate embedding for text
-   * Uses text-embedding-3-small model (1536 dimensions)
+   * Uses text-embedding-3-small model (1024 dimensions to match Pinecone index)
    */
   async generateEmbedding(text: string): Promise<number[]> {
     try {
@@ -36,6 +47,7 @@ export class OpenAIService {
       const response = await this.client.embeddings.create({
         model: 'text-embedding-3-small',
         input: text,
+        dimensions: 1024, // Match Pinecone index dimension
       });
 
       const embedding = response.data[0].embedding;
@@ -66,6 +78,7 @@ export class OpenAIService {
       const response = await this.client.embeddings.create({
         model: 'text-embedding-3-small',
         input: texts,
+        dimensions: 1024, // Match Pinecone index dimension
       });
 
       return response.data.map((item) => item.embedding);

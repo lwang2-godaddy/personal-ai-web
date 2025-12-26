@@ -189,22 +189,11 @@ export const uploadVoiceNote = createAsyncThunk(
         throw new Error(validation.errors.join(', '));
       }
 
-      // Store in Firestore (via API route - triggers Cloud Function for embedding)
-      const storeResponse = await fetch('/api/voice-notes', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          noteId,
-          voiceNote,
-        }),
-      });
-
-      if (!storeResponse.ok) {
-        const error = await storeResponse.json();
-        throw new Error(error.error || 'Failed to store voice note');
-      }
+      // Store directly in Firestore (client-side write preserves auth context)
+      // This triggers the Cloud Function for embedding generation
+      const { FirestoreService } = await import('@/lib/api/firebase/firestore');
+      const firestoreService = FirestoreService.getInstance();
+      await firestoreService.createVoiceNote(noteId, voiceNote);
 
       return { noteId, voiceNote };
     } catch (error: any) {

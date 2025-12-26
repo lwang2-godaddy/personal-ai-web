@@ -7,14 +7,28 @@ export class PineconeService {
   private indexName: string;
 
   private constructor() {
-    this.indexName = process.env.NEXT_PUBLIC_PINECONE_INDEX || 'personal-ai-data';
+    // CRITICAL: This service must ONLY run on the server
+    // If you see this error in browser, you're importing it in a client component!
+    if (typeof window !== 'undefined') {
+      throw new Error(
+        'PineconeService cannot run in the browser! ' +
+        'API keys must stay on the server. ' +
+        'Use it only in API routes (app/api/**/route.ts).'
+      );
+    }
+
+    // Server-side only - API key is NOT exposed to browser
+    this.indexName = process.env.PINECONE_INDEX || 'personal-ai-data';
   }
 
   private getClient(): Pinecone {
     if (!this.client) {
-      const apiKey = process.env.NEXT_PUBLIC_PINECONE_API_KEY;
+      const apiKey = process.env.PINECONE_API_KEY;
       if (!apiKey) {
-        throw new Error('NEXT_PUBLIC_PINECONE_API_KEY is not set');
+        throw new Error(
+          'PINECONE_API_KEY is not set - make sure to configure it in environment variables. ' +
+          'This variable should NOT have the NEXT_PUBLIC_ prefix.'
+        );
       }
       this.client = new Pinecone({ apiKey });
     }
@@ -41,7 +55,7 @@ export class PineconeService {
       if (!indexExists) {
         await client.createIndex({
           name: this.indexName,
-          dimension: 1536, // text-embedding-3-small dimension
+          dimension: 1024, // text-embedding-3-small with reduced dimensions
           metric: 'cosine',
           spec: {
             serverless: {

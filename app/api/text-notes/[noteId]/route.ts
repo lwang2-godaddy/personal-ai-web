@@ -12,10 +12,10 @@ import FirestoreService from '@/lib/api/firebase/firestore';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { noteId: string } }
+  { params }: { params: Promise<{ noteId: string }> }
 ) {
   try {
-    const { noteId } = params;
+    const { noteId } = await params;
 
     const textNote = await FirestoreService.getTextNoteById(noteId);
 
@@ -39,10 +39,10 @@ export async function GET(
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { noteId: string } }
+  { params }: { params: Promise<{ noteId: string }> }
 ) {
   try {
-    const { noteId } = params;
+    const { noteId } = await params;
     const { updates } = await request.json();
 
     if (!updates) {
@@ -77,10 +77,10 @@ export async function PATCH(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { noteId: string } }
+  { params }: { params: Promise<{ noteId: string }> }
 ) {
   try {
-    const { noteId } = params;
+    const { noteId } = await params;
 
     await FirestoreService.deleteTextNote(noteId);
 
