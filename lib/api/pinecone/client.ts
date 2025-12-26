@@ -78,7 +78,7 @@ export class PineconeService {
   /**
    * Upsert a single vector
    */
-  async upsertVector(vector: PineconeVector): Promise<string> {
+  async upsertVector(vector: PineconeVector, userId?: string, endpoint?: string): Promise<string> {
     try {
       const client = this.getClient();
       const index = client.Index(this.indexName);
@@ -91,6 +91,12 @@ export class PineconeService {
         },
       ]);
 
+      // Track usage if userId provided
+      if (userId && typeof window === 'undefined') {
+        const UsageTracker = (await import('@/lib/services/usage/UsageTracker')).default;
+        await UsageTracker.trackPineconeUpsert(userId, 1, endpoint || 'pinecone_upsert');
+      }
+
       return vector.id;
     } catch (error) {
       console.error('Pinecone upsert error:', error);
@@ -101,7 +107,7 @@ export class PineconeService {
   /**
    * Upsert multiple vectors in batch
    */
-  async upsertVectorsBatch(vectors: PineconeVector[]): Promise<void> {
+  async upsertVectorsBatch(vectors: PineconeVector[], userId?: string, endpoint?: string): Promise<void> {
     try {
       const client = this.getClient();
       const index = client.Index(this.indexName);
@@ -117,6 +123,12 @@ export class PineconeService {
             metadata: v.metadata as RecordMetadata,
           })),
         );
+      }
+
+      // Track usage if userId provided
+      if (userId && typeof window === 'undefined') {
+        const UsageTracker = (await import('@/lib/services/usage/UsageTracker')).default;
+        await UsageTracker.trackPineconeUpsert(userId, vectors.length, endpoint || 'pinecone_upsert_batch');
       }
 
       console.log(`Upserted ${vectors.length} vectors in batches of ${batchSize}`);
@@ -135,6 +147,7 @@ export class PineconeService {
     userId: string,
     topK = 10,
     filter?: Record<string, any>,
+    endpoint?: string
   ): Promise<PineconeQueryResult[]> {
     try {
       const client = this.getClient();
@@ -151,6 +164,12 @@ export class PineconeService {
         includeMetadata: true,
         filter: queryFilter,
       });
+
+      // Track usage
+      if (typeof window === 'undefined') {
+        const UsageTracker = (await import('@/lib/services/usage/UsageTracker')).default;
+        await UsageTracker.trackPineconeQuery(userId, topK, endpoint || 'pinecone_query');
+      }
 
       return (
         queryResponse.matches?.map((match) => ({
@@ -173,10 +192,11 @@ export class PineconeService {
     userId: string,
     dataType: 'health' | 'location' | 'voice' | 'photo',
     topK = 10,
+    endpoint?: string
   ): Promise<PineconeQueryResult[]> {
     return this.queryVectors(queryVector, userId, topK, {
       type: { $eq: dataType },
-    });
+    }, endpoint || `pinecone_query_${dataType}`);
   }
 
   /**
@@ -187,11 +207,12 @@ export class PineconeService {
     userId: string,
     activity: string,
     topK = 10,
+    endpoint?: string
   ): Promise<PineconeQueryResult[]> {
     return this.queryVectors(queryVector, userId, topK, {
       type: { $eq: 'location' },
       activity: { $eq: activity },
-    });
+    }, endpoint || 'pinecone_query_location_activity');
   }
 
   /**
@@ -203,23 +224,30 @@ export class PineconeService {
     startDate: string,
     endDate: string,
     topK = 10,
+    endpoint?: string
   ): Promise<PineconeQueryResult[]> {
     return this.queryVectors(queryVector, userId, topK, {
       date: {
         $gte: startDate,
         $lte: endDate,
       },
-    });
+    }, endpoint || 'pinecone_query_date_range');
   }
 
   /**
    * Delete a single vector
    */
-  async deleteVector(vectorId: string): Promise<void> {
+  async deleteVector(vectorId: string, userId?: string, endpoint?: string): Promise<void> {
     try {
       const client = this.getClient();
       const index = client.Index(this.indexName);
       await index.deleteOne(vectorId);
+
+      // Track usage if userId provided
+      if (userId && typeof window === 'undefined') {
+        const UsageTracker = (await import('@/lib/services/usage/UsageTracker')).default;
+        await UsageTracker.trackPineconeDelete(userId, 1, endpoint || 'pinecone_delete');
+      }
     } catch (error) {
       console.error('Pinecone delete error:', error);
       throw error;
@@ -295,6 +323,8 @@ export class PineconeService {
     userIds: string[],
     topK = 10,
     additionalFilter?: Record<string, any>,
+    requestingUserId?: string,
+    endpoint?: string
   ): Promise<PineconeQueryResult[]> {
     try {
       const client = this.getClient();
@@ -312,6 +342,16 @@ export class PineconeService {
         includeMetadata: true,
         filter: queryFilter,
       });
+
+      // Track usage if requesting user provided
+      if (requestingUserId && typeof window === 'undefined') {
+        const UsageTracker = (await import('@/lib/services/usage/UsageTracker')).default;
+        await UsageTracker.trackPineconeQuery(
+          requestingUserId,
+          topK,
+          endpoint || 'pinecone_query_multi_user'
+        );
+      }
 
       return (
         queryResponse.matches?.map((match) => ({
@@ -334,6 +374,8 @@ export class PineconeService {
     userIds: string[],
     topK = 10,
     additionalFilter?: Record<string, any>,
+    requestingUserId?: string,
+    endpoint?: string
   ): Promise<PineconeQueryResult[]> {
     try {
       const client = this.getClient();
@@ -351,6 +393,16 @@ export class PineconeService {
         includeMetadata: true,
         filter: queryFilter,
       });
+
+      // Track usage if requesting user provided
+      if (requestingUserId && typeof window === 'undefined') {
+        const UsageTracker = (await import('@/lib/services/usage/UsageTracker')).default;
+        await UsageTracker.trackPineconeQuery(
+          requestingUserId,
+          topK,
+          endpoint || 'pinecone_query_participants'
+        );
+      }
 
       return (
         queryResponse.matches?.map((match) => ({
@@ -371,11 +423,15 @@ export class PineconeService {
    * Upsert visual embedding to separate visual index (512D)
    * For CLIP visual embeddings from photos
    */
-  async upsertVisualVector(vector: {
-    id: string;
-    values: number[];
-    metadata: Record<string, any>;
-  }): Promise<void> {
+  async upsertVisualVector(
+    vector: {
+      id: string;
+      values: number[];
+      metadata: Record<string, any>;
+    },
+    userId?: string,
+    endpoint?: string
+  ): Promise<void> {
     try {
       const client = this.getClient();
       const visualIndex = client.Index('personal-ai-visual');
@@ -386,6 +442,12 @@ export class PineconeService {
           metadata: vector.metadata as RecordMetadata,
         },
       ]);
+
+      // Track usage if userId provided
+      if (userId && typeof window === 'undefined') {
+        const UsageTracker = (await import('@/lib/services/usage/UsageTracker')).default;
+        await UsageTracker.trackPineconeUpsert(userId, 1, endpoint || 'pinecone_upsert_visual');
+      }
 
       console.log(`Upserted visual vector: ${vector.id} to visual index`);
     } catch (error) {
@@ -401,6 +463,7 @@ export class PineconeService {
     queryEmbedding: number[],
     userId: string,
     topK: number = 10,
+    endpoint?: string
   ): Promise<PineconeQueryResult[]> {
     try {
       const client = this.getClient();
@@ -414,6 +477,12 @@ export class PineconeService {
         },
         includeMetadata: true,
       });
+
+      // Track usage
+      if (typeof window === 'undefined') {
+        const UsageTracker = (await import('@/lib/services/usage/UsageTracker')).default;
+        await UsageTracker.trackPineconeQuery(userId, topK, endpoint || 'pinecone_query_visual');
+      }
 
       return (
         queryResponse.matches?.map((match) => ({
@@ -431,11 +500,18 @@ export class PineconeService {
   /**
    * Delete visual vector (512D)
    */
-  async deleteVisualVector(vectorId: string): Promise<void> {
+  async deleteVisualVector(vectorId: string, userId?: string, endpoint?: string): Promise<void> {
     try {
       const client = this.getClient();
       const visualIndex = client.Index('personal-ai-visual');
       await visualIndex.deleteOne(vectorId);
+
+      // Track usage if userId provided
+      if (userId && typeof window === 'undefined') {
+        const UsageTracker = (await import('@/lib/services/usage/UsageTracker')).default;
+        await UsageTracker.trackPineconeDelete(userId, 1, endpoint || 'pinecone_delete_visual');
+      }
+
       console.log(`Deleted visual vector: ${vectorId}`);
     } catch (error) {
       console.error('Error deleting visual vector:', error);

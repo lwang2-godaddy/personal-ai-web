@@ -51,7 +51,11 @@ export class RAGEngine {
       // 1. Generate embedding for user query
       console.log('[RAGEngine] Step 1: Calling OpenAI to generate embedding...');
       const embeddingStart = Date.now();
-      const queryEmbedding = await this.openAIService.generateEmbedding(userMessage);
+      const queryEmbedding = await this.openAIService.generateEmbedding(
+        userMessage,
+        userId,
+        'rag_query_embedding'
+      );
       console.log(`[RAGEngine] ✓ Embedding generated in ${Date.now() - embeddingStart}ms (dimension: ${queryEmbedding.length})`);
 
       // 2. Query Pinecone for relevant vectors
@@ -61,6 +65,8 @@ export class RAGEngine {
         queryEmbedding,
         userId,
         RAG_TOP_K_RESULTS,
+        undefined,
+        'rag_query_vector'
       );
       console.log(`[RAGEngine] ✓ Pinecone returned ${relevantVectors.length} relevant data points in ${Date.now() - pineconeStart}ms`);
 
@@ -75,6 +81,10 @@ export class RAGEngine {
       const response = await this.openAIService.chatCompletion(
         [{ role: 'user', content: userMessage, timestamp: new Date().toISOString() }],
         context,
+        {
+          userId,
+          endpoint: 'rag_chat_completion'
+        }
       );
       console.log(`[RAGEngine] ✓ GPT-4o responded in ${Date.now() - gptStart}ms (length: ${response.length} chars)`);
 
@@ -111,13 +121,19 @@ export class RAGEngine {
   }> {
     try {
       // Generate embedding for user query
-      const queryEmbedding = await this.openAIService.generateEmbedding(userMessage);
+      const queryEmbedding = await this.openAIService.generateEmbedding(
+        userMessage,
+        userId,
+        'rag_query_history_embedding'
+      );
 
       // Query Pinecone for relevant vectors
       const relevantVectors = await this.pineconeService.queryVectors(
         queryEmbedding,
         userId,
         RAG_TOP_K_RESULTS,
+        undefined,
+        'rag_query_history_vector'
       );
 
       // Build context
@@ -130,7 +146,10 @@ export class RAGEngine {
       ];
 
       // Generate response
-      const response = await this.openAIService.chatCompletion(messages, context);
+      const response = await this.openAIService.chatCompletion(messages, context, {
+        userId,
+        endpoint: 'rag_chat_history_completion'
+      });
 
       const contextUsed: ContextReference[] = relevantVectors.map((vector) => ({
         id: vector.id,
@@ -161,19 +180,28 @@ export class RAGEngine {
     contextUsed: ContextReference[];
   }> {
     try {
-      const queryEmbedding = await this.openAIService.generateEmbedding(userMessage);
+      const queryEmbedding = await this.openAIService.generateEmbedding(
+        userMessage,
+        userId,
+        'rag_query_datatype_embedding'
+      );
 
       const relevantVectors = await this.pineconeService.queryVectorsByType(
         queryEmbedding,
         userId,
         dataType,
         RAG_TOP_K_RESULTS,
+        `rag_query_datatype_${dataType}`
       );
 
       const context = this.buildContext(relevantVectors);
       const response = await this.openAIService.chatCompletion(
         [{ role: 'user', content: userMessage, timestamp: new Date().toISOString() }],
         context,
+        {
+          userId,
+          endpoint: 'rag_chat_datatype_completion'
+        }
       );
 
       const contextUsed: ContextReference[] = relevantVectors.map((vector) => ({
@@ -205,19 +233,28 @@ export class RAGEngine {
     contextUsed: ContextReference[];
   }> {
     try {
-      const queryEmbedding = await this.openAIService.generateEmbedding(userMessage);
+      const queryEmbedding = await this.openAIService.generateEmbedding(
+        userMessage,
+        userId,
+        'rag_query_activity_embedding'
+      );
 
       const relevantVectors = await this.pineconeService.queryLocationsByActivity(
         queryEmbedding,
         userId,
         activity,
         20, // Get more results for activity queries
+        'rag_query_activity_location'
       );
 
       const context = this.buildContext(relevantVectors);
       const response = await this.openAIService.chatCompletion(
         [{ role: 'user', content: userMessage, timestamp: new Date().toISOString() }],
         context,
+        {
+          userId,
+          endpoint: 'rag_chat_activity_completion'
+        }
       );
 
       const contextUsed: ContextReference[] = relevantVectors.map((vector) => ({

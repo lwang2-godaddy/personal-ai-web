@@ -35,8 +35,11 @@ export class OpenAIService {
   /**
    * Generate embedding for text
    * Uses text-embedding-3-small model (1024 dimensions to match Pinecone index)
+   * @param text - Text to embed
+   * @param userId - Optional user ID for usage tracking
+   * @param endpoint - Optional endpoint name for tracking context
    */
-  async generateEmbedding(text: string): Promise<number[]> {
+  async generateEmbedding(text: string, userId?: string, endpoint?: string): Promise<number[]> {
     try {
       // Check cache first
       const cacheKey = this.getCacheKey(text);
@@ -51,6 +54,14 @@ export class OpenAIService {
       });
 
       const embedding = response.data[0].embedding;
+
+      // Track usage if userId provided
+      if (userId && typeof window === 'undefined') {
+        const tokens = response.usage?.total_tokens || this.estimateTokens(text);
+        // Dynamic import to avoid circular dependencies
+        const UsageTracker = (await import('@/lib/services/usage/UsageTracker')).default;
+        await UsageTracker.trackEmbedding(userId, tokens, endpoint || 'embedding');
+      }
 
       // Cache the embedding
       this.embeddingCache.set(cacheKey, embedding);
@@ -68,6 +79,15 @@ export class OpenAIService {
       console.error('OpenAI embedding error:', error);
       throw error;
     }
+  }
+
+  /**
+   * Estimate token count for text (rough approximation)
+   * Used when OpenAI doesn't return usage data
+   */
+  private estimateTokens(text: string): number {
+    // Rough estimate: 1 token ≈ 4 characters
+    return Math.ceil(text.length / 4);
   }
 
   /**
@@ -91,7 +111,12 @@ export class OpenAIService {
   /**
    * Transcribe audio file using Whisper (Web version)
    */
-  async transcribeAudio(audioFile: File, language?: string): Promise<string> {
+  async transcribeAudio(
+    audioFile: File,
+    language?: string,
+    userId?: string,
+    endpoint?: string
+  ): Promise<string> {
     try {
       const response = await this.client.audio.transcriptions.create({
         file: audioFile,
@@ -99,6 +124,14 @@ export class OpenAIService {
         language: language || 'en',
         response_format: 'text',
       });
+
+      // Track usage if userId provided
+      if (userId && typeof window === 'undefined') {
+        // Estimate duration from file size (rough approximation: 1MB ≈ 10 minutes)
+        const durationSeconds = Math.ceil((audioFile.size / (1024 * 1024)) * 600);
+        const UsageTracker = (await import('@/lib/services/usage/UsageTracker')).default;
+        await UsageTracker.trackTranscription(userId, durationSeconds, endpoint || 'transcription');
+      }
 
       return response as unknown as string;
     } catch (error) {
@@ -111,11 +144,15 @@ export class OpenAIService {
    * Generate speech from text using OpenAI TTS
    * @param text Text to convert to speech
    * @param voice Voice to use (alloy, echo, fable, onyx, nova, shimmer)
+   * @param userId Optional user ID for usage tracking
+   * @param endpoint Optional endpoint name for tracking context
    * @returns Blob of audio data
    */
   async textToSpeech(
     text: string,
     voice: 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer' = 'alloy',
+    userId?: string,
+    endpoint?: string
   ): Promise<Blob> {
     try {
       const response = await this.client.audio.speech.create({
@@ -123,6 +160,25 @@ export class OpenAIService {
         voice: voice,
         input: text,
       });
+
+      // Track usage if userId provided (TTS charged per character)
+      if (userId && typeof window === 'undefined') {
+        const characters = text.length;
+        // TTS pricing: $15 per 1M characters
+        const cost = (characters / 1_000_000) * 15.0;
+        const UsageTracker = (await import('@/lib/services/usage/UsageTracker')).default;
+        await UsageTracker.logUsageEvent({
+          userId,
+          timestamp: new Date().toISOString(),
+          operation: 'tts',
+          provider: 'openai',
+          model: 'tts-1',
+          totalTokens: characters,
+          estimatedCostUSD: cost,
+          endpoint: endpoint || 'tts',
+          metadata: { voice, characterCount: characters },
+        });
+      }
 
       // Convert response to Blob for web playback
       const arrayBuffer = await response.arrayBuffer();
@@ -143,6 +199,8 @@ export class OpenAIService {
       temperature?: number;
       maxTokens?: number;
       stream?: boolean;
+      userId?: string;
+      endpoint?: string;
     },
   ): Promise<string> {
     try {
@@ -172,6 +230,19 @@ export class OpenAIService {
         stream: false,
       });
 
+      // Track usage if userId provided
+      if (options?.userId && typeof window === 'undefined') {
+        const promptTokens = response.usage?.prompt_tokens || 0;
+        const completionTokens = response.usage?.completion_tokens || 0;
+        const UsageTracker = (await import('@/lib/services/usage/UsageTracker')).default;
+        await UsageTracker.trackChatCompletion(
+          options.userId,
+          promptTokens,
+          completionTokens,
+          options.endpoint || 'chat_completion'
+        );
+      }
+
       return response.choices[0]?.message?.content || '';
     } catch (error) {
       console.error('OpenAI chat completion error:', error);
@@ -190,6 +261,8 @@ export class OpenAIService {
     options?: {
       temperature?: number;
       maxTokens?: number;
+      userId?: string;
+      endpoint?: string;
     },
   ): Promise<string> {
     try {
@@ -214,6 +287,19 @@ export class OpenAIService {
         stream: false,
       });
 
+      // Track usage if userId provided
+      if (options?.userId && typeof window === 'undefined') {
+        const promptTokens = response.usage?.prompt_tokens || 0;
+        const completionTokens = response.usage?.completion_tokens || 0;
+        const UsageTracker = (await import('@/lib/services/usage/UsageTracker')).default;
+        await UsageTracker.trackChatCompletion(
+          options.userId,
+          promptTokens,
+          completionTokens,
+          options.endpoint || 'chat_completion_custom'
+        );
+      }
+
       return response.choices[0].message.content || '';
     } catch (error) {
       console.error('OpenAI chat completion with custom system prompt error:', error);
@@ -230,6 +316,8 @@ export class OpenAIService {
     options?: {
       temperature?: number;
       maxTokens?: number;
+      userId?: string;
+      endpoint?: string;
     },
   ): AsyncGenerator<string, void, unknown> {
     try {
@@ -257,13 +345,34 @@ export class OpenAIService {
         temperature: options?.temperature ?? 0.7,
         max_tokens: options?.maxTokens ?? 500,
         stream: true,
+        stream_options: { include_usage: true },
       });
+
+      let promptTokens = 0;
+      let completionTokens = 0;
 
       for await (const chunk of stream) {
         const content = chunk.choices[0]?.delta?.content;
         if (content) {
           yield content;
         }
+
+        // Capture usage from the final chunk
+        if (chunk.usage) {
+          promptTokens = chunk.usage.prompt_tokens || 0;
+          completionTokens = chunk.usage.completion_tokens || 0;
+        }
+      }
+
+      // Track usage after stream completes
+      if (options?.userId && typeof window === 'undefined' && (promptTokens > 0 || completionTokens > 0)) {
+        const UsageTracker = (await import('@/lib/services/usage/UsageTracker')).default;
+        await UsageTracker.trackChatCompletion(
+          options.userId,
+          promptTokens,
+          completionTokens,
+          options.endpoint || 'chat_completion_stream'
+        );
       }
     } catch (error) {
       console.error('OpenAI streaming error:', error);
@@ -275,7 +384,7 @@ export class OpenAIService {
    * Generate image description using GPT-4 Vision
    * Uses 'auto' detail level for cost optimization
    */
-  async describeImage(imageUrl: string): Promise<string> {
+  async describeImage(imageUrl: string, userId?: string, endpoint?: string): Promise<string> {
     try {
       const response = await this.client.chat.completions.create({
         model: 'gpt-4o',
@@ -302,6 +411,19 @@ export class OpenAIService {
 
       const description = response.choices[0]?.message?.content || '';
 
+      // Track usage if userId provided
+      if (userId && typeof window === 'undefined') {
+        const promptTokens = response.usage?.prompt_tokens || 0;
+        const completionTokens = response.usage?.completion_tokens || 0;
+        const UsageTracker = (await import('@/lib/services/usage/UsageTracker')).default;
+        await UsageTracker.trackImageDescription(
+          userId,
+          promptTokens,
+          completionTokens,
+          endpoint || 'image_description'
+        );
+      }
+
       console.log(`Generated image description: ${description.substring(0, 50)}...`);
       return description;
     } catch (error) {
@@ -314,13 +436,19 @@ export class OpenAIService {
    * Batch describe multiple images (with rate limiting)
    * Processes in batches of 5 with 2 second delay to avoid rate limits
    */
-  async describeImagesBatch(imageUrls: string[]): Promise<string[]> {
+  async describeImagesBatch(
+    imageUrls: string[],
+    userId?: string,
+    endpoint?: string
+  ): Promise<string[]> {
     const descriptions: string[] = [];
 
     // Process in batches of 5 with 2 second delay to avoid rate limits
     for (let i = 0; i < imageUrls.length; i += 5) {
       const batch = imageUrls.slice(i, i + 5);
-      const batchPromises = batch.map((url) => this.describeImage(url));
+      const batchPromises = batch.map((url) =>
+        this.describeImage(url, userId, endpoint || 'image_description_batch')
+      );
       const batchResults = await Promise.all(batchPromises);
       descriptions.push(...batchResults);
 
