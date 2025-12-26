@@ -14,6 +14,8 @@ import authReducer from './slices/authSlice';
 import chatReducer from './slices/chatSlice';
 import dashboardReducer from './slices/dashboardSlice';
 import inputReducer from './slices/inputSlice';
+import quickCreateReducer from './slices/quickCreateSlice';
+import toastReducer from './slices/toastSlice';
 
 // Persist configuration
 const persistConfig = {
@@ -28,6 +30,8 @@ const rootReducer = combineReducers({
   chat: chatReducer,
   dashboard: dashboardReducer,
   input: inputReducer,
+  quickCreate: quickCreateReducer,
+  toast: toastReducer,
 });
 
 // Persisted reducer

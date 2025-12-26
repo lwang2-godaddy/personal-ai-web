@@ -4,6 +4,8 @@ import { AuthGuard } from '@/components/auth/AuthGuard';
 // import { LanguageSwitcher } from '@/components/LanguageSwitcher'; // Temporarily disabled - requires i18n middleware
 import { useAppDispatch, useAppSelector } from '@/lib/store/hooks';
 import { signOutThunk } from '@/lib/store/slices/authSlice';
+import { FloatingActionButton, ToastContainer } from '@/components/common';
+import QuickCreateModal from '@/components/create/QuickCreateModal';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -23,7 +25,7 @@ export default function DashboardLayout({
   const navigation = [
     { name: 'Dashboard', href: '/dashboard' },
     { name: 'Chat', href: '/chat' },
-    { name: 'Create', href: '/create' },
+    { name: 'Templates', href: '/create' },
     { name: 'Search', href: '/search' },
     { name: 'Settings', href: '/settings' },
   ];
@@ -39,7 +41,7 @@ export default function DashboardLayout({
                 {/* Logo */}
                 <div className="flex-shrink-0 flex items-center">
                   <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                    PersonalAI
+                    SirCharge
                   </h1>
                 </div>
 
@@ -85,6 +87,15 @@ export default function DashboardLayout({
 
         {/* Main content */}
         <main>{children}</main>
+
+        {/* Floating Action Button */}
+        <FloatingActionButton />
+
+        {/* Quick Create Modal */}
+        <QuickCreateModal />
+
+        {/* Toast Notifications */}
+        <ToastContainer />
       </div>
     </AuthGuard>
   );

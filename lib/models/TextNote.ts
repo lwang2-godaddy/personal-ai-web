@@ -14,6 +14,7 @@ export interface TextNote {
   title: string;
   content: string;
   tags: string[];
+  type?: 'diary' | 'thought'; // New field: diary for full entries, thought for quick 280-char thoughts
   location?: {
     latitude: number;
     longitude: number;
@@ -38,6 +39,7 @@ export interface TextNoteDraft {
     latitude: number;
     longitude: number;
     address: string | null;
+    locationId: string | null; // Will be null in draft, populated only if correlated
   };
   lastSaved: string; // ISO string
 }
