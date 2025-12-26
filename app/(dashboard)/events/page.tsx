@@ -11,7 +11,7 @@ import {
 } from '@/lib/store/slices/eventsSlice';
 import { Event, EventType, EventStatus } from '@/lib/models/Event';
 import { EventModal } from '@/components/events';
-import { useAuth } from '@/lib/contexts/AuthContext';
+import { useAuth } from '@/lib/hooks/useAuth';
 
 export default function EventsPage() {
   const dispatch = useAppDispatch();

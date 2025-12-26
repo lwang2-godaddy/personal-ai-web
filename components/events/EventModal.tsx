@@ -13,7 +13,7 @@ import {
   cancelEvent,
   fetchEvents,
 } from '@/lib/store/slices/eventsSlice';
-import { useAuth } from '@/lib/contexts/AuthContext';
+import { useAuth } from '@/lib/hooks/useAuth';
 
 interface EventModalProps {
   isOpen: boolean;
