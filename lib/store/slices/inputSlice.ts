@@ -11,6 +11,7 @@ import { TextNote } from '@/lib/models/TextNote';
 import { validateTextNote, validateVoiceNote, validatePhotoMemory } from '@/lib/utils/validation';
 import StorageService from '@/lib/api/firebase/storage';
 import GeolocationService from '@/lib/services/geolocation';
+import TextNoteService from '@/lib/services/textNoteService';
 
 /**
  * Input State Interface
@@ -370,36 +371,10 @@ export const saveTextNote = createAsyncThunk(
         throw new Error(validation.errors.join(', '));
       }
 
-      // Generate note ID
-      const noteId = `text_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      // Use TextNoteService to save directly to Firestore (preserves auth context)
+      const result = await TextNoteService.createTextNote(textNote, userId);
 
-      // Create full text note object
-      const fullTextNote: Omit<TextNote, 'id'> = {
-        ...textNote,
-        userId,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        embeddingId: null,
-      };
-
-      // Store in Firestore (via API route - triggers Cloud Function for embedding)
-      const response = await fetch('/api/text-notes', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          noteId,
-          textNote: fullTextNote,
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to save text note');
-      }
-
-      return { noteId, textNote: fullTextNote };
+      return { noteId: result.noteId, textNote: result.textNote };
     } catch (error: any) {
       console.error('Text note save error:', error);
       return rejectWithValue(error.message || 'Failed to save text note');
