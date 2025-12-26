@@ -14,6 +14,7 @@ export default function QuickThoughtForm() {
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { isSubmitting, error: submitError } = useAppSelector((state) => state.quickCreate);
+  const userId = useAppSelector((state) => state.auth.user?.uid);
   const dispatch = useAppDispatch();
 
   // Auto-focus textarea when component mounts
@@ -52,7 +53,9 @@ export default function QuickThoughtForm() {
     }));
 
     // Refresh dashboard data
-    dispatch(fetchDashboardData());
+    if (userId) {
+      dispatch(fetchDashboardData(userId));
+    }
   };
 
   const characterCount = content.length;

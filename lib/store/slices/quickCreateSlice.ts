@@ -1,10 +1,13 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { textNoteService } from '@/lib/services/textNoteService';
-import { voiceRecorderService } from '@/lib/services/voiceRecorderService';
-import { storageService } from '@/lib/services/storageService';
-import { imageProcessorService } from '@/lib/services/imageProcessorService';
+import textNoteService from '@/lib/services/textNoteService';
+import voiceRecorderService from '@/lib/services/voiceRecorder';
+import imageProcessorService from '@/lib/services/imageProcessor';
 import { addToast } from './toastSlice';
 import type { RootState } from '../index';
+import FirebaseStorage from '@/lib/api/firebase/storage';
+import FirestoreService from '@/lib/api/firebase/firestore';
+import OpenAIService from '@/lib/api/openai/client';
+import type { PhotoMemory } from '@/lib/models/PhotoMemory';
 
 export type CreateType = 'diary' | 'thought' | 'voice' | 'photo';
 
@@ -31,7 +34,7 @@ export const submitQuickDiary = createAsyncThunk(
       const userId = state.auth.user?.uid;
       if (!userId) throw new Error('User not authenticated');
 
-      await textNoteService.getInstance().createTextNote({
+      await textNoteService.createTextNote({
         title: data.title,
         content: data.content,
         tags: data.tags || [],
@@ -56,7 +59,7 @@ export const submitQuickThought = createAsyncThunk(
       const userId = state.auth.user?.uid;
       if (!userId) throw new Error('User not authenticated');
 
-      await textNoteService.getInstance().createTextNote({
+      await textNoteService.createTextNote({
         title: 'Quick Thought',
         content: data.content,
         tags: data.tags || [],
@@ -82,21 +85,25 @@ export const submitQuickVoice = createAsyncThunk(
       if (!userId) throw new Error('User not authenticated');
 
       // Upload audio file
-      const audioFile = new File([data.audioBlob], `voice-${Date.now()}.webm`, {
+      const timestamp = Date.now();
+      const audioFile = new File([data.audioBlob], `voice-${timestamp}.webm`, {
         type: data.audioBlob.type,
       });
-      const audioUrl = await storageService.uploadFile(audioFile, `voice-notes/${userId}`);
+      const path = `voice-notes/${userId}/${timestamp}.webm`;
+      const audioUrl = await FirebaseStorage.uploadFile(path, audioFile);
 
-      // Transcribe audio
-      const transcription = await voiceRecorderService.transcribeAudio(data.audioBlob);
+      // Transcribe audio using OpenAI Whisper
+      const transcription = await OpenAIService.transcribeAudio(audioFile);
 
-      // Save voice note
-      await voiceRecorderService.saveVoiceNote({
+      // Save voice note to Firestore
+      const voiceNoteId = `voice_${timestamp}`;
+      await FirestoreService.createVoiceNote(voiceNoteId, {
         userId,
         audioUrl,
         transcription,
         duration: data.duration,
-        title: data.title,
+        title: data.title || 'Voice Note',
+        createdAt: new Date().toISOString(),
       });
 
       dispatch(addToast({ message: 'Voice note recorded!', type: 'success' }));
@@ -121,27 +128,42 @@ export const submitQuickPhoto = createAsyncThunk(
       const { thumbnail, medium, original } = await imageProcessorService.processImage(data.file);
 
       // Upload all versions
+      const timestamp = Date.now();
       const [thumbnailUrl, mediumUrl, originalUrl] = await Promise.all([
-        storageService.uploadFile(thumbnail, `photos/${userId}/thumbnails`),
-        storageService.uploadFile(medium, `photos/${userId}/medium`),
-        storageService.uploadFile(original, `photos/${userId}/original`),
+        FirebaseStorage.uploadFile(`photos/${userId}/thumbnails/${timestamp}.jpg`, thumbnail),
+        FirebaseStorage.uploadFile(`photos/${userId}/medium/${timestamp}.jpg`, medium),
+        FirebaseStorage.uploadFile(`photos/${userId}/original/${timestamp}.jpg`, original),
       ]);
 
-      // Generate AI description if no caption provided
-      let description = data.caption || '';
-      if (!description) {
-        description = await imageProcessorService.generateDescription(data.file);
-      }
+      // Use caption or default description
+      // TODO: Implement AI description generation using OpenAI Vision API
+      const description = data.caption || 'Photo uploaded via PersonalAI';
 
-      // Save photo metadata
-      await storageService.savePhotoMetadata({
+      // Save photo metadata to Firestore
+      const photoId = `photo_${timestamp}`;
+      const photoData: Partial<PhotoMemory> = {
         userId,
+        imageUrl: originalUrl,
         thumbnailUrl,
         mediumUrl,
-        originalUrl,
-        description,
+        autoDescription: description,
+        userDescription: data.caption || null,
+        latitude: null,
+        longitude: null,
+        locationId: null,
+        activity: null,
+        address: null,
         takenAt: new Date(),
-      });
+        uploadedAt: new Date(),
+        fileSize: data.file.size,
+        dimensions: { width: 0, height: 0 }, // Will be populated by imageProcessor
+        textEmbeddingId: null,
+        visualEmbeddingId: null,
+        tags: [],
+        isFavorite: false,
+      };
+
+      await FirestoreService.createPhotoMemory(photoId, photoData);
 
       dispatch(addToast({ message: 'Photo uploaded!', type: 'success' }));
       return { success: true };

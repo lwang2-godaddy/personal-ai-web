@@ -18,6 +18,7 @@ export default function QuickVoiceForm() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const { isSubmitting, error: submitError } = useAppSelector((state) => state.quickCreate);
+  const userId = useAppSelector((state) => state.auth.user?.uid);
   const dispatch = useAppDispatch();
 
   // Cleanup on unmount
@@ -92,7 +93,9 @@ export default function QuickVoiceForm() {
     }));
 
     // Refresh dashboard data
-    dispatch(fetchDashboardData());
+    if (userId) {
+      dispatch(fetchDashboardData(userId));
+    }
   };
 
   const formatDuration = (seconds: number) => {

@@ -14,6 +14,7 @@ export default function QuickPhotoForm() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { isSubmitting, error: submitError } = useAppSelector((state) => state.quickCreate);
+  const userId = useAppSelector((state) => state.auth.user?.uid);
   const dispatch = useAppDispatch();
 
   const handleFileChange = (file: File | null) => {
@@ -77,7 +78,9 @@ export default function QuickPhotoForm() {
     }));
 
     // Refresh dashboard data
-    dispatch(fetchDashboardData());
+    if (userId) {
+      dispatch(fetchDashboardData(userId));
+    }
   };
 
   return (

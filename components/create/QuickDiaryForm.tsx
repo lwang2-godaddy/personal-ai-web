@@ -13,6 +13,7 @@ export default function QuickDiaryForm() {
 
   const titleInputRef = useRef<HTMLInputElement>(null);
   const { isSubmitting, error } = useAppSelector((state) => state.quickCreate);
+  const userId = useAppSelector((state) => state.auth.user?.uid);
   const dispatch = useAppDispatch();
 
   // Auto-focus title input when component mounts
@@ -54,7 +55,9 @@ export default function QuickDiaryForm() {
     }));
 
     // Refresh dashboard data
-    dispatch(fetchDashboardData());
+    if (userId) {
+      dispatch(fetchDashboardData(userId));
+    }
   };
 
   const characterCount = content.length;

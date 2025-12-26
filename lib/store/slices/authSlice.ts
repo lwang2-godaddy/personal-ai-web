@@ -45,6 +45,8 @@ export const signInWithGoogleThunk = createAsyncThunk(
           createdAt: new Date().toISOString(),
           lastSync: null,
           preferences: getDefaultPreferences(),
+          role: 'user',
+          accountStatus: 'active',
         };
         await firestoreService.updateUserData(firebaseUser.uid, userData);
       }
@@ -100,6 +102,8 @@ export const signUpWithEmailThunk = createAsyncThunk(
         createdAt: new Date().toISOString(),
         lastSync: null,
         preferences: getDefaultPreferences(),
+        role: 'user',
+        accountStatus: 'active',
       };
 
       await firestoreService.updateUserData(firebaseUser.uid, userData);

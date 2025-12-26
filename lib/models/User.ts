@@ -6,6 +6,21 @@ export interface User {
   createdAt: string;
   lastSync: string | null;
   preferences: UserPreferences;
+
+  // Role-based access control
+  role: 'admin' | 'user';
+  accountStatus: 'active' | 'suspended';
+  customLimits?: UserLimits;
+}
+
+/**
+ * Custom usage limits per user
+ * Overrides default limits when set
+ */
+export interface UserLimits {
+  maxTokensPerDay?: number;      // Override default token limit
+  maxApiCallsPerDay?: number;    // Override default API call limit
+  maxCostPerMonth?: number;      // Monthly spending cap in USD
 }
 
 export interface UserPreferences {
