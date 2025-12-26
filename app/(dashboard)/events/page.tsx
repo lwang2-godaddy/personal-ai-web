@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/lib/store/hooks';
 import {
   fetchEvents,
@@ -15,6 +16,7 @@ import { useAuth } from '@/lib/hooks/useAuth';
 
 export default function EventsPage() {
   const dispatch = useAppDispatch();
+  const router = useRouter();
   const { user } = useAuth();
   const { events, isLoading, error, filters } = useAppSelector((state) => state.events);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -117,12 +119,33 @@ export default function EventsPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Events</h1>
-        <button
-          onClick={handleCreateClick}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          Create Event
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => router.push('/events/search')}
+            className="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+            Search
+          </button>
+          <button
+            onClick={handleCreateClick}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Create Event
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
