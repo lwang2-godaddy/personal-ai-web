@@ -5,6 +5,7 @@
 
 import { TextNote, TextNoteDraft } from '@/lib/models/TextNote';
 import { validateTextNote, sanitizeText } from '@/lib/utils/validation';
+import FirestoreService from '@/lib/api/firebase/firestore';
 
 const DRAFT_STORAGE_KEY = 'personalai_diary_draft';
 const AUTO_SAVE_INTERVAL = 30000; // 30 seconds
@@ -12,6 +13,11 @@ const AUTO_SAVE_INTERVAL = 30000; // 30 seconds
 export class TextNoteService {
   private static instance: TextNoteService;
   private autoSaveTimer: NodeJS.Timeout | null = null;
+  private firestoreService: typeof FirestoreService;
+
+  private constructor() {
+    this.firestoreService = FirestoreService;
+  }
 
   static getInstance(): TextNoteService {
     if (!TextNoteService.instance) {
@@ -57,22 +63,8 @@ export class TextNoteService {
       embeddingId: null,
     };
 
-    // Store in Firestore via API route
-    const response = await fetch('/api/text-notes', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        noteId,
-        textNote: fullTextNote,
-      }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to create text note');
-    }
+    // Store directly in Firestore (preserves auth context)
+    await this.firestoreService.createTextNote(noteId, fullTextNote);
 
     return { noteId, textNote: fullTextNote };
   }
@@ -102,21 +94,11 @@ export class TextNoteService {
     // Add updatedAt timestamp
     sanitizedUpdates.updatedAt = new Date().toISOString();
 
-    // Update in Firestore via API route
-    const response = await fetch(`/api/text-notes/${noteId}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ updates: sanitizedUpdates }),
-    });
+    // Update directly in Firestore (preserves auth context)
+    await this.firestoreService.updateTextNote(noteId, sanitizedUpdates);
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to update text note');
-    }
-
-    const { textNote } = await response.json();
+    // Fetch and return updated note
+    const textNote = await this.firestoreService.getTextNoteById(noteId);
     return textNote;
   }
 
@@ -125,14 +107,8 @@ export class TextNoteService {
    * @param noteId Note ID
    */
   async deleteTextNote(noteId: string): Promise<void> {
-    const response = await fetch(`/api/text-notes/${noteId}`, {
-      method: 'DELETE',
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to delete text note');
-    }
+    // Delete directly from Firestore (preserves auth context)
+    await this.firestoreService.deleteTextNote(noteId);
   }
 
   /**
@@ -142,14 +118,8 @@ export class TextNoteService {
    * @returns Promise with array of text notes
    */
   async getUserTextNotes(userId: string, limit: number = 50): Promise<TextNote[]> {
-    const response = await fetch(`/api/text-notes?userId=${userId}&limit=${limit}`);
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to fetch text notes');
-    }
-
-    const { textNotes } = await response.json();
+    // Fetch directly from Firestore (preserves auth context)
+    const textNotes = await this.firestoreService.getTextNotes(userId, limit);
     return textNotes;
   }
 
@@ -159,14 +129,8 @@ export class TextNoteService {
    * @returns Promise with text note
    */
   async getTextNoteById(noteId: string): Promise<TextNote> {
-    const response = await fetch(`/api/text-notes/${noteId}`);
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to fetch text note');
-    }
-
-    const { textNote } = await response.json();
+    // Fetch directly from Firestore (preserves auth context)
+    const textNote = await this.firestoreService.getTextNoteById(noteId);
     return textNote;
   }
 
