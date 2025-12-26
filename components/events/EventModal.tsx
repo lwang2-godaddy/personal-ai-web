@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Fragment } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
-import { Event, EventType, EventStatus } from '@/lib/models/Event';
+import { Event, EventType, EventStatus, EventReminder } from '@/lib/models/Event';
 import { useAppDispatch } from '@/lib/store/hooks';
 import {
   createEvent,
@@ -14,6 +14,8 @@ import {
   fetchEvents,
 } from '@/lib/store/slices/eventsSlice';
 import { useAuth } from '@/lib/hooks/useAuth';
+import ReminderManager from './ReminderManager';
+import ReminderService from '@/lib/services/reminders/ReminderService';
 
 interface EventModalProps {
   isOpen: boolean;
@@ -38,6 +40,7 @@ export default function EventModal({ isOpen, onClose, mode = 'view', event }: Ev
   const [location, setLocation] = useState('');
   const [participants, setParticipants] = useState('');
   const [status, setStatus] = useState<EventStatus>('confirmed');
+  const [reminders, setReminders] = useState<EventReminder[]>([]);
 
   useEffect(() => {
     setCurrentMode(mode);
@@ -54,6 +57,7 @@ export default function EventModal({ isOpen, onClose, mode = 'view', event }: Ev
       setLocation(event.location || '');
       setParticipants(event.participants.join(', '));
       setStatus(event.status);
+      setReminders(event.reminders || []);
     } else if (currentMode === 'create') {
       resetForm();
     }
@@ -80,6 +84,8 @@ export default function EventModal({ isOpen, onClose, mode = 'view', event }: Ev
     setLocation('');
     setParticipants('');
     setStatus('confirmed');
+    // Generate smart reminders for new events
+    setReminders(ReminderService.generateSmartReminders('appointment'));
   };
 
   const handleSave = async () => {
@@ -113,6 +119,7 @@ export default function EventModal({ isOpen, onClose, mode = 'view', event }: Ev
         recurrenceEndDate: undefined,
         status,
         confidence: 1.0,
+        reminders, // NEW: Multiple reminders support
         notificationScheduled: false,
         notificationSentAt: undefined,
         notificationId: undefined,
@@ -444,6 +451,18 @@ export default function EventModal({ isOpen, onClose, mode = 'view', event }: Ev
                           onChange={(e) => setParticipants(e.target.value)}
                           className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                           placeholder="Comma-separated names"
+                        />
+                      </div>
+
+                      {/* Reminders Section */}
+                      <div className="pt-4 border-t border-gray-200">
+                        <ReminderManager
+                          event={event}
+                          eventType={type}
+                          eventDatetime={datetime ? new Date(datetime) : new Date()}
+                          reminders={reminders}
+                          onChange={setReminders}
+                          disabled={currentMode === 'view'}
                         />
                       </div>
                     </div>

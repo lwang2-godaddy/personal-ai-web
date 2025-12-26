@@ -69,6 +69,7 @@ export const fetchEvents = createAsyncThunk(
           : undefined,
         status: doc.status,
         confidence: doc.confidence,
+        reminders: doc.reminders || [], // NEW: Multiple reminders support
         notificationScheduled: doc.notificationScheduled,
         notificationSentAt: doc.notificationSentAt?.toDate
           ? doc.notificationSentAt.toDate()

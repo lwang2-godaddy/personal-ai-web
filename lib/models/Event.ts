@@ -2,6 +2,27 @@ export type EventType = 'appointment' | 'meeting' | 'intention' | 'plan' | 'remi
 export type EventSourceType = 'voice' | 'text' | 'photo' | 'health' | 'location' | 'manual';
 export type EventStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'draft';
 export type RecurrenceType = 'daily' | 'weekly' | 'monthly' | 'yearly';
+export type ReminderStatus = 'pending' | 'scheduled' | 'sent' | 'cancelled';
+
+export interface EventReminder {
+  id: string; // UUID for tracking
+  type: 'smart' | 'custom';
+  timing: number; // Minutes before event
+  notificationId?: string; // FCM/local notification ID
+  scheduledAt?: Date;
+  sentAt?: Date;
+  status: ReminderStatus;
+}
+
+// Smart reminder defaults per event type (minutes before event)
+export const SMART_REMINDER_DEFAULTS: Record<EventType, number[]> = {
+  appointment: [10080, 1440, 60], // 1 week, 1 day, 1 hour
+  meeting: [1440, 60, 15], // 1 day, 1 hour, 15 min
+  intention: [1440], // 1 day
+  plan: [10080, 1440], // 1 week, 1 day
+  reminder: [60], // 1 hour
+  todo: [1440, 60], // 1 day, 1 hour
+};
 
 export interface Event {
   id: string;
@@ -22,9 +43,10 @@ export interface Event {
   recurrenceEndDate?: Date;
   status: EventStatus;
   confidence: number;
-  notificationScheduled: boolean;
-  notificationSentAt?: Date;
-  notificationId?: string;
+  reminders: EventReminder[]; // NEW: Multiple reminders support
+  notificationScheduled: boolean; // @deprecated Use reminders array
+  notificationSentAt?: Date; // @deprecated Use reminders array
+  notificationId?: string; // @deprecated Use reminders array
   userConfirmed: boolean;
   userModified: boolean;
   completedAt?: Date;
