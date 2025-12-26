@@ -53,14 +53,17 @@ export class TextNoteService {
     // Generate note ID
     const noteId = `text_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-    // Create full text note object
+    // Create full text note object (filter out undefined values for Firestore)
     const fullTextNote: TextNote = {
       id: noteId,
-      ...sanitizedNote,
+      title: sanitizedNote.title,
+      content: sanitizedNote.content,
+      tags: sanitizedNote.tags,
       userId,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       embeddingId: null,
+      ...(sanitizedNote.location && { location: sanitizedNote.location }),
     };
 
     // Store directly in Firestore (preserves auth context)
