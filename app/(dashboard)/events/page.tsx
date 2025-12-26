@@ -9,10 +9,17 @@ import {
   setStatusFilter,
   clearFilters,
   setSelectedEvent,
+  updateEvent,
 } from '@/lib/store/slices/eventsSlice';
 import { Event, EventType, EventStatus } from '@/lib/models/Event';
 import { EventModal } from '@/components/events';
 import { useAuth } from '@/lib/hooks/useAuth';
+import EventCalendar from '@/components/events/EventCalendar';
+import MiniCalendar from '@/components/events/MiniCalendar';
+import { useCalendarDragDrop } from '@/lib/hooks/useCalendarDragDrop';
+import { SlotInfo } from 'react-big-calendar';
+
+type TabType = 'calendar' | 'list' | 'search';
 
 export default function EventsPage() {
   const dispatch = useAppDispatch();
@@ -22,6 +29,27 @@ export default function EventsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'view' | 'edit' | 'create'>('view');
   const [selectedEvent, setSelected] = useState<Event | null>(null);
+  const [activeTab, setActiveTab] = useState<TabType>('calendar');
+  const [selectedDate, setSelectedDate] = useState(new Date());
+
+  // Calendar drag-and-drop hook
+  const { handleEventDrop, handleEventResize, isValidating } = useCalendarDragDrop(
+    user?.uid || '',
+    async (event: Event, start: Date, end: Date) => {
+      try {
+        const updatedEvent = {
+          ...event,
+          datetime: start,
+          endDatetime: end,
+        };
+        await dispatch(updateEvent(updatedEvent)).unwrap();
+        return true;
+      } catch (error) {
+        console.error('Failed to update event:', error);
+        return false;
+      }
+    }
+  );
 
   useEffect(() => {
     if (user) {
@@ -59,6 +87,31 @@ export default function EventsPage() {
 
   const handleClearFilters = () => {
     dispatch(clearFilters());
+  };
+
+  const handleSelectSlot = (slotInfo: SlotInfo) => {
+    setSelected({
+      id: '',
+      userId: user?.uid || '',
+      title: '',
+      description: '',
+      datetime: slotInfo.start,
+      endDatetime: slotInfo.end,
+      isAllDay: false,
+      type: 'appointment',
+      sourceType: 'manual',
+      participants: [],
+      status: 'draft',
+      reminders: [],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } as Event);
+    setModalMode('create');
+    setIsModalOpen(true);
+  };
+
+  const handleDateSelect = (date: Date) => {
+    setSelectedDate(date);
   };
 
   // Filter events based on current filters
@@ -121,31 +174,42 @@ export default function EventsPage() {
         <h1 className="text-3xl font-bold text-gray-900">Events</h1>
         <div className="flex items-center gap-3">
           <button
-            onClick={() => router.push('/events/search')}
-            className="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
-            Search
-          </button>
-          <button
             onClick={handleCreateClick}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             Create Event
           </button>
         </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex items-center gap-2 mb-6 border-b border-gray-200">
+        <button
+          onClick={() => setActiveTab('calendar')}
+          className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${
+            activeTab === 'calendar'
+              ? 'border-blue-500 text-blue-600'
+              : 'border-transparent text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          Calendar
+        </button>
+        <button
+          onClick={() => setActiveTab('list')}
+          className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${
+            activeTab === 'list'
+              ? 'border-blue-500 text-blue-600'
+              : 'border-transparent text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          List
+        </button>
+        <button
+          onClick={() => router.push('/events/search')}
+          className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors border-b-2 border-transparent"
+        >
+          Search
+        </button>
       </div>
 
       {/* Filters */}
@@ -209,8 +273,31 @@ export default function EventsPage() {
         </div>
       )}
 
-      {/* Events List */}
-      {!isLoading && !error && (
+      {/* Calendar View */}
+      {activeTab === 'calendar' && !isLoading && !error && (
+        <div className="flex gap-6">
+          <div className="flex-1">
+            <EventCalendar
+              events={filteredEvents}
+              onSelectEvent={handleEventClick}
+              onSelectSlot={handleSelectSlot}
+              onEventDrop={handleEventDrop}
+              onEventResize={handleEventResize}
+              loading={isValidating}
+            />
+          </div>
+          <div className="flex-shrink-0">
+            <MiniCalendar
+              selectedDate={selectedDate}
+              events={filteredEvents}
+              onDateSelect={handleDateSelect}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* List View */}
+      {activeTab === 'list' && !isLoading && !error && (
         <>
           {filteredEvents.length === 0 ? (
             <div className="bg-white rounded-lg shadow p-8 text-center">
