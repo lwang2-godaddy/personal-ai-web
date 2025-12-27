@@ -4,7 +4,7 @@ import { AuthGuard } from '@/components/auth/AuthGuard';
 // import { LanguageSwitcher } from '@/components/LanguageSwitcher'; // Temporarily disabled - requires i18n middleware
 import { useAppDispatch, useAppSelector } from '@/lib/store/hooks';
 import { signOutThunk } from '@/lib/store/slices/authSlice';
-import { FloatingActionButton, ToastContainer } from '@/components/common';
+import { FloatingActionButton, ToastContainer, Footer } from '@/components/common';
 import QuickCreateModal from '@/components/create/QuickCreateModal';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -32,7 +32,7 @@ export default function DashboardLayout({
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
         {/* Navigation */}
         <nav className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -86,7 +86,7 @@ export default function DashboardLayout({
         </nav>
 
         {/* Main content */}
-        <main>{children}</main>
+        <main className="flex-1">{children}</main>
 
         {/* Floating Action Button */}
         <FloatingActionButton />
@@ -96,6 +96,9 @@ export default function DashboardLayout({
 
         {/* Toast Notifications */}
         <ToastContainer />
+
+        {/* Footer */}
+        <Footer />
       </div>
     </AuthGuard>
   );
