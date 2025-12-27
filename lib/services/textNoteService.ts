@@ -36,40 +36,59 @@ export class TextNoteService {
     note: Omit<TextNote, 'id' | 'userId' | 'createdAt' | 'updatedAt' | 'embeddingId'>,
     userId: string
   ): Promise<{ noteId: string; textNote: TextNote }> {
-    // Sanitize text inputs
-    const sanitizedNote = {
-      ...note,
-      title: sanitizeText(note.title),
-      content: sanitizeText(note.content),
-      tags: note.tags.map((tag) => sanitizeText(tag)),
-    };
+    try {
+      console.log('[TextNoteService] Creating text note for userId:', userId);
 
-    // Validate
-    const validation = validateTextNote(sanitizedNote);
-    if (!validation.isValid) {
-      throw new Error(validation.errors.join(', '));
+      // Sanitize text inputs
+      const sanitizedNote = {
+        ...note,
+        title: sanitizeText(note.title),
+        content: sanitizeText(note.content),
+        tags: note.tags.map((tag) => sanitizeText(tag)),
+      };
+
+      console.log('[TextNoteService] Sanitized note:', { title: sanitizedNote.title, contentLength: sanitizedNote.content.length, tags: sanitizedNote.tags });
+
+      // Validate
+      const validation = validateTextNote(sanitizedNote);
+      if (!validation.isValid) {
+        console.error('[TextNoteService] Validation failed:', validation.errors);
+        throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
+      }
+
+      // Generate note ID
+      const noteId = `text_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      console.log('[TextNoteService] Generated noteId:', noteId);
+
+      // Create full text note object (filter out undefined values for Firestore)
+      const fullTextNote: TextNote = {
+        id: noteId,
+        title: sanitizedNote.title,
+        content: sanitizedNote.content,
+        tags: sanitizedNote.tags,
+        userId,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        embeddingId: null,
+        ...(sanitizedNote.location && { location: sanitizedNote.location }),
+      };
+
+      console.log('[TextNoteService] Calling Firestore with noteId:', noteId);
+
+      // Store directly in Firestore (preserves auth context)
+      await this.firestoreService.createTextNote(noteId, fullTextNote);
+
+      console.log('[TextNoteService] Successfully created text note:', noteId);
+      return { noteId, textNote: fullTextNote };
+    } catch (error: any) {
+      console.error('[TextNoteService] Error creating text note:', {
+        error: error,
+        message: error.message,
+        code: error.code,
+        userId,
+      });
+      throw new Error(`Failed to create diary entry: ${error.message || error.code || 'Unknown error'}`);
     }
-
-    // Generate note ID
-    const noteId = `text_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-    // Create full text note object (filter out undefined values for Firestore)
-    const fullTextNote: TextNote = {
-      id: noteId,
-      title: sanitizedNote.title,
-      content: sanitizedNote.content,
-      tags: sanitizedNote.tags,
-      userId,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      embeddingId: null,
-      ...(sanitizedNote.location && { location: sanitizedNote.location }),
-    };
-
-    // Store directly in Firestore (preserves auth context)
-    await this.firestoreService.createTextNote(noteId, fullTextNote);
-
-    return { noteId, textNote: fullTextNote };
   }
 
   /**
