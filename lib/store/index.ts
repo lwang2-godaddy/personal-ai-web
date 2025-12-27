@@ -17,7 +17,6 @@ import inputReducer from './slices/inputSlice';
 import quickCreateReducer from './slices/quickCreateSlice';
 import toastReducer from './slices/toastSlice';
 import eventsReducer from './slices/eventsSlice';
-import circleReducer from './slices/circleSlice';
 
 // Persist configuration
 const persistConfig = {
@@ -35,7 +34,6 @@ const rootReducer = combineReducers({
   quickCreate: quickCreateReducer,
   toast: toastReducer,
   events: eventsReducer,
-  circles: circleReducer,
 });
 
 // Persisted reducer
