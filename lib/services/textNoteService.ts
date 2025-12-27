@@ -60,7 +60,7 @@ export class TextNoteService {
       const noteId = `text_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       console.log('[TextNoteService] Generated noteId:', noteId);
 
-      // Create full text note object (filter out undefined values for Firestore)
+      // Create full text note object (filter out undefined/null values for Firestore)
       const fullTextNote: TextNote = {
         id: noteId,
         title: sanitizedNote.title,
@@ -70,8 +70,24 @@ export class TextNoteService {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         embeddingId: null,
-        ...(sanitizedNote.location && { location: sanitizedNote.location }),
       };
+
+      // Only add location if it exists and has valid values (Pinecone rejects null in metadata)
+      if (sanitizedNote.location) {
+        const location: any = {
+          latitude: sanitizedNote.location.latitude,
+          longitude: sanitizedNote.location.longitude,
+        };
+        // Only add address if it's not null
+        if (sanitizedNote.location.address !== null && sanitizedNote.location.address !== undefined) {
+          location.address = sanitizedNote.location.address;
+        }
+        // Only add locationId if it's not null
+        if (sanitizedNote.location.locationId !== null && sanitizedNote.location.locationId !== undefined) {
+          location.locationId = sanitizedNote.location.locationId;
+        }
+        fullTextNote.location = location;
+      }
 
       console.log('[TextNoteService] Calling Firestore with noteId:', noteId);
 

@@ -258,19 +258,13 @@ export const uploadPhoto = createAsyncThunk(
       });
       dispatch(setPhotoDescribing(false));
 
-      // Create photo memory object
+      // Create photo memory object (omit null values - Pinecone rejects null in metadata)
       const photoMemory: Omit<PhotoMemory, 'id'> = {
         userId,
         imageUrl,
         thumbnailUrl,
         mediumUrl,
         autoDescription,
-        userDescription: userDescription || null,
-        latitude: location?.latitude || null,
-        longitude: location?.longitude || null,
-        locationId: null, // Will be correlated by Cloud Function
-        activity: null, // Will be auto-tagged by Cloud Function
-        address: location?.address || null,
         takenAt: new Date(),
         uploadedAt: new Date(),
         fileSize,
@@ -279,7 +273,22 @@ export const uploadPhoto = createAsyncThunk(
         visualEmbeddingId: null,
         tags: [],
         isFavorite: false,
-      };
+      } as any;
+
+      // Only add fields if they have non-null values
+      if (userDescription) {
+        photoMemory.userDescription = userDescription;
+      }
+      if (location?.latitude !== null && location?.latitude !== undefined) {
+        photoMemory.latitude = location.latitude;
+      }
+      if (location?.longitude !== null && location?.longitude !== undefined) {
+        photoMemory.longitude = location.longitude;
+      }
+      if (location?.address) {
+        photoMemory.address = location.address;
+      }
+      // locationId and activity will be set by Cloud Function, omit for now
 
       // Validate
       const validation = validatePhotoMemory(photoMemory);
