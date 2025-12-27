@@ -92,6 +92,12 @@ export const submitQuickVoice = createAsyncThunk(
       const userId = state.auth.user?.uid;
       if (!userId) throw new Error('User not authenticated');
 
+      // Get Firebase ID token for authentication
+      const { auth } = await import('@/lib/api/firebase/config');
+      const user = auth.currentUser;
+      if (!user) throw new Error('User not authenticated');
+      const idToken = await user.getIdToken();
+
       // Upload audio file
       const timestamp = Date.now();
       const audioFile = new File([data.audioBlob], `voice-${timestamp}.webm`, {
@@ -106,6 +112,9 @@ export const submitQuickVoice = createAsyncThunk(
 
       const transcribeResponse = await fetch('/api/transcribe', {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${idToken}`,
+        },
         body: formData,
       });
 
