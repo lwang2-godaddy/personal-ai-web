@@ -21,15 +21,21 @@ import { db } from './config';
 function serializeFirestoreData(data: any): any {
   if (!data) return data;
 
-  if (data instanceof Timestamp) {
-    return data.toDate().toISOString();
+  // Check for Firestore Timestamp (has toDate method)
+  if (data && typeof data === 'object' && typeof data.toDate === 'function') {
+    try {
+      return data.toDate().toISOString();
+    } catch (e) {
+      console.warn('Failed to convert timestamp:', data);
+      return null;
+    }
   }
 
   if (Array.isArray(data)) {
     return data.map(serializeFirestoreData);
   }
 
-  if (typeof data === 'object') {
+  if (typeof data === 'object' && data !== null) {
     const serialized: any = {};
     for (const [key, value] of Object.entries(data)) {
       serialized[key] = serializeFirestoreData(value);
