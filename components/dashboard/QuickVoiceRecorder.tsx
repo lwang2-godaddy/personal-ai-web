@@ -99,8 +99,13 @@ export function QuickVoiceRecorder() {
       // Reset state
       handleCancel();
 
-      // Refresh dashboard
+      // Refresh dashboard immediately (will show "Processing...")
       dispatch(fetchDashboardData(user.uid));
+
+      // Refresh again after 3 seconds to show "Indexed" status
+      setTimeout(() => {
+        dispatch(fetchDashboardData(user.uid));
+      }, 3000);
 
       alert('Voice note saved successfully!');
     } catch (error: any) {

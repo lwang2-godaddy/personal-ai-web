@@ -31,14 +31,20 @@ export function QuickThoughtInput() {
       tags: [],
     }));
 
-    // Refresh dashboard data
-    if (userId) {
-      dispatch(fetchDashboardData(userId));
-    }
-
-    // Clear form
+    // Clear form immediately
     setContent('');
     setIsFocused(false);
+
+    // Refresh dashboard immediately to show the new note (will show "Processing...")
+    if (userId) {
+      dispatch(fetchDashboardData(userId));
+
+      // Refresh again after 3 seconds to show "Indexed" status
+      // (gives Cloud Function time to generate embedding)
+      setTimeout(() => {
+        dispatch(fetchDashboardData(userId));
+      }, 3000);
+    }
   };
 
   const characterCount = content.length;
