@@ -14,15 +14,15 @@ service firebase.storage {
       return request.auth.uid == userId;
     }
 
-    // Helper function to validate file size (max 10MB)
+    // Helper function to validate file size (max 50MB)
     function isValidSize() {
-      return request.resource.size < 10 * 1024 * 1024;
+      return request.resource.size < 50 * 1024 * 1024;
     }
 
     // User files in users/{userId}/ structure
     match /users/{userId}/{allPaths=**} {
       allow read: if isAuthenticated() && isOwner(userId);
-      allow write: if isAuthenticated() && isOwner(userId) && isValidSize();
+      allow write: if isAuthenticated() && isOwner(userId);
       allow delete: if isAuthenticated() && isOwner(userId);
     }
 
