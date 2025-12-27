@@ -1,0 +1,15 @@
+<svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="36" cy="36" r="36" fill="#4F46E5"/>
+
+  <!-- Simple AI icon -->
+  <g transform="translate(24, 24)">
+    <!-- Circle representing AI -->
+    <circle cx="12" cy="12" r="10" stroke="white" stroke-width="2" fill="none"/>
+
+    <!-- Dots inside -->
+    <circle cx="9" cy="10" r="1.5" fill="white"/>
+    <circle cx="15" cy="10" r="1.5" fill="white"/>
+    <circle cx="12" cy="15" r="1.5" fill="white"/>
+  </g>
+</svg>

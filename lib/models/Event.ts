@@ -2,7 +2,7 @@ export type EventType = 'appointment' | 'meeting' | 'intention' | 'plan' | 'remi
 export type EventSourceType = 'voice' | 'text' | 'photo' | 'health' | 'location' | 'manual';
 export type EventStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'draft';
 export type RecurrenceType = 'daily' | 'weekly' | 'monthly' | 'yearly';
-export type ReminderStatus = 'pending' | 'scheduled' | 'sent' | 'cancelled';
+export type ReminderStatus = 'pending' | 'scheduled' | 'sent' | 'cancelled' | 'snoozed';
 
 export interface EventReminder {
   id: string; // UUID for tracking
@@ -12,6 +12,8 @@ export interface EventReminder {
   scheduledAt?: Date;
   sentAt?: Date;
   status: ReminderStatus;
+  snoozeCount?: number; // Times snoozed (max 3)
+  snoozeUntil?: Date; // Snooze expiration time
 }
 
 // Smart reminder defaults per event type (minutes before event)
@@ -43,6 +45,7 @@ export interface Event {
   recurrenceEndDate?: Date;
   status: EventStatus;
   confidence: number;
+  timezone?: string; // IANA timezone (e.g., 'America/Los_Angeles')
   reminders: EventReminder[]; // NEW: Multiple reminders support
   notificationScheduled: boolean; // @deprecated Use reminders array
   notificationSentAt?: Date; // @deprecated Use reminders array
