@@ -1,7 +1,7 @@
 import OpenAIService from '@/lib/api/openai/client';
 import PineconeService from '@/lib/api/pinecone/client';
 import FirestoreService from '@/lib/api/firebase/firestore';
-import { ChatMessage, PineconeQueryResult, ContextReference } from '@/lib/models';
+import { ChatMessage, PineconeQueryResult, ContextReference, Circle, CircleDataSharing } from '@/lib/models';
 
 // Constants (adapted from mobile APP_CONSTANTS)
 const RAG_TOP_K_RESULTS = 10;
@@ -350,6 +350,216 @@ export class RAGEngine {
       isAverageQuery,
       isComparisonQuery,
     };
+  }
+
+  // ==================== CIRCLE RAG METHODS ====================
+
+  /**
+   * Query with circle context (respects per-circle data sharing rules)
+   *
+   * Flow:
+   * 1. Fetch circle and validate membership
+   * 2. Generate embedding for user query
+   * 3. Query Pinecone with multi-user filter + data type filter
+   * 4. Build context with member attribution
+   * 5. Send to GPT-4 with circle-aware system prompt
+   * 6. Return response with attributed context
+   */
+  async queryCircleContext(
+    userMessage: string,
+    circleId: string,
+    currentUserId: string,
+  ): Promise<{
+    response: string;
+    contextUsed: ContextReference[];
+  }> {
+    try {
+      console.log(`[RAGEngine] Circle query from user ${currentUserId} in circle ${circleId}: "${userMessage}"`);
+
+      // 1. Fetch circle and validate membership
+      const circle = await this.firestoreService.getCircle(circleId);
+      if (!circle.memberIds.includes(currentUserId)) {
+        throw new Error('Not authorized to access this circle');
+      }
+
+      // 2. Generate query embedding
+      console.log('[RAGEngine] Generating embedding for circle query...');
+      const queryEmbedding = await this.openAIService.generateEmbedding(
+        userMessage,
+        currentUserId,
+        'rag_circle_query_embedding'
+      );
+
+      // 3. Build data type filter based on circle sharing rules
+      const dataTypeFilter = this.buildCircleDataFilter(circle.dataSharing);
+
+      // 4. Query Pinecone with multi-user filter + data type filter
+      console.log(`[RAGEngine] Querying Pinecone for ${circle.memberIds.length} circle members...`);
+      const relevantVectors = await this.pineconeService.queryMultiUserVectors(
+        queryEmbedding,
+        circle.memberIds,
+        20, // Get more results for circle queries
+        dataTypeFilter,
+        'rag_circle_query_vector'
+      );
+
+      console.log(`[RAGEngine] Found ${relevantVectors.length} relevant data points across circle members`);
+
+      // 5. Build context with member attribution
+      const context = await this.buildCircleContext(relevantVectors, circle, currentUserId);
+
+      // 6. System prompt for circle context
+      const systemPrompt = `You are analyzing data for a friend circle called "${circle.name}" with ${circle.memberIds.length} members.
+When referencing data, mention which member it's from by name.
+Be conversational and friendly - this is a private circle of close friends.
+Respect the data sharing settings - only data types enabled for this circle are included.`;
+
+      // 7. Generate response
+      console.log('[RAGEngine] Generating GPT-4 response with circle context...');
+      const response = await this.openAIService.chatCompletionWithSystemPrompt(
+        [{ role: 'user', content: userMessage, timestamp: new Date().toISOString() }],
+        context,
+        systemPrompt,
+        {
+          userId: currentUserId,
+          endpoint: 'rag_circle_chat_completion'
+        }
+      );
+
+      // 8. Return response with attributed context
+      const contextUsed: ContextReference[] = relevantVectors.map((vector) => ({
+        id: vector.id,
+        type: vector.metadata.type as any,
+        snippet: vector.metadata.text,
+        score: vector.score,
+        userId: vector.metadata.userId, // Include for attribution
+      }));
+
+      console.log(`[RAGEngine] Circle query complete with ${contextUsed.length} context references`);
+
+      return {
+        response,
+        contextUsed,
+      };
+    } catch (error) {
+      console.error('[RAGEngine] Circle query error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Build Pinecone filter based on circle data sharing rules
+   *
+   * Converts CircleDataSharing to Pinecone metadata filter
+   * Example: { shareHealth: true, shareLocation: false } → { type: { $in: ['health'] } }
+   */
+  private buildCircleDataFilter(dataSharing: CircleDataSharing): Record<string, any> {
+    const allowedTypes: string[] = [];
+
+    if (dataSharing.shareHealth) {
+      allowedTypes.push('health');
+    }
+    if (dataSharing.shareLocation) {
+      allowedTypes.push('location');
+    }
+    if (dataSharing.shareActivities) {
+      allowedTypes.push('shared_activity');
+    }
+    if (dataSharing.shareVoiceNotes) {
+      allowedTypes.push('voice');
+    }
+    if (dataSharing.sharePhotos) {
+      allowedTypes.push('photo');
+    }
+
+    // If no types allowed, return filter that matches nothing
+    if (allowedTypes.length === 0) {
+      return { type: { $eq: 'none' } };
+    }
+
+    // Return filter for allowed types
+    return { type: { $in: allowedTypes } };
+  }
+
+  /**
+   * Build context with member attribution
+   *
+   * Formats retrieved data to show which circle member each piece belongs to
+   * Example: "[1] (92.5% relevant) [Alice] I played badminton at SF Badminton Club."
+   */
+  private async buildCircleContext(
+    vectors: PineconeQueryResult[],
+    circle: Circle,
+    currentUserId: string,
+  ): Promise<string> {
+    if (vectors.length === 0) {
+      return `No relevant data found in circle "${circle.name}". Circle members may not have this type of data, or it may not be shared.`;
+    }
+
+    // Fetch user display names for attribution
+    const userIds = [...new Set(vectors.map((v) => v.metadata.userId))];
+    const userNames = await this.fetchUserNames(userIds);
+
+    // Sort by relevance score
+    const sortedVectors = [...vectors].sort((a, b) => b.score - a.score);
+
+    // Build context parts with member attribution
+    const contextParts = sortedVectors.map((vector, index) => {
+      const metadata = vector.metadata;
+      const vectorUserId = metadata.userId;
+      const userName = userNames.get(vectorUserId) || 'Circle Member';
+      const isCurrentUser = vectorUserId === currentUserId;
+      const userLabel = isCurrentUser ? 'You' : userName;
+      const relevancePercent = (vector.score * 100).toFixed(1);
+
+      // Special formatting for photos
+      if (metadata.type === 'photo') {
+        return `[${index + 1}] (${relevancePercent}% relevant) [${userLabel}] 📸 Photo: ${metadata.text}`;
+      }
+
+      return `[${index + 1}] (${relevancePercent}% relevant) [${userLabel}] ${metadata.text}`;
+    });
+
+    let context = `Circle "${circle.name}" Data (${circle.memberIds.length} members, ${sortedVectors.length} items):\n\n${contextParts.join('\n\n')}`;
+
+    // Limit context length
+    if (context.length > RAG_CONTEXT_MAX_LENGTH) {
+      context = context.substring(0, RAG_CONTEXT_MAX_LENGTH) + '...';
+    }
+
+    return context;
+  }
+
+  /**
+   * Fetch user display names from Firestore
+   * Used for attribution in circle contexts
+   */
+  private async fetchUserNames(userIds: string[]): Promise<Map<string, string>> {
+    const userNames = new Map<string, string>();
+
+    try {
+      const userDocs = await Promise.all(
+        userIds.map((uid) => this.firestoreService.getUserData(uid)),
+      );
+
+      userDocs.forEach((user, index) => {
+        if (user && user.displayName) {
+          userNames.set(userIds[index], user.displayName);
+        } else {
+          userNames.set(userIds[index], 'Circle Member');
+        }
+      });
+    } catch (error) {
+      console.error('[RAGEngine] Error fetching user names:', error);
+      // Return map with generic names
+      userIds.forEach((uid) => {
+        if (!userNames.has(uid)) {
+          userNames.set(uid, 'Circle Member');
+        }
+      });
+    }
+
+    return userNames;
   }
 }
 
