@@ -6,3 +6,6 @@
 export { CircleCard } from './CircleCard';
 export { DataSharingToggles } from './DataSharingToggles';
 export { CircleMessageBubble } from './CircleMessageBubble';
+export { CircleMemberListItem } from './CircleMemberListItem';
+export { CircleChallengeCard } from './CircleChallengeCard';
+export { CircleInsightCard } from './CircleInsightCard';
