@@ -7,3 +7,4 @@ export * from './VoiceNote';
 export * from './PhotoMemory';
 export * from './TextNote';
 export * from './Event';
+export * from './Circle';
