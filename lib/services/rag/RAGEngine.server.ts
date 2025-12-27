@@ -1,11 +1,7 @@
 import OpenAIService from '@/lib/api/openai/client';
 import PineconeService from '@/lib/api/pinecone/client';
 import FirestoreService from '@/lib/api/firebase/firestore';
-import { ChatMessage, PineconeQueryResult, ContextReference } from '@/lib/models';
-
-// Temporary stub types for Circle feature (WIP)
-type Circle = any;
-type CircleDataSharing = any;
+import { ChatMessage, PineconeQueryResult, ContextReference, Circle, CircleDataSharing } from '@/lib/models';
 
 // Constants (adapted from mobile APP_CONSTANTS)
 const RAG_TOP_K_RESULTS = 10;
@@ -356,12 +352,12 @@ export class RAGEngine {
     };
   }
 
-  // ==================== CIRCLE RAG METHODS (WIP - DISABLED) ====================
+  // ==================== CIRCLE RAG METHODS ====================
 
   /**
    * Query with circle context (respects per-circle data sharing rules)
    *
-   * NOTE: This feature is currently disabled / work-in-progress
+   * Used for Close Friend Circles feature to enable group intelligence while maintaining privacy.
    */
   async queryCircleContext(
     userMessage: string,
@@ -371,8 +367,6 @@ export class RAGEngine {
     response: string;
     contextUsed: ContextReference[];
   }> {
-    throw new Error('Circle feature is not yet implemented');
-    /* WIP - Commenting out incomplete implementation
     try {
       console.log(`[RAGEngine] Circle query from user ${currentUserId} in circle ${circleId}: "${userMessage}"`);
 
@@ -445,15 +439,12 @@ Respect the data sharing settings - only data types enabled for this circle are 
       console.error('[RAGEngine] Circle query error:', error);
       throw error;
     }
-    */ // End WIP comment
   }
 
   /**
-   * Build Pinecone filter based on circle data sharing rules (DISABLED - WIP)
+   * Build Pinecone filter based on circle data sharing rules
    */
   private buildCircleDataFilter(dataSharing: CircleDataSharing): Record<string, any> {
-    throw new Error('Circle feature is not yet implemented');
-    /* WIP - Commenting out incomplete implementation
     const allowedTypes: string[] = [];
 
     if (dataSharing.shareHealth) {
@@ -479,19 +470,16 @@ Respect the data sharing settings - only data types enabled for this circle are 
 
     // Return filter for allowed types
     return { type: { $in: allowedTypes } };
-    */ // End WIP comment
   }
 
   /**
-   * Build context with member attribution (DISABLED - WIP)
+   * Build context with member attribution
    */
   private async buildCircleContext(
     vectors: PineconeQueryResult[],
     circle: Circle,
     currentUserId: string,
   ): Promise<string> {
-    throw new Error('Circle feature is not yet implemented');
-    /* WIP - Commenting out incomplete implementation
     if (vectors.length === 0) {
       return `No relevant data found in circle "${circle.name}". Circle members may not have this type of data, or it may not be shared.`;
     }
@@ -528,15 +516,12 @@ Respect the data sharing settings - only data types enabled for this circle are 
     }
 
     return context;
-    */ // End WIP comment
   }
 
   /**
-   * Fetch user display names from Firestore (DISABLED - WIP)
+   * Fetch user display names from Firestore
    */
   private async fetchUserNames(userIds: string[]): Promise<Map<string, string>> {
-    throw new Error('Circle feature is not yet implemented');
-    /* WIP - Commenting out incomplete implementation
     const userNames = new Map<string, string>();
 
     try {
@@ -562,7 +547,6 @@ Respect the data sharing settings - only data types enabled for this circle are 
     }
 
     return userNames;
-    */ // End WIP comment
   }
 }
 

@@ -299,6 +299,13 @@ export class FirestoreService {
       textNoteCount: textNotes.length,
     };
   }
+
+  /**
+   * Get circle by ID (for RAG circle queries)
+   */
+  async getCircle(circleId: string): Promise<any> {
+    return this.getDocument('circles', circleId);
+  }
 }
 
 // Export singleton instance
