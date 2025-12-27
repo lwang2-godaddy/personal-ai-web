@@ -4,7 +4,7 @@ import { AuthGuard } from '@/components/auth/AuthGuard';
 // import { LanguageSwitcher } from '@/components/LanguageSwitcher'; // Temporarily disabled - requires i18n middleware
 import { useAppDispatch, useAppSelector } from '@/lib/store/hooks';
 import { signOutThunk } from '@/lib/store/slices/authSlice';
-import { FloatingActionButton, ToastContainer, Footer } from '@/components/common';
+import { FloatingActionButton, ToastContainer } from '@/components/common';
 import QuickCreateModal from '@/components/create/QuickCreateModal';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -96,9 +96,6 @@ export default function DashboardLayout({
 
         {/* Toast Notifications */}
         <ToastContainer />
-
-        {/* Footer */}
-        <Footer />
       </div>
     </AuthGuard>
   );
