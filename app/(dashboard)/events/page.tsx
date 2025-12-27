@@ -37,12 +37,13 @@ export default function EventsPage() {
     user?.uid || '',
     async (event: Event, start: Date, end: Date) => {
       try {
-        const updatedEvent = {
-          ...event,
-          datetime: start,
-          endDatetime: end,
-        };
-        await dispatch(updateEvent(updatedEvent)).unwrap();
+        await dispatch(updateEvent({
+          eventId: event.id,
+          updates: {
+            datetime: start,
+            endDatetime: end,
+          },
+        })).unwrap();
         return true;
       } catch (error) {
         console.error('Failed to update event:', error);
