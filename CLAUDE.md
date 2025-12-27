@@ -1310,6 +1310,7 @@ console.log('Context used:', data.contextUsed);
 - **Cloud Functions:** `PersonalAIApp/firebase/functions/src/index.ts`
 - **Firestore Rules:** `firestore.rules`
 - **Environment Variables:** `.env.example`
+- **Temporal Reasoning Feature:** `docs/features/TEMPORAL_REASONING.md` (comprehensive guide to time-based RAG queries)
 
 ### External Documentation
 
@@ -1341,6 +1342,13 @@ This web app has a **completely different architecture** than the React Native m
 **Important:** Don't assume patterns from mobile app work in web app. Always check this CLAUDE.md first.
 
 ## Version History
+
+- **v0.2.0** (Dec 27, 2025) - Temporal Reasoning Feature
+  - Added intelligent temporal query detection (yesterday, last week, etc.)
+  - Integrated Firestore events collection with RAG queries
+  - Explicit date display in context for GPT-4
+  - Date-filtered Pinecone searches for time-bounded queries
+  - Comprehensive documentation: `docs/features/TEMPORAL_REASONING.md`
 
 - **v0.1.0** (Dec 26, 2025) - Initial CLAUDE.md creation
   - Comprehensive documentation of web app architecture

@@ -40,6 +40,12 @@ export class RAGEngine {
 
   /**
    * Main query method: User asks a question, returns AI answer with personal context
+   *
+   * Features:
+   * - Temporal query detection (yesterday, last week, etc.)
+   * - Date-filtered Pinecone search
+   * - Firestore events integration
+   * - Unified context building from vectors + events
    */
   async query(userMessage: string, userId: string): Promise<{
     response: string;
@@ -48,8 +54,17 @@ export class RAGEngine {
     try {
       console.log(`[RAGEngine] Query from user ${userId}: "${userMessage}"`);
 
-      // 1. Generate embedding for user query
-      console.log('[RAGEngine] Step 1: Calling OpenAI to generate embedding...');
+      // 1. Parse temporal intent from query
+      console.log('[RAGEngine] Step 1: Parsing temporal intent...');
+      const temporalIntent = this.parseTemporalIntent(userMessage);
+      if (temporalIntent.hasTemporalIntent) {
+        console.log(`[RAGEngine] ✓ Detected temporal query: "${temporalIntent.timeReference}" (${temporalIntent.dateRange?.start.toLocaleDateString()} - ${temporalIntent.dateRange?.end.toLocaleDateString()})`);
+      } else {
+        console.log('[RAGEngine] ✓ No temporal intent detected');
+      }
+
+      // 2. Generate embedding for user query
+      console.log('[RAGEngine] Step 2: Calling OpenAI to generate embedding...');
       const embeddingStart = Date.now();
       const queryEmbedding = await this.openAIService.generateEmbedding(
         userMessage,
@@ -58,25 +73,75 @@ export class RAGEngine {
       );
       console.log(`[RAGEngine] ✓ Embedding generated in ${Date.now() - embeddingStart}ms (dimension: ${queryEmbedding.length})`);
 
-      // 2. Query Pinecone for relevant vectors
-      console.log('[RAGEngine] Step 2: Querying Pinecone vector database...');
+      // 3. Query Pinecone for relevant vectors (with optional date filter)
+      console.log('[RAGEngine] Step 3: Querying Pinecone vector database...');
       const pineconeStart = Date.now();
+
+      // Apply date filter if temporal intent detected
+      let pineconeFilter: Record<string, any> | undefined = undefined;
+      if (temporalIntent.hasTemporalIntent && temporalIntent.dateRange) {
+        pineconeFilter = {
+          // Filter by date range (supports multiple date field names)
+          $or: [
+            {
+              date: {
+                $gte: temporalIntent.dateRange.start.toISOString(),
+                $lte: temporalIntent.dateRange.end.toISOString()
+              }
+            },
+            {
+              createdAt: {
+                $gte: temporalIntent.dateRange.start.toISOString(),
+                $lte: temporalIntent.dateRange.end.toISOString()
+              }
+            },
+            {
+              timestamp: {
+                $gte: temporalIntent.dateRange.start.toISOString(),
+                $lte: temporalIntent.dateRange.end.toISOString()
+              }
+            }
+          ]
+        };
+        console.log(`[RAGEngine] ✓ Applying date filter to Pinecone query`);
+      }
+
       const relevantVectors = await this.pineconeService.queryVectors(
         queryEmbedding,
         userId,
         RAG_TOP_K_RESULTS,
-        undefined,
+        pineconeFilter,
         'rag_query_vector'
       );
       console.log(`[RAGEngine] ✓ Pinecone returned ${relevantVectors.length} relevant data points in ${Date.now() - pineconeStart}ms`);
 
-      // 3. Build context from retrieved data
-      console.log('[RAGEngine] Step 3: Building context from retrieved data...');
-      const context = this.buildContext(relevantVectors);
-      console.log(`[RAGEngine] ✓ Context built (length: ${context.length} chars)`);
+      // 4. Query Firestore for extracted events (if temporal intent detected)
+      let relevantEvents: any[] = [];
+      if (temporalIntent.hasTemporalIntent && temporalIntent.dateRange) {
+        console.log('[RAGEngine] Step 4: Querying Firestore for extracted events...');
+        const eventsStart = Date.now();
+        try {
+          relevantEvents = await this.getEventsByDateRange(
+            userId,
+            temporalIntent.dateRange.start,
+            temporalIntent.dateRange.end
+          );
+          console.log(`[RAGEngine] ✓ Firestore returned ${relevantEvents.length} events in ${Date.now() - eventsStart}ms`);
+        } catch (error) {
+          console.warn('[RAGEngine] Warning: Failed to retrieve events from Firestore:', error);
+          // Continue without events if query fails
+        }
+      }
 
-      // 4. Generate response with GPT-4o
-      console.log('[RAGEngine] Step 4: Calling OpenAI GPT-4o for response...');
+      // 5. Build context from retrieved data (merge vectors + events)
+      console.log(`[RAGEngine] Step ${temporalIntent.hasTemporalIntent ? '5' : '4'}: Building context from retrieved data...`);
+      const context = relevantEvents.length > 0
+        ? this.buildContextWithEvents(relevantVectors, relevantEvents)
+        : this.buildContext(relevantVectors);
+      console.log(`[RAGEngine] ✓ Context built (length: ${context.length} chars, ${relevantVectors.length} vectors, ${relevantEvents.length} events)`);
+
+      // 6. Generate response with GPT-4o
+      console.log(`[RAGEngine] Step ${temporalIntent.hasTemporalIntent ? '6' : '5'}: Calling OpenAI GPT-4o for response...`);
       const gptStart = Date.now();
       const response = await this.openAIService.chatCompletion(
         [{ role: 'user', content: userMessage, timestamp: new Date().toISOString() }],
@@ -88,7 +153,7 @@ export class RAGEngine {
       );
       console.log(`[RAGEngine] ✓ GPT-4o responded in ${Date.now() - gptStart}ms (length: ${response.length} chars)`);
 
-      // 5. Create context references for UI
+      // 7. Create context references for UI
       const contextUsed: ContextReference[] = relevantVectors.map((vector) => ({
         id: vector.id,
         score: vector.score,
@@ -96,7 +161,7 @@ export class RAGEngine {
         snippet: vector.metadata.text,
       }));
 
-      console.log(`[RAGEngine] Query complete. Used ${contextUsed.length} context references`);
+      console.log(`[RAGEngine] Query complete. Used ${contextUsed.length} context references${temporalIntent.hasTemporalIntent ? ` (temporal: ${temporalIntent.timeReference})` : ''}`);
 
       return {
         response,
@@ -291,13 +356,31 @@ export class RAGEngine {
       const metadata = vector.metadata;
       const relevancePercent = (vector.score * 100).toFixed(1);
 
+      // Extract date from metadata (support multiple field names)
+      let datePrefix = '';
+      const dateField = metadata.date || metadata.createdAt || metadata.timestamp;
+      if (dateField) {
+        try {
+          const date = new Date(dateField);
+          if (!isNaN(date.getTime())) {
+            datePrefix = `[${date.toLocaleDateString('en-US', {
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric'
+            })}] `;
+          }
+        } catch (e) {
+          // If date parsing fails, skip the date prefix
+        }
+      }
+
       // Special formatting for photos
       if (metadata.type === 'photo') {
-        return `[${index + 1}] (${relevancePercent}% relevant) 📸 Photo: ${metadata.text}`;
+        return `[${index + 1}] (${relevancePercent}% relevant) ${datePrefix}📸 Photo: ${metadata.text}`;
       }
 
       // Standard formatting for other data types
-      return `[${index + 1}] (${relevancePercent}% relevant) ${metadata.text}`;
+      return `[${index + 1}] (${relevancePercent}% relevant) ${datePrefix}${metadata.text}`;
     });
 
     // Limit context length
@@ -350,6 +433,243 @@ export class RAGEngine {
       isAverageQuery,
       isComparisonQuery,
     };
+  }
+
+  // ==================== TEMPORAL REASONING METHODS ====================
+
+  /**
+   * Parse temporal intent from user query
+   * Converts relative time references to absolute date ranges
+   *
+   * @param userMessage - User's query message
+   * @returns Temporal intent object with date range if detected
+   *
+   * @example
+   * parseTemporalIntent("what did I do yesterday")
+   * // Returns: { hasTemporalIntent: true, dateRange: { start: yesterday 00:00, end: yesterday 23:59 } }
+   */
+  private parseTemporalIntent(userMessage: string): {
+    hasTemporalIntent: boolean;
+    dateRange?: { start: Date; end: Date };
+    timeReference?: string;
+  } {
+    const today = new Date();
+    const messageLower = userMessage.toLowerCase();
+
+    // Helper to get start/end of day
+    const startOfDay = (date: Date) => {
+      const d = new Date(date);
+      d.setHours(0, 0, 0, 0);
+      return d;
+    };
+    const endOfDay = (date: Date) => {
+      const d = new Date(date);
+      d.setHours(23, 59, 59, 999);
+      return d;
+    };
+
+    // Detect "today"
+    if (/\btoday\b/i.test(userMessage)) {
+      return {
+        hasTemporalIntent: true,
+        dateRange: { start: startOfDay(today), end: endOfDay(today) },
+        timeReference: 'today'
+      };
+    }
+
+    // Detect "yesterday"
+    if (/\byesterday\b/i.test(userMessage)) {
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      return {
+        hasTemporalIntent: true,
+        dateRange: { start: startOfDay(yesterday), end: endOfDay(yesterday) },
+        timeReference: 'yesterday'
+      };
+    }
+
+    // Detect "day before yesterday" / "2 days ago"
+    if (/day before yesterday|2 days ago/i.test(userMessage)) {
+      const twoDaysAgo = new Date(today);
+      twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+      return {
+        hasTemporalIntent: true,
+        dateRange: { start: startOfDay(twoDaysAgo), end: endOfDay(twoDaysAgo) },
+        timeReference: 'day before yesterday'
+      };
+    }
+
+    // Detect "N days ago"
+    const daysAgoMatch = messageLower.match(/(\d+)\s+days?\s+ago/);
+    if (daysAgoMatch) {
+      const daysAgo = parseInt(daysAgoMatch[1]);
+      const targetDate = new Date(today);
+      targetDate.setDate(targetDate.getDate() - daysAgo);
+      return {
+        hasTemporalIntent: true,
+        dateRange: { start: startOfDay(targetDate), end: endOfDay(targetDate) },
+        timeReference: `${daysAgo} days ago`
+      };
+    }
+
+    // Detect "this week"
+    if (/\bthis week\b/i.test(userMessage)) {
+      const weekStart = new Date(today);
+      weekStart.setDate(weekStart.getDate() - today.getDay()); // Sunday
+      return {
+        hasTemporalIntent: true,
+        dateRange: { start: startOfDay(weekStart), end: endOfDay(today) },
+        timeReference: 'this week'
+      };
+    }
+
+    // Detect "last week"
+    if (/\blast week\b/i.test(userMessage)) {
+      const lastWeekEnd = new Date(today);
+      lastWeekEnd.setDate(lastWeekEnd.getDate() - today.getDay() - 1); // Last Saturday
+      const lastWeekStart = new Date(lastWeekEnd);
+      lastWeekStart.setDate(lastWeekStart.getDate() - 6); // Previous Sunday
+      return {
+        hasTemporalIntent: true,
+        dateRange: { start: startOfDay(lastWeekStart), end: endOfDay(lastWeekEnd) },
+        timeReference: 'last week'
+      };
+    }
+
+    // Detect "this month"
+    if (/\bthis month\b/i.test(userMessage)) {
+      const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+      return {
+        hasTemporalIntent: true,
+        dateRange: { start: startOfDay(monthStart), end: endOfDay(today) },
+        timeReference: 'this month'
+      };
+    }
+
+    // Detect "last month"
+    if (/\blast month\b/i.test(userMessage)) {
+      const lastMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0); // Last day of previous month
+      return {
+        hasTemporalIntent: true,
+        dateRange: { start: startOfDay(lastMonthStart), end: endOfDay(lastMonthEnd) },
+        timeReference: 'last month'
+      };
+    }
+
+    // Detect "this year"
+    if (/\bthis year\b/i.test(userMessage)) {
+      const yearStart = new Date(today.getFullYear(), 0, 1);
+      return {
+        hasTemporalIntent: true,
+        dateRange: { start: startOfDay(yearStart), end: endOfDay(today) },
+        timeReference: 'this year'
+      };
+    }
+
+    // No temporal intent detected
+    return { hasTemporalIntent: false };
+  }
+
+  /**
+   * Get events from Firestore within a date range
+   * Uses the extracted events collection with AI-parsed datetimes
+   *
+   * @param userId - User ID
+   * @param startDate - Start of date range (inclusive)
+   * @param endDate - End of date range (inclusive)
+   * @returns Array of extracted events
+   */
+  private async getEventsByDateRange(
+    userId: string,
+    startDate: Date,
+    endDate: Date
+  ): Promise<any[]> {
+    return await this.firestoreService.getEvents(userId, {
+      startDate,
+      endDate,
+      limit: 50
+    });
+  }
+
+  /**
+   * Build unified context from both Pinecone vectors and Firestore events
+   * Merges semantic search results with extracted temporal events
+   *
+   * @param vectors - Pinecone query results
+   * @param events - Extracted events from Firestore
+   * @returns Formatted context string for GPT-4
+   */
+  private buildContextWithEvents(
+    vectors: PineconeQueryResult[],
+    events: any[]
+  ): string {
+    if (vectors.length === 0 && events.length === 0) {
+      return 'No relevant data found in the user\'s personal history. Let the user know you need more data to answer their question.';
+    }
+
+    // Build context parts from vectors (with existing date display logic)
+    const vectorParts: string[] = [];
+    if (vectors.length > 0) {
+      const sortedVectors = [...vectors].sort((a, b) => b.score - a.score);
+      vectorParts.push(...sortedVectors.map((vector, index) => {
+        const metadata = vector.metadata;
+        const relevancePercent = (vector.score * 100).toFixed(1);
+
+        // Extract date from metadata
+        let datePrefix = '';
+        const dateField = metadata.date || metadata.createdAt || metadata.timestamp;
+        if (dateField) {
+          try {
+            const date = new Date(dateField);
+            if (!isNaN(date.getTime())) {
+              datePrefix = `[${date.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+              })}] `;
+            }
+          } catch (e) {
+            // Skip date prefix if parsing fails
+          }
+        }
+
+        // Special formatting for photos
+        if (metadata.type === 'photo') {
+          return `[${index + 1}] (${relevancePercent}% relevant) ${datePrefix}📸 Photo: ${metadata.text}`;
+        }
+
+        return `[${index + 1}] (${relevancePercent}% relevant) ${datePrefix}${metadata.text}`;
+      }));
+    }
+
+    // Build context parts from events
+    const eventParts: string[] = [];
+    if (events.length > 0) {
+      eventParts.push(...events.map((event, index) => {
+        const eventDate = new Date(event.datetime);
+        const dateStr = eventDate.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+        const confidencePercent = ((event.confidence || 0.7) * 100).toFixed(0);
+        return `[Event ${index + 1}] (${confidencePercent}% confidence) [${dateStr}] ${event.title}${event.description ? ': ' + event.description : ''}`;
+      }));
+    }
+
+    // Combine all parts
+    const allParts = [...vectorParts, ...eventParts];
+    let context = `Relevant information from the user's personal data (${vectors.length} items) and extracted events (${events.length} events):\n\n${allParts.join('\n\n')}`;
+
+    // Limit context length
+    if (context.length > RAG_CONTEXT_MAX_LENGTH) {
+      context = context.substring(0, RAG_CONTEXT_MAX_LENGTH) + '...';
+    }
+
+    return context;
   }
 
   // ==================== CIRCLE RAG METHODS ====================

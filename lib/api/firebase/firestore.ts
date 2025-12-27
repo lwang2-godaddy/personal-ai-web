@@ -301,6 +301,44 @@ export class FirestoreService {
   }
 
   /**
+   * Get extracted events for a user with optional date range filtering
+   * Used by RAGEngine for temporal reasoning
+   *
+   * @param userId - User ID
+   * @param options - Query options
+   * @param options.startDate - Filter events after this date (inclusive)
+   * @param options.endDate - Filter events before this date (inclusive)
+   * @param options.limit - Maximum number of events to return (default: 50)
+   * @returns Array of extracted events sorted by datetime (newest first)
+   */
+  async getEvents(
+    userId: string,
+    options?: {
+      startDate?: Date;
+      endDate?: Date;
+      limit?: number;
+    }
+  ): Promise<any[]> {
+    const constraints: QueryConstraint[] = [where('userId', '==', userId)];
+
+    // Add date range filters if provided
+    if (options?.startDate) {
+      constraints.push(where('datetime', '>=', Timestamp.fromDate(options.startDate)));
+    }
+    if (options?.endDate) {
+      constraints.push(where('datetime', '<=', Timestamp.fromDate(options.endDate)));
+    }
+
+    // Order by datetime (newest first for RAG relevance)
+    constraints.push(orderBy('datetime', 'desc'));
+
+    // Apply limit
+    constraints.push(firestoreLimit(options?.limit || 50));
+
+    return this.getDocuments('events', constraints);
+  }
+
+  /**
    * Get circle by ID (for RAG circle queries)
    */
   async getCircle(circleId: string): Promise<any> {
