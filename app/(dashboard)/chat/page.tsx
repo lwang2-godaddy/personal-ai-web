@@ -38,13 +38,19 @@ export default function ChatPage() {
       {/* Header */}
       <div className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-6 py-4">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              AI Chat
-            </h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              Ask questions about your personal data
-            </p>
+          <div className="flex items-center gap-3">
+            {/* SirCharge Avatar/Logo */}
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-2xl flex-shrink-0">
+              ⚡
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Ask SirCharge
+              </h1>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                Your personal AI assistant who knows everything about you
+              </p>
+            </div>
           </div>
           {messages.length > 0 && (
             <button

@@ -32,7 +32,7 @@ export function ChatInput({ onSend, disabled, placeholder }: ChatInputProps) {
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           onKeyPress={handleKeyPress}
-          placeholder={placeholder || 'Ask me anything about your data...'}
+          placeholder={placeholder || 'Ask me anything... like "Where did I go yesterday?" or "How am I sleeping?"'}
           disabled={disabled}
           rows={1}
           className="flex-1 resize-none rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
