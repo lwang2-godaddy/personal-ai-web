@@ -12,6 +12,7 @@ import { validateTextNote, validateVoiceNote, validatePhotoMemory } from '@/lib/
 import StorageService from '@/lib/api/firebase/storage';
 import GeolocationService from '@/lib/services/geolocation';
 import TextNoteService from '@/lib/services/textNoteService';
+import { apiPost } from '@/lib/api/client';
 
 /**
  * Input State Interface
@@ -154,23 +155,10 @@ export const uploadVoiceNote = createAsyncThunk(
 
       // Transcribe with OpenAI Whisper (via API route)
       dispatch(setVoiceTranscribing(true));
-      const transcribeResponse = await fetch('/api/transcribe', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          audioUrl,
-          userId,
-        }),
+      const { transcription, duration } = await apiPost('/api/transcribe', {
+        audioUrl,
+        userId,
       });
-
-      if (!transcribeResponse.ok) {
-        const error = await transcribeResponse.json();
-        throw new Error(error.error || 'Transcription failed');
-      }
-
-      const { transcription, duration } = await transcribeResponse.json();
 
       // Create voice note object
       const voiceNote: Omit<VoiceNote, 'id'> = {
@@ -264,23 +252,10 @@ export const uploadPhoto = createAsyncThunk(
 
       // Generate description with OpenAI Vision API
       dispatch(setPhotoDescribing(true));
-      const describeResponse = await fetch('/api/describe-image', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          imageUrl,
-          userId,
-        }),
+      const { description: autoDescription } = await apiPost('/api/describe-image', {
+        imageUrl,
+        userId,
       });
-
-      if (!describeResponse.ok) {
-        const error = await describeResponse.json();
-        throw new Error(error.error || 'Image description failed');
-      }
-
-      const { description: autoDescription } = await describeResponse.json();
       dispatch(setPhotoDescribing(false));
 
       // Create photo memory object
@@ -313,21 +288,10 @@ export const uploadPhoto = createAsyncThunk(
       }
 
       // Store in Firestore (via API route - triggers Cloud Function for dual embeddings)
-      const storeResponse = await fetch('/api/photos', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          photoId,
-          photoMemory,
-        }),
+      await apiPost('/api/photos', {
+        photoId,
+        photoMemory,
       });
-
-      if (!storeResponse.ok) {
-        const error = await storeResponse.json();
-        throw new Error(error.error || 'Failed to store photo');
-      }
 
       return { photoId, photoMemory };
     } catch (error: any) {
