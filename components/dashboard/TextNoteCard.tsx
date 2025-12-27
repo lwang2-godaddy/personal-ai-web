@@ -13,7 +13,7 @@ export function TextNoteCard({ data }: TextNoteCardProps) {
   const dispatch = useAppDispatch();
 
   const handleCreateClick = () => {
-    dispatch(openQuickCreate('diary'));
+    dispatch(openQuickCreate({ type: 'diary' }));
   };
 
   if (data.length === 0) {

@@ -13,13 +13,36 @@ export function VoiceNoteCard({ data }: VoiceNoteCardProps) {
   const dispatch = useAppDispatch();
 
   const handleCreateClick = () => {
-    dispatch(openQuickCreate('voice'));
+    dispatch(openQuickCreate({ type: 'voice' }));
   };
 
   const formatDuration = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Convert voice note to diary
+  const handleConvertToDiary = (voiceNote: VoiceNote) => {
+    // Generate default title from date
+    const date = new Date(voiceNote.createdAt);
+    const defaultTitle = `Voice Note - ${date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    })}`;
+
+    // Open quick create with prefilled data
+    dispatch(openQuickCreate({
+      type: 'diary',
+      prefill: {
+        diary: {
+          title: defaultTitle,
+          content: voiceNote.transcription,
+          tags: voiceNote.tags || [],
+        }
+      }
+    }));
   };
 
   if (data.length === 0) {
@@ -81,7 +104,7 @@ export function VoiceNoteCard({ data }: VoiceNoteCardProps) {
               {item.transcription || 'No transcription available'}
             </p>
             {item.tags && item.tags.length > 0 && (
-              <div className="flex flex-wrap gap-1">
+              <div className="flex flex-wrap gap-1 mb-2">
                 {item.tags.map((tag, idx) => (
                   <span
                     key={idx}
@@ -91,6 +114,20 @@ export function VoiceNoteCard({ data }: VoiceNoteCardProps) {
                   </span>
                 ))}
               </div>
+            )}
+
+            {/* Convert to Diary button */}
+            {item.transcription && (
+              <button
+                onClick={() => handleConvertToDiary(item)}
+                className="mt-2 w-full px-3 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded transition-colors flex items-center justify-center gap-1"
+                title="Convert this voice note to a diary entry"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                Convert to Diary
+              </button>
             )}
           </div>
         ))}

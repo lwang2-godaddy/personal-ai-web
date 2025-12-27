@@ -65,7 +65,7 @@ export default function FloatingActionButton() {
   };
 
   const handleMenuItemClick = (type: CreateType) => {
-    dispatch(openQuickCreate(type));
+    dispatch(openQuickCreate({ type }));
     setIsMenuOpen(false);
   };
 

@@ -12,9 +12,25 @@ export default function QuickDiaryForm() {
   const [errors, setErrors] = useState<{ title?: string; content?: string }>({});
 
   const titleInputRef = useRef<HTMLInputElement>(null);
-  const { isSubmitting, error } = useAppSelector((state) => state.quickCreate);
+  const { isSubmitting, error, prefillData } = useAppSelector((state) => state.quickCreate);
   const userId = useAppSelector((state) => state.auth.user?.uid);
   const dispatch = useAppDispatch();
+
+  // Load prefill data on mount
+  useEffect(() => {
+    if (prefillData?.diary) {
+      const { title: prefillTitle, content: prefillContent, tags: prefillTags } = prefillData.diary;
+
+      if (prefillTitle) setTitle(prefillTitle);
+      if (prefillContent) setContent(prefillContent);
+      if (prefillTags) setTags(prefillTags.join(', '));
+
+      // Clear any errors when prefilling
+      setErrors({});
+
+      console.log('[QuickDiaryForm] Loaded prefill data from voice note');
+    }
+  }, [prefillData]);
 
   // Auto-focus title input when component mounts
   useEffect(() => {

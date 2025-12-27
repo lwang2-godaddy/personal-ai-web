@@ -8,7 +8,7 @@ export function QuickThoughtPanel() {
   const dispatch = useAppDispatch();
 
   const handleCreateClick = () => {
-    dispatch(openQuickCreate('thought'));
+    dispatch(openQuickCreate({ type: 'thought' }));
   };
 
   return (

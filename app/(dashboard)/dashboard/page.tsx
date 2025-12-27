@@ -41,9 +41,9 @@ export default function DashboardPage() {
   }, [user?.uid, dispatch]);
 
   // Click handlers for stat cards
-  const handleDiaryClick = () => dispatch(openQuickCreate('diary'));
-  const handleVoiceClick = () => dispatch(openQuickCreate('voice'));
-  const handlePhotoClick = () => dispatch(openQuickCreate('photo'));
+  const handleDiaryClick = () => dispatch(openQuickCreate({ type: 'diary' }));
+  const handleVoiceClick = () => dispatch(openQuickCreate({ type: 'voice' }));
+  const handlePhotoClick = () => dispatch(openQuickCreate({ type: 'photo' }));
   const handleHealthClick = () => setShowHealthInfo(true);
   const handleLocationClick = () => setShowLocationInfo(true);
 

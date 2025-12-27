@@ -14,7 +14,7 @@ export function PhotoCard({ data }: PhotoCardProps) {
   const dispatch = useAppDispatch();
 
   const handleCreateClick = () => {
-    dispatch(openQuickCreate('photo'));
+    dispatch(openQuickCreate({ type: 'photo' }));
   };
 
   if (data.length === 0) {

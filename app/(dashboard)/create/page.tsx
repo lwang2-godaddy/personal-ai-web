@@ -159,7 +159,7 @@ export default function TemplatesPage() {
   const handleUseTemplate = (template: Template) => {
     // For now, open the quick create modal
     // In the future, this could open the full DiaryEditor with pre-filled content
-    dispatch(openQuickCreate('diary'));
+    dispatch(openQuickCreate({ type: 'diary' }));
   };
 
   return (

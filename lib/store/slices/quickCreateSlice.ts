@@ -15,6 +15,14 @@ interface QuickCreateState {
   activeType: CreateType | null;
   isSubmitting: boolean;
   error: string | null;
+  // Prefill data for forms (e.g., converting voice note to diary)
+  prefillData: {
+    diary?: {
+      title?: string;
+      content?: string;
+      tags?: string[];
+    };
+  } | null;
 }
 
 const initialState: QuickCreateState = {
@@ -22,6 +30,7 @@ const initialState: QuickCreateState = {
   activeType: null,
   isSubmitting: false,
   error: null,
+  prefillData: null,
 };
 
 // Async thunk for submitting diary entry
@@ -190,9 +199,10 @@ const quickCreateSlice = createSlice({
   name: 'quickCreate',
   initialState,
   reducers: {
-    openQuickCreate: (state, action: PayloadAction<CreateType>) => {
+    openQuickCreate: (state, action: PayloadAction<{ type: CreateType; prefill?: QuickCreateState['prefillData'] }>) => {
       state.isOpen = true;
-      state.activeType = action.payload;
+      state.activeType = action.payload.type;
+      state.prefillData = action.payload.prefill || null;
       state.error = null;
     },
     closeQuickCreate: (state) => {
@@ -200,9 +210,13 @@ const quickCreateSlice = createSlice({
       state.activeType = null;
       state.error = null;
       state.isSubmitting = false;
+      state.prefillData = null;
     },
     setError: (state, action: PayloadAction<string>) => {
       state.error = action.payload;
+    },
+    setPrefillData: (state, action: PayloadAction<QuickCreateState['prefillData']>) => {
+      state.prefillData = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -215,6 +229,7 @@ const quickCreateSlice = createSlice({
       state.isSubmitting = false;
       state.isOpen = false;
       state.activeType = null;
+      state.prefillData = null; // Clear prefill after successful save
     });
     builder.addCase(submitQuickDiary.rejected, (state, action) => {
       state.isSubmitting = false;
@@ -268,5 +283,5 @@ const quickCreateSlice = createSlice({
   },
 });
 
-export const { openQuickCreate, closeQuickCreate, setError } = quickCreateSlice.actions;
+export const { openQuickCreate, closeQuickCreate, setError, setPrefillData } = quickCreateSlice.actions;
 export default quickCreateSlice.reducer;
