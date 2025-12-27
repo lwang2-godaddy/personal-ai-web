@@ -4,13 +4,14 @@ import { useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/lib/store/hooks';
 import { submitQuickThought } from '@/lib/store/slices/quickCreateSlice';
 import { fetchDashboardData } from '@/lib/store/slices/dashboardSlice';
+import { QuickVoiceRecorder } from './QuickVoiceRecorder';
 
 const MAX_LENGTH = 280;
 
 /**
  * QuickThoughtInput Component
  *
- * Inline compose box for quick thoughts.
+ * Inline compose box for quick thoughts with voice recording.
  * Displays at the top of the dashboard for immediate engagement.
  */
 export function QuickThoughtInput() {
@@ -97,6 +98,11 @@ export function QuickThoughtInput() {
                 </div>
               </div>
             )}
+          </div>
+
+          {/* Voice Recording Button */}
+          <div className="flex-shrink-0">
+            <QuickVoiceRecorder />
           </div>
         </div>
       </form>

@@ -180,13 +180,10 @@ export function QuickVoiceRecorder() {
     return (
       <button
         onClick={handleStopRecording}
-        className="flex items-center gap-2 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg shadow-lg transition-all animate-pulse"
+        className="w-10 h-10 flex items-center justify-center bg-red-600 hover:bg-red-700 text-white rounded-full shadow-lg transition-all animate-pulse"
+        title={`Recording: ${formatDuration(duration)}`}
       >
         <span className="text-xl">⏹</span>
-        <div className="flex flex-col items-start">
-          <span className="text-xs font-medium">Recording...</span>
-          <span className="text-xs font-mono">{formatDuration(duration)}</span>
-        </div>
       </button>
     );
   }
@@ -196,11 +193,10 @@ export function QuickVoiceRecorder() {
     <button
       onClick={handleStartRecording}
       disabled={!isOnline || voice.isUploading}
-      className="flex items-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg shadow transition-all disabled:cursor-not-allowed"
+      className="w-10 h-10 flex items-center justify-center bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-full shadow transition-all disabled:cursor-not-allowed"
       title="Record voice note"
     >
       <span className="text-xl">🎤</span>
-      <span className="text-sm font-medium hidden sm:inline">Voice Note</span>
     </button>
   );
 }

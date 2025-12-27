@@ -11,7 +11,6 @@ import {
   PhotoCard,
   TextNoteCard,
   QuickThoughtInput,
-  QuickVoiceRecorder,
   ClickableStatCard,
   InfoModal,
 } from '@/components/dashboard';
@@ -70,11 +69,8 @@ export default function DashboardPage() {
       )}
 
       {/* Quick Thought Input with Voice Recorder */}
-      <div className="mb-8 space-y-4">
+      <div className="mb-8">
         <QuickThoughtInput />
-        <div className="flex justify-center">
-          <QuickVoiceRecorder />
-        </div>
       </div>
 
       {/* Stats Grid - Now Clickable */}
