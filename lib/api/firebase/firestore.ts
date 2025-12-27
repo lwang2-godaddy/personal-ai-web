@@ -60,6 +60,29 @@ export class FirestoreService {
   }
 
   /**
+   * Query collection with custom where clauses and ordering
+   */
+  async queryCollection<T>(
+    collectionName: string,
+    whereClauses: Array<{ field: string; operator: any; value: any }> = [],
+    orderByClause?: { field: string; direction: 'asc' | 'desc' }
+  ): Promise<T[]> {
+    const constraints: QueryConstraint[] = [];
+
+    // Add where clauses
+    whereClauses.forEach(clause => {
+      constraints.push(where(clause.field, clause.operator, clause.value));
+    });
+
+    // Add orderBy if provided
+    if (orderByClause) {
+      constraints.push(orderBy(orderByClause.field, orderByClause.direction));
+    }
+
+    return this.getDocuments<T>(collectionName, constraints);
+  }
+
+  /**
    * Add a new document with auto-generated ID
    */
   async addDocument(collectionName: string, data: any): Promise<string> {

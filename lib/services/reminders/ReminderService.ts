@@ -174,11 +174,12 @@ export class ReminderService {
    * Get reminder status color
    */
   getStatusColor(status: EventReminder['status']): string {
-    const colors = {
+    const colors: Record<EventReminder['status'], string> = {
       pending: 'text-gray-600',
       scheduled: 'text-blue-600',
       sent: 'text-green-600',
       cancelled: 'text-red-600',
+      snoozed: 'text-yellow-600',
     };
     return colors[status] || colors.pending;
   }
@@ -187,11 +188,12 @@ export class ReminderService {
    * Get reminder status label
    */
   getStatusLabel(status: EventReminder['status']): string {
-    const labels = {
+    const labels: Record<EventReminder['status'], string> = {
       pending: 'Pending',
       scheduled: 'Scheduled',
       sent: 'Sent',
       cancelled: 'Cancelled',
+      snoozed: 'Snoozed',
     };
     return labels[status] || 'Unknown';
   }
@@ -206,18 +208,13 @@ export class ReminderService {
   /**
    * Get reminder count by status
    */
-  getReminderCountByStatus(reminders: EventReminder[]): {
-    pending: number;
-    scheduled: number;
-    sent: number;
-    cancelled: number;
-  } {
+  getReminderCountByStatus(reminders: EventReminder[]): Record<EventReminder['status'], number> {
     return reminders.reduce(
       (acc, reminder) => {
         acc[reminder.status]++;
         return acc;
       },
-      { pending: 0, scheduled: 0, sent: 0, cancelled: 0 }
+      { pending: 0, scheduled: 0, sent: 0, cancelled: 0, snoozed: 0 }
     );
   }
 }
