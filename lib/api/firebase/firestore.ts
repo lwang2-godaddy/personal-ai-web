@@ -16,6 +16,31 @@ import {
 import { db } from './config';
 
 /**
+ * Helper to convert Firestore Timestamps to ISO strings for Redux serialization
+ */
+function serializeFirestoreData(data: any): any {
+  if (!data) return data;
+
+  if (data instanceof Timestamp) {
+    return data.toDate().toISOString();
+  }
+
+  if (Array.isArray(data)) {
+    return data.map(serializeFirestoreData);
+  }
+
+  if (typeof data === 'object') {
+    const serialized: any = {};
+    for (const [key, value] of Object.entries(data)) {
+      serialized[key] = serializeFirestoreData(value);
+    }
+    return serialized;
+  }
+
+  return data;
+}
+
+/**
  * Firestore service for web
  * Provides basic CRUD operations
  * More specific methods will be added as services are ported
@@ -38,7 +63,11 @@ export class FirestoreService {
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {
-      return { id: docSnap.id, ...docSnap.data() } as T;
+      const data = docSnap.data();
+      return {
+        id: docSnap.id,
+        ...serializeFirestoreData(data)
+      } as T;
     }
     return null;
   }
@@ -53,10 +82,13 @@ export class FirestoreService {
     const q = query(collection(db, collectionName), ...constraints);
     const querySnapshot = await getDocs(q);
 
-    return querySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as T[];
+    return querySnapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...serializeFirestoreData(data),
+      };
+    }) as T[];
   }
 
   /**
