@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { ChatMessage, ChatState } from '@/lib/models';
+import { apiPost } from '@/lib/api/client';
 
 const initialState: ChatState = {
   messages: [],
@@ -20,25 +21,12 @@ export const sendMessage = createAsyncThunk(
       const state = getState() as any;
       const conversationHistory = state.chat.messages;
 
-      // Call API route instead of direct RAGEngine
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message,
-          userId,
-          conversationHistory,
-        }),
+      // Call API route with authentication
+      const result = await apiPost('/api/chat', {
+        message,
+        userId,
+        conversationHistory,
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to get response');
-      }
-
-      const result = await response.json();
 
       return {
         userMessage: {
@@ -71,25 +59,12 @@ export const sendFreshMessage = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      // Call API route
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message,
-          userId,
-          conversationHistory: [],
-        }),
+      // Call API route with authentication
+      const result = await apiPost('/api/chat', {
+        message,
+        userId,
+        conversationHistory: [],
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to get response');
-      }
-
-      const result = await response.json();
 
       return {
         userMessage: {
