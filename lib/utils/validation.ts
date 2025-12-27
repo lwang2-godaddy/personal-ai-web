@@ -29,7 +29,8 @@ export const validateTextNote = (note: Partial<TextNote>): ValidationResult => {
   // Content validation
   if (!note.content || note.content.trim().length === 0) {
     errors.push('Content is required');
-  } else if (note.content.trim().length < APP_CONSTANTS.TEXT_NOTE_MIN_CONTENT_LENGTH) {
+  } else if (note.type !== 'thought' && note.content.trim().length < APP_CONSTANTS.TEXT_NOTE_MIN_CONTENT_LENGTH) {
+    // Skip minimum length check for quick thoughts (like Twitter)
     errors.push(`Content must be at least ${APP_CONSTANTS.TEXT_NOTE_MIN_CONTENT_LENGTH} characters`);
   } else if (note.content.length > APP_CONSTANTS.TEXT_NOTE_MAX_CONTENT_LENGTH) {
     errors.push(`Content must be less than ${APP_CONSTANTS.TEXT_NOTE_MAX_CONTENT_LENGTH} characters`);
