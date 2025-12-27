@@ -66,7 +66,6 @@ export default function EventCalendar({
   const eventStyleGetter = useCallback((event: any) => {
     const fullEvent = event.resource as Event;
     const color = EVENT_TYPE_COLORS[fullEvent.type] || '#6B7280';
-    const hasConflicts = fullEvent.conflicts && fullEvent.conflicts.length > 0;
     const isCompleted = fullEvent.status === 'completed';
 
     return {
@@ -74,7 +73,6 @@ export default function EventCalendar({
         backgroundColor: color,
         borderRadius: '4px',
         opacity: isCompleted ? 0.5 : 1,
-        border: hasConflicts ? '2px solid #EF4444' : 'none',
         color: '#FFFFFF',
         fontSize: '12px',
         padding: '2px 4px',
@@ -293,10 +291,11 @@ export default function EventCalendar({
         onSelectEvent={handleSelectEvent}
         onSelectSlot={handleSelectSlot}
         selectable
-        draggableAccessor={() => true}
-        resizable
-        onEventDrop={handleEventDrop}
-        onEventResize={handleEventResize}
+        // TODO: Re-enable drag and drop with withDragAndDrop wrapper
+        // draggableAccessor={() => true}
+        // resizable
+        // onEventDrop={handleEventDrop}
+        // onEventResize={handleEventResize}
         eventPropGetter={eventStyleGetter}
         components={{
           toolbar: CustomToolbar,
