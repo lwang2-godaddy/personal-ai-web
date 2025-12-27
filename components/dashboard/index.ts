@@ -7,4 +7,5 @@ export { PanelHeader } from './PanelHeader';
 export { InfoModal } from './InfoModal';
 export { QuickThoughtPanel } from './QuickThoughtPanel';
 export { QuickThoughtInput } from './QuickThoughtInput';
+export { QuickVoiceRecorder } from './QuickVoiceRecorder';
 export { ClickableStatCard } from './ClickableStatCard';
