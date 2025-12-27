@@ -60,6 +60,16 @@ export class FirestoreService {
   }
 
   /**
+   * Add a new document with auto-generated ID
+   */
+  async addDocument(collectionName: string, data: any): Promise<string> {
+    const collectionRef = collection(db, collectionName);
+    const docRef = doc(collectionRef);
+    await setDoc(docRef, data);
+    return docRef.id;
+  }
+
+  /**
    * Create or update a document
    */
   async setDocument(
