@@ -1,15 +1,18 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/lib/store/hooks';
 import { fetchDashboardData } from '@/lib/store/slices/dashboardSlice';
+import { openQuickCreate } from '@/lib/store/slices/quickCreateSlice';
 import {
   HealthDataCard,
   LocationDataCard,
   VoiceNoteCard,
   PhotoCard,
   TextNoteCard,
-  QuickThoughtPanel,
+  QuickThoughtInput,
+  ClickableStatCard,
+  InfoModal,
 } from '@/components/dashboard';
 
 export default function DashboardPage() {
@@ -26,12 +29,23 @@ export default function DashboardPage() {
     error,
   } = useAppSelector((state) => state.dashboard);
 
+  // State for info modals
+  const [showHealthInfo, setShowHealthInfo] = useState(false);
+  const [showLocationInfo, setShowLocationInfo] = useState(false);
+
   // Fetch dashboard data on mount
   useEffect(() => {
     if (user?.uid) {
       dispatch(fetchDashboardData(user.uid));
     }
   }, [user?.uid, dispatch]);
+
+  // Click handlers for stat cards
+  const handleDiaryClick = () => dispatch(openQuickCreate('diary'));
+  const handleVoiceClick = () => dispatch(openQuickCreate('voice'));
+  const handlePhotoClick = () => dispatch(openQuickCreate('photo'));
+  const handleHealthClick = () => setShowHealthInfo(true);
+  const handleLocationClick = () => setShowLocationInfo(true);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -54,37 +68,52 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Stats Grid */}
+      {/* Quick Thought Input - Twitter Style */}
+      <div className="mb-8">
+        <QuickThoughtInput />
+      </div>
+
+      {/* Stats Grid - Now Clickable */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-        <StatCard
+        <ClickableStatCard
           title="Health Data"
           value={isLoading ? '...' : stats.healthCount.toString()}
           subtitle="Records synced"
           icon="💪"
+          onClick={handleHealthClick}
+          ariaLabel="View health data information"
         />
-        <StatCard
+        <ClickableStatCard
           title="Locations"
           value={isLoading ? '...' : stats.locationCount.toString()}
           subtitle="Places visited"
           icon="📍"
+          onClick={handleLocationClick}
+          ariaLabel="View location data information"
         />
-        <StatCard
+        <ClickableStatCard
           title="Voice Notes"
           value={isLoading ? '...' : stats.voiceCount.toString()}
           subtitle="Recordings"
           icon="🎤"
+          onClick={handleVoiceClick}
+          ariaLabel="Create new voice note"
         />
-        <StatCard
+        <ClickableStatCard
           title="Photos"
           value={isLoading ? '...' : stats.photoCount.toString()}
           subtitle="Memories"
           icon="📸"
+          onClick={handlePhotoClick}
+          ariaLabel="Upload new photo"
         />
-        <StatCard
+        <ClickableStatCard
           title="Diary"
           value={isLoading ? '...' : stats.textNoteCount.toString()}
           subtitle="Entries"
           icon="📝"
+          onClick={handleDiaryClick}
+          ariaLabel="Create new diary entry"
         />
       </div>
 
@@ -131,43 +160,50 @@ export default function DashboardPage() {
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
             Recent Activity
           </h2>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <TextNoteCard data={recentTextNotes} />
             <HealthDataCard data={recentHealth} />
             <LocationDataCard data={recentLocations} />
             <VoiceNoteCard data={recentVoiceNotes} />
             <PhotoCard data={recentPhotos} />
           </div>
-
-          {/* Quick Thought Panel - centered below */}
-          <div className="max-w-2xl mx-auto">
-            <QuickThoughtPanel />
-          </div>
         </div>
       )}
-    </div>
-  );
-}
 
-function StatCard({
-  title,
-  value,
-  subtitle,
-  icon,
-}: {
-  title: string;
-  value: string;
-  subtitle: string;
-  icon: string;
-}) {
-  return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">{title}</h3>
-        <span className="text-2xl">{icon}</span>
-      </div>
-      <p className="text-3xl font-bold text-gray-900 dark:text-white mb-1">{value}</p>
-      <p className="text-sm text-gray-500 dark:text-gray-400">{subtitle}</p>
+      {/* Info Modals */}
+      {showHealthInfo && (
+        <InfoModal title="Health Data Collection" onClose={() => setShowHealthInfo(false)}>
+          <p className="mb-4">
+            Health data is collected via the mobile app using <strong>HealthKit</strong> (iOS) or <strong>Google Fit</strong> (Android).
+          </p>
+          <p className="mb-4">To start tracking your health data:</p>
+          <ul className="list-disc list-inside space-y-2 mb-4">
+            <li>Download the PersonalAI mobile app</li>
+            <li>Grant health permissions when prompted</li>
+            <li>Your data will automatically sync to this dashboard</li>
+          </ul>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Tracked data includes: steps, workouts, sleep, heart rate, and more.
+          </p>
+        </InfoModal>
+      )}
+
+      {showLocationInfo && (
+        <InfoModal title="Location Data Collection" onClose={() => setShowLocationInfo(false)}>
+          <p className="mb-4">
+            Location data is collected via the mobile app with background location tracking.
+          </p>
+          <p className="mb-4">To enable location tracking:</p>
+          <ul className="list-disc list-inside space-y-2 mb-4">
+            <li>Download the PersonalAI mobile app</li>
+            <li>Enable location permissions (Always)</li>
+            <li>The app will track significant locations automatically</li>
+          </ul>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Location data includes: addresses, visit counts, duration, and activity detection.
+          </p>
+        </InfoModal>
+      )}
     </div>
   );
 }

@@ -6,3 +6,5 @@ export { TextNoteCard } from './TextNoteCard';
 export { PanelHeader } from './PanelHeader';
 export { InfoModal } from './InfoModal';
 export { QuickThoughtPanel } from './QuickThoughtPanel';
+export { QuickThoughtInput } from './QuickThoughtInput';
+export { ClickableStatCard } from './ClickableStatCard';
