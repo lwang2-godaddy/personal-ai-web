@@ -149,7 +149,7 @@ export const submitQuickPhoto = createAsyncThunk(
 
       // Use caption or default description
       // TODO: Implement AI description generation using OpenAI Vision API
-      const description = data.caption || 'Photo uploaded via PersonalAI';
+      const description = data.caption || 'Photo uploaded via SirCharge';
 
       // Save photo metadata to Firestore
       const photoId = `photo_${timestamp}`;

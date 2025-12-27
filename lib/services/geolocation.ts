@@ -95,7 +95,7 @@ export class GeolocationService {
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
         {
           headers: {
-            'User-Agent': 'PersonalAI-WebApp/1.0',
+            'User-Agent': 'SirCharge-WebApp/1.0',
           },
         }
       );

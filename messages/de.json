@@ -4,7 +4,7 @@
     "loading": "Laden...",
     "error": "Fehler",
     "welcome": "Willkommen zurück, {name}!",
-    "personalAI": "PersonalAI"
+    "personalAI": "SirCharge"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -18,7 +18,7 @@
     "signInWithEmail": "Mit E-Mail anmelden",
     "email": "E-Mail",
     "password": "Passwort",
-    "welcomeTitle": "Willkommen bei PersonalAI",
+    "welcomeTitle": "Willkommen bei SirCharge",
     "welcomeSubtitle": "Ihr intelligenter persönlicher Datenassistent",
     "signInPrompt": "Melden Sie sich an, um auf Ihr Dashboard zuzugreifen"
   },
@@ -36,7 +36,7 @@
     },
     "dataCollection": {
       "title": "📱 Datenerfassung",
-      "description": "Dieses Web-Dashboard ist schreibgeschützt. Um Gesundheitsdaten, Standortverlauf, Sprachnotizen und Fotos zu sammeln, verwenden Sie bitte die PersonalAI Mobile App.",
+      "description": "Dieses Web-Dashboard ist schreibgeschützt. Um Gesundheitsdaten, Standortverlauf, Sprachnotizen und Fotos zu sammeln, verwenden Sie bitte die SirCharge Mobile App.",
       "syncInfo": "Sobald Sie Daten auf dem Handy gesammelt haben, werden sie automatisch synchronisiert und hier angezeigt."
     },
     "quickActions": {

@@ -4,7 +4,7 @@
     "loading": "読み込み中...",
     "error": "エラー",
     "welcome": "おかえりなさい、{name}さん！",
-    "personalAI": "PersonalAI"
+    "personalAI": "SirCharge"
   },
   "nav": {
     "dashboard": "ダッシュボード",
@@ -18,7 +18,7 @@
     "signInWithEmail": "メールでログイン",
     "email": "メール",
     "password": "パスワード",
-    "welcomeTitle": "PersonalAIへようこそ",
+    "welcomeTitle": "SirChargeへようこそ",
     "welcomeSubtitle": "あなたのインテリジェントな個人データアシスタント",
     "signInPrompt": "ログインしてダッシュボードにアクセス"
   },
@@ -36,7 +36,7 @@
     },
     "dataCollection": {
       "title": "📱 データ収集",
-      "description": "このWebダッシュボードは表示専用です。健康データ、位置履歴、音声メモ、写真を収集するには、PersonalAIモバイルアプリをご使用ください。",
+      "description": "このWebダッシュボードは表示専用です。健康データ、位置履歴、音声メモ、写真を収集するには、SirChargeモバイルアプリをご使用ください。",
       "syncInfo": "モバイルでデータを収集すると、自動的に同期され、分析とチャットのためにここに表示されます。"
     },
     "quickActions": {

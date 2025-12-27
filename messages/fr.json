@@ -4,7 +4,7 @@
     "loading": "Chargement...",
     "error": "Erreur",
     "welcome": "Bienvenue, {name}!",
-    "personalAI": "PersonalAI"
+    "personalAI": "SirCharge"
   },
   "nav": {
     "dashboard": "Tableau de Bord",
@@ -18,7 +18,7 @@
     "signInWithEmail": "Se connecter avec Email",
     "email": "Email",
     "password": "Mot de Passe",
-    "welcomeTitle": "Bienvenue sur PersonalAI",
+    "welcomeTitle": "Bienvenue sur SirCharge",
     "welcomeSubtitle": "Votre assistant intelligent de données personnelles",
     "signInPrompt": "Connectez-vous pour accéder à votre tableau de bord"
   },
@@ -36,7 +36,7 @@
     },
     "dataCollection": {
       "title": "📱 Collecte de Données",
-      "description": "Ce tableau de bord web est en lecture seule. Pour collecter des données de santé, l'historique de localisation, les notes vocales et les photos, veuillez utiliser l'application mobile PersonalAI.",
+      "description": "Ce tableau de bord web est en lecture seule. Pour collecter des données de santé, l'historique de localisation, les notes vocales et les photos, veuillez utiliser l'application mobile SirCharge.",
       "syncInfo": "Une fois que vous avez collecté des données sur mobile, elles se synchroniseront automatiquement et apparaîtront ici."
     },
     "quickActions": {

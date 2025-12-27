@@ -55,7 +55,7 @@ export default function DashboardPage() {
           Welcome back, {user?.displayName || 'User'}!
         </h1>
         <p className="text-gray-600 dark:text-gray-400">
-          Your PersonalAI dashboard
+          Your SirCharge dashboard
         </p>
       </div>
 
@@ -124,7 +124,7 @@ export default function DashboardPage() {
         </h2>
         <p className="text-blue-800 dark:text-blue-200 mb-4">
           This web dashboard is <strong>view-only</strong> for your data. To collect health data,
-          location history, voice notes, and photos, please use the PersonalAI mobile app.
+          location history, voice notes, and photos, please use the SirCharge mobile app.
         </p>
         <p className="text-sm text-blue-700 dark:text-blue-300">
           Once you&apos;ve collected data on mobile, it will automatically sync and appear here for
@@ -178,7 +178,7 @@ export default function DashboardPage() {
           </p>
           <p className="mb-4">To start tracking your health data:</p>
           <ul className="list-disc list-inside space-y-2 mb-4">
-            <li>Download the PersonalAI mobile app</li>
+            <li>Download the SirCharge mobile app</li>
             <li>Grant health permissions when prompted</li>
             <li>Your data will automatically sync to this dashboard</li>
           </ul>
@@ -195,7 +195,7 @@ export default function DashboardPage() {
           </p>
           <p className="mb-4">To enable location tracking:</p>
           <ul className="list-disc list-inside space-y-2 mb-4">
-            <li>Download the PersonalAI mobile app</li>
+            <li>Download the SirCharge mobile app</li>
             <li>Enable location permissions (Always)</li>
             <li>The app will track significant locations automatically</li>
           </ul>

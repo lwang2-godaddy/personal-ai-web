@@ -4,7 +4,7 @@
     "loading": "加载中...",
     "error": "错误",
     "welcome": "欢迎回来，{name}！",
-    "personalAI": "PersonalAI"
+    "personalAI": "SirCharge"
   },
   "nav": {
     "dashboard": "仪表板",
@@ -18,7 +18,7 @@
     "signInWithEmail": "使用邮箱登录",
     "email": "邮箱",
     "password": "密码",
-    "welcomeTitle": "欢迎来到 PersonalAI",
+    "welcomeTitle": "欢迎来到 SirCharge",
     "welcomeSubtitle": "您的智能个人数据助手",
     "signInPrompt": "登录以访问您的仪表板"
   },
@@ -36,7 +36,7 @@
     },
     "dataCollection": {
       "title": "📱 数据收集",
-      "description": "此网页仪表板仅供查看。要收集健康数据、位置历史、语音笔记和照片，请使用 PersonalAI 移动应用。",
+      "description": "此网页仪表板仅供查看。要收集健康数据、位置历史、语音笔记和照片，请使用 SirCharge 移动应用。",
       "syncInfo": "一旦您在移动设备上收集了数据，它将自动同步并显示在这里以供分析和聊天。"
     },
     "quickActions": {
