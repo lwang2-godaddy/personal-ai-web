@@ -1,4 +1,5 @@
 import { ChatMessage } from '@/lib/models';
+import { TypingIndicator } from './TypingIndicator';
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -41,7 +42,21 @@ function DataTypeBadge({ type }: { type: string }) {
 }
 
 export function MessageBubble({ message }: MessageBubbleProps) {
+  // Handle typing indicator (system message with id __typing__)
+  if (message.id === '__typing__') {
+    return (
+      <div className="flex justify-start mb-4">
+        {/* SirCharge Avatar for typing indicator */}
+        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-lg mr-2 flex-shrink-0">
+          ⚡
+        </div>
+        <TypingIndicator />
+      </div>
+    );
+  }
+
   const isUser = message.role === 'user';
+  const isError = message.role === 'system' && message.content.startsWith('Error:');
 
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`}>
@@ -56,11 +71,13 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         className={`max-w-[70%] rounded-lg px-4 py-3 ${
           isUser
             ? 'bg-blue-600 text-white'
+            : isError
+            ? 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300'
             : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
         }`}
       >
         {/* Data type badges - PROMINENT at top */}
-        {!isUser && message.contextUsed && message.contextUsed.length > 0 && (
+        {!isUser && !isError && message.contextUsed && message.contextUsed.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-3">
             {Array.from(new Set(message.contextUsed.map(c => c.type))).map(type => (
               <DataTypeBadge key={type} type={type} />
@@ -71,7 +88,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         <p className="text-sm whitespace-pre-wrap">{message.content}</p>
 
         {/* Expandable sources section - less prominent */}
-        {!isUser && message.contextUsed && message.contextUsed.length > 0 && (
+        {!isUser && !isError && message.contextUsed && message.contextUsed.length > 0 && (
           <details className="mt-3 pt-3 border-t border-gray-300 dark:border-gray-600">
             <summary className="text-xs font-semibold cursor-pointer opacity-70 hover:opacity-100">
               📚 View {message.contextUsed.length} source{message.contextUsed.length !== 1 ? 's' : ''}
