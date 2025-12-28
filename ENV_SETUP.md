@@ -74,7 +74,7 @@ If not already added:
 2. Click ⚙️ (Settings) → Project settings
 3. Scroll to "Your apps" section
 4. If no web app exists, click "Add app" → Web (</>) icon
-5. Register app with nickname: "PersonalAI Web"
+5. Register app with nickname: "SirCharge Web"
 6. Copy configuration (already in `.env.local`)
 
 ### 2. Configure Authorized Domains

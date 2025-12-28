@@ -10,7 +10,7 @@
 
 ## Executive Summary
 
-This document describes the **multi-layered security architecture** that prevents users from accessing each other's personal data in the PersonalAI system. The system uses **defense-in-depth** with mandatory userId filtering at every layer.
+This document describes the **multi-layered security architecture** that prevents users from accessing each other's personal data in the SirCharge system. The system uses **defense-in-depth** with mandatory userId filtering at every layer.
 
 **Security Status:** 🟢 **SECURE** - No vulnerabilities detected in user data isolation.
 

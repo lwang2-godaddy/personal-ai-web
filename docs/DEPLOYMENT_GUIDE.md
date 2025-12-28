@@ -1,8 +1,8 @@
-# Production Deployment Guide - PersonalAI Web Dashboard
+# Production Deployment Guide - SirCharge Web Dashboard
 
 ## Overview
 
-This guide covers deploying the PersonalAI Next.js web dashboard to production. We'll focus on two recommended platforms:
+This guide covers deploying the SirCharge Next.js web dashboard to production. We'll focus on two recommended platforms:
 1. **Vercel** (Recommended) - Zero-config, optimized for Next.js
 2. **Firebase Hosting** (Alternative) - Already using Firebase backend
 

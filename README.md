@@ -1,10 +1,10 @@
-# PersonalAI Web Dashboard
+# SirCharge Web Dashboard
 
-Web application companion to the PersonalAI mobile app. View and interact with your personal data through an AI-powered dashboard.
+Web application companion to the SirCharge mobile app. View and interact with your personal data through an AI-powered dashboard.
 
 ## Overview
 
-This web app shares **100% of the backend** (Firebase, OpenAI, Pinecone) with the PersonalAI mobile app. Data collection happens on mobile, while the web provides:
+This web app shares **100% of the backend** (Firebase, OpenAI, Pinecone) with the SirCharge mobile app. Data collection happens on mobile, while the web provides:
 
 - 💬 **AI Chat** - RAG-powered conversations about your personal data
 - 📊 **Dashboard** - View health, location, voice, and photo data
@@ -275,7 +275,7 @@ Run `npm run build` to check for TypeScript errors. All errors must be resolved 
 
 ## Contributing
 
-This project is part of the PersonalAI ecosystem. See the main repository for contribution guidelines.
+This project is part of the SirCharge ecosystem. See the main repository for contribution guidelines.
 
 ## License
 

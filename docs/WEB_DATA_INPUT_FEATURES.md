@@ -9,7 +9,7 @@ Related Docs: README.md, docs/planning/WEB_APP_IMPLEMENTATION_GUIDE.md
 
 # Web Data Input Features
 
-**Complete implementation of three data input modalities for PersonalAI web dashboard**
+**Complete implementation of three data input modalities for SirCharge web dashboard**
 
 ## Overview
 

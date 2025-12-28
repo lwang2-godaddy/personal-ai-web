@@ -1,8 +1,8 @@
-# PersonalAI Web Dashboard - Deployment Guide
+# SirCharge Web Dashboard - Deployment Guide
 
 ## Overview
 
-The PersonalAI web dashboard is a Next.js 16 application that can be deployed to Vercel (recommended), or any Node.js hosting platform.
+The SirCharge web dashboard is a Next.js 16 application that can be deployed to Vercel (recommended), or any Node.js hosting platform.
 
 ## Prerequisites
 
