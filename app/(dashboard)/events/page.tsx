@@ -17,7 +17,7 @@ import { useAuth } from '@/lib/hooks/useAuth';
 import EventCalendar from '@/components/events/EventCalendar';
 import MiniCalendar from '@/components/events/MiniCalendar';
 import { useCalendarDragDrop } from '@/lib/hooks/useCalendarDragDrop';
-import { SlotInfo } from 'react-big-calendar';
+import { SlotInfo, View, Views } from 'react-big-calendar';
 
 type TabType = 'calendar' | 'list' | 'search';
 
@@ -31,6 +31,7 @@ export default function EventsPage() {
   const [selectedEvent, setSelected] = useState<Event | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('calendar');
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [calendarView, setCalendarView] = useState<View>(Views.MONTH);
 
   // Calendar drag-and-drop hook
   const { handleEventDrop, handleEventResize, isValidating } = useCalendarDragDrop(
@@ -280,6 +281,54 @@ export default function EventsPage() {
         </div>
       )}
 
+      {/* Calendar View Selector */}
+      {activeTab === 'calendar' && !isLoading && !error && (
+        <div className="bg-white rounded-lg shadow p-4 mb-6">
+          <div className="flex gap-2">
+            <button
+              onClick={() => setCalendarView(Views.MONTH)}
+              className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                calendarView === Views.MONTH
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Month
+            </button>
+            <button
+              onClick={() => setCalendarView(Views.WEEK)}
+              className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                calendarView === Views.WEEK
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Week
+            </button>
+            <button
+              onClick={() => setCalendarView(Views.DAY)}
+              className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                calendarView === Views.DAY
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Day
+            </button>
+            <button
+              onClick={() => setCalendarView(Views.AGENDA)}
+              className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                calendarView === Views.AGENDA
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Agenda
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Calendar View */}
       {activeTab === 'calendar' && !isLoading && !error && (
         <div className="flex gap-6">
@@ -291,6 +340,10 @@ export default function EventsPage() {
               onEventDrop={handleEventDrop}
               onEventResize={handleEventResize}
               loading={isValidating}
+              view={calendarView}
+              onViewChange={setCalendarView}
+              date={selectedDate}
+              onNavigate={setSelectedDate}
             />
           </div>
           <div className="flex-shrink-0">

@@ -24,3 +24,120 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* ===== Calendar View Enhancements ===== */
+
+/* Week View */
+.rbc-time-view {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+}
+
+.rbc-time-header {
+  background-color: #f9fafb;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.rbc-timeslot-group {
+  min-height: 60px;
+}
+
+/* Day View */
+.rbc-day-slot {
+  min-height: 80px;
+}
+
+/* Agenda View */
+.rbc-agenda-view {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.rbc-agenda-view table {
+  border: none;
+}
+
+.rbc-agenda-date-cell,
+.rbc-agenda-time-cell {
+  padding: 0.75rem;
+  background-color: #f9fafb;
+  font-weight: 500;
+}
+
+.rbc-agenda-event-cell {
+  padding: 0.75rem;
+}
+
+/* Event Colors by Type */
+.rbc-event.event-appointment {
+  background-color: #3B82F6;
+}
+
+.rbc-event.event-meeting {
+  background-color: #8B5CF6;
+}
+
+.rbc-event.event-intention {
+  background-color: #06B6D4;
+}
+
+.rbc-event.event-plan {
+  background-color: #F59E0B;
+}
+
+.rbc-event.event-reminder {
+  background-color: #EF4444;
+}
+
+.rbc-event.event-todo {
+  background-color: #10B981;
+}
+
+/* Conflict Warning */
+.rbc-event.has-conflict {
+  border: 2px solid #FECACA;
+  box-shadow: 0 0 0 2px #FEE2E2;
+}
+
+/* Current Time Indicator */
+.rbc-current-time-indicator {
+  background-color: #EF4444;
+  height: 2px;
+}
+
+/* Better event text visibility */
+.rbc-event {
+  padding: 4px 6px;
+  border-radius: 4px;
+  color: white;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* Month view event styling */
+.rbc-month-view .rbc-event {
+  padding: 2px 4px;
+  font-size: 12px;
+}
+
+/* Week/Day view event styling */
+.rbc-time-slot {
+  border-top: 1px solid #f3f4f6;
+}
+
+.rbc-time-content {
+  border-top: 2px solid #e5e7eb;
+}
+
+/* Today highlight */
+.rbc-today {
+  background-color: #eff6ff;
+}
+
+/* Selected event */
+.rbc-event.rbc-selected {
+  background-color: inherit;
+  outline: 3px solid #2563eb;
+  outline-offset: 2px;
+}

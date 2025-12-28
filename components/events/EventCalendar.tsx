@@ -14,6 +14,10 @@ interface EventCalendarProps {
   onEventDrop?: (event: Event, start: Date, end: Date) => Promise<boolean>;
   onEventResize?: (event: Event, start: Date, end: Date) => Promise<boolean>;
   loading?: boolean;
+  view?: View;                     // NEW: Control view externally
+  onViewChange?: (view: View) => void; // NEW: Handle view changes
+  date?: Date;                     // NEW: Control date externally
+  onNavigate?: (date: Date) => void;  // NEW: Handle date navigation
 }
 
 const locales = {
@@ -45,11 +49,20 @@ export default function EventCalendar({
   onEventDrop,
   onEventResize,
   loading = false,
+  view: externalView,
+  onViewChange: externalOnViewChange,
+  date: externalDate,
+  onNavigate: externalOnNavigate,
 }: EventCalendarProps) {
-  const [view, setView] = useState<View>('month');
-  const [date, setDate] = useState(new Date());
+  // Internal state as fallback
+  const [internalView, setInternalView] = useState<View>('month');
+  const [internalDate, setInternalDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null);
+
+  // Use external props if provided, otherwise use internal state
+  const view = externalView !== undefined ? externalView : internalView;
+  const date = externalDate || internalDate;
 
   // Transform events for react-big-calendar
   const calendarEvents = useMemo(() => {
@@ -59,6 +72,7 @@ export default function EventCalendar({
       end: event.endDatetime || new Date(event.datetime.getTime() + 60 * 60 * 1000), // Default 1 hour
       title: event.title,
       resource: event, // Store full event object
+      className: `event-${event.type}${event.conflicts && event.conflicts.length > 0 ? ' has-conflict' : ''}`,
     }));
   }, [events]);
 
@@ -171,14 +185,22 @@ export default function EventCalendar({
     setTooltipPosition(null);
   }, []);
 
-  // Navigation handlers
+  // Navigation handlers - use external handlers if provided, otherwise update internal state
   const handleNavigate = useCallback((newDate: Date) => {
-    setDate(newDate);
-  }, []);
+    if (externalOnNavigate) {
+      externalOnNavigate(newDate);
+    } else {
+      setInternalDate(newDate);
+    }
+  }, [externalOnNavigate]);
 
   const handleViewChange = useCallback((newView: View) => {
-    setView(newView);
-  }, []);
+    if (externalOnViewChange) {
+      externalOnViewChange(newView);
+    } else {
+      setInternalView(newView);
+    }
+  }, [externalOnViewChange]);
 
   // Custom toolbar
   const CustomToolbar = (toolbar: any) => {
@@ -287,7 +309,7 @@ export default function EventCalendar({
         date={date}
         onView={handleViewChange}
         onNavigate={handleNavigate}
-        views={['month', 'week', 'day']}
+        views={['month', 'week', 'day', 'agenda']}
         onSelectEvent={handleSelectEvent}
         onSelectSlot={handleSelectSlot}
         selectable
