@@ -166,22 +166,29 @@ export class VoiceRecorderService {
 
   /**
    * Get supported MIME type
+   * Prioritizes iOS-compatible formats (MP4/M4A) for cross-platform playback
    */
   private getSupportedMimeType(): string {
     const types = [
+      // Prioritize iOS-compatible formats first
+      'audio/mp4',
+      'audio/mp4;codecs=mp4a.40.2', // AAC-LC
+      'audio/mpeg', // MP3
+      // Fallback to WebM (not supported on iOS)
       'audio/webm;codecs=opus',
       'audio/webm',
       'audio/ogg;codecs=opus',
       'audio/ogg',
-      'audio/mp4',
     ];
 
     for (const type of types) {
       if (MediaRecorder.isTypeSupported(type)) {
+        console.log('[VoiceRecorder] Using MIME type:', type);
         return type;
       }
     }
 
+    console.warn('[VoiceRecorder] No supported MIME type found, using browser default');
     return ''; // Browser will use default
   }
 

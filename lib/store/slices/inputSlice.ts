@@ -142,7 +142,25 @@ export const uploadVoiceNote = createAsyncThunk(
     try {
       // Generate note ID
       const noteId = `voice_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      const storagePath = `users/${userId}/voice-notes/${noteId}.webm`;
+
+      // Determine file extension from MIME type
+      const mimeType = audioBlob.type || 'audio/webm';
+      let extension = 'webm'; // Default fallback
+
+      if (mimeType.includes('audio/mp4') || mimeType.includes('audio/m4a')) {
+        extension = 'm4a';
+      } else if (mimeType.includes('audio/mpeg') || mimeType.includes('audio/mp3')) {
+        extension = 'mp3';
+      } else if (mimeType.includes('audio/webm')) {
+        extension = 'webm';
+      } else if (mimeType.includes('audio/ogg')) {
+        extension = 'ogg';
+      } else if (mimeType.includes('audio/wav')) {
+        extension = 'wav';
+      }
+
+      console.log(`[uploadVoiceNote] MIME type: ${mimeType}, extension: ${extension}`);
+      const storagePath = `users/${userId}/voice-notes/${noteId}.${extension}`;
 
       // Upload audio file with progress tracking
       const audioUrl = await StorageService.uploadFile(
