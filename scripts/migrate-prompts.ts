@@ -50,6 +50,7 @@ const PROMPTS_PATH = path.join(
 // Service mapping from YAML files
 const FILE_TO_SERVICE: Record<string, string> = {
   'analysis.yaml': 'SentimentAnalysisService',
+  'entityExtraction.yaml': 'EntityExtractionService',
   'events.yaml': 'EventExtractionService',
   'lifeFeed.yaml': 'LifeFeedGenerator',
   'memory.yaml': 'MemoryGeneratorService',
