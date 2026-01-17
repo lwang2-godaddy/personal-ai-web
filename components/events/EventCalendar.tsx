@@ -72,7 +72,7 @@ export default function EventCalendar({
       end: event.endDatetime || new Date(event.datetime.getTime() + 60 * 60 * 1000), // Default 1 hour
       title: event.title,
       resource: event, // Store full event object
-      className: `event-${event.type}${event.conflicts && event.conflicts.length > 0 ? ' has-conflict' : ''}`,
+      className: `event-${event.type}${(event as any).conflicts?.length > 0 ? ' has-conflict' : ''}`,
     }));
   }, [events]);
 

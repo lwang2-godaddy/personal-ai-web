@@ -20,7 +20,37 @@
  * ```
  */
 
-import { getAuth } from 'firebase/auth';
+// Import auth from config to ensure Firebase is initialized
+import { auth } from '@/lib/api/firebase/config';
+import { onAuthStateChanged, User } from 'firebase/auth';
+
+/**
+ * Wait for Firebase auth to be ready
+ * Firebase auth state is not immediately available on page load.
+ * This returns a promise that resolves when auth state is determined.
+ */
+let authReadyPromise: Promise<User | null> | null = null;
+
+function waitForAuth(): Promise<User | null> {
+  if (authReadyPromise) {
+    return authReadyPromise;
+  }
+
+  // If currentUser is already set, auth is ready
+  if (auth.currentUser) {
+    return Promise.resolve(auth.currentUser);
+  }
+
+  // Wait for onAuthStateChanged to fire once
+  authReadyPromise = new Promise((resolve) => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      unsubscribe();
+      resolve(user);
+    });
+  });
+
+  return authReadyPromise;
+}
 
 /**
  * API Client Class
@@ -32,8 +62,8 @@ export class ApiClient {
    * @private
    */
   private static async getAuthHeaders(): Promise<HeadersInit> {
-    const auth = getAuth();
-    const user = auth.currentUser;
+    // Wait for Firebase auth to be ready before checking currentUser
+    const user = await waitForAuth();
 
     if (!user) {
       throw new Error('User not authenticated. Please sign in first.');

@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "eslint",
     "migrate:users": "tsx scripts/migrate-users.ts",
-    "set-admin": "tsx scripts/set-admin.ts"
+    "set-admin": "tsx scripts/set-admin.ts",
+    "migrate:prompts": "tsx scripts/migrate-prompts.ts"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.9",
@@ -40,6 +41,7 @@
     "eslint-config-next": "16.1.1",
     "tailwindcss": "^4",
     "tsx": "^4.19.2",
-    "typescript": "^5"
+    "typescript": "^5",
+    "yaml": "^2.8.2"
   }
 }

@@ -58,6 +58,7 @@ export async function GET(
  * Body:
  * - notificationPreferences?: NotificationPreferences
  * - quietHours?: QuietHours
+ * - lifeFeedPreferences?: LifeFeedPreferences
  * - timezone?: string
  * - locale?: string
  */
@@ -113,6 +114,36 @@ export async function PATCH(
 
     if (body.locale !== undefined) {
       updates.locale = body.locale;
+    }
+
+    // Life Feed preferences
+    if (body.lifeFeedPreferences !== undefined) {
+      // Basic validation
+      if (typeof body.lifeFeedPreferences.enabled !== 'boolean') {
+        return NextResponse.json(
+          { error: 'Invalid lifeFeedPreferences: enabled must be a boolean' },
+          { status: 400 }
+        );
+      }
+      if (body.lifeFeedPreferences.maxPostsPerDay !== undefined) {
+        const maxPosts = body.lifeFeedPreferences.maxPostsPerDay;
+        if (typeof maxPosts !== 'number' || maxPosts < 1 || maxPosts > 10) {
+          return NextResponse.json(
+            { error: 'Invalid lifeFeedPreferences: maxPostsPerDay must be 1-10' },
+            { status: 400 }
+          );
+        }
+      }
+      if (body.lifeFeedPreferences.frequency !== undefined) {
+        const validFrequencies = ['low', 'medium', 'high', 'smart'];
+        if (!validFrequencies.includes(body.lifeFeedPreferences.frequency)) {
+          return NextResponse.json(
+            { error: 'Invalid lifeFeedPreferences: frequency must be low, medium, high, or smart' },
+            { status: 400 }
+          );
+        }
+      }
+      updates.lifeFeedPreferences = body.lifeFeedPreferences;
     }
 
     // Only admins can update role and status

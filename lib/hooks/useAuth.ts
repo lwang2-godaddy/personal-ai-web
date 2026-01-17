@@ -6,7 +6,8 @@
 'use client';
 
 import { useAppSelector } from '@/lib/store/hooks';
-import { getAuth } from 'firebase/auth';
+// Import auth from config to ensure Firebase is initialized
+import { auth } from '@/lib/api/firebase/config';
 
 /**
  * useAuth Hook
@@ -31,7 +32,6 @@ export function useAuth() {
    * @throws Error if user is not logged in
    */
   const getIdToken = async (forceRefresh = false): Promise<string> => {
-    const auth = getAuth();
     const currentUser = auth.currentUser;
 
     if (!currentUser) {

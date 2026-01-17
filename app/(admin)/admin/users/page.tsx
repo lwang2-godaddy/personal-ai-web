@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { apiGet, apiPatch } from '@/lib/api/client';
+import { useAppSelector } from '@/lib/store/hooks';
 
 interface User {
   id: string;
@@ -30,6 +31,7 @@ interface UsersResponse {
  */
 export default function AdminUsersPage() {
   const router = useRouter();
+  const { isAuthenticated, isLoading: authLoading } = useAppSelector((state) => state.auth);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -39,8 +41,11 @@ export default function AdminUsersPage() {
   const [total, setTotal] = useState(0);
 
   useEffect(() => {
-    fetchUsers();
-  }, [page, searchQuery]);
+    // Wait for auth to be ready before fetching
+    if (!authLoading && isAuthenticated) {
+      fetchUsers();
+    }
+  }, [page, searchQuery, authLoading, isAuthenticated]);
 
   const fetchUsers = async () => {
     try {
@@ -156,11 +161,11 @@ export default function AdminUsersPage() {
 
       {/* Users Table */}
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
-        {loading ? (
+        {loading || authLoading ? (
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
               <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading users...</p>
+              <p className="text-gray-600">{authLoading ? 'Checking authentication...' : 'Loading users...'}</p>
             </div>
           </div>
         ) : error ? (

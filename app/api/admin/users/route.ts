@@ -41,7 +41,17 @@ export async function GET(request: NextRequest) {
       const searchLower = search.toLowerCase();
 
       const filteredUsers = allUsersSnapshot.docs
-        .map((doc) => ({ id: doc.id, ...doc.data() }))
+        .map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+            // Normalize subscription: extract tier string from object if needed
+            subscription: typeof data.subscription === 'object' && data.subscription?.tier
+              ? data.subscription.tier
+              : data.subscription || 'free',
+          };
+        })
         .filter((userData: any) => {
           const email = (userData.email || '').toLowerCase();
           const displayName = (userData.displayName || '').toLowerCase();
@@ -75,10 +85,17 @@ export async function GET(request: NextRequest) {
       .offset(offset)
       .get();
 
-    const users = usersSnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    const users = usersSnapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        // Normalize subscription: extract tier string from object if needed
+        subscription: typeof data.subscription === 'object' && data.subscription?.tier
+          ? data.subscription.tier
+          : data.subscription || 'free',
+      };
+    });
 
     return NextResponse.json({
       users,
