@@ -346,7 +346,7 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
                     value={editedContent}
                     onChange={(e) => setEditedContent(e.target.value)}
                     rows={15}
-                    className="w-full font-mono text-sm border border-gray-300 rounded-md p-3 focus:ring-red-500 focus:border-red-500"
+                    className="w-full font-mono text-sm text-gray-900 bg-white border border-gray-300 rounded-md p-3 focus:ring-red-500 focus:border-red-500"
                     placeholder="Enter prompt content..."
                   />
 
