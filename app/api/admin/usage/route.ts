@@ -6,6 +6,8 @@ import { getAdminFirestore } from '@/lib/api/firebase/admin';
  * GET /api/admin/usage
  * Get aggregated usage statistics across all users
  *
+ * Queries usageEvents collection directly and aggregates on-the-fly
+ *
  * Query params:
  * - startDate: string (ISO date, default: 30 days ago)
  * - endDate: string (ISO date, default: today)
@@ -31,140 +33,92 @@ export async function GET(request: NextRequest) {
     const startDateStr = searchParams.get('startDate') || startDate.toISOString().split('T')[0];
     const endDateStr = searchParams.get('endDate') || endDate.toISOString().split('T')[0];
 
+    // Create ISO timestamps for Firestore query
+    const startTimestamp = new Date(startDateStr + 'T00:00:00.000Z').toISOString();
+    const endTimestamp = new Date(endDateStr + 'T23:59:59.999Z').toISOString();
+
     const db = getAdminFirestore();
 
-    if (groupBy === 'day') {
-      // Fetch daily usage data
-      const usageSnapshot = await db
-        .collection('usageDaily')
-        .where('date', '>=', startDateStr)
-        .where('date', '<=', endDateStr)
-        .orderBy('date', 'asc')
-        .get();
+    // Query usageEvents collection directly
+    const usageSnapshot = await db
+      .collection('usageEvents')
+      .where('timestamp', '>=', startTimestamp)
+      .where('timestamp', '<=', endTimestamp)
+      .orderBy('timestamp', 'asc')
+      .get();
 
-      // Aggregate by date
-      const usageByDate = new Map<string, any>();
+    // Aggregate by date or month
+    const usageByPeriod = new Map<string, any>();
 
-      usageSnapshot.forEach((doc) => {
-        const data = doc.data();
-        const date = data.date;
+    usageSnapshot.forEach((doc) => {
+      const data = doc.data();
+      const timestamp = data.timestamp;
 
-        if (!usageByDate.has(date)) {
-          usageByDate.set(date, {
-            date,
-            totalCostUSD: 0,
-            totalApiCalls: 0,
-            totalTokens: 0,
-            operationCounts: {},
-          });
-        }
+      // Extract date or month from timestamp
+      let period: string;
+      if (groupBy === 'day') {
+        period = timestamp.substring(0, 10); // YYYY-MM-DD
+      } else {
+        period = timestamp.substring(0, 7); // YYYY-MM
+      }
 
-        const dayData = usageByDate.get(date)!;
-        dayData.totalCostUSD += data.totalCostUSD || 0;
-        dayData.totalApiCalls += data.totalApiCalls || 0;
-        dayData.totalTokens += data.totalTokens || 0;
+      if (!usageByPeriod.has(period)) {
+        usageByPeriod.set(period, {
+          date: groupBy === 'day' ? period : undefined,
+          month: groupBy === 'month' ? period : undefined,
+          totalCostUSD: 0,
+          totalApiCalls: 0,
+          totalTokens: 0,
+          operationCounts: {},
+          operationCosts: {},
+        });
+      }
 
-        // Aggregate operation counts
-        if (data.operationCounts) {
-          Object.entries(data.operationCounts).forEach(([operation, count]) => {
-            dayData.operationCounts[operation] = (dayData.operationCounts[operation] || 0) + (count as number);
-          });
-        }
+      const periodData = usageByPeriod.get(period)!;
+      periodData.totalCostUSD += data.estimatedCostUSD || 0;
+      periodData.totalApiCalls += 1;
+      periodData.totalTokens += data.totalTokens || 0;
+
+      // Aggregate operation counts and costs
+      const operation = data.operation || 'unknown';
+      periodData.operationCounts[operation] = (periodData.operationCounts[operation] || 0) + 1;
+      periodData.operationCosts[operation] = (periodData.operationCosts[operation] || 0) + (data.estimatedCostUSD || 0);
+    });
+
+    const usage = Array.from(usageByPeriod.values())
+      .map((period) => ({
+        ...period,
+        totalCostUSD: Number(period.totalCostUSD.toFixed(4)),
+        operationCosts: Object.fromEntries(
+          Object.entries(period.operationCosts).map(([k, v]) => [k, Number((v as number).toFixed(4))])
+        ),
+      }))
+      .sort((a, b) => {
+        const aKey = a.date || a.month || '';
+        const bKey = b.date || b.month || '';
+        return aKey.localeCompare(bKey);
       });
 
-      const usage = Array.from(usageByDate.values()).map((day) => ({
-        ...day,
-        totalCostUSD: Number(day.totalCostUSD.toFixed(2)),
-      }));
+    // Calculate totals
+    const totals = usage.reduce(
+      (acc, period) => ({
+        totalCost: acc.totalCost + period.totalCostUSD,
+        totalApiCalls: acc.totalApiCalls + period.totalApiCalls,
+        totalTokens: acc.totalTokens + period.totalTokens,
+      }),
+      { totalCost: 0, totalApiCalls: 0, totalTokens: 0 }
+    );
 
-      // Calculate totals
-      const totals = usage.reduce(
-        (acc, day) => ({
-          totalCost: acc.totalCost + day.totalCostUSD,
-          totalApiCalls: acc.totalApiCalls + day.totalApiCalls,
-          totalTokens: acc.totalTokens + day.totalTokens,
-        }),
-        { totalCost: 0, totalApiCalls: 0, totalTokens: 0 }
-      );
-
-      return NextResponse.json({
-        usage,
-        totals: {
-          ...totals,
-          totalCost: Number(totals.totalCost.toFixed(2)),
-        },
-        startDate: startDateStr,
-        endDate: endDateStr,
-        groupBy: 'day',
-      });
-    } else {
-      // Fetch monthly usage data
-      const startMonth = startDateStr.substring(0, 7); // YYYY-MM
-      const endMonth = endDateStr.substring(0, 7);
-
-      const usageSnapshot = await db
-        .collection('usageMonthly')
-        .where('month', '>=', startMonth)
-        .where('month', '<=', endMonth)
-        .orderBy('month', 'asc')
-        .get();
-
-      // Aggregate by month
-      const usageByMonth = new Map<string, any>();
-
-      usageSnapshot.forEach((doc) => {
-        const data = doc.data();
-        const month = data.month;
-
-        if (!usageByMonth.has(month)) {
-          usageByMonth.set(month, {
-            month,
-            totalCostUSD: 0,
-            totalApiCalls: 0,
-            totalTokens: 0,
-            operationCounts: {},
-          });
-        }
-
-        const monthData = usageByMonth.get(month)!;
-        monthData.totalCostUSD += data.totalCostUSD || 0;
-        monthData.totalApiCalls += data.totalApiCalls || 0;
-        monthData.totalTokens += data.totalTokens || 0;
-
-        // Aggregate operation counts
-        if (data.operationCounts) {
-          Object.entries(data.operationCounts).forEach(([operation, count]) => {
-            monthData.operationCounts[operation] = (monthData.operationCounts[operation] || 0) + (count as number);
-          });
-        }
-      });
-
-      const usage = Array.from(usageByMonth.values()).map((month) => ({
-        ...month,
-        totalCostUSD: Number(month.totalCostUSD.toFixed(2)),
-      }));
-
-      // Calculate totals
-      const totals = usage.reduce(
-        (acc, month) => ({
-          totalCost: acc.totalCost + month.totalCostUSD,
-          totalApiCalls: acc.totalApiCalls + month.totalApiCalls,
-          totalTokens: acc.totalTokens + month.totalTokens,
-        }),
-        { totalCost: 0, totalApiCalls: 0, totalTokens: 0 }
-      );
-
-      return NextResponse.json({
-        usage,
-        totals: {
-          ...totals,
-          totalCost: Number(totals.totalCost.toFixed(2)),
-        },
-        startDate: startDateStr,
-        endDate: endDateStr,
-        groupBy: 'month',
-      });
-    }
+    return NextResponse.json({
+      usage,
+      totals: {
+        ...totals,
+        totalCost: Number(totals.totalCost.toFixed(4)),
+      },
+      startDate: startDateStr,
+      endDate: endDateStr,
+      groupBy,
+    });
   } catch (error: any) {
     console.error('[Admin Usage API] Error:', error);
     return NextResponse.json(

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { apiGet } from '@/lib/api/client';
+import { useAppSelector } from '@/lib/store/hooks';
 import {
   LineChart,
   Line,
@@ -67,6 +68,7 @@ const OPERATION_LABELS: Record<string, string> = {
  * System-wide usage metrics and cost analysis
  */
 export default function AdminUsageAnalyticsPage() {
+  const { isAuthenticated, isLoading: authLoading } = useAppSelector((state) => state.auth);
   const [usageData, setUsageData] = useState<UsageData[]>([]);
   const [totals, setTotals] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -90,10 +92,11 @@ export default function AdminUsageAnalyticsPage() {
   }, []);
 
   useEffect(() => {
-    if (startDate && endDate) {
+    // Wait for auth to be ready before fetching
+    if (startDate && endDate && !authLoading && isAuthenticated) {
       fetchUsageData();
     }
-  }, [startDate, endDate, groupBy]);
+  }, [startDate, endDate, groupBy, authLoading, isAuthenticated]);
 
   const fetchUsageData = async () => {
     try {
@@ -300,11 +303,11 @@ export default function AdminUsageAnalyticsPage() {
       </div>
 
       {/* Loading State */}
-      {loading && (
+      {(loading || authLoading) && (
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
             <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading analytics...</p>
+            <p className="text-gray-600">{authLoading ? 'Checking authentication...' : 'Loading analytics...'}</p>
           </div>
         </div>
       )}
