@@ -37,6 +37,7 @@ interface UsageResponse {
     totalApiCalls: number;
     totalTokens: number;
   };
+  topUsers: TopUser[];
   startDate: string;
   endDate: string;
   groupBy: 'day' | 'month';
@@ -44,23 +45,33 @@ interface UsageResponse {
 
 interface TopUser {
   userId: string;
-  email: string;
+  email?: string;
   displayName?: string;
   totalCost: number;
   totalApiCalls: number;
+  totalTokens?: number;
 }
 
 const COLORS = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#22c55e', '#14b8a6', '#06b6d4', '#3b82f6', '#6366f1', '#8b5cf6'];
 
 const OPERATION_LABELS: Record<string, string> = {
+  // OpenAI operations
   embedding: 'Embeddings',
   chat_completion: 'Chat Completion',
   transcription: 'Transcription',
   image_description: 'Image Description',
   tts: 'Text-to-Speech',
+  // Pinecone operations
   pinecone_query: 'Vector Query',
   pinecone_upsert: 'Vector Upsert',
   pinecone_delete: 'Vector Delete',
+  // Service-based operations (from promptExecutions)
+  sentiment_analysis: 'Sentiment Analysis',
+  entity_extraction: 'Entity Extraction',
+  event_extraction: 'Event Extraction',
+  memory_generation: 'Memory Generation',
+  suggestion: 'Suggestions',
+  life_feed: 'Life Feed',
 };
 
 /**
@@ -113,8 +124,12 @@ export default function AdminUsageAnalyticsPage() {
       setUsageData(data.usage);
       setTotals(data.totals);
 
-      // Calculate top users from usage data
-      calculateTopUsers(data.usage);
+      // Use top users from API response
+      if (data.topUsers && data.topUsers.length > 0) {
+        setTopUsers(data.topUsers);
+      } else {
+        setTopUsers([]);
+      }
     } catch (err: any) {
       console.error('Failed to fetch usage data:', err);
       setError(err.message || 'Failed to load usage analytics');
@@ -209,7 +224,7 @@ export default function AdminUsageAnalyticsPage() {
   }));
 
   const topUsersChartData = topUsers.map((user) => ({
-    name: user.displayName || user.email.split('@')[0],
+    name: user.displayName || (user.email ? user.email.split('@')[0] : user.userId.substring(0, 8)),
     cost: user.totalCost,
     apiCalls: user.totalApiCalls,
   }));

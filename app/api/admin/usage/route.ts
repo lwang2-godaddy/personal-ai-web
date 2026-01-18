@@ -3,10 +3,34 @@ import { requireAdmin } from '@/lib/middleware/auth';
 import { getAdminFirestore } from '@/lib/api/firebase/admin';
 
 /**
+ * Map service names to user-friendly operation labels
+ */
+const SERVICE_TO_OPERATION: Record<string, string> = {
+  OpenAIService: 'chat_completion',
+  RAGEngine: 'chat_completion',
+  QueryRAGServer: 'chat_completion',
+  SentimentAnalysisService: 'sentiment_analysis',
+  EntityExtractionService: 'entity_extraction',
+  EventExtractionService: 'event_extraction',
+  MemoryGeneratorService: 'memory_generation',
+  SuggestionEngine: 'suggestion',
+  LifeFeedGenerator: 'life_feed',
+};
+
+interface TopUser {
+  userId: string;
+  email?: string;
+  displayName?: string;
+  totalCost: number;
+  totalApiCalls: number;
+  totalTokens: number;
+}
+
+/**
  * GET /api/admin/usage
  * Get aggregated usage statistics across all users
  *
- * Queries usageEvents collection directly and aggregates on-the-fly
+ * Queries promptExecutions collection and aggregates on-the-fly
  *
  * Query params:
  * - startDate: string (ISO date, default: 30 days ago)
@@ -16,6 +40,7 @@ import { getAdminFirestore } from '@/lib/api/firebase/admin';
  * Returns:
  * - usage: UsageData[] (array of daily/monthly aggregated data)
  * - totals: { totalCost, totalApiCalls, totalTokens }
+ * - topUsers: TopUser[] (top 10 users by cost)
  */
 export async function GET(request: NextRequest) {
   try {
@@ -39,25 +64,34 @@ export async function GET(request: NextRequest) {
 
     const db = getAdminFirestore();
 
-    console.log('[Admin Usage API] Querying usageEvents collection...');
+    console.log('[Admin Usage API] Querying promptExecutions collection...');
     console.log('[Admin Usage API] Date range:', { startTimestamp, endTimestamp });
 
-    // Query usageEvents collection directly
+    // Query promptExecutions collection (same as prompts stats API)
     const usageSnapshot = await db
-      .collection('usageEvents')
-      .where('timestamp', '>=', startTimestamp)
-      .where('timestamp', '<=', endTimestamp)
-      .orderBy('timestamp', 'asc')
+      .collection('promptExecutions')
+      .where('executedAt', '>=', startTimestamp)
+      .where('executedAt', '<=', endTimestamp)
+      .orderBy('executedAt', 'asc')
       .get();
 
-    console.log(`[Admin Usage API] Found ${usageSnapshot.size} usage events`);
+    console.log(`[Admin Usage API] Found ${usageSnapshot.size} prompt executions`);
 
     // Aggregate by date or month
     const usageByPeriod = new Map<string, any>();
+    // Track per-user stats
+    const userStats = new Map<string, TopUser>();
 
     usageSnapshot.forEach((doc) => {
       const data = doc.data();
-      const timestamp = data.timestamp;
+      const timestamp = data.executedAt as string;
+      const userId = data.userId as string;
+      const service = data.service as string;
+      const cost = (data.estimatedCostUSD as number) || 0;
+      const tokens = (data.totalTokens as number) || 0;
+
+      // Map service to operation
+      const operation = SERVICE_TO_OPERATION[service] || service;
 
       // Extract date or month from timestamp
       let period: string;
@@ -67,6 +101,7 @@ export async function GET(request: NextRequest) {
         period = timestamp.substring(0, 7); // YYYY-MM
       }
 
+      // Initialize period data
       if (!usageByPeriod.has(period)) {
         usageByPeriod.set(period, {
           date: groupBy === 'day' ? period : undefined,
@@ -76,24 +111,42 @@ export async function GET(request: NextRequest) {
           totalTokens: 0,
           operationCounts: {},
           operationCosts: {},
+          userCount: new Set(),
         });
       }
 
       const periodData = usageByPeriod.get(period)!;
-      periodData.totalCostUSD += data.estimatedCostUSD || 0;
+      periodData.totalCostUSD += cost;
       periodData.totalApiCalls += 1;
-      periodData.totalTokens += data.totalTokens || 0;
+      periodData.totalTokens += tokens;
+      periodData.userCount.add(userId);
 
       // Aggregate operation counts and costs
-      const operation = data.operation || 'unknown';
       periodData.operationCounts[operation] = (periodData.operationCounts[operation] || 0) + 1;
-      periodData.operationCosts[operation] = (periodData.operationCosts[operation] || 0) + (data.estimatedCostUSD || 0);
+      periodData.operationCosts[operation] = (periodData.operationCosts[operation] || 0) + cost;
+
+      // Aggregate per-user stats
+      if (userId) {
+        if (!userStats.has(userId)) {
+          userStats.set(userId, {
+            userId,
+            totalCost: 0,
+            totalApiCalls: 0,
+            totalTokens: 0,
+          });
+        }
+        const userStat = userStats.get(userId)!;
+        userStat.totalCost += cost;
+        userStat.totalApiCalls += 1;
+        userStat.totalTokens += tokens;
+      }
     });
 
     const usage = Array.from(usageByPeriod.values())
       .map((period) => ({
         ...period,
         totalCostUSD: Number(period.totalCostUSD.toFixed(4)),
+        userCount: period.userCount.size,
         operationCosts: Object.fromEntries(
           Object.entries(period.operationCosts).map(([k, v]) => [k, Number((v as number).toFixed(4))])
         ),
@@ -114,12 +167,42 @@ export async function GET(request: NextRequest) {
       { totalCost: 0, totalApiCalls: 0, totalTokens: 0 }
     );
 
+    // Get top 10 users by cost
+    const topUsersList = Array.from(userStats.values())
+      .sort((a, b) => b.totalCost - a.totalCost)
+      .slice(0, 10);
+
+    // Fetch user details (displayName, email) for top users
+    const topUsers: TopUser[] = await Promise.all(
+      topUsersList.map(async (user) => {
+        try {
+          const userDoc = await db.collection('users').doc(user.userId).get();
+          if (userDoc.exists) {
+            const userData = userDoc.data();
+            return {
+              ...user,
+              totalCost: Number(user.totalCost.toFixed(4)),
+              displayName: userData?.displayName || userData?.name || undefined,
+              email: userData?.email || undefined,
+            };
+          }
+        } catch (err) {
+          console.warn(`[Admin Usage API] Failed to fetch user ${user.userId}:`, err);
+        }
+        return {
+          ...user,
+          totalCost: Number(user.totalCost.toFixed(4)),
+        };
+      })
+    );
+
     return NextResponse.json({
       usage,
       totals: {
         ...totals,
         totalCost: Number(totals.totalCost.toFixed(4)),
       },
+      topUsers,
       startDate: startDateStr,
       endDate: endDateStr,
       groupBy,

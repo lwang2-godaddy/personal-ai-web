@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { apiGet, apiPost } from '@/lib/api/client';
-import { FirestorePromptConfig, PROMPT_SERVICES, SUPPORTED_LANGUAGES } from '@/lib/models/Prompt';
+import { FirestorePromptConfig, PROMPT_SERVICES, PROMPT_CATEGORIES, SUPPORTED_LANGUAGES } from '@/lib/models/Prompt';
 
 interface PromptsResponse {
   configs: FirestorePromptConfig[];
@@ -128,6 +128,12 @@ export default function AdminPromptsPage() {
     };
   });
 
+  // Group services by category
+  const servicesByCategory = PROMPT_CATEGORIES.map(category => ({
+    ...category,
+    services: serviceMatrix.filter(s => s.category === category.id),
+  }));
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -210,64 +216,21 @@ export default function AdminPromptsPage() {
         </div>
       ) : (
         <>
-          {/* Services Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {serviceMatrix.map(service => (
-              <div
-                key={service.id}
-                className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900">{service.name}</h3>
-                    <p className="text-sm text-gray-600 mt-1">{service.description}</p>
-                  </div>
-                  {/* Status Badge */}
-                  <span
-                    className={`px-2 py-1 text-xs font-medium rounded-full ${
-                      service.status === 'published'
-                        ? 'bg-green-100 text-green-800'
-                        : service.status === 'draft'
-                        ? 'bg-yellow-100 text-yellow-800'
-                        : service.status === 'archived'
-                        ? 'bg-gray-100 text-gray-800'
-                        : 'bg-blue-100 text-blue-800'
-                    }`}
-                  >
-                    {service.isMigrated ? service.status : 'YAML Only'}
-                  </span>
-                </div>
+          {/* Services Grouped by Category */}
+          {servicesByCategory.map(category => (
+            <div key={category.id} className="space-y-4">
+              {/* Category Header */}
+              <div className="border-b border-gray-200 pb-2">
+                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <span className="text-xl">{category.icon}</span>
+                  {category.name}
+                </h2>
+                <p className="text-sm text-gray-500 mt-1">{category.description}</p>
+              </div>
 
-                {/* Config Details */}
-                {service.config && (
-                  <div className="mt-4 space-y-2 text-sm text-gray-600">
-                    <div className="flex justify-between">
-                      <span>Prompts:</span>
-                      <span className="font-medium">
-                        {Object.keys(service.config.prompts).length}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Version:</span>
-                      <span className="font-medium">{service.config.version}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Last Updated:</span>
-                      <span className="font-medium">
-                        {new Date(service.config.lastUpdated).toLocaleDateString()}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Source:</span>
-                      <span className={`font-medium ${service.enabled ? 'text-green-600' : 'text-orange-600'}`}>
-                        {service.enabled ? 'Firestore' : 'YAML Fallback'}
-                      </span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Cost Stats (30 days) - shown for all services */}
-                {(() => {
+              {/* Services Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {category.services.map(service => {
                   const stats = serviceStats.get(service.id);
                   const cost = stats?.totalCost ?? 0;
                   const executions = stats?.executionCount ?? 0;
@@ -276,34 +239,106 @@ export default function AdminPromptsPage() {
                     : cost < 10
                       ? 'bg-yellow-100 text-yellow-800'
                       : 'bg-red-100 text-red-800';
+
                   return (
-                    <div className={`${service.config ? 'mt-2 pt-2 border-t border-gray-100' : 'mt-4'} space-y-2 text-sm text-gray-600`}>
-                      <div className="flex justify-between items-center">
-                        <span>Cost (30d):</span>
-                        <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${costBadgeClass}`}>
-                          ${cost.toFixed(4)}
+                    <div
+                      key={service.id}
+                      className="bg-white rounded-lg shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow"
+                    >
+                      {/* Header Row: Icon + Name + Platform Badge */}
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-2xl">{service.icon}</span>
+                          <h3 className="text-base font-semibold text-gray-900">{service.name}</h3>
+                        </div>
+                        <span
+                          className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+                            service.platform === 'mobile'
+                              ? 'bg-blue-100 text-blue-700'
+                              : 'bg-purple-100 text-purple-700'
+                          }`}
+                        >
+                          {service.platform === 'mobile' ? '📱 Mobile' : '☁️ Server'}
                         </span>
                       </div>
-                      <div className="flex justify-between">
-                        <span>Executions:</span>
-                        <span className="font-medium">{executions.toLocaleString()}</span>
+
+                      {/* Description */}
+                      <p className="text-sm text-gray-600 mb-3">{service.description}</p>
+
+                      {/* Trigger */}
+                      <div className="flex items-start gap-2 mb-2">
+                        <span className="text-yellow-500">⚡</span>
+                        <span className="text-sm text-gray-600">{service.trigger}</span>
+                      </div>
+
+                      {/* Example */}
+                      <div className="flex items-start gap-2 mb-4">
+                        <span className="text-gray-400">💭</span>
+                        <span className="text-sm text-gray-500 italic">&quot;{service.example}&quot;</span>
+                      </div>
+
+                      {/* Divider */}
+                      <div className="border-t border-gray-100 pt-3 mt-3">
+                        {/* Stats Row */}
+                        <div className="flex items-center justify-between text-sm mb-3">
+                          <div className="flex items-center gap-4">
+                            <span className="text-gray-600">
+                              <span className="font-medium">{service.config ? Object.keys(service.config.prompts).length : 0}</span> prompts
+                            </span>
+                            <span className="text-gray-600">
+                              <span className="font-medium">{executions.toLocaleString()}</span> runs
+                            </span>
+                          </div>
+                          <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${costBadgeClass}`}>
+                            ${cost.toFixed(4)}
+                          </span>
+                        </div>
+
+                        {/* Status Badge */}
+                        <div className="flex items-center justify-between mb-3">
+                          <span
+                            className={`px-2 py-1 text-xs font-medium rounded-full ${
+                              service.status === 'published'
+                                ? 'bg-green-100 text-green-800'
+                                : service.status === 'draft'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : service.status === 'archived'
+                                ? 'bg-gray-100 text-gray-800'
+                                : 'bg-blue-100 text-blue-800'
+                            }`}
+                          >
+                            {service.isMigrated ? (
+                              <>
+                                {service.status === 'published' && '✅ '}
+                                {service.status === 'draft' && '📝 '}
+                                {service.status === 'archived' && '📦 '}
+                                {service.status}
+                              </>
+                            ) : (
+                              'YAML Only'
+                            )}
+                          </span>
+                          {service.config && (
+                            <span className={`text-xs ${service.enabled ? 'text-green-600' : 'text-orange-600'}`}>
+                              {service.enabled ? 'Firestore' : 'YAML Fallback'}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Action Button */}
+                        <Link
+                          href={`/admin/prompts/${service.id}?language=${selectedLanguage}`}
+                          className="block w-full text-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm font-medium"
+                        >
+                          {service.isMigrated ? 'Edit Prompts' : 'Migrate & Edit'}
+                        </Link>
                       </div>
                     </div>
                   );
-                })()}
-
-                {/* Actions */}
-                <div className="mt-4 flex space-x-2">
-                  <Link
-                    href={`/admin/prompts/${service.id}?language=${selectedLanguage}`}
-                    className="flex-1 text-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm font-medium"
-                  >
-                    {service.isMigrated ? 'Edit Prompts' : 'Migrate & Edit'}
-                  </Link>
-                </div>
+                })}
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
 
           {/* Info Panel */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
