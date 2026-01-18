@@ -125,13 +125,13 @@ The migration script reads YAML files directly and uploads to Firestore:
 cd /path/to/personal-ai-web
 
 # Migrate all languages (skip existing)
-npx ts-node scripts/migrate-prompts.ts
+npx tsx scripts/migrate-prompts.ts
 
 # Migrate all languages (overwrite existing)
-npx ts-node scripts/migrate-prompts.ts --overwrite
+npx tsx scripts/migrate-prompts.ts --overwrite
 
 # Show help
-npx ts-node scripts/migrate-prompts.ts --help
+npx tsx scripts/migrate-prompts.ts --help
 ```
 
 **Prerequisites:**
@@ -332,7 +332,7 @@ echo $FIREBASE_SERVICE_ACCOUNT_KEY | head -c 50
 echo $NEXT_PUBLIC_FIREBASE_PROJECT_ID
 
 # Run with verbose output
-DEBUG=* npx ts-node scripts/migrate-prompts.ts
+DEBUG=* npx tsx scripts/migrate-prompts.ts
 ```
 
 ### Prompts Not Loading from Firestore

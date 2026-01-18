@@ -5,7 +5,7 @@
  * and migrates them to Firestore for dynamic prompt management.
  *
  * Usage:
- *   npx ts-node scripts/migrate-prompts.ts
+ *   npx tsx scripts/migrate-prompts.ts
  *
  * Prerequisites:
  *   - GOOGLE_APPLICATION_CREDENTIALS environment variable set
@@ -15,31 +15,13 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as yaml from 'yaml';
+import * as dotenv from 'dotenv';
+
+// Load environment variables FIRST
+dotenv.config({ path: path.join(__dirname, '../.env.local') });
+
+// Now import firebase-admin after env vars are loaded
 import * as admin from 'firebase-admin';
-
-// Initialize Firebase Admin
-const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
-const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-
-if (!admin.apps.length) {
-  if (serviceAccountKey) {
-    const serviceAccount = JSON.parse(serviceAccountKey);
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-      projectId,
-    });
-  } else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-    admin.initializeApp({
-      projectId,
-    });
-  } else {
-    console.error('Error: No Firebase credentials found.');
-    console.error('Set FIREBASE_SERVICE_ACCOUNT_KEY or GOOGLE_APPLICATION_CREDENTIALS');
-    process.exit(1);
-  }
-}
-
-const db = admin.firestore();
 
 // Path to YAML prompts in Firebase Functions
 const PROMPTS_PATH = path.join(
@@ -48,19 +30,6 @@ const PROMPTS_PATH = path.join(
 );
 
 // Service mapping from YAML files
-// Note: Some files contain prompts for multiple services
-const FILE_TO_SERVICES: Record<string, string[]> = {
-  'analysis.yaml': ['SentimentAnalysisService', 'EntityExtractionService'],
-  'entityExtraction.yaml': ['EntityExtractionService'],
-  'events.yaml': ['EventExtractionService'],
-  'lifeFeed.yaml': ['LifeFeedGenerator'],
-  'memory.yaml': ['MemoryGeneratorService'],
-  'suggestions.yaml': ['SuggestionEngine'],
-  'chat.yaml': ['OpenAIService'],
-  'rag.yaml': ['RAGEngine', 'QueryRAGServer'],
-};
-
-// Legacy single-service mapping (for backward compatibility)
 const FILE_TO_SERVICE: Record<string, string> = {
   'analysis.yaml': 'SentimentAnalysisService',
   'entityExtraction.yaml': 'EntityExtractionService',
@@ -79,8 +48,49 @@ interface YamlPromptConfig {
   prompts: Record<string, any>;
 }
 
+function initializeFirebase() {
+  const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+
+  if (admin.apps && admin.apps.length > 0) {
+    return admin.firestore();
+  }
+
+  if (serviceAccountKey) {
+    try {
+      const serviceAccount = JSON.parse(serviceAccountKey);
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+        projectId: projectId || serviceAccount.project_id,
+      });
+      console.log(`✅ Firebase initialized with project: ${projectId || serviceAccount.project_id}`);
+    } catch (e) {
+      console.error('Error parsing FIREBASE_SERVICE_ACCOUNT_KEY:', e);
+      process.exit(1);
+    }
+  } else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+    admin.initializeApp({
+      projectId,
+    });
+    console.log(`✅ Firebase initialized from GOOGLE_APPLICATION_CREDENTIALS`);
+  } else {
+    console.error('Error: No Firebase credentials found.');
+    console.error('Set FIREBASE_SERVICE_ACCOUNT_KEY or GOOGLE_APPLICATION_CREDENTIALS');
+    console.error('\nCurrent env vars:');
+    console.error(`  FIREBASE_SERVICE_ACCOUNT_KEY: ${serviceAccountKey ? 'set (length: ' + serviceAccountKey.length + ')' : 'not set'}`);
+    console.error(`  GOOGLE_APPLICATION_CREDENTIALS: ${process.env.GOOGLE_APPLICATION_CREDENTIALS || 'not set'}`);
+    console.error(`  NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${projectId || 'not set'}`);
+    process.exit(1);
+  }
+
+  return admin.firestore();
+}
+
 async function migratePrompts(overwrite = false) {
   console.log('Starting prompt migration...\n');
+
+  // Initialize Firebase
+  const db = initializeFirebase();
 
   // Check if PROMPTS_PATH exists
   if (!fs.existsSync(PROMPTS_PATH)) {
@@ -105,15 +115,17 @@ async function migratePrompts(overwrite = false) {
     const langPath = path.join(PROMPTS_PATH, language);
     const yamlFiles = fs.readdirSync(langPath).filter(f => f.endsWith('.yaml'));
 
+    console.log(`\n📂 Processing ${language.toUpperCase()}...`);
+
     for (const yamlFile of yamlFiles) {
       const service = FILE_TO_SERVICE[yamlFile];
       if (!service) {
-        console.log(`  Skipping unknown file: ${yamlFile}`);
+        console.log(`  ⚠️  Skipping unknown file: ${yamlFile}`);
         continue;
       }
 
       const filePath = path.join(langPath, yamlFile);
-      console.log(`Processing ${language}/${yamlFile} -> ${service}...`);
+      process.stdout.write(`  ${yamlFile} -> ${service}... `);
 
       try {
         // Read and parse YAML
@@ -121,7 +133,7 @@ async function migratePrompts(overwrite = false) {
         const config: YamlPromptConfig = yaml.parse(yamlContent);
 
         if (!config.prompts || Object.keys(config.prompts).length === 0) {
-          console.log(`  ⚠️  No prompts found in ${yamlFile}, skipping`);
+          console.log(`⚠️  No prompts found, skipping`);
           skipped++;
           continue;
         }
@@ -136,7 +148,7 @@ async function migratePrompts(overwrite = false) {
         const existingDoc = await docRef.get();
 
         if (existingDoc.exists && !overwrite) {
-          console.log(`  ⏭️  Config already exists, skipping (use --overwrite to replace)`);
+          console.log(`⏭️  Already exists (use --overwrite)`);
           skipped++;
           continue;
         }
@@ -177,28 +189,28 @@ async function migratePrompts(overwrite = false) {
           changeNotes: existingDoc.exists ? 'Migration (overwrite)' : 'Initial migration from YAML',
         });
 
-        console.log(`  ✅ Migrated ${Object.keys(config.prompts).length} prompts`);
+        console.log(`✅ ${Object.keys(config.prompts).length} prompts`);
         migrated++;
       } catch (error: unknown) {
         const message = error instanceof Error ? error.message : 'Unknown error';
-        console.log(`  ❌ Error: ${message}`);
+        console.log(`❌ Error: ${message}`);
         errors.push(`${language}/${service}: ${message}`);
       }
     }
   }
 
   console.log('\n========================================');
-  console.log('Migration Summary:');
-  console.log(`  Migrated: ${migrated}`);
-  console.log(`  Skipped:  ${skipped}`);
-  console.log(`  Errors:   ${errors.length}`);
+  console.log('📊 Migration Summary:');
+  console.log(`  ✅ Migrated: ${migrated}`);
+  console.log(`  ⏭️  Skipped:  ${skipped}`);
+  console.log(`  ❌ Errors:   ${errors.length}`);
 
   if (errors.length > 0) {
     console.log('\nErrors:');
     errors.forEach(e => console.log(`  - ${e}`));
   }
 
-  console.log('\n✅ Migration complete!');
+  console.log('\n✨ Migration complete!');
   console.log('\nNext steps:');
   console.log('1. Visit /admin/prompts to see migrated prompts');
   console.log('2. Edit prompts as needed');
@@ -214,7 +226,7 @@ if (args.includes('--help')) {
 Migrate Prompts from YAML to Firestore
 
 Usage:
-  npx ts-node scripts/migrate-prompts.ts [options]
+  npx tsx scripts/migrate-prompts.ts [options]
 
 Options:
   --overwrite  Overwrite existing Firestore configs
@@ -222,14 +234,11 @@ Options:
 
 Prerequisites:
   Set one of these environment variables:
-  - FIREBASE_SERVICE_ACCOUNT_KEY (JSON string)
+  - FIREBASE_SERVICE_ACCOUNT_KEY (JSON string in .env.local)
   - GOOGLE_APPLICATION_CREDENTIALS (path to service account file)
 `);
   process.exit(0);
 }
-
-// Load environment variables from .env.local
-require('dotenv').config({ path: path.join(__dirname, '../.env.local') });
 
 migratePrompts(overwrite)
   .then(() => process.exit(0))
