@@ -48,6 +48,19 @@ const PROMPTS_PATH = path.join(
 );
 
 // Service mapping from YAML files
+// Note: Some files contain prompts for multiple services
+const FILE_TO_SERVICES: Record<string, string[]> = {
+  'analysis.yaml': ['SentimentAnalysisService', 'EntityExtractionService'],
+  'entityExtraction.yaml': ['EntityExtractionService'],
+  'events.yaml': ['EventExtractionService'],
+  'lifeFeed.yaml': ['LifeFeedGenerator'],
+  'memory.yaml': ['MemoryGeneratorService'],
+  'suggestions.yaml': ['SuggestionEngine'],
+  'chat.yaml': ['OpenAIService'],
+  'rag.yaml': ['RAGEngine', 'QueryRAGServer'],
+};
+
+// Legacy single-service mapping (for backward compatibility)
 const FILE_TO_SERVICE: Record<string, string> = {
   'analysis.yaml': 'SentimentAnalysisService',
   'entityExtraction.yaml': 'EntityExtractionService',
@@ -55,6 +68,8 @@ const FILE_TO_SERVICE: Record<string, string> = {
   'lifeFeed.yaml': 'LifeFeedGenerator',
   'memory.yaml': 'MemoryGeneratorService',
   'suggestions.yaml': 'SuggestionEngine',
+  'chat.yaml': 'OpenAIService',
+  'rag.yaml': 'RAGEngine',
 };
 
 interface YamlPromptConfig {
