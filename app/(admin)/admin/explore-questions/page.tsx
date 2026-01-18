@@ -27,6 +27,13 @@ interface MigrationResponse {
   errors: { id: string; error: string }[];
 }
 
+interface AllLanguagesMigrationResult {
+  totalMigrated: number;
+  totalSkipped: number;
+  totalErrors: number;
+  byLanguage: { language: string; migrated: number; skipped: number; errors: number }[];
+}
+
 export default function AdminExploreQuestionsPage() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -37,6 +44,8 @@ export default function AdminExploreQuestionsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [migrating, setMigrating] = useState(false);
   const [migrationResult, setMigrationResult] = useState<MigrationResponse | null>(null);
+  const [migratingAll, setMigratingAll] = useState(false);
+  const [allMigrationResult, setAllMigrationResult] = useState<AllLanguagesMigrationResult | null>(null);
 
   // Editor state
   const [editorOpen, setEditorOpen] = useState(false);
@@ -98,6 +107,67 @@ export default function AdminExploreQuestionsPage() {
       setError(message);
     } finally {
       setMigrating(false);
+    }
+  };
+
+  const handleMigrateAll = async () => {
+    if (
+      !confirm(
+        'This will migrate default question templates to Firestore for ALL 6 languages. Existing questions will be skipped. Continue?'
+      )
+    ) {
+      return;
+    }
+
+    setMigratingAll(true);
+    setAllMigrationResult(null);
+    setMigrationResult(null);
+    setError(null);
+
+    const results: AllLanguagesMigrationResult = {
+      totalMigrated: 0,
+      totalSkipped: 0,
+      totalErrors: 0,
+      byLanguage: [],
+    };
+
+    try {
+      for (const lang of EXPLORE_SUPPORTED_LANGUAGES) {
+        try {
+          const response = await apiPost<MigrationResponse>('/api/admin/explore-questions/migrate', {
+            language: lang.code,
+            overwrite: false,
+          });
+
+          results.totalMigrated += response.migrated;
+          results.totalSkipped += response.skipped;
+          results.totalErrors += response.errors.length;
+          results.byLanguage.push({
+            language: lang.code,
+            migrated: response.migrated,
+            skipped: response.skipped,
+            errors: response.errors.length,
+          });
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : 'Unknown error';
+          results.byLanguage.push({
+            language: lang.code,
+            migrated: 0,
+            skipped: 0,
+            errors: 1,
+          });
+          results.totalErrors += 1;
+          console.error(`Migration failed for ${lang.code}:`, message);
+        }
+      }
+
+      setAllMigrationResult(results);
+      await fetchQuestions();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Migration failed';
+      setError(message);
+    } finally {
+      setMigratingAll(false);
     }
   };
 
@@ -205,13 +275,22 @@ export default function AdminExploreQuestionsPage() {
             </select>
           </div>
 
-          {/* Migrate Button */}
+          {/* Migrate All Languages Button */}
+          <button
+            onClick={handleMigrateAll}
+            disabled={migratingAll || migrating}
+            className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {migratingAll ? 'Migrating All...' : 'Migrate All Languages'}
+          </button>
+
+          {/* Migrate Current Language Button */}
           <button
             onClick={handleMigrate}
-            disabled={migrating}
+            disabled={migrating || migratingAll}
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {migrating ? 'Migrating...' : 'Migrate Default Questions'}
+            {migrating ? 'Migrating...' : `Migrate ${selectedLanguage.toUpperCase()}`}
           </button>
 
           {/* Create Button */}
@@ -224,7 +303,47 @@ export default function AdminExploreQuestionsPage() {
         </div>
       </div>
 
-      {/* Migration Result */}
+      {/* All Languages Migration Result */}
+      {allMigrationResult && (
+        <div
+          className={`p-4 rounded-lg border ${allMigrationResult.totalErrors === 0 ? 'bg-green-50 border-green-200' : 'bg-yellow-50 border-yellow-200'}`}
+        >
+          <h3
+            className={`font-medium mb-2 ${allMigrationResult.totalErrors === 0 ? 'text-green-800' : 'text-yellow-800'}`}
+          >
+            All Languages Migration {allMigrationResult.totalErrors === 0 ? 'Complete' : 'Completed with Issues'}
+          </h3>
+          <div className="text-sm space-y-2">
+            <div className="flex gap-4">
+              <span className="text-green-700">Migrated: {allMigrationResult.totalMigrated}</span>
+              <span className="text-gray-600">Skipped: {allMigrationResult.totalSkipped}</span>
+              {allMigrationResult.totalErrors > 0 && (
+                <span className="text-red-700">Errors: {allMigrationResult.totalErrors}</span>
+              )}
+            </div>
+            <div className="grid grid-cols-6 gap-2 mt-2">
+              {allMigrationResult.byLanguage.map((lang) => (
+                <div
+                  key={lang.language}
+                  className={`p-2 rounded text-center text-xs ${
+                    lang.errors > 0
+                      ? 'bg-red-100 text-red-800'
+                      : lang.migrated > 0
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-gray-100 text-gray-800'
+                  }`}
+                >
+                  <div className="font-bold">{lang.language.toUpperCase()}</div>
+                  <div>{lang.migrated} new</div>
+                  <div>{lang.skipped} skip</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Single Language Migration Result */}
       {migrationResult && (
         <div
           className={`p-4 rounded-lg border ${migrationResult.success ? 'bg-green-50 border-green-200' : 'bg-yellow-50 border-yellow-200'}`}
