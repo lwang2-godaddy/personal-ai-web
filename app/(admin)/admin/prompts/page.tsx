@@ -248,9 +248,14 @@ export default function AdminPromptsPage() {
                     >
                       {/* Header Row: Icon + Name + Platform Badge */}
                       <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <span className="text-2xl">{service.icon}</span>
-                          <h3 className="text-base font-semibold text-gray-900">{service.name}</h3>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-2xl">{service.icon}</span>
+                            <h3 className="text-base font-semibold text-gray-900">{service.name}</h3>
+                          </div>
+                          <code className="text-xs text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded mt-1 inline-block">
+                            {service.id}
+                          </code>
                         </div>
                         <span
                           className={`px-2 py-0.5 text-xs font-medium rounded-full ${
