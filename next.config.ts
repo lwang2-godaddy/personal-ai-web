@@ -35,6 +35,35 @@ function getVersionEnv() {
 
 const nextConfig: NextConfig = {
   env: getVersionEnv(),
+
+  // Rewrites for subdomain URL support
+  // Mobile app links to docs.sircharge.app/* and support.sircharge.app
+  // These rewrites handle those subdomains when DNS is configured
+  async rewrites() {
+    return {
+      beforeFiles: [
+        // docs.sircharge.app/getting-started -> /docs/getting-started
+        {
+          source: '/:path*',
+          has: [{ type: 'host', value: 'docs.sircharge.app' }],
+          destination: '/docs/:path*',
+        },
+        // support.sircharge.app -> /support
+        {
+          source: '/',
+          has: [{ type: 'host', value: 'support.sircharge.app' }],
+          destination: '/support',
+        },
+        {
+          source: '/:path*',
+          has: [{ type: 'host', value: 'support.sircharge.app' }],
+          destination: '/support/:path*',
+        },
+      ],
+      afterFiles: [],
+      fallback: [],
+    };
+  },
 };
 
 export default withNextIntl(nextConfig);
