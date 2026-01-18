@@ -9,8 +9,63 @@ import {
   EXPLORE_CATEGORIES,
   ExploreLanguageCode,
   ExploreQuestionsConfig,
+  ExploreCategory,
+  UserDataState,
 } from '@/lib/models/ExploreQuestion';
 import ExploreQuestionEditor from '@/components/admin/ExploreQuestionEditor';
+
+/**
+ * Category display rules - defines when each category appears
+ * and what data requirements are needed
+ */
+const CATEGORY_DISPLAY_RULES: Record<
+  ExploreCategory,
+  {
+    dataStates: UserDataState[];
+    requirements: string;
+    variableInfo?: string;
+    description: string;
+  }
+> = {
+  onboarding: {
+    dataStates: ['NO_DATA'],
+    requirements: 'None - action triggers for new users',
+    description: 'These are action prompts, not AI queries. They help new users get started.',
+  },
+  activity: {
+    dataStates: ['PARTIAL_DATA', 'RICH_DATA'],
+    requirements: 'Location data with activities tagged',
+    variableInfo: '{{activity}} → replaced with user\'s top 2 activities',
+    description: 'Questions about user\'s activities from location visits.',
+  },
+  health: {
+    dataStates: ['MINIMAL_DATA', 'PARTIAL_DATA', 'RICH_DATA'],
+    requirements: 'Health data (HealthKit/Google Fit)',
+    variableInfo: '{{healthType}} → replaced with available health metrics',
+    description: 'Questions about health data like steps, sleep, heart rate.',
+  },
+  location: {
+    dataStates: ['PARTIAL_DATA', 'RICH_DATA'],
+    requirements: 'Location tracking data',
+    variableInfo: '{{place}} → replaced with frequent locations',
+    description: 'Questions about places visited and location history.',
+  },
+  voice: {
+    dataStates: ['PARTIAL_DATA', 'RICH_DATA'],
+    requirements: 'Voice notes recorded',
+    description: 'Questions about transcribed voice note content.',
+  },
+  photo: {
+    dataStates: ['PARTIAL_DATA', 'RICH_DATA'],
+    requirements: 'Photo memories saved',
+    description: 'Questions about photo descriptions and memories.',
+  },
+  general: {
+    dataStates: ['MINIMAL_DATA', 'PARTIAL_DATA', 'RICH_DATA'],
+    requirements: 'None - works with any data',
+    description: 'General questions that work across all data types.',
+  },
+};
 
 interface QuestionsResponse {
   questions: ExploreQuestion[];
@@ -435,6 +490,149 @@ export default function AdminExploreQuestionsPage() {
         </div>
       </div>
 
+      {/* Display Logic Reference Section */}
+      <div className="space-y-4">
+        {/* Where Questions Appear */}
+        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+          <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
+            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+              <span>📱</span> Where Questions Appear
+            </h3>
+          </div>
+          <div className="p-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="flex items-start gap-3">
+                <div className="text-2xl">📍</div>
+                <div>
+                  <div className="font-medium text-gray-900">Screen Location</div>
+                  <div className="text-sm text-gray-600">
+                    Mobile App → Explore/Chat Tab (empty state)
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="text-2xl">4️⃣</div>
+                <div>
+                  <div className="font-medium text-gray-900">Display Count</div>
+                  <div className="text-sm text-gray-600">
+                    Top 4 questions shown based on user&apos;s data
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="text-2xl">⏱️</div>
+                <div>
+                  <div className="font-medium text-gray-900">Cache / Refresh</div>
+                  <div className="text-sm text-gray-600">
+                    24h TTL • Pull-to-refresh or app restart
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* User Data States Reference */}
+        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+          <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
+            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+              <span>👤</span> User Data States
+              <span className="text-xs font-normal text-gray-500 ml-2">
+                (determines which questions appear)
+              </span>
+            </h3>
+          </div>
+          <div className="p-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="border border-gray-200 rounded-lg p-3 text-center bg-gray-50">
+                <div className="text-2xl mb-1">🆕</div>
+                <div className="font-bold text-gray-900">NO_DATA</div>
+                <div className="text-sm text-gray-600">0 points</div>
+                <div className="text-xs text-gray-500 mt-1">New user</div>
+              </div>
+              <div className="border border-blue-200 rounded-lg p-3 text-center bg-blue-50">
+                <div className="text-2xl mb-1">📊</div>
+                <div className="font-bold text-blue-900">MINIMAL_DATA</div>
+                <div className="text-sm text-blue-700">1-2 points</div>
+                <div className="text-xs text-blue-600 mt-1">Just started</div>
+              </div>
+              <div className="border border-indigo-200 rounded-lg p-3 text-center bg-indigo-50">
+                <div className="text-2xl mb-1">📈</div>
+                <div className="font-bold text-indigo-900">PARTIAL_DATA</div>
+                <div className="text-sm text-indigo-700">3-9 pts OR 1 cat</div>
+                <div className="text-xs text-indigo-600 mt-1">Growing data</div>
+              </div>
+              <div className="border border-green-200 rounded-lg p-3 text-center bg-green-50">
+                <div className="text-2xl mb-1">🌟</div>
+                <div className="font-bold text-green-900">RICH_DATA</div>
+                <div className="text-sm text-green-700">10+ pts AND 2+ cats</div>
+                <div className="text-xs text-green-600 mt-1">Substantial data</div>
+              </div>
+            </div>
+            <div className="mt-3 text-xs text-gray-500 text-center">
+              Data points = location + health + voice + photo + text notes
+            </div>
+          </div>
+        </div>
+
+        {/* Category Display Rules */}
+        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+          <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
+            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+              <span>📂</span> Category Display Rules
+            </h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="px-4 py-2 text-left font-medium text-gray-700">Category</th>
+                  <th className="px-4 py-2 text-left font-medium text-gray-700">Shows For</th>
+                  <th className="px-4 py-2 text-left font-medium text-gray-700">Requirements</th>
+                  <th className="px-4 py-2 text-left font-medium text-gray-700">Variables</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {EXPLORE_CATEGORIES.map((cat) => {
+                  const rules = CATEGORY_DISPLAY_RULES[cat.id];
+                  return (
+                    <tr key={cat.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-2">
+                        <span className="font-medium">{cat.icon} {cat.name}</span>
+                      </td>
+                      <td className="px-4 py-2">
+                        <div className="flex flex-wrap gap-1">
+                          {rules.dataStates.map((state) => (
+                            <span
+                              key={state}
+                              className={`px-1.5 py-0.5 text-xs rounded ${
+                                state === 'NO_DATA'
+                                  ? 'bg-gray-100 text-gray-700'
+                                  : state === 'MINIMAL_DATA'
+                                    ? 'bg-blue-100 text-blue-700'
+                                    : state === 'PARTIAL_DATA'
+                                      ? 'bg-indigo-100 text-indigo-700'
+                                      : 'bg-green-100 text-green-700'
+                              }`}
+                            >
+                              {state.replace('_DATA', '')}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="px-4 py-2 text-gray-600">{rules.requirements}</td>
+                      <td className="px-4 py-2 text-gray-500 text-xs font-mono">
+                        {rules.variableInfo || '—'}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
       {/* Loading State */}
       {loading ? (
         <div className="flex items-center justify-center h-64">
@@ -470,16 +668,54 @@ export default function AdminExploreQuestionsPage() {
             (category) =>
               category.questions.length > 0 && (
                 <div key={category.id} className="space-y-4">
-                  {/* Category Header */}
-                  <div className="border-b border-gray-200 pb-2">
-                    <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                      <span className="text-xl">{category.icon}</span>
-                      {category.name}
-                      <span className="text-sm font-normal text-gray-500">
-                        ({category.questions.length})
-                      </span>
-                    </h2>
-                    <p className="text-sm text-gray-500 mt-1">{category.description}</p>
+                  {/* Category Header with Display Rules */}
+                  <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                    <div className="px-4 py-3 border-b border-gray-100">
+                      <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                        <span className="text-xl">{category.icon}</span>
+                        {category.name}
+                        <span className="text-sm font-normal text-gray-500">
+                          ({category.questions.length})
+                        </span>
+                      </h2>
+                      <p className="text-sm text-gray-500 mt-1">{category.description}</p>
+                    </div>
+                    {/* Display Rules Summary */}
+                    <div className="px-4 py-2 bg-gray-50 flex flex-wrap items-center gap-4 text-xs">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-gray-500">Shows for:</span>
+                        <div className="flex gap-1">
+                          {CATEGORY_DISPLAY_RULES[category.id].dataStates.map((state) => (
+                            <span
+                              key={state}
+                              className={`px-1.5 py-0.5 rounded ${
+                                state === 'NO_DATA'
+                                  ? 'bg-gray-200 text-gray-700'
+                                  : state === 'MINIMAL_DATA'
+                                    ? 'bg-blue-100 text-blue-700'
+                                    : state === 'PARTIAL_DATA'
+                                      ? 'bg-indigo-100 text-indigo-700'
+                                      : 'bg-green-100 text-green-700'
+                              }`}
+                            >
+                              {state.replace('_DATA', '')}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-gray-500">Requires:</span>
+                        <span className="text-gray-700">{CATEGORY_DISPLAY_RULES[category.id].requirements}</span>
+                      </div>
+                      {CATEGORY_DISPLAY_RULES[category.id].variableInfo && (
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-gray-500">Variables:</span>
+                          <code className="text-gray-700 bg-gray-100 px-1 py-0.5 rounded">
+                            {CATEGORY_DISPLAY_RULES[category.id].variableInfo}
+                          </code>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Questions Grid */}
@@ -539,12 +775,85 @@ export default function AdminExploreQuestionsPage() {
                           {question.userDataStates?.map((state) => (
                             <span
                               key={state}
-                              className="px-2 py-0.5 text-xs bg-indigo-50 text-indigo-700 rounded-full"
+                              className={`px-2 py-0.5 text-xs rounded-full ${
+                                state === 'NO_DATA'
+                                  ? 'bg-gray-100 text-gray-700'
+                                  : state === 'MINIMAL_DATA'
+                                    ? 'bg-blue-50 text-blue-700'
+                                    : state === 'PARTIAL_DATA'
+                                      ? 'bg-indigo-50 text-indigo-700'
+                                      : 'bg-green-50 text-green-700'
+                              }`}
                             >
                               {state}
                             </span>
                           ))}
                         </div>
+
+                        {/* Data Requirements Badge */}
+                        {question.requiresData && (
+                          <div className="mb-3 p-2 bg-amber-50 border border-amber-200 rounded-md">
+                            <div className="text-xs font-medium text-amber-800 mb-1">
+                              Data Requirements:
+                            </div>
+                            <div className="flex flex-wrap gap-1">
+                              {question.requiresData.hasLocationData && (
+                                <span className="px-1.5 py-0.5 text-xs bg-amber-100 text-amber-700 rounded">
+                                  📍 Location
+                                </span>
+                              )}
+                              {question.requiresData.hasHealthData && (
+                                <span className="px-1.5 py-0.5 text-xs bg-amber-100 text-amber-700 rounded">
+                                  ❤️ Health
+                                </span>
+                              )}
+                              {question.requiresData.hasVoiceNotes && (
+                                <span className="px-1.5 py-0.5 text-xs bg-amber-100 text-amber-700 rounded">
+                                  🎙️ Voice
+                                </span>
+                              )}
+                              {question.requiresData.hasPhotoMemories && (
+                                <span className="px-1.5 py-0.5 text-xs bg-amber-100 text-amber-700 rounded">
+                                  📸 Photo
+                                </span>
+                              )}
+                              {question.requiresData.minActivityCount && (
+                                <span className="px-1.5 py-0.5 text-xs bg-amber-100 text-amber-700 rounded">
+                                  🏃 {question.requiresData.minActivityCount}+ activities
+                                </span>
+                              )}
+                              {question.requiresData.healthTypes && question.requiresData.healthTypes.length > 0 && (
+                                <span className="px-1.5 py-0.5 text-xs bg-amber-100 text-amber-700 rounded">
+                                  Health: {question.requiresData.healthTypes.join(', ')}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Variable Preview */}
+                        {question.variables && question.variables.length > 0 && (
+                          <div className="mb-3 p-2 bg-slate-50 border border-slate-200 rounded-md">
+                            <div className="text-xs font-medium text-slate-700 mb-1">
+                              Variable Substitution:
+                            </div>
+                            <div className="text-xs text-slate-600 font-mono">
+                              {question.variables.map((v) => (
+                                <div key={v} className="flex items-center gap-1">
+                                  <span className="text-slate-400">{`{{${v}}}`}</span>
+                                  <span className="text-slate-400">→</span>
+                                  <span className="text-slate-600 italic">
+                                    {v === 'activity' && 'e.g., "badminton", "gym"'}
+                                    {v === 'healthType' && 'e.g., "steps", "sleep"'}
+                                    {v === 'place' && 'e.g., "home", "office"'}
+                                    {v === 'date' && 'e.g., "today", "last week"'}
+                                    {!['activity', 'healthType', 'place', 'date'].includes(v) && `user's ${v}`}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
 
                         {/* Actions */}
                         <div className="flex justify-between items-center pt-3 border-t border-gray-100">
@@ -610,16 +919,107 @@ export default function AdminExploreQuestionsPage() {
         </div>
       </div>
 
-      {/* Info Panel */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h3 className="text-blue-800 font-medium mb-2">How Explore Questions Work</h3>
-        <ul className="text-blue-700 text-sm space-y-1">
-          <li>1. Mobile app fetches questions from Firestore on app launch (cached for 24h)</li>
-          <li>2. Questions are filtered by user&apos;s data state (NO_DATA, MINIMAL_DATA, etc.)</li>
-          <li>3. Template variables like {'{{activity}}'} are replaced with user&apos;s actual data</li>
-          <li>4. If Firestore is unavailable, app falls back to hardcoded JSON questions</li>
-          <li>5. Changes made here will reflect in mobile app within 24 hours (or on cache refresh)</li>
-        </ul>
+      {/* Info Panel - Question Flow Diagram */}
+      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+        <div className="bg-blue-50 px-4 py-3 border-b border-blue-200">
+          <h3 className="font-semibold text-blue-900 flex items-center gap-2">
+            <span>ℹ️</span> How Explore Questions Work
+          </h3>
+        </div>
+        <div className="p-4">
+          {/* Flow Diagram */}
+          <div className="mb-4 p-3 bg-gray-50 rounded-lg overflow-x-auto">
+            <div className="flex items-center justify-between min-w-[600px] text-xs">
+              <div className="flex flex-col items-center text-center">
+                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-lg mb-1">
+                  📱
+                </div>
+                <div className="font-medium text-gray-900">App Launch</div>
+                <div className="text-gray-500">User opens app</div>
+              </div>
+              <div className="flex-1 border-t-2 border-dashed border-gray-300 mx-2"></div>
+              <div className="flex flex-col items-center text-center">
+                <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center text-lg mb-1">
+                  🔥
+                </div>
+                <div className="font-medium text-gray-900">Firestore</div>
+                <div className="text-gray-500">Fetch questions</div>
+              </div>
+              <div className="flex-1 border-t-2 border-dashed border-gray-300 mx-2"></div>
+              <div className="flex flex-col items-center text-center">
+                <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center text-lg mb-1">
+                  🔍
+                </div>
+                <div className="font-medium text-gray-900">Filter</div>
+                <div className="text-gray-500">By data state</div>
+              </div>
+              <div className="flex-1 border-t-2 border-dashed border-gray-300 mx-2"></div>
+              <div className="flex flex-col items-center text-center">
+                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-lg mb-1">
+                  🔄
+                </div>
+                <div className="font-medium text-gray-900">Substitute</div>
+                <div className="text-gray-500">Variables → data</div>
+              </div>
+              <div className="flex-1 border-t-2 border-dashed border-gray-300 mx-2"></div>
+              <div className="flex flex-col items-center text-center">
+                <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-lg mb-1">
+                  ✨
+                </div>
+                <div className="font-medium text-gray-900">Display</div>
+                <div className="text-gray-500">Top 4 shown</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Key Points */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div className="space-y-2">
+              <h4 className="font-medium text-gray-900">Data Flow</h4>
+              <ul className="space-y-1 text-gray-600">
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-500 mt-0.5">•</span>
+                  <span>Questions fetched from Firestore on app launch</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-500 mt-0.5">•</span>
+                  <span>Cached locally for 24 hours</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-500 mt-0.5">•</span>
+                  <span>Fallback to hardcoded JSON if Firestore unavailable</span>
+                </li>
+              </ul>
+            </div>
+            <div className="space-y-2">
+              <h4 className="font-medium text-gray-900">Variable Substitution</h4>
+              <ul className="space-y-1 text-gray-600">
+                <li className="flex items-start gap-2">
+                  <span className="text-green-500 mt-0.5">•</span>
+                  <span><code className="bg-gray-100 px-1 rounded">{'{{activity}}'}</code> → user&apos;s top activities</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-500 mt-0.5">•</span>
+                  <span><code className="bg-gray-100 px-1 rounded">{'{{healthType}}'}</code> → available health metrics</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-500 mt-0.5">•</span>
+                  <span>Substitution happens client-side at display time</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Admin Note */}
+          <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-md">
+            <div className="flex items-start gap-2">
+              <span className="text-amber-600">⚠️</span>
+              <div className="text-sm text-amber-800">
+                <strong>Admin Note:</strong> Changes made here will reflect in the mobile app within 24 hours (or immediately on pull-to-refresh / app restart).
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Editor Modal */}
