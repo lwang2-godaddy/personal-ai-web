@@ -564,7 +564,9 @@ export async function POST(request: NextRequest) {
         const labelKey = translations[template.labelKeyTemplate] || template.labelKeyTemplate;
         const queryTemplate = translations[template.queryKeyTemplate] || template.queryKeyTemplate;
 
-        const question: ExploreQuestion = {
+        // Build question object, excluding undefined fields
+        // Firestore doesn't accept undefined values
+        const question: Record<string, unknown> = {
           id: template.id,
           icon: template.icon,
           labelKey,
@@ -573,14 +575,20 @@ export async function POST(request: NextRequest) {
           priority: template.priority,
           enabled: true,
           userDataStates: template.userDataStates,
-          requiresData: template.requiresData,
-          variables: template.variables,
           order: template.order,
           createdAt: now,
           createdBy: user.uid,
           updatedAt: now,
           updatedBy: user.uid,
         };
+
+        // Only add optional fields if they have values
+        if (template.requiresData) {
+          question.requiresData = template.requiresData;
+        }
+        if (template.variables && template.variables.length > 0) {
+          question.variables = template.variables;
+        }
 
         await questionRef.set(question);
         migrated++;

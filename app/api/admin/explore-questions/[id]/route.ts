@@ -158,9 +158,17 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     delete updates.createdAt;
     delete updates.createdBy;
 
+    // Filter out undefined values - Firestore doesn't accept them
+    const cleanUpdates: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(updates)) {
+      if (value !== undefined) {
+        cleanUpdates[key] = value;
+      }
+    }
+
     // Update question
     await questionRef.update({
-      ...updates,
+      ...cleanUpdates,
       updatedAt: now,
       updatedBy: user.uid,
     });

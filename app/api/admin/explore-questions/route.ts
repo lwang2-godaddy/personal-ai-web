@@ -172,7 +172,9 @@ export async function POST(request: NextRequest) {
       ? 0
       : (maxOrderSnapshot.docs[0].data().order || 0) + 1;
 
-    const newQuestion: ExploreQuestion = {
+    // Build question object, excluding undefined fields
+    // Firestore doesn't accept undefined values
+    const newQuestion: Record<string, unknown> = {
       id: questionId,
       icon: question.icon,
       labelKey: question.labelKey,
@@ -181,14 +183,20 @@ export async function POST(request: NextRequest) {
       priority: question.priority ?? 50,
       enabled: question.enabled ?? true,
       userDataStates: question.userDataStates,
-      requiresData: question.requiresData,
-      variables: question.variables || [],
       order: question.order ?? maxOrder,
       createdAt: now,
       createdBy: user.uid,
       updatedAt: now,
       updatedBy: user.uid,
     };
+
+    // Only add optional fields if they have values
+    if (question.requiresData && Object.keys(question.requiresData).length > 0) {
+      newQuestion.requiresData = question.requiresData;
+    }
+    if (question.variables && question.variables.length > 0) {
+      newQuestion.variables = question.variables;
+    }
 
     // Save question
     await db
