@@ -5,7 +5,16 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { apiGet, apiPatch } from '@/lib/api/client';
-import { FirestorePromptConfig, PromptDefinition, PromptVersion, PROMPT_SERVICES, SUPPORTED_LANGUAGES } from '@/lib/models/Prompt';
+import {
+  FirestorePromptConfig,
+  PromptDefinition,
+  PromptVersion,
+  PromptExecution,
+  PromptExecutionStats,
+  GetExecutionsResponse,
+  PROMPT_SERVICES,
+  SUPPORTED_LANGUAGES,
+} from '@/lib/models/Prompt';
 
 interface ServiceResponse {
   config: FirestorePromptConfig | null;
@@ -30,11 +39,42 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
   const [editedContent, setEditedContent] = useState('');
   const [editNotes, setEditNotes] = useState('');
 
+  // Executions state
+  const [executions, setExecutions] = useState<PromptExecution[]>([]);
+  const [executionStats, setExecutionStats] = useState<PromptExecutionStats | null>(null);
+  const [executionsLoading, setExecutionsLoading] = useState(false);
+
   const serviceInfo = PROMPT_SERVICES.find(s => s.id === service);
 
   useEffect(() => {
     fetchConfig();
   }, [service, selectedLanguage]);
+
+  // Fetch executions when prompt is selected
+  useEffect(() => {
+    if (selectedPromptId) {
+      fetchExecutions();
+    }
+  }, [selectedPromptId, selectedLanguage, service]);
+
+  const fetchExecutions = async () => {
+    if (!selectedPromptId) return;
+
+    try {
+      setExecutionsLoading(true);
+      const response = await apiGet<GetExecutionsResponse>(
+        `/api/admin/prompts/${service}/executions?promptId=${selectedPromptId}&language=${selectedLanguage}&limit=50`
+      );
+      setExecutions(response.executions);
+      setExecutionStats(response.stats);
+    } catch (err) {
+      console.error('Failed to fetch executions:', err);
+      setExecutions([]);
+      setExecutionStats(null);
+    } finally {
+      setExecutionsLoading(false);
+    }
+  };
 
   const fetchConfig = async () => {
     try {
@@ -439,6 +479,83 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* Executions History */}
+            {selectedPromptId && (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 mt-4">
+                <div className="p-4 border-b border-gray-200">
+                  <h3 className="font-semibold text-gray-900">Recent Executions</h3>
+                  {executionStats && (
+                    <div className="flex gap-4 mt-2 text-sm text-gray-600">
+                      <span>Total: <strong>{executionStats.totalExecutions}</strong></span>
+                      <span>Avg Latency: <strong>{executionStats.avgLatencyMs}ms</strong></span>
+                      <span>Cost: <strong>${executionStats.totalCostUSD.toFixed(4)}</strong></span>
+                      <span>Success: <strong>{(executionStats.successRate * 100).toFixed(1)}%</strong></span>
+                      <span>Users: <strong>{executionStats.uniqueUsers}</strong></span>
+                    </div>
+                  )}
+                </div>
+                {executionsLoading ? (
+                  <div className="p-8 text-center">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-red-600 mx-auto"></div>
+                    <p className="text-sm text-gray-500 mt-2">Loading executions...</p>
+                  </div>
+                ) : executions.length === 0 ? (
+                  <div className="p-8 text-center text-gray-500 text-sm">
+                    No executions found for this prompt yet.
+                  </div>
+                ) : (
+                  <div className="divide-y divide-gray-100 max-h-96 overflow-y-auto">
+                    {executions.map(exec => (
+                      <div key={exec.id} className="p-3 text-sm hover:bg-gray-50">
+                        <div className="flex justify-between items-start">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-gray-900">
+                              {exec.userId.slice(0, 8)}...
+                            </span>
+                            <span className="px-1.5 py-0.5 text-xs bg-gray-100 text-gray-600 rounded">
+                              {exec.model}
+                            </span>
+                            <span className="px-1.5 py-0.5 text-xs bg-blue-50 text-blue-600 rounded">
+                              {exec.promptSource}
+                            </span>
+                          </div>
+                          <span className={`px-2 py-0.5 text-xs rounded ${
+                            exec.success ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                          }`}>
+                            {exec.success ? 'Success' : 'Failed'}
+                          </span>
+                        </div>
+                        <div className="text-gray-500 text-xs mt-1 flex gap-3">
+                          <span>{new Date(exec.executedAt).toLocaleString()}</span>
+                          <span>{exec.latencyMs}ms</span>
+                          <span>{exec.totalTokens} tokens</span>
+                          <span>${exec.estimatedCostUSD.toFixed(6)}</span>
+                          {exec.sourceType && (
+                            <span className="text-purple-600">{exec.sourceType}</span>
+                          )}
+                        </div>
+                        <div className="mt-2 space-y-1">
+                          <div className="text-xs">
+                            <span className="text-gray-500">Input:</span>
+                            <span className="text-gray-700 ml-1 font-mono">{exec.inputSummary}</span>
+                          </div>
+                          <div className="text-xs">
+                            <span className="text-gray-500">Output:</span>
+                            <span className="text-gray-700 ml-1 font-mono">{exec.outputSummary}</span>
+                          </div>
+                        </div>
+                        {exec.errorMessage && (
+                          <div className="mt-1 text-xs text-red-600">
+                            Error: {exec.errorMessage}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>

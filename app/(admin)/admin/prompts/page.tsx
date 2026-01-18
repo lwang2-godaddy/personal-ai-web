@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/hooks/useAuth';
-import { apiGet } from '@/lib/api/client';
+import { apiGet, apiPost } from '@/lib/api/client';
 import { FirestorePromptConfig, PROMPT_SERVICES, SUPPORTED_LANGUAGES } from '@/lib/models/Prompt';
 
 interface PromptsResponse {
@@ -13,16 +13,55 @@ interface PromptsResponse {
   languages: typeof SUPPORTED_LANGUAGES;
 }
 
+interface MigrationResponse {
+  success: boolean;
+  migrated: string[];
+  skipped: string[];
+  errors: { service: string; error: string }[];
+}
+
 export default function AdminPromptsPage() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [configs, setConfigs] = useState<FirestorePromptConfig[]>([]);
   const [selectedLanguage, setSelectedLanguage] = useState<string>('en');
+  const [migrating, setMigrating] = useState(false);
+  const [migrationResult, setMigrationResult] = useState<MigrationResponse | null>(null);
 
   useEffect(() => {
     fetchPrompts();
   }, [selectedLanguage]);
+
+  const handleMigrateAll = async () => {
+    if (!confirm('This will migrate all YAML prompts to Firestore. Services that already exist will be skipped. Continue?')) {
+      return;
+    }
+
+    setMigrating(true);
+    setMigrationResult(null);
+    setError(null);
+
+    try {
+      const response = await apiPost<MigrationResponse>(
+        '/api/admin/prompts/migrate',
+        {
+          language: selectedLanguage,
+          overwrite: false,
+        }
+      );
+
+      setMigrationResult(response);
+
+      // Refresh the list
+      await fetchPrompts();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Migration failed';
+      setError(message);
+    } finally {
+      setMigrating(false);
+    }
+  };
 
   const fetchPrompts = async () => {
     try {
@@ -80,8 +119,47 @@ export default function AdminPromptsPage() {
               ))}
             </select>
           </div>
+          {/* Migrate Button */}
+          <button
+            onClick={handleMigrateAll}
+            disabled={migrating}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {migrating ? 'Migrating...' : 'Migrate YAML to Firestore'}
+          </button>
         </div>
       </div>
+
+      {/* Migration Result */}
+      {migrationResult && (
+        <div className={`p-4 rounded-lg border ${migrationResult.success ? 'bg-green-50 border-green-200' : 'bg-yellow-50 border-yellow-200'}`}>
+          <h3 className={`font-medium mb-2 ${migrationResult.success ? 'text-green-800' : 'text-yellow-800'}`}>
+            Migration {migrationResult.success ? 'Complete' : 'Completed with Issues'}
+          </h3>
+          <div className="text-sm space-y-1">
+            {migrationResult.migrated.length > 0 && (
+              <p className="text-green-700">
+                Migrated: {migrationResult.migrated.join(', ')}
+              </p>
+            )}
+            {migrationResult.skipped.length > 0 && (
+              <p className="text-gray-600">
+                Skipped (already exist): {migrationResult.skipped.join(', ')}
+              </p>
+            )}
+            {migrationResult.errors.length > 0 && (
+              <div className="text-red-700">
+                Errors:
+                <ul className="list-disc list-inside ml-2">
+                  {migrationResult.errors.map((err, i) => (
+                    <li key={i}>{err.service}: {err.error}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Error Display */}
       {error && (
