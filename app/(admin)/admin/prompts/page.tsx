@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { apiGet, apiPost } from '@/lib/api/client';
 import { FirestorePromptConfig, PROMPT_SERVICES, PROMPT_CATEGORIES, SUPPORTED_LANGUAGES } from '@/lib/models/Prompt';
+import { getOperationsForService } from '@/lib/models/ServiceOperations';
 
 interface PromptsResponse {
   configs: FirestorePromptConfig[];
@@ -293,6 +294,45 @@ export default function AdminPromptsPage() {
                             ${cost.toFixed(4)}
                           </span>
                         </div>
+
+                        {/* Operations Used */}
+                        {(() => {
+                          const operations = getOperationsForService(service.id);
+                          const maxToShow = 4;
+                          const visibleOps = operations.slice(0, maxToShow);
+                          const hiddenCount = operations.length - maxToShow;
+
+                          return operations.length > 0 && (
+                            <div className="mb-3">
+                              <p className="text-xs font-medium text-gray-500 mb-1.5">Operations Used:</p>
+                              <div className="flex flex-wrap gap-1">
+                                {visibleOps.map((op) => (
+                                  <span
+                                    key={op.operation}
+                                    className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-indigo-50 text-indigo-700"
+                                    title={op.label}
+                                  >
+                                    <span className="mr-1">{op.icon}</span>
+                                    {op.label}
+                                  </span>
+                                ))}
+                                {hiddenCount > 0 && (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-gray-50 text-gray-500">
+                                    +{hiddenCount} more
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })()}
+
+                        {/* View Cost Breakdown Link */}
+                        <Link
+                          href={`/admin/usage?service=${service.id}`}
+                          className="block text-xs text-indigo-600 hover:text-indigo-800 mb-3"
+                        >
+                          → View cost breakdown for this service
+                        </Link>
 
                         {/* Status Badge */}
                         <div className="flex items-center justify-between mb-3">

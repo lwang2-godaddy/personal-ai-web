@@ -8,3 +8,4 @@ export * from './PhotoMemory';
 export * from './TextNote';
 export * from './Event';
 export * from './Circle';
+export * from './ServiceOperations';

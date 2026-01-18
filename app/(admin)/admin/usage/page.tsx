@@ -1,8 +1,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { apiGet } from '@/lib/api/client';
 import { useAppSelector } from '@/lib/store/hooks';
+import {
+  getOperationLabel,
+  getOperationIcon,
+  getServicesForOperation,
+  OPERATION_LABELS,
+  type OperationType,
+} from '@/lib/models/ServiceOperations';
 import {
   LineChart,
   Line,
@@ -54,24 +63,9 @@ interface TopUser {
 
 const COLORS = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#22c55e', '#14b8a6', '#06b6d4', '#3b82f6', '#6366f1', '#8b5cf6'];
 
-const OPERATION_LABELS: Record<string, string> = {
-  // OpenAI operations
-  embedding: 'Embeddings',
-  chat_completion: 'Chat Completion',
-  transcription: 'Transcription',
-  image_description: 'Image Description',
-  tts: 'Text-to-Speech',
-  // Pinecone operations
-  pinecone_query: 'Vector Query',
-  pinecone_upsert: 'Vector Upsert',
-  pinecone_delete: 'Vector Delete',
-  // Service-based operations (from promptExecutions)
-  sentiment_analysis: 'Sentiment Analysis',
-  entity_extraction: 'Entity Extraction',
-  event_extraction: 'Event Extraction',
-  memory_generation: 'Memory Generation',
-  suggestion: 'Suggestions',
-  life_feed: 'Life Feed',
+// Legacy labels for backwards compatibility (not in ServiceOperations.ts)
+const LEGACY_OPERATION_LABELS: Record<string, string> = {
+  image_description: 'Photo Description',
 };
 
 /**
@@ -80,6 +74,7 @@ const OPERATION_LABELS: Record<string, string> = {
  */
 export default function AdminUsageAnalyticsPage() {
   const { isAuthenticated, isLoading: authLoading } = useAppSelector((state) => state.auth);
+  const searchParams = useSearchParams();
   const [usageData, setUsageData] = useState<UsageData[]>([]);
   const [totals, setTotals] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -89,6 +84,9 @@ export default function AdminUsageAnalyticsPage() {
   const [groupBy, setGroupBy] = useState<'day' | 'month'>('day');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+
+  // Service filter from URL (e.g., /admin/usage?service=RAGEngine)
+  const serviceFilter = searchParams.get('service');
 
   // Top users state
   const [topUsers, setTopUsers] = useState<TopUser[]>([]);
@@ -107,7 +105,7 @@ export default function AdminUsageAnalyticsPage() {
     if (startDate && endDate && !authLoading && isAuthenticated) {
       fetchUsageData();
     }
-  }, [startDate, endDate, groupBy, authLoading, isAuthenticated]);
+  }, [startDate, endDate, groupBy, authLoading, isAuthenticated, serviceFilter]);
 
   const fetchUsageData = async () => {
     try {
@@ -119,6 +117,11 @@ export default function AdminUsageAnalyticsPage() {
         endDate,
         groupBy,
       });
+
+      // Add service filter if present
+      if (serviceFilter) {
+        queryParams.set('service', serviceFilter);
+      }
 
       const data = await apiGet<UsageResponse>(`/api/admin/usage?${queryParams.toString()}`);
       setUsageData(data.usage);
@@ -219,8 +222,11 @@ export default function AdminUsageAnalyticsPage() {
   }, {} as Record<string, number>);
 
   const operationBreakdownData = Object.entries(operationBreakdown).map(([operation, cost]) => ({
-    name: OPERATION_LABELS[operation] || operation,
+    operation, // Keep the raw operation type for service lookup
+    name: getOperationLabel(operation) || LEGACY_OPERATION_LABELS[operation] || operation,
+    icon: getOperationIcon(operation),
     value: cost,
+    services: getServicesForOperation(operation as OperationType),
   }));
 
   const topUsersChartData = topUsers.map((user) => ({
@@ -384,6 +390,55 @@ export default function AdminUsageAnalyticsPage() {
         </div>
       )}
 
+      {/* Service Filter Banner */}
+      {serviceFilter && !loading && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-blue-600 text-xl">🔍</span>
+            <div>
+              <p className="text-blue-800 font-medium">
+                Filtering by service: <span className="font-bold">{serviceFilter}</span>
+              </p>
+              <p className="text-blue-600 text-sm">
+                Showing usage data only for operations triggered by this service
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/admin/usage"
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
+          >
+            Clear Filter
+          </Link>
+        </div>
+      )}
+
+      {/* Info Section: Operations vs Services */}
+      {!loading && operationBreakdownData.length > 0 && (
+        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-lg p-5">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl">ℹ️</span>
+            <div className="flex-1">
+              <h3 className="text-indigo-800 font-semibold mb-2">Understanding Operations vs Services</h3>
+              <ul className="text-indigo-700 text-sm space-y-1">
+                <li><strong>Operations</strong> = Type of AI action (e.g., embedding, chat_completion)</li>
+                <li><strong>Services</strong> = Code that triggers operations (e.g., RAGEngine, MoodDetection)</li>
+                <li>One service can trigger <strong>multiple operations</strong> (e.g., RAGEngine triggers embedding + search + chat)</li>
+                <li>Multiple services can contribute to the <strong>same operation</strong></li>
+              </ul>
+              <div className="mt-3">
+                <Link
+                  href="/admin/prompts"
+                  className="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-800 font-medium text-sm"
+                >
+                  View Services →
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Cost Breakdown by Operation */}
       {!loading && operationBreakdownData.length > 0 && (
         <div className="bg-white rounded-lg shadow-md p-6">
@@ -419,6 +474,7 @@ export default function AdminUsageAnalyticsPage() {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Operation</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Services</th>
                       <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Total Cost</th>
                       <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">% of Total</th>
                     </tr>
@@ -426,17 +482,44 @@ export default function AdminUsageAnalyticsPage() {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {operationBreakdownData
                       .sort((a, b) => b.value - a.value)
-                      .map((item, index) => (
-                        <tr key={index}>
-                          <td className="px-4 py-2 text-sm font-medium text-gray-900">{item.name}</td>
-                          <td className="px-4 py-2 text-sm text-gray-900 text-right font-medium">
-                            ${item.value.toFixed(2)}
-                          </td>
-                          <td className="px-4 py-2 text-sm text-gray-500 text-right">
-                            {((item.value / totals.totalCost) * 100).toFixed(1)}%
-                          </td>
-                        </tr>
-                      ))}
+                      .map((item, index) => {
+                        const maxServicesToShow = 2;
+                        const visibleServices = item.services.slice(0, maxServicesToShow);
+                        const hiddenCount = item.services.length - maxServicesToShow;
+
+                        return (
+                          <tr key={index}>
+                            <td className="px-4 py-2 text-sm font-medium text-gray-900">
+                              <span className="mr-2">{item.icon}</span>
+                              {item.name}
+                            </td>
+                            <td className="px-4 py-2 text-sm text-gray-600">
+                              <div className="flex flex-wrap gap-1">
+                                {visibleServices.map((service) => (
+                                  <Link
+                                    key={service.id}
+                                    href={`/admin/prompts/${service.id}`}
+                                    className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+                                  >
+                                    {service.shortName}
+                                  </Link>
+                                ))}
+                                {hiddenCount > 0 && (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-50 text-gray-500">
+                                    +{hiddenCount}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-4 py-2 text-sm text-gray-900 text-right font-medium">
+                              ${item.value.toFixed(2)}
+                            </td>
+                            <td className="px-4 py-2 text-sm text-gray-500 text-right">
+                              {totals.totalCost > 0 ? ((item.value / totals.totalCost) * 100).toFixed(1) : '0.0'}%
+                            </td>
+                          </tr>
+                        );
+                      })}
                   </tbody>
                 </table>
               </div>

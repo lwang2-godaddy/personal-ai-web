@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/middleware/auth';
 import { getAdminFirestore } from '@/lib/api/firebase/admin';
+import { SERVICE_OPERATIONS_MAP } from '@/lib/models/ServiceOperations';
 
 /**
  * Map service names to user-friendly operation labels
+ * Note: sourceType field takes precedence when available (e.g., 'embedding', 'vision')
  */
 const SERVICE_TO_OPERATION: Record<string, string> = {
   OpenAIService: 'chat_completion',
@@ -15,6 +17,23 @@ const SERVICE_TO_OPERATION: Record<string, string> = {
   MemoryGeneratorService: 'memory_generation',
   SuggestionEngine: 'suggestion',
   LifeFeedGenerator: 'life_feed',
+};
+
+/**
+ * Map sourceType field to operation labels (takes precedence over service mapping)
+ * These are set directly in the tracking calls (e.g., sourceType: 'embedding')
+ */
+const SOURCE_TYPE_TO_OPERATION: Record<string, string> = {
+  embedding: 'embedding',
+  vision: 'vision',
+  transcription: 'transcription', // Whisper audio transcription
+  tts: 'tts', // OpenAI Text-to-Speech
+  rag: 'chat_completion',
+  rag_stream: 'chat_completion',
+  direct: 'chat_completion',
+  direct_stream: 'chat_completion',
+  custom_prompt: 'chat_completion',
+  pinecone_query: 'pinecone_query',
 };
 
 interface TopUser {
@@ -50,6 +69,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const groupBy = searchParams.get('groupBy') || 'day';
+    const serviceFilter = searchParams.get('service') || null;
 
     // Default date range: last 30 days
     const endDate = new Date();
@@ -57,6 +77,14 @@ export async function GET(request: NextRequest) {
 
     const startDateStr = searchParams.get('startDate') || startDate.toISOString().split('T')[0];
     const endDateStr = searchParams.get('endDate') || endDate.toISOString().split('T')[0];
+
+    // Get allowed operations for the service filter (if provided)
+    const allowedOperations: Set<string> | null = serviceFilter
+      ? new Set([
+          ...(SERVICE_OPERATIONS_MAP[serviceFilter] || []),
+          // Also include the service name itself as an operation (for direct service matches)
+        ])
+      : null;
 
     // Create ISO timestamps for Firestore query
     const startTimestamp = new Date(startDateStr + 'T00:00:00.000Z').toISOString();
@@ -87,11 +115,25 @@ export async function GET(request: NextRequest) {
       const timestamp = data.executedAt as string;
       const userId = data.userId as string;
       const service = data.service as string;
+      const sourceType = data.sourceType as string | undefined;
       const cost = (data.estimatedCostUSD as number) || 0;
       const tokens = (data.totalTokens as number) || 0;
 
-      // Map service to operation
-      const operation = SERVICE_TO_OPERATION[service] || service;
+      // Map to operation: sourceType takes precedence over service mapping
+      // This allows embeddings (sourceType='embedding') to be tracked separately from chat
+      const operation = sourceType && SOURCE_TYPE_TO_OPERATION[sourceType]
+        ? SOURCE_TYPE_TO_OPERATION[sourceType]
+        : SERVICE_TO_OPERATION[service] || service;
+
+      // Apply service filter if provided
+      // Include execution if: service matches filter OR operation is one that the filter service can trigger
+      if (serviceFilter && allowedOperations) {
+        const matchesService = service === serviceFilter;
+        const matchesOperation = allowedOperations.has(operation);
+        if (!matchesService && !matchesOperation) {
+          return; // Skip this execution
+        }
+      }
 
       // Extract date or month from timestamp
       let period: string;
@@ -206,6 +248,7 @@ export async function GET(request: NextRequest) {
       startDate: startDateStr,
       endDate: endDateStr,
       groupBy,
+      serviceFilter: serviceFilter || undefined,
     });
   } catch (error: any) {
     console.error('[Admin Usage API] Error:', error);
