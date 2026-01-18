@@ -292,7 +292,7 @@ export default function AdminExploreQuestionsPage() {
   };
 
   const handleDuplicateQuestion = (question: ExploreQuestion) => {
-    const duplicatedData = {
+    const duplicatedData: Partial<ExploreQuestion> = {
       ...question,
       id: undefined,
       labelKey: `${question.labelKey} (Copy)`,
@@ -300,8 +300,8 @@ export default function AdminExploreQuestionsPage() {
       createdBy: undefined,
       updatedAt: undefined,
       updatedBy: undefined,
-    } as ExploreQuestion;
-    setEditingQuestion(duplicatedData);
+    };
+    setEditingQuestion(duplicatedData as ExploreQuestion);
     setEditorMode('create');
     setEditorOpen(true);
   };
