@@ -39,6 +39,9 @@ export async function GET(request: NextRequest) {
 
     const db = getAdminFirestore();
 
+    console.log('[Admin Usage API] Querying usageEvents collection...');
+    console.log('[Admin Usage API] Date range:', { startTimestamp, endTimestamp });
+
     // Query usageEvents collection directly
     const usageSnapshot = await db
       .collection('usageEvents')
@@ -46,6 +49,8 @@ export async function GET(request: NextRequest) {
       .where('timestamp', '<=', endTimestamp)
       .orderBy('timestamp', 'asc')
       .get();
+
+    console.log(`[Admin Usage API] Found ${usageSnapshot.size} usage events`);
 
     // Aggregate by date or month
     const usageByPeriod = new Map<string, any>();

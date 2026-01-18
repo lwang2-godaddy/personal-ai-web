@@ -282,22 +282,29 @@ class UsageTracker {
     event: Omit<UsageEvent, 'id' | 'timestamp'>
   ): Promise<void> {
     try {
-      // Import Firebase Admin SDK dynamically (only on server)
-      const { getFirestore } = await import('firebase-admin/firestore');
-      const { initializeFirebaseAdmin } = await import('@/lib/api/firebase/admin');
+      // Import Firebase Admin helper dynamically (only on server)
+      const { getAdminFirestore } = await import('@/lib/api/firebase/admin');
 
-      // Initialize Firebase Admin
-      initializeFirebaseAdmin();
-      const db = getFirestore();
+      // Get Firestore instance using the admin helper (ensures proper initialization)
+      const db = getAdminFirestore();
 
-      // Create usage event document
-      const usageEvent: Omit<UsageEvent, 'id'> = {
-        ...event,
+      // Create usage event document, filtering out undefined values
+      // Firestore doesn't accept undefined values
+      const usageEvent: Record<string, any> = {
         timestamp: new Date().toISOString(),
       };
 
+      // Only add defined values to the document
+      for (const [key, value] of Object.entries(event)) {
+        if (value !== undefined) {
+          usageEvent[key] = value;
+        }
+      }
+
       // Write to usageEvents collection
       await db.collection('usageEvents').add(usageEvent);
+
+      console.log(`[UsageTracker] ✓ Logged usage event: ${event.operation} for user ${event.userId}`);
 
       // Note: Daily and monthly aggregations will be handled by a Cloud Function
       // that runs periodically (every hour) to aggregate events
@@ -317,11 +324,8 @@ class UsageTracker {
     maxCostPerMonth: number;
   }> {
     try {
-      const { getFirestore } = await import('firebase-admin/firestore');
-      const { initializeFirebaseAdmin } = await import('@/lib/api/firebase/admin');
-
-      initializeFirebaseAdmin();
-      const db = getFirestore();
+      const { getAdminFirestore } = await import('@/lib/api/firebase/admin');
+      const db = getAdminFirestore();
 
       const userDoc = await db.collection('users').doc(userId).get();
       const userData = userDoc.data();
@@ -346,11 +350,8 @@ class UsageTracker {
     date: string
   ): Promise<{ totalTokens: number; totalApiCalls: number; totalCostUSD: number }> {
     try {
-      const { getFirestore } = await import('firebase-admin/firestore');
-      const { initializeFirebaseAdmin } = await import('@/lib/api/firebase/admin');
-
-      initializeFirebaseAdmin();
-      const db = getFirestore();
+      const { getAdminFirestore } = await import('@/lib/api/firebase/admin');
+      const db = getAdminFirestore();
 
       const docId = `${userId}_${date}`;
       const dailyDoc = await db.collection('usageDaily').doc(docId).get();
@@ -379,11 +380,8 @@ class UsageTracker {
     month: string
   ): Promise<{ totalTokens: number; totalApiCalls: number; totalCostUSD: number }> {
     try {
-      const { getFirestore } = await import('firebase-admin/firestore');
-      const { initializeFirebaseAdmin } = await import('@/lib/api/firebase/admin');
-
-      initializeFirebaseAdmin();
-      const db = getFirestore();
+      const { getAdminFirestore } = await import('@/lib/api/firebase/admin');
+      const db = getAdminFirestore();
 
       const docId = `${userId}_${month}`;
       const monthlyDoc = await db.collection('usageMonthly').doc(docId).get();

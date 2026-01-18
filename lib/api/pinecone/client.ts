@@ -55,7 +55,7 @@ export class PineconeService {
       if (!indexExists) {
         await client.createIndex({
           name: this.indexName,
-          dimension: 1024, // text-embedding-3-small with reduced dimensions
+          dimension: 1536, // text-embedding-3-small default dimensions
           metric: 'cosine',
           spec: {
             serverless: {

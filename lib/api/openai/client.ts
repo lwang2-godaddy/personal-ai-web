@@ -41,26 +41,38 @@ export class OpenAIService {
    */
   async generateEmbedding(text: string, userId?: string, endpoint?: string): Promise<number[]> {
     try {
+      console.log(`[OpenAI] generateEmbedding called - userId: ${userId}, endpoint: ${endpoint}, textLength: ${text.length}`);
+
       // Check cache first
       const cacheKey = this.getCacheKey(text);
       if (this.embeddingCache.has(cacheKey)) {
+        console.log(`[OpenAI] Cache hit for embedding`);
         return this.embeddingCache.get(cacheKey)!;
       }
 
       const response = await this.client.embeddings.create({
         model: 'text-embedding-3-small',
         input: text,
-        dimensions: 1024, // Match Pinecone index dimension
+        dimensions: 1536, // Match Pinecone index dimension
       });
 
       const embedding = response.data[0].embedding;
+      console.log(`[OpenAI] Embedding generated, tokens: ${response.usage?.total_tokens}`);
 
       // Track usage if userId provided
+      console.log(`[OpenAI] Tracking check - userId: ${!!userId}, isServer: ${typeof window === 'undefined'}`);
       if (userId && typeof window === 'undefined') {
-        const tokens = response.usage?.total_tokens || this.estimateTokens(text);
-        // Dynamic import to avoid circular dependencies
-        const UsageTracker = (await import('@/lib/services/usage/UsageTracker')).default;
-        await UsageTracker.trackEmbedding(userId, tokens, endpoint || 'embedding');
+        try {
+          const tokens = response.usage?.total_tokens || this.estimateTokens(text);
+          console.log(`[OpenAI] Attempting to track embedding usage: ${tokens} tokens`);
+          // Dynamic import to avoid circular dependencies
+          const UsageTracker = (await import('@/lib/services/usage/UsageTracker')).default;
+          console.log(`[OpenAI] UsageTracker imported successfully`);
+          await UsageTracker.trackEmbedding(userId, tokens, endpoint || 'embedding');
+          console.log(`[OpenAI] Usage tracking completed`);
+        } catch (trackingError) {
+          console.error(`[OpenAI] Usage tracking FAILED:`, trackingError);
+        }
       }
 
       // Cache the embedding
@@ -98,7 +110,7 @@ export class OpenAIService {
       const response = await this.client.embeddings.create({
         model: 'text-embedding-3-small',
         input: texts,
-        dimensions: 1024, // Match Pinecone index dimension
+        dimensions: 1536, // Match Pinecone index dimension
       });
 
       return response.data.map((item) => item.embedding);
@@ -194,6 +206,8 @@ export class OpenAIService {
     },
   ): Promise<string> {
     try {
+      console.log(`[OpenAI] chatCompletion called - userId: ${options?.userId}, endpoint: ${options?.endpoint}`);
+
       const systemMessage = context
         ? {
             role: 'system' as const,
@@ -220,17 +234,27 @@ export class OpenAIService {
         stream: false,
       });
 
+      console.log(`[OpenAI] Chat completed - promptTokens: ${response.usage?.prompt_tokens}, completionTokens: ${response.usage?.completion_tokens}`);
+
       // Track usage if userId provided
+      console.log(`[OpenAI] Chat tracking check - userId: ${!!options?.userId}, isServer: ${typeof window === 'undefined'}`);
       if (options?.userId && typeof window === 'undefined') {
-        const promptTokens = response.usage?.prompt_tokens || 0;
-        const completionTokens = response.usage?.completion_tokens || 0;
-        const UsageTracker = (await import('@/lib/services/usage/UsageTracker')).default;
-        await UsageTracker.trackChatCompletion(
-          options.userId,
-          promptTokens,
-          completionTokens,
-          options.endpoint || 'chat_completion'
-        );
+        try {
+          const promptTokens = response.usage?.prompt_tokens || 0;
+          const completionTokens = response.usage?.completion_tokens || 0;
+          console.log(`[OpenAI] Attempting to track chat usage: ${promptTokens}+${completionTokens} tokens`);
+          const UsageTracker = (await import('@/lib/services/usage/UsageTracker')).default;
+          console.log(`[OpenAI] UsageTracker imported for chat`);
+          await UsageTracker.trackChatCompletion(
+            options.userId,
+            promptTokens,
+            completionTokens,
+            options.endpoint || 'chat_completion'
+          );
+          console.log(`[OpenAI] Chat usage tracking completed`);
+        } catch (trackingError) {
+          console.error(`[OpenAI] Chat usage tracking FAILED:`, trackingError);
+        }
       }
 
       return response.choices[0]?.message?.content || '';
