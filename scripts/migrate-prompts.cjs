@@ -38,6 +38,7 @@ const FILE_TO_SERVICE = {
   'suggestions.yaml': 'SuggestionEngine',
   'chat.yaml': 'OpenAIService',
   'rag.yaml': 'RAGEngine',
+  'dailySummary.yaml': 'DailySummaryService',
 };
 
 function initializeFirebase() {

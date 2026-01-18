@@ -44,6 +44,7 @@ const FILE_TO_SERVICE: Record<string, string> = {
   'suggestions.yaml': 'SuggestionEngine',
   'chat.yaml': 'OpenAIService',
   'rag.yaml': 'RAGEngine',
+  'dailySummary.yaml': 'DailySummaryService',
 };
 
 interface YamlPromptConfig {

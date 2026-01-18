@@ -107,6 +107,7 @@ export const SERVICE_FILE_MAP: Record<string, string> = {
   MemoryGeneratorService: 'memory.yaml',
   SuggestionEngine: 'suggestions.yaml',
   LifeFeedGenerator: 'lifeFeed.yaml',
+  DailySummaryService: 'dailySummary.yaml',
   // Mobile app / Server services
   OpenAIService: 'chat.yaml',
   RAGEngine: 'rag.yaml',
@@ -238,6 +239,16 @@ export const PROMPT_SERVICES = [
     trigger: 'Based on user patterns and context',
     platform: 'server' as const,
     example: 'Suggesting "Time for your daily walk?"',
+  },
+  {
+    id: 'DailySummaryService',
+    name: 'Daily Summaries',
+    category: 'proactive' as PromptCategoryId,
+    icon: '📊',
+    description: 'Generates daily and weekly activity summaries',
+    trigger: 'Daily at user-preferred time or on-demand',
+    platform: 'server' as const,
+    example: 'Creating "You walked 12,000 steps and completed 2 workouts today!"',
   },
 ] as const;
 
