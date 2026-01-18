@@ -20,6 +20,25 @@ interface MigrationResponse {
   errors: { service: string; error: string }[];
 }
 
+interface ServiceStats {
+  service: string;
+  totalCost: number;
+  executionCount: number;
+  avgCostPerExecution: number;
+}
+
+interface StatsResponse {
+  services: ServiceStats[];
+  period: {
+    startDate: string;
+    endDate: string;
+  };
+  totals: {
+    totalCost: number;
+    totalExecutions: number;
+  };
+}
+
 export default function AdminPromptsPage() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -28,10 +47,26 @@ export default function AdminPromptsPage() {
   const [selectedLanguage, setSelectedLanguage] = useState<string>('en');
   const [migrating, setMigrating] = useState(false);
   const [migrationResult, setMigrationResult] = useState<MigrationResponse | null>(null);
+  const [serviceStats, setServiceStats] = useState<Map<string, ServiceStats>>(new Map());
 
   useEffect(() => {
     fetchPrompts();
+    fetchStats();
   }, [selectedLanguage]);
+
+  const fetchStats = async () => {
+    try {
+      const response = await apiGet<StatsResponse>('/api/admin/prompts/stats?days=30');
+      const statsMap = new Map<string, ServiceStats>();
+      response.services.forEach((stat) => {
+        statsMap.set(stat.service, stat);
+      });
+      setServiceStats(statsMap);
+    } catch (err: unknown) {
+      // Stats fetch is non-critical, just log the error
+      console.error('Failed to fetch stats:', err);
+    }
+  };
 
   const handleMigrateAll = async () => {
     if (!confirm('This will migrate all YAML prompts to Firestore. Services that already exist will be skipped. Continue?')) {
@@ -230,6 +265,32 @@ export default function AdminPromptsPage() {
                     </div>
                   </div>
                 )}
+
+                {/* Cost Stats (30 days) - shown for all services */}
+                {(() => {
+                  const stats = serviceStats.get(service.id);
+                  const cost = stats?.totalCost ?? 0;
+                  const executions = stats?.executionCount ?? 0;
+                  const costBadgeClass = cost < 1
+                    ? 'bg-green-100 text-green-800'
+                    : cost < 10
+                      ? 'bg-yellow-100 text-yellow-800'
+                      : 'bg-red-100 text-red-800';
+                  return (
+                    <div className={`${service.config ? 'mt-2 pt-2 border-t border-gray-100' : 'mt-4'} space-y-2 text-sm text-gray-600`}>
+                      <div className="flex justify-between items-center">
+                        <span>Cost (30d):</span>
+                        <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${costBadgeClass}`}>
+                          ${cost.toFixed(4)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Executions:</span>
+                        <span className="font-medium">{executions.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* Actions */}
                 <div className="mt-4 flex space-x-2">
