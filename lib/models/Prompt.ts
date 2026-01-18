@@ -119,32 +119,126 @@ export const SERVICE_FILE_MAP: Record<string, string> = {
 export const SUPPORTED_LANGUAGES = [
   { code: 'en', name: 'English', nativeName: 'English', status: 'complete' },
   { code: 'es', name: 'Spanish', nativeName: 'Español', status: 'complete' },
-  { code: 'fr', name: 'French', nativeName: 'Français', status: 'pending' },
-  { code: 'de', name: 'German', nativeName: 'Deutsch', status: 'pending' },
-  { code: 'it', name: 'Italian', nativeName: 'Italiano', status: 'pending' },
-  { code: 'pt', name: 'Portuguese', nativeName: 'Português', status: 'pending' },
-  { code: 'zh', name: 'Chinese', nativeName: '中文', status: 'pending' },
-  { code: 'ja', name: 'Japanese', nativeName: '日本語', status: 'pending' },
-  { code: 'ko', name: 'Korean', nativeName: '한국어', status: 'pending' },
+  { code: 'fr', name: 'French', nativeName: 'Français', status: 'complete' },
+  { code: 'de', name: 'German', nativeName: 'Deutsch', status: 'complete' },
+  { code: 'it', name: 'Italian', nativeName: 'Italiano', status: 'complete' },
+  { code: 'pt', name: 'Portuguese', nativeName: 'Português', status: 'complete' },
+  { code: 'zh', name: 'Chinese', nativeName: '中文', status: 'complete' },
+  { code: 'ja', name: 'Japanese', nativeName: '日本語', status: 'complete' },
+  { code: 'ko', name: 'Korean', nativeName: '한국어', status: 'complete' },
 ] as const;
 
 export type LanguageCode = typeof SUPPORTED_LANGUAGES[number]['code'];
 
 /**
+ * Categories for organizing prompt services
+ */
+export const PROMPT_CATEGORIES = [
+  { id: 'chat', name: 'Chat & Conversations', icon: '💬', description: 'Prompts that power the chat interface' },
+  { id: 'processing', name: 'Content Processing', icon: '📝', description: 'Automatic analysis when content is created' },
+  { id: 'proactive', name: 'Proactive Features', icon: '✨', description: 'AI-generated insights and suggestions' },
+] as const;
+
+export type PromptCategoryId = typeof PROMPT_CATEGORIES[number]['id'];
+
+/**
  * Services that use the prompt system
+ * Organized by category with metadata for the admin UI
  */
 export const PROMPT_SERVICES = [
-  // Cloud Function services (server-side)
-  { id: 'SentimentAnalysisService', name: 'Sentiment Analysis', description: 'Analyzes emotional tone of user input' },
-  { id: 'EntityExtractionService', name: 'Entity Extraction', description: 'Extracts entities from user input' },
-  { id: 'EventExtractionService', name: 'Event Extraction', description: 'Extracts events and dates from text' },
-  { id: 'MemoryGeneratorService', name: 'Memory Generator', description: 'Generates titles and summaries for memories' },
-  { id: 'SuggestionEngine', name: 'Suggestion Engine', description: 'Generates proactive suggestions' },
-  { id: 'LifeFeedGenerator', name: 'Life Feed', description: 'Generates social media style posts' },
-  // Mobile app services (client-side)
-  { id: 'OpenAIService', name: 'OpenAI Chat', description: 'General chat completion and image description' },
-  { id: 'RAGEngine', name: 'RAG Engine', description: 'Context-aware query responses' },
-  { id: 'QueryRAGServer', name: 'Server RAG', description: 'Server-side RAG query processing' },
+  // Chat & Conversations
+  {
+    id: 'OpenAIService',
+    name: 'Chat Responses',
+    category: 'chat' as PromptCategoryId,
+    icon: '💬',
+    description: 'Main chat completion and image description',
+    trigger: 'When user sends a chat message',
+    platform: 'mobile' as const,
+    example: 'User asks "What did I do yesterday?"',
+  },
+  {
+    id: 'RAGEngine',
+    name: 'Context Search',
+    category: 'chat' as PromptCategoryId,
+    icon: '🔍',
+    description: 'Retrieves relevant context from user data',
+    trigger: 'When chat needs personal data context',
+    platform: 'mobile' as const,
+    example: 'Finding relevant health/location data for query',
+  },
+  {
+    id: 'QueryRAGServer',
+    name: 'Server Chat',
+    category: 'chat' as PromptCategoryId,
+    icon: '☁️',
+    description: 'Server-side chat processing',
+    trigger: 'When web app processes chat queries',
+    platform: 'server' as const,
+    example: 'Web dashboard chat requests',
+  },
+  // Content Processing
+  {
+    id: 'MemoryGeneratorService',
+    name: 'Memory Summaries',
+    category: 'processing' as PromptCategoryId,
+    icon: '📝',
+    description: 'Generates titles and summaries for memories',
+    trigger: 'When new memory/note is created',
+    platform: 'server' as const,
+    example: 'Auto-generating title for a voice note',
+  },
+  {
+    id: 'SentimentAnalysisService',
+    name: 'Mood Detection',
+    category: 'processing' as PromptCategoryId,
+    icon: '😊',
+    description: 'Analyzes emotional tone of content',
+    trigger: 'When processing user-created content',
+    platform: 'server' as const,
+    example: 'Detecting positive mood in diary entry',
+  },
+  {
+    id: 'EntityExtractionService',
+    name: 'People & Places',
+    category: 'processing' as PromptCategoryId,
+    icon: '👥',
+    description: 'Extracts people, locations, and things',
+    trigger: 'When processing text content',
+    platform: 'server' as const,
+    example: 'Finding "John" and "coffee shop" in note',
+  },
+  {
+    id: 'EventExtractionService',
+    name: 'Events & Dates',
+    category: 'processing' as PromptCategoryId,
+    icon: '📅',
+    description: 'Extracts events and dates from text',
+    trigger: 'When processing text content',
+    platform: 'server' as const,
+    example: 'Finding "meeting tomorrow at 3pm"',
+  },
+  // Proactive Features
+  {
+    id: 'LifeFeedGenerator',
+    name: 'Life Feed Posts',
+    category: 'proactive' as PromptCategoryId,
+    icon: '📰',
+    description: 'Generates social-style life updates',
+    trigger: 'Periodically from user activity',
+    platform: 'server' as const,
+    example: 'Creating "You visited 3 new places this week!"',
+  },
+  {
+    id: 'SuggestionEngine',
+    name: 'Smart Suggestions',
+    category: 'proactive' as PromptCategoryId,
+    icon: '💡',
+    description: 'Generates proactive suggestions',
+    trigger: 'Based on user patterns and context',
+    platform: 'server' as const,
+    example: 'Suggesting "Time for your daily walk?"',
+  },
 ] as const;
 
 export type ServiceId = typeof PROMPT_SERVICES[number]['id'];
