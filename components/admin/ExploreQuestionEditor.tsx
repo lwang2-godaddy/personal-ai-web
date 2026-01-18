@@ -9,6 +9,13 @@ import {
   USER_DATA_STATES,
   DataRequirements,
 } from '@/lib/models/ExploreQuestion';
+import EmojiPicker from './EmojiPicker';
+import {
+  QUESTION_TEMPLATES,
+  TEMPLATE_CATEGORIES,
+  QuestionTemplate,
+  getTemplatesByCategory,
+} from '@/lib/data/questionTemplates';
 
 interface ExploreQuestionEditorProps {
   question?: ExploreQuestion | null;
@@ -17,13 +24,6 @@ interface ExploreQuestionEditorProps {
   onSave: (question: Partial<ExploreQuestion>) => Promise<void>;
   mode: 'create' | 'edit';
 }
-
-const COMMON_EMOJIS = [
-  '❓', '🏃', '❤️', '📍', '🎙️', '📸', '📊', '👋',
-  '💪', '🧘', '🚴', '🏊', '⛳', '🎾', '🏸', '⚽',
-  '🥘', '🍔', '☕', '🛒', '🏠', '💼', '✈️', '🎭',
-  '📚', '🎵', '🌙', '☀️', '🌿', '💊', '🧠', '💤',
-];
 
 export default function ExploreQuestionEditor({
   question,
@@ -47,6 +47,8 @@ export default function ExploreQuestionEditor({
   const [error, setError] = useState<string | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [variablesInput, setVariablesInput] = useState('');
+  const [showTemplatePicker, setShowTemplatePicker] = useState(false);
+  const [templateCategory, setTemplateCategory] = useState('activity');
 
   // Data requirements
   const [requiresData, setRequiresData] = useState<DataRequirements>({});
@@ -85,7 +87,27 @@ export default function ExploreQuestionEditor({
       setHealthTypesInput('');
     }
     setError(null);
+    setShowTemplatePicker(false);
   }, [question, mode, isOpen]);
+
+  const handleApplyTemplate = (template: QuestionTemplate) => {
+    const { data } = template;
+    setFormData({
+      icon: data.icon,
+      labelKey: data.labelKey,
+      queryTemplate: data.queryTemplate,
+      category: data.category,
+      priority: data.priority,
+      enabled: true,
+      userDataStates: data.userDataStates,
+      variables: data.variables || [],
+      order: 0,
+    });
+    setVariablesInput(data.variables?.join(', ') || '');
+    setRequiresData(data.requiresData || {});
+    setHealthTypesInput(data.requiresData?.healthTypes?.join(', ') || '');
+    setShowTemplatePicker(false);
+  };
 
   const handleSave = async () => {
     // Validation
@@ -172,14 +194,77 @@ export default function ExploreQuestionEditor({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-200">
+        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
           <h2 className="text-xl font-semibold text-gray-900">
             {mode === 'create' ? 'Create New Question' : 'Edit Question'}
           </h2>
+          {mode === 'create' && (
+            <button
+              type="button"
+              onClick={() => setShowTemplatePicker(!showTemplatePicker)}
+              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                showTemplatePicker
+                  ? 'bg-purple-100 text-purple-700 border border-purple-300'
+                  : 'bg-purple-600 text-white hover:bg-purple-700'
+              }`}
+            >
+              {showTemplatePicker ? 'Hide Templates' : 'Use Template'}
+            </button>
+          )}
         </div>
 
         {/* Form */}
         <div className="px-6 py-4 space-y-6">
+          {/* Template Picker */}
+          {showTemplatePicker && mode === 'create' && (
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+              <h3 className="text-sm font-medium text-purple-900 mb-3">
+                Choose a Template
+              </h3>
+              {/* Category tabs */}
+              <div className="flex flex-wrap gap-2 mb-4">
+                {TEMPLATE_CATEGORIES.filter(cat => cat.id !== 'recent').map((cat) => (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => setTemplateCategory(cat.id)}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
+                      templateCategory === cat.id
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-white text-gray-700 border border-gray-200 hover:border-purple-300'
+                    }`}
+                  >
+                    {cat.icon} {cat.name}
+                  </button>
+                ))}
+              </div>
+              {/* Template grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-64 overflow-y-auto">
+                {getTemplatesByCategory(templateCategory).map((template) => (
+                  <button
+                    key={template.id}
+                    type="button"
+                    onClick={() => handleApplyTemplate(template)}
+                    className="text-left p-3 bg-white rounded-lg border border-gray-200 hover:border-purple-400 hover:shadow-sm transition-all"
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-lg">{template.data.icon}</span>
+                      <span className="font-medium text-sm text-gray-900">
+                        {template.name}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500 line-clamp-1">
+                      {template.description}
+                    </p>
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-purple-700 mt-3">
+                Selecting a template will pre-fill the form. You can still customize it.
+              </p>
+            </div>
+          )}
+
           {/* Error */}
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
@@ -200,38 +285,12 @@ export default function ExploreQuestionEditor({
                 >
                   {formData.icon}
                 </button>
-                {showEmojiPicker && (
-                  <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-10 w-64">
-                    <div className="grid grid-cols-8 gap-1">
-                      {COMMON_EMOJIS.map((emoji) => (
-                        <button
-                          key={emoji}
-                          type="button"
-                          onClick={() => {
-                            setFormData({ ...formData, icon: emoji });
-                            setShowEmojiPicker(false);
-                          }}
-                          className="w-8 h-8 flex items-center justify-center text-lg hover:bg-gray-100 rounded"
-                        >
-                          {emoji}
-                        </button>
-                      ))}
-                    </div>
-                    <div className="mt-2 pt-2 border-t">
-                      <input
-                        type="text"
-                        placeholder="Custom emoji..."
-                        className="w-full px-2 py-1 text-sm border border-gray-200 rounded"
-                        maxLength={4}
-                        onChange={(e) => {
-                          if (e.target.value) {
-                            setFormData({ ...formData, icon: e.target.value });
-                          }
-                        }}
-                      />
-                    </div>
-                  </div>
-                )}
+                <EmojiPicker
+                  isOpen={showEmojiPicker}
+                  onClose={() => setShowEmojiPicker(false)}
+                  onSelect={(emoji) => setFormData({ ...formData, icon: emoji })}
+                  selectedEmoji={formData.icon}
+                />
               </div>
             </div>
 

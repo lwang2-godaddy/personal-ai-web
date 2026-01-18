@@ -111,6 +111,17 @@ export default function AdminExploreQuestionsPage() {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  // Copy to languages
+  const [copyModalQuestion, setCopyModalQuestion] = useState<ExploreQuestion | null>(null);
+  const [copying, setCopying] = useState(false);
+  const [copyResult, setCopyResult] = useState<{
+    success: boolean;
+    copied: number;
+    skipped: number;
+    errors: number;
+    results: { language: string; status: string; error?: string }[];
+  } | null>(null);
+
   useEffect(() => {
     fetchQuestions();
   }, [selectedLanguage, selectedCategory]);
@@ -277,6 +288,54 @@ export default function AdminExploreQuestionsPage() {
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to update question';
       setError(message);
+    }
+  };
+
+  const handleDuplicateQuestion = (question: ExploreQuestion) => {
+    const duplicatedData = {
+      ...question,
+      id: undefined,
+      labelKey: `${question.labelKey} (Copy)`,
+      createdAt: undefined,
+      createdBy: undefined,
+      updatedAt: undefined,
+      updatedBy: undefined,
+    } as ExploreQuestion;
+    setEditingQuestion(duplicatedData);
+    setEditorMode('create');
+    setEditorOpen(true);
+  };
+
+  const handleCopyToAllLanguages = async (overwrite: boolean = false) => {
+    if (!copyModalQuestion) return;
+
+    const targetLanguages = EXPLORE_SUPPORTED_LANGUAGES.filter(
+      (lang) => lang.code !== selectedLanguage
+    ).map((lang) => lang.code);
+
+    setCopying(true);
+    setCopyResult(null);
+
+    try {
+      const response = await apiPost<{
+        success: boolean;
+        copied: number;
+        skipped: number;
+        errors: number;
+        results: { language: string; status: string; error?: string }[];
+      }>('/api/admin/explore-questions/copy-to-languages', {
+        sourceLanguage: selectedLanguage,
+        questionId: copyModalQuestion.id,
+        targetLanguages,
+        overwrite,
+      });
+
+      setCopyResult(response);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to copy question';
+      setError(message);
+    } finally {
+      setCopying(false);
     }
   };
 
@@ -857,12 +916,29 @@ export default function AdminExploreQuestionsPage() {
 
                         {/* Actions */}
                         <div className="flex justify-between items-center pt-3 border-t border-gray-100">
-                          <button
-                            onClick={() => handleEditQuestion(question)}
-                            className="text-sm text-red-600 hover:text-red-700 font-medium"
-                          >
-                            Edit
-                          </button>
+                          <div className="flex gap-3">
+                            <button
+                              onClick={() => handleEditQuestion(question)}
+                              className="text-sm text-red-600 hover:text-red-700 font-medium"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDuplicateQuestion(question)}
+                              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                            >
+                              Duplicate
+                            </button>
+                            <button
+                              onClick={() => {
+                                setCopyModalQuestion(question);
+                                setCopyResult(null);
+                              }}
+                              className="text-sm text-purple-600 hover:text-purple-700 font-medium"
+                            >
+                              Copy to All
+                            </button>
+                          </div>
                           {deleteConfirmId === question.id ? (
                             <div className="flex items-center gap-2">
                               <span className="text-sm text-gray-500">Delete?</span>
@@ -1033,6 +1109,140 @@ export default function AdminExploreQuestionsPage() {
         onSave={handleSaveQuestion}
         mode={editorMode}
       />
+
+      {/* Copy to All Languages Modal */}
+      {copyModalQuestion && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-lg">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900">
+                Copy to All Languages
+              </h2>
+              <p className="text-sm text-gray-500 mt-1">
+                Copy "{copyModalQuestion.labelKey}" from {selectedLanguage.toUpperCase()} to all other languages
+              </p>
+            </div>
+
+            {/* Content */}
+            <div className="px-6 py-4">
+              {/* Question Preview */}
+              <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-2xl">{copyModalQuestion.icon}</span>
+                  <span className="font-medium">{copyModalQuestion.labelKey}</span>
+                </div>
+                <p className="text-sm text-gray-600">{copyModalQuestion.queryTemplate}</p>
+              </div>
+
+              {/* Target Languages */}
+              <div className="mb-4">
+                <h3 className="text-sm font-medium text-gray-700 mb-2">Target Languages:</h3>
+                <div className="flex flex-wrap gap-2">
+                  {EXPLORE_SUPPORTED_LANGUAGES.filter(lang => lang.code !== selectedLanguage).map((lang) => (
+                    <span
+                      key={lang.code}
+                      className="px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded-full"
+                    >
+                      {lang.code.toUpperCase()} - {lang.nativeName}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Copy Result */}
+              {copyResult && (
+                <div className={`p-4 rounded-lg mb-4 ${
+                  copyResult.success
+                    ? 'bg-green-50 border border-green-200'
+                    : 'bg-yellow-50 border border-yellow-200'
+                }`}>
+                  <h4 className={`font-medium mb-2 ${
+                    copyResult.success ? 'text-green-800' : 'text-yellow-800'
+                  }`}>
+                    {copyResult.success ? 'Copy Complete!' : 'Copy Completed with Issues'}
+                  </h4>
+                  <div className="text-sm space-y-1">
+                    <p className="text-green-700">Copied: {copyResult.copied}</p>
+                    {copyResult.skipped > 0 && (
+                      <p className="text-gray-600">Skipped: {copyResult.skipped}</p>
+                    )}
+                    {copyResult.errors > 0 && (
+                      <p className="text-red-700">Errors: {copyResult.errors}</p>
+                    )}
+                  </div>
+                  {/* Individual results */}
+                  <div className="mt-3 grid grid-cols-5 gap-2">
+                    {copyResult.results.map((result) => (
+                      <div
+                        key={result.language}
+                        className={`p-2 rounded text-center text-xs ${
+                          result.status === 'copied'
+                            ? 'bg-green-100 text-green-800'
+                            : result.status === 'skipped'
+                            ? 'bg-gray-100 text-gray-800'
+                            : 'bg-red-100 text-red-800'
+                        }`}
+                        title={result.error || ''}
+                      >
+                        <div className="font-bold">{result.language.toUpperCase()}</div>
+                        <div>{result.status === 'copied' ? '✓' : result.status === 'skipped' ? '—' : '✗'}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Warning */}
+              {!copyResult && (
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-md">
+                  <div className="flex items-start gap-2">
+                    <span className="text-amber-600">⚠️</span>
+                    <div className="text-sm text-amber-800">
+                      <strong>Note:</strong> This will copy the question text exactly.
+                      Existing questions in other languages will be skipped unless you choose to overwrite.
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setCopyModalQuestion(null);
+                  setCopyResult(null);
+                }}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                {copyResult ? 'Close' : 'Cancel'}
+              </button>
+              {!copyResult && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => handleCopyToAllLanguages(false)}
+                    disabled={copying}
+                    className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-md hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {copying ? 'Copying...' : 'Copy (Skip Existing)'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleCopyToAllLanguages(true)}
+                    disabled={copying}
+                    className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {copying ? 'Copying...' : 'Overwrite All'}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
