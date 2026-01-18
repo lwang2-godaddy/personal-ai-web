@@ -100,12 +100,17 @@ export interface PromptVersion {
  * Service mapping for the prompt system
  */
 export const SERVICE_FILE_MAP: Record<string, string> = {
+  // Cloud Functions services
   SentimentAnalysisService: 'analysis.yaml',
   EntityExtractionService: 'analysis.yaml',
   EventExtractionService: 'events.yaml',
   MemoryGeneratorService: 'memory.yaml',
   SuggestionEngine: 'suggestions.yaml',
   LifeFeedGenerator: 'lifeFeed.yaml',
+  // Mobile app / Server services
+  OpenAIService: 'chat.yaml',
+  RAGEngine: 'rag.yaml',
+  QueryRAGServer: 'rag.yaml',
 };
 
 /**
@@ -129,12 +134,17 @@ export type LanguageCode = typeof SUPPORTED_LANGUAGES[number]['code'];
  * Services that use the prompt system
  */
 export const PROMPT_SERVICES = [
+  // Cloud Function services (server-side)
   { id: 'SentimentAnalysisService', name: 'Sentiment Analysis', description: 'Analyzes emotional tone of user input' },
   { id: 'EntityExtractionService', name: 'Entity Extraction', description: 'Extracts entities from user input' },
   { id: 'EventExtractionService', name: 'Event Extraction', description: 'Extracts events and dates from text' },
   { id: 'MemoryGeneratorService', name: 'Memory Generator', description: 'Generates titles and summaries for memories' },
   { id: 'SuggestionEngine', name: 'Suggestion Engine', description: 'Generates proactive suggestions' },
   { id: 'LifeFeedGenerator', name: 'Life Feed', description: 'Generates social media style posts' },
+  // Mobile app services (client-side)
+  { id: 'OpenAIService', name: 'OpenAI Chat', description: 'General chat completion and image description' },
+  { id: 'RAGEngine', name: 'RAG Engine', description: 'Context-aware query responses' },
+  { id: 'QueryRAGServer', name: 'Server RAG', description: 'Server-side RAG query processing' },
 ] as const;
 
 export type ServiceId = typeof PROMPT_SERVICES[number]['id'];
@@ -208,4 +218,72 @@ export function isValidFirestorePromptConfig(config: unknown): config is Firesto
     typeof c.prompts === 'object' &&
     ['draft', 'published', 'archived'].includes(c.status as string)
   );
+}
+
+/**
+ * Prompt Execution log entry
+ * Tracks when prompts are called, results, and usage
+ * Path: promptExecutions/{executionId}
+ */
+export interface PromptExecution {
+  id: string;
+  userId: string;                       // Who triggered it
+  service: string;                      // 'SentimentAnalysisService'
+  promptId: string;                     // 'sentiment_analysis'
+  language: string;                     // 'en'
+
+  // Prompt metadata
+  promptVersion: string;                // From promptConfig.version
+  promptSource: 'firestore' | 'yaml' | 'mobile';   // Where prompt was loaded from
+  model: string;                        // 'gpt-4o-mini'
+  temperature: number;
+  maxTokens: number;
+
+  // Input/Output (truncated for privacy)
+  inputSummary: string;                 // First 200 chars
+  inputTokens: number;
+  outputSummary: string;                // First 200 chars
+  outputTokens: number;
+
+  // Cost
+  totalTokens: number;
+  estimatedCostUSD: number;
+
+  // Performance
+  latencyMs: number;
+  success: boolean;
+  errorMessage?: string;
+
+  // Timestamps
+  executedAt: string;                   // ISO 8601
+
+  // Optional context
+  sourceType?: string;                  // 'voice', 'text', etc.
+  sourceId?: string;                    // Document ID that triggered
+}
+
+/**
+ * Execution statistics for a prompt
+ */
+export interface PromptExecutionStats {
+  totalExecutions: number;
+  avgLatencyMs: number;
+  totalCostUSD: number;
+  successRate: number;
+  uniqueUsers: number;
+}
+
+/**
+ * API request/response types for executions
+ */
+export interface GetExecutionsRequest {
+  service: string;
+  promptId?: string;
+  language?: string;
+  limit?: number;
+}
+
+export interface GetExecutionsResponse {
+  executions: PromptExecution[];
+  stats: PromptExecutionStats;
 }

@@ -5,19 +5,22 @@ import { PROMPT_SERVICES, SUPPORTED_LANGUAGES } from '@/lib/models/Prompt';
 
 /**
  * POST /api/admin/prompts/migrate
- * Import prompt configurations from YAML content
+ * Import prompt configurations from YAML content or trigger Cloud Function migration
  *
- * This endpoint accepts YAML content and imports it into Firestore.
- * Use this to migrate from YAML files to Firestore-based prompt management.
+ * This endpoint can work in two modes:
+ * 1. With configs: Accepts pre-parsed prompts and imports them into Firestore
+ * 2. Without configs: Calls the Cloud Function to migrate YAML files to Firestore
  *
  * Body:
- * - configs: Array of { language, service, yamlContent } objects
+ * - configs?: Array of { language, service, prompts } objects (optional)
+ * - language?: string (e.g., 'en') - Used when calling Cloud Function
  * - overwrite?: boolean (default: false) - If true, overwrites existing configs
  *
  * Returns:
- * - migrated: number
- * - skipped: number
- * - errors: string[]
+ * - success: boolean
+ * - migrated: string[]
+ * - skipped: string[]
+ * - errors: { service: string; error: string }[]
  */
 export async function POST(request: NextRequest) {
   try {
@@ -26,13 +29,11 @@ export async function POST(request: NextRequest) {
     if (authResponse) return authResponse;
 
     const body = await request.json();
-    const { configs, overwrite = false } = body;
+    const { configs, language = 'en', overwrite = false } = body;
 
+    // If configs not provided, call the Cloud Function to migrate from YAML
     if (!configs || !Array.isArray(configs) || configs.length === 0) {
-      return NextResponse.json(
-        { error: 'Missing required field: configs (array of { language, service, yamlContent })' },
-        { status: 400 }
-      );
+      return await callCloudFunctionMigration(language, overwrite);
     }
 
     const promptService = getPromptService();
@@ -165,6 +166,85 @@ export async function GET(request: NextRequest) {
     const message = error instanceof Error ? error.message : 'Failed to get migration status';
     return NextResponse.json(
       { error: message },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * Call the Cloud Function to migrate YAML prompts to Firestore
+ * The Cloud Function has access to the YAML files in the functions directory
+ */
+async function callCloudFunctionMigration(
+  language: string,
+  overwrite: boolean
+): Promise<NextResponse> {
+  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+
+  if (!projectId) {
+    return NextResponse.json(
+      { error: 'Firebase project ID not configured' },
+      { status: 500 }
+    );
+  }
+
+  // Cloud Function URL for callable functions
+  // Format: https://{region}-{project}.cloudfunctions.net/{function-name}
+  const functionUrl = `https://us-central1-${projectId}.cloudfunctions.net/migrateYamlToFirestore`;
+
+  try {
+    console.log('[Migrate API] Calling Cloud Function:', functionUrl);
+
+    const response = await fetch(functionUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        data: {
+          services: ['OpenAIService', 'RAGEngine', 'QueryRAGServer'],
+          language,
+          overwrite,
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[Migrate API] Cloud Function error:', response.status, errorText);
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Cloud Function error: ${response.statusText}`,
+          details: errorText,
+        },
+        { status: response.status >= 400 && response.status < 500 ? response.status : 500 }
+      );
+    }
+
+    const result = await response.json();
+    console.log('[Migrate API] Cloud Function result:', result);
+
+    // Cloud Functions return { result: { ... } } for callable functions
+    const migrationResult = result.result || result;
+
+    return NextResponse.json({
+      success: migrationResult.success ?? true,
+      migrated: migrationResult.migrated || [],
+      skipped: migrationResult.skipped || [],
+      errors: migrationResult.errors || [],
+    });
+  } catch (error: unknown) {
+    console.error('[Migrate API] Error calling Cloud Function:', error);
+    const message = error instanceof Error ? error.message : 'Failed to call migration function';
+    return NextResponse.json(
+      {
+        success: false,
+        error: message,
+        migrated: [],
+        skipped: [],
+        errors: [{ service: 'all', error: message }],
+      },
       { status: 500 }
     );
   }
