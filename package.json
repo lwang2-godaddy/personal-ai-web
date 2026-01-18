@@ -10,7 +10,8 @@
     "lint": "eslint",
     "migrate:users": "tsx scripts/migrate-users.ts",
     "set-admin": "tsx scripts/set-admin.ts",
-    "migrate:prompts": "tsx scripts/migrate-prompts.ts"
+    "migrate:prompts": "tsx scripts/migrate-prompts.ts",
+    "init-subscription-config": "tsx scripts/init-subscription-config.ts"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.9",

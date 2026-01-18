@@ -29,6 +29,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const navLinks = [
     { href: '/admin', label: 'Overview', icon: '📊' },
     { href: '/admin/users', label: 'Users', icon: '👥' },
+    { href: '/admin/subscriptions', label: 'Subscriptions', icon: '💳' },
     { href: '/admin/usage', label: 'Usage Analytics', icon: '📈' },
     { href: '/admin/prompts', label: 'Prompts', icon: '💬' },
   ];

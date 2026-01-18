@@ -178,21 +178,24 @@ export default function AdminDashboardPage() {
             </div>
           </Link>
 
-          {/* System Settings */}
-          <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200 opacity-60">
+          {/* Subscription Plans */}
+          <Link
+            href="/admin/subscriptions"
+            className="block bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow border border-gray-200 hover:border-red-300"
+          >
             <div className="flex items-center space-x-4">
-              <div className="text-5xl">⚙️</div>
+              <div className="text-5xl">💳</div>
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">System Settings</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Subscription Plans</h3>
                 <p className="text-sm text-gray-600 mt-1">
-                  Configure system parameters
+                  Configure tier quotas and features
                 </p>
               </div>
             </div>
-            <div className="mt-4 text-gray-400 font-medium text-sm flex items-center">
-              Coming Soon
+            <div className="mt-4 text-red-600 font-medium text-sm flex items-center">
+              Manage Plans →
             </div>
-          </div>
+          </Link>
         </div>
       </div>
 

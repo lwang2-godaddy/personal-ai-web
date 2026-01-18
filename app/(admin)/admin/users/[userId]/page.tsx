@@ -26,7 +26,18 @@ interface User {
   displayName?: string;
   role: 'admin' | 'user';
   accountStatus: 'active' | 'suspended';
-  subscription?: 'free' | 'premium' | 'pro';
+  subscription?: {
+    tier: 'free' | 'premium' | 'pro';
+    status?: string;
+    source?: string;
+    quotaOverrides?: {
+      messagesPerDay?: number;
+      photosPerMonth?: number;
+      voiceMinutesPerMonth?: number;
+    };
+    overrideBy?: string;
+    overrideAt?: string;
+  };
   customLimits?: {
     maxTokensPerDay?: number;
     maxApiCallsPerDay?: number;
@@ -34,6 +45,35 @@ interface User {
   };
   createdAt: string;
   lastLoginAt?: string;
+}
+
+interface SubscriptionDetails {
+  userId: string;
+  subscription: {
+    tier: 'free' | 'premium' | 'pro';
+    status: string;
+    source?: string;
+    quotaOverrides?: {
+      messagesPerDay?: number;
+      photosPerMonth?: number;
+      voiceMinutesPerMonth?: number;
+    };
+  };
+  usage: {
+    messagesThisMonth: number;
+    photosThisMonth: number;
+    voiceMinutesThisMonth: number;
+  };
+  tierDefaults: {
+    messagesPerDay: number;
+    photosPerMonth: number;
+    voiceMinutesPerMonth: number;
+  };
+  effectiveLimits: {
+    messagesPerDay: number;
+    photosPerMonth: number;
+    voiceMinutesPerMonth: number;
+  };
 }
 
 interface UsageData {
@@ -84,6 +124,13 @@ const OPERATION_LABELS: Record<string, string> = {
 };
 
 /**
+ * Format quota value for display
+ */
+function formatQuotaValue(value: number): string {
+  return value === -1 ? 'Unlimited' : value.toString();
+}
+
+/**
  * Admin User Detail Page
  * View and manage individual user with usage analytics
  */
@@ -94,6 +141,7 @@ export default function AdminUserDetailPage() {
 
   const [user, setUser] = useState<User | null>(null);
   const [currentMonthUsage, setCurrentMonthUsage] = useState<any>(null);
+  const [subscriptionDetails, setSubscriptionDetails] = useState<SubscriptionDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -107,16 +155,22 @@ export default function AdminUserDetailPage() {
   // Edit states
   const [isEditingStatus, setIsEditingStatus] = useState(false);
   const [isEditingSubscription, setIsEditingSubscription] = useState(false);
+  const [isEditingQuotas, setIsEditingQuotas] = useState(false);
+  const [isResettingUsage, setIsResettingUsage] = useState(false);
   const [isEditingLimits, setIsEditingLimits] = useState(false);
 
   // Form states
-  const [selectedSubscription, setSelectedSubscription] = useState<'free' | 'premium' | 'pro'>('free');
+  const [selectedTier, setSelectedTier] = useState<'free' | 'premium' | 'pro'>('free');
+  const [messagesOverride, setMessagesOverride] = useState<string>('');
+  const [photosOverride, setPhotosOverride] = useState<string>('');
+  const [voiceOverride, setVoiceOverride] = useState<string>('');
   const [maxTokensPerDay, setMaxTokensPerDay] = useState<string>('');
   const [maxApiCallsPerDay, setMaxApiCallsPerDay] = useState<string>('');
   const [maxCostPerMonth, setMaxCostPerMonth] = useState<string>('');
 
   useEffect(() => {
     fetchUserData();
+    fetchSubscriptionDetails();
     fetchUsageData();
   }, [userId]);
 
@@ -130,7 +184,7 @@ export default function AdminUserDetailPage() {
       setCurrentMonthUsage(data.currentMonthUsage);
 
       // Initialize form states
-      setSelectedSubscription(data.user.subscription || 'free');
+      setSelectedTier(data.user.subscription?.tier || 'free');
       setMaxTokensPerDay(data.user.customLimits?.maxTokensPerDay?.toString() || '');
       setMaxApiCallsPerDay(data.user.customLimits?.maxApiCallsPerDay?.toString() || '');
       setMaxCostPerMonth(data.user.customLimits?.maxCostPerMonth?.toString() || '');
@@ -139,6 +193,21 @@ export default function AdminUserDetailPage() {
       setError(err.message || 'Failed to load user data');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchSubscriptionDetails = async () => {
+    try {
+      const data = await apiGet<SubscriptionDetails>(`/api/admin/users/${userId}/subscription`);
+      setSubscriptionDetails(data);
+
+      // Initialize override form states
+      const overrides = data.subscription.quotaOverrides;
+      setMessagesOverride(overrides?.messagesPerDay?.toString() || '');
+      setPhotosOverride(overrides?.photosPerMonth?.toString() || '');
+      setVoiceOverride(overrides?.voiceMinutesPerMonth?.toString() || '');
+    } catch (err: any) {
+      console.error('Failed to fetch subscription details:', err);
     }
   };
 
@@ -184,17 +253,94 @@ export default function AdminUserDetailPage() {
     }
   };
 
-  const handleUpdateSubscription = async () => {
+  const handleUpdateTier = async () => {
     try {
       setIsEditingSubscription(true);
-      await apiPatch(`/api/admin/users/${userId}`, { subscription: selectedSubscription });
+      await apiPatch(`/api/admin/users/${userId}/subscription`, { tier: selectedTier });
       await fetchUserData();
-      alert('Subscription updated successfully');
+      await fetchSubscriptionDetails();
+      alert('Subscription tier updated successfully');
     } catch (err: any) {
-      console.error('Failed to update subscription:', err);
-      alert(`Failed to update subscription: ${err.message}`);
+      console.error('Failed to update tier:', err);
+      alert(`Failed to update tier: ${err.message}`);
     } finally {
       setIsEditingSubscription(false);
+    }
+  };
+
+  const handleUpdateQuotaOverrides = async () => {
+    try {
+      setIsEditingQuotas(true);
+
+      const quotaOverrides: any = {};
+
+      // Parse values (-1 for unlimited, empty means use tier default)
+      if (messagesOverride !== '') {
+        const value = parseInt(messagesOverride, 10);
+        if (!isNaN(value) && value >= -1) {
+          quotaOverrides.messagesPerDay = value;
+        }
+      }
+      if (photosOverride !== '') {
+        const value = parseInt(photosOverride, 10);
+        if (!isNaN(value) && value >= -1) {
+          quotaOverrides.photosPerMonth = value;
+        }
+      }
+      if (voiceOverride !== '') {
+        const value = parseInt(voiceOverride, 10);
+        if (!isNaN(value) && value >= -1) {
+          quotaOverrides.voiceMinutesPerMonth = value;
+        }
+      }
+
+      await apiPatch(`/api/admin/users/${userId}/subscription`, { quotaOverrides });
+      await fetchSubscriptionDetails();
+      alert('Quota overrides updated successfully');
+    } catch (err: any) {
+      console.error('Failed to update quota overrides:', err);
+      alert(`Failed to update quota overrides: ${err.message}`);
+    } finally {
+      setIsEditingQuotas(false);
+    }
+  };
+
+  const handleClearQuotaOverrides = async () => {
+    if (!confirm('Are you sure you want to clear all quota overrides? This will revert to tier defaults.')) {
+      return;
+    }
+
+    try {
+      setIsEditingQuotas(true);
+      await apiPatch(`/api/admin/users/${userId}/subscription`, { quotaOverrides: null });
+      setMessagesOverride('');
+      setPhotosOverride('');
+      setVoiceOverride('');
+      await fetchSubscriptionDetails();
+      alert('Quota overrides cleared successfully');
+    } catch (err: any) {
+      console.error('Failed to clear quota overrides:', err);
+      alert(`Failed to clear quota overrides: ${err.message}`);
+    } finally {
+      setIsEditingQuotas(false);
+    }
+  };
+
+  const handleResetUsage = async () => {
+    if (!confirm('Are you sure you want to reset all usage counters to 0?')) {
+      return;
+    }
+
+    try {
+      setIsResettingUsage(true);
+      await apiPatch(`/api/admin/users/${userId}/subscription`, { resetUsage: true });
+      await fetchSubscriptionDetails();
+      alert('Usage counters reset successfully');
+    } catch (err: any) {
+      console.error('Failed to reset usage:', err);
+      alert(`Failed to reset usage: ${err.message}`);
+    } finally {
+      setIsResettingUsage(false);
     }
   };
 
@@ -295,7 +441,7 @@ export default function AdminUserDetailPage() {
             href="/admin/users"
             className="text-red-600 hover:text-red-800 font-medium mb-2 inline-block"
           >
-            ← Back to Users
+            Back to Users
           </Link>
           <h1 className="text-3xl font-bold text-gray-900">{user.displayName || 'Unknown User'}</h1>
           <p className="mt-1 text-gray-600">{user.email}</p>
@@ -368,35 +514,144 @@ export default function AdminUserDetailPage() {
 
       {/* Subscription Management */}
       <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Subscription Tier</h2>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Current Tier</label>
+        <h2 className="text-xl font-bold text-gray-900 mb-4">Subscription</h2>
+
+        {/* Tier Selection */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 mb-2">Subscription Tier</label>
+          <div className="flex items-center gap-4">
             <select
-              value={selectedSubscription}
-              onChange={(e) => setSelectedSubscription(e.target.value as 'free' | 'premium' | 'pro')}
-              className="w-full md:w-64 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              value={selectedTier}
+              onChange={(e) => setSelectedTier(e.target.value as 'free' | 'premium' | 'pro')}
+              className="w-48 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
             >
               <option value="free">Free</option>
               <option value="premium">Premium</option>
               <option value="pro">Pro</option>
             </select>
+            <button
+              onClick={handleUpdateTier}
+              disabled={isEditingSubscription || selectedTier === (subscriptionDetails?.subscription.tier || 'free')}
+              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {isEditingSubscription ? 'Updating...' : 'Update Tier'}
+            </button>
           </div>
-          <button
-            onClick={handleUpdateSubscription}
-            disabled={isEditingSubscription || selectedSubscription === user.subscription}
-            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {isEditingSubscription ? 'Updating...' : 'Update Subscription'}
-          </button>
+          {subscriptionDetails?.subscription.source === 'admin_override' && (
+            <p className="mt-2 text-sm text-orange-600">
+              Tier was set by admin override
+            </p>
+          )}
+        </div>
+
+        {/* Current Usage vs Limits */}
+        {subscriptionDetails && (
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-3">Current Usage</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-blue-50 rounded-lg p-4">
+                <p className="text-sm text-blue-600 font-medium">Messages</p>
+                <p className="text-2xl font-bold text-blue-900">
+                  {subscriptionDetails.usage.messagesThisMonth} / {formatQuotaValue(subscriptionDetails.effectiveLimits.messagesPerDay)}
+                </p>
+                <p className="text-xs text-blue-500 mt-1">
+                  Tier default: {formatQuotaValue(subscriptionDetails.tierDefaults.messagesPerDay)}
+                </p>
+              </div>
+              <div className="bg-green-50 rounded-lg p-4">
+                <p className="text-sm text-green-600 font-medium">Photos</p>
+                <p className="text-2xl font-bold text-green-900">
+                  {subscriptionDetails.usage.photosThisMonth} / {formatQuotaValue(subscriptionDetails.effectiveLimits.photosPerMonth)}
+                </p>
+                <p className="text-xs text-green-500 mt-1">
+                  Tier default: {formatQuotaValue(subscriptionDetails.tierDefaults.photosPerMonth)}
+                </p>
+              </div>
+              <div className="bg-purple-50 rounded-lg p-4">
+                <p className="text-sm text-purple-600 font-medium">Voice Minutes</p>
+                <p className="text-2xl font-bold text-purple-900">
+                  {subscriptionDetails.usage.voiceMinutesThisMonth} / {formatQuotaValue(subscriptionDetails.effectiveLimits.voiceMinutesPerMonth)}
+                </p>
+                <p className="text-xs text-purple-500 mt-1">
+                  Tier default: {formatQuotaValue(subscriptionDetails.tierDefaults.voiceMinutesPerMonth)}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={handleResetUsage}
+              disabled={isResettingUsage}
+              className="mt-4 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 disabled:opacity-50 transition-colors"
+            >
+              {isResettingUsage ? 'Resetting...' : 'Reset All Usage Counters'}
+            </button>
+          </div>
+        )}
+
+        {/* Quota Overrides */}
+        <div className="border-t pt-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-3">Custom Quota Overrides</h3>
+          <p className="text-sm text-gray-600 mb-4">
+            Set custom limits for this user. Use -1 for unlimited. Leave blank to use tier defaults.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Messages/Day</label>
+              <input
+                type="number"
+                value={messagesOverride}
+                onChange={(e) => setMessagesOverride(e.target.value)}
+                placeholder="Use tier default"
+                min="-1"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Photos/Month</label>
+              <input
+                type="number"
+                value={photosOverride}
+                onChange={(e) => setPhotosOverride(e.target.value)}
+                placeholder="Use tier default"
+                min="-1"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Voice Minutes/Month</label>
+              <input
+                type="number"
+                value={voiceOverride}
+                onChange={(e) => setVoiceOverride(e.target.value)}
+                placeholder="Use tier default"
+                min="-1"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+          <div className="flex gap-4">
+            <button
+              onClick={handleUpdateQuotaOverrides}
+              disabled={isEditingQuotas}
+              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 transition-colors"
+            >
+              {isEditingQuotas ? 'Updating...' : 'Update Overrides'}
+            </button>
+            <button
+              onClick={handleClearQuotaOverrides}
+              disabled={isEditingQuotas}
+              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 disabled:opacity-50 transition-colors"
+            >
+              Clear All Overrides
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Custom Limits */}
+      {/* Custom API Limits */}
       <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Custom Usage Limits</h2>
+        <h2 className="text-xl font-bold text-gray-900 mb-4">Custom API Limits</h2>
         <p className="text-sm text-gray-600 mb-4">
-          Set custom limits for this user. Leave blank to use default limits for their subscription tier.
+          Set custom API usage limits for this user. Leave blank to use default limits.
         </p>
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -451,10 +706,10 @@ export default function AdminUserDetailPage() {
         </div>
       </div>
 
-      {/* Current Month Usage Summary */}
+      {/* Current Month API Usage Summary */}
       {currentMonthUsage && (
         <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Current Month Usage</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Current Month API Usage</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-purple-50 rounded-lg p-4">
               <p className="text-sm text-purple-600 font-medium">Total Cost</p>
