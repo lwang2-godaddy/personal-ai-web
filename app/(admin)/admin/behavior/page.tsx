@@ -408,7 +408,7 @@ export default function AdminBehaviorAnalyticsPage() {
                     <XAxis type="number" />
                     <YAxis dataKey="name" type="category" width={100} />
                     <Tooltip
-                      formatter={(value: any, name: string) => [value, name === 'count' ? 'Views' : 'Unique Users']}
+                      formatter={(value: any, name?: string) => [value, name === 'count' ? 'Views' : 'Unique Users']}
                       labelFormatter={(label: any, payload: any) => payload?.[0]?.payload?.fullName || label}
                     />
                     <Legend />
@@ -455,7 +455,7 @@ export default function AdminBehaviorAnalyticsPage() {
                     <XAxis type="number" />
                     <YAxis dataKey="name" type="category" width={100} />
                     <Tooltip
-                      formatter={(value: any, name: string) => [value, name === 'count' ? 'Uses' : 'Unique Users']}
+                      formatter={(value: any, name?: string) => [value, name === 'count' ? 'Uses' : 'Unique Users']}
                       labelFormatter={(label: any, payload: any) => payload?.[0]?.payload?.fullName || label}
                     />
                     <Legend />

@@ -29,6 +29,7 @@ export default function CreateCirclePage() {
     shareActivities: true,
     shareVoiceNotes: false,
     sharePhotos: false,
+    shareDiary: false,
   });
 
   const [settings, setSettings] = useState<CircleSettings>({

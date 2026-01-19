@@ -14,6 +14,7 @@ import {
   QueryConstraint,
 } from 'firebase/firestore';
 import { db } from './config';
+import type { FriendPrivacySettings } from '@/lib/models/Friend';
 
 /**
  * Infrastructure cost tracking helper
@@ -407,9 +408,9 @@ export class FirestoreService {
   async getPrivacySettingsForFriends(
     userId: string,
     friendIds: string[]
-  ): Promise<Map<string, { shareHealth: boolean; shareLocation: boolean; shareActivities: boolean; shareVoiceNotes: boolean; sharePhotos: boolean }>> {
+  ): Promise<Map<string, FriendPrivacySettings>> {
     console.log('[Firestore] Fetching privacy settings for', friendIds.length, 'friends');
-    const result = new Map<string, { shareHealth: boolean; shareLocation: boolean; shareActivities: boolean; shareVoiceNotes: boolean; sharePhotos: boolean }>();
+    const result = new Map<string, FriendPrivacySettings>();
 
     if (friendIds.length === 0) {
       return result;

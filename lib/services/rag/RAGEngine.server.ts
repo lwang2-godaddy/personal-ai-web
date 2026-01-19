@@ -843,6 +843,7 @@ Respect the data sharing settings - only data types enabled for this circle are 
         shareHealth: false,
         shareLocation: false,
         shareActivities: false,
+        shareDiary: false,
         shareVoiceNotes: false,
         sharePhotos: false,
       };

@@ -123,14 +123,6 @@ export default function SettingsPage() {
               {user?.email}
             </p>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              User ID
-            </label>
-            <p className="text-xs text-gray-600 dark:text-gray-400 font-mono">
-              {user?.uid}
-            </p>
-          </div>
         </div>
       </div>
 
@@ -195,10 +187,6 @@ export default function SettingsPage() {
           <div className="flex justify-between">
             <span className="text-gray-600 dark:text-gray-400">Platform</span>
             <span className="text-gray-900 dark:text-white">Web</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-600 dark:text-gray-400">Backend</span>
-            <span className="text-gray-900 dark:text-white">Firebase + OpenAI + Pinecone</span>
           </div>
         </div>
       </div>

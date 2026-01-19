@@ -17,6 +17,7 @@ export interface FriendPrivacySettings {
   shareHealth: boolean;
   shareLocation: boolean;
   shareActivities: boolean;
+  shareDiary: boolean;
   shareVoiceNotes: boolean;
   sharePhotos: boolean;
 }

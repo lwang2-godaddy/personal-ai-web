@@ -21,6 +21,13 @@ interface MigrationResponse {
   errors: { service: string; error: string }[];
 }
 
+interface AllLanguagesMigrationResult {
+  language: string;
+  languageName: string;
+  result: MigrationResponse | null;
+  error?: string;
+}
+
 interface ServiceStats {
   service: string;
   totalCost: number;
@@ -48,6 +55,9 @@ export default function AdminPromptsPage() {
   const [selectedLanguage, setSelectedLanguage] = useState<string>('en');
   const [migrating, setMigrating] = useState(false);
   const [migrationResult, setMigrationResult] = useState<MigrationResponse | null>(null);
+  const [migratingAllLanguages, setMigratingAllLanguages] = useState(false);
+  const [allLanguagesMigrationResults, setAllLanguagesMigrationResults] = useState<AllLanguagesMigrationResult[]>([]);
+  const [currentMigratingLanguage, setCurrentMigratingLanguage] = useState<string | null>(null);
   const [serviceStats, setServiceStats] = useState<Map<string, ServiceStats>>(new Map());
 
   useEffect(() => {
@@ -70,7 +80,7 @@ export default function AdminPromptsPage() {
   };
 
   const handleMigrateAll = async () => {
-    if (!confirm('This will migrate all YAML prompts to Firestore. Services that already exist will be skipped. Continue?')) {
+    if (!confirm('This will migrate all YAML prompts to Firestore for the selected language. Services that already exist will be skipped. Continue?')) {
       return;
     }
 
@@ -97,6 +107,56 @@ export default function AdminPromptsPage() {
     } finally {
       setMigrating(false);
     }
+  };
+
+  const handleMigrateAllLanguages = async () => {
+    if (!confirm(`This will migrate YAML prompts to Firestore for ALL ${SUPPORTED_LANGUAGES.length} languages. This may take a few minutes. Continue?`)) {
+      return;
+    }
+
+    setMigratingAllLanguages(true);
+    setAllLanguagesMigrationResults([]);
+    setMigrationResult(null);
+    setError(null);
+
+    const results: AllLanguagesMigrationResult[] = [];
+
+    for (const lang of SUPPORTED_LANGUAGES) {
+      setCurrentMigratingLanguage(lang.code);
+
+      try {
+        const response = await apiPost<MigrationResponse>(
+          '/api/admin/prompts/migrate',
+          {
+            language: lang.code,
+            overwrite: false,
+          }
+        );
+
+        results.push({
+          language: lang.code,
+          languageName: lang.nativeName,
+          result: response,
+        });
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Migration failed';
+        results.push({
+          language: lang.code,
+          languageName: lang.nativeName,
+          result: null,
+          error: message,
+        });
+      }
+
+      // Update results progressively
+      setAllLanguagesMigrationResults([...results]);
+    }
+
+    setCurrentMigratingLanguage(null);
+    setMigratingAllLanguages(false);
+
+    // Refresh the list for current language
+    await fetchPrompts();
   };
 
   const fetchPrompts = async () => {
@@ -161,22 +221,31 @@ export default function AdminPromptsPage() {
               ))}
             </select>
           </div>
-          {/* Migrate Button */}
+          {/* Migrate Buttons */}
           <button
             onClick={handleMigrateAll}
-            disabled={migrating}
+            disabled={migrating || migratingAllLanguages}
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {migrating ? 'Migrating...' : 'Migrate YAML to Firestore'}
+            {migrating ? 'Migrating...' : `Migrate ${selectedLanguage.toUpperCase()}`}
+          </button>
+          <button
+            onClick={handleMigrateAllLanguages}
+            disabled={migrating || migratingAllLanguages}
+            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {migratingAllLanguages
+              ? `Migrating ${currentMigratingLanguage?.toUpperCase() || '...'} (${allLanguagesMigrationResults.length + 1}/${SUPPORTED_LANGUAGES.length})`
+              : `Migrate All ${SUPPORTED_LANGUAGES.length} Languages`}
           </button>
         </div>
       </div>
 
-      {/* Migration Result */}
+      {/* Migration Result (Single Language) */}
       {migrationResult && (
         <div className={`p-4 rounded-lg border ${migrationResult.success ? 'bg-green-50 border-green-200' : 'bg-yellow-50 border-yellow-200'}`}>
           <h3 className={`font-medium mb-2 ${migrationResult.success ? 'text-green-800' : 'text-yellow-800'}`}>
-            Migration {migrationResult.success ? 'Complete' : 'Completed with Issues'}
+            Migration {migrationResult.success ? 'Complete' : 'Completed with Issues'} ({selectedLanguage.toUpperCase()})
           </h3>
           <div className="text-sm space-y-1">
             {migrationResult.migrated.length > 0 && (
@@ -200,6 +269,86 @@ export default function AdminPromptsPage() {
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {/* All Languages Migration Results */}
+      {allLanguagesMigrationResults.length > 0 && (
+        <div className="p-4 rounded-lg border bg-white border-gray-200">
+          <h3 className="font-medium mb-3 text-gray-900">
+            All Languages Migration Results
+            {migratingAllLanguages && (
+              <span className="ml-2 text-sm text-gray-500">
+                (In Progress: {allLanguagesMigrationResults.length}/{SUPPORTED_LANGUAGES.length})
+              </span>
+            )}
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {allLanguagesMigrationResults.map((langResult) => (
+              <div
+                key={langResult.language}
+                className={`p-3 rounded-lg border ${
+                  langResult.error
+                    ? 'bg-red-50 border-red-200'
+                    : langResult.result?.success
+                    ? 'bg-green-50 border-green-200'
+                    : 'bg-yellow-50 border-yellow-200'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-medium text-gray-900">
+                    {langResult.languageName} ({langResult.language.toUpperCase()})
+                  </span>
+                  {langResult.error ? (
+                    <span className="text-red-600 text-xs">Failed</span>
+                  ) : langResult.result?.success ? (
+                    <span className="text-green-600 text-xs">Success</span>
+                  ) : (
+                    <span className="text-yellow-600 text-xs">Partial</span>
+                  )}
+                </div>
+                {langResult.error ? (
+                  <p className="text-xs text-red-600">{langResult.error}</p>
+                ) : langResult.result && (
+                  <div className="text-xs space-y-1">
+                    {langResult.result.migrated.length > 0 && (
+                      <p className="text-green-700">
+                        Migrated: {langResult.result.migrated.length}
+                      </p>
+                    )}
+                    {langResult.result.skipped.length > 0 && (
+                      <p className="text-gray-600">
+                        Skipped: {langResult.result.skipped.length}
+                      </p>
+                    )}
+                    {langResult.result.errors.length > 0 && (
+                      <p className="text-red-600">
+                        Errors: {langResult.result.errors.length}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Summary */}
+          {!migratingAllLanguages && allLanguagesMigrationResults.length === SUPPORTED_LANGUAGES.length && (
+            <div className="mt-4 pt-3 border-t border-gray-200">
+              <h4 className="text-sm font-medium text-gray-900 mb-2">Summary</h4>
+              <div className="flex flex-wrap gap-4 text-sm">
+                <span className="text-green-700">
+                  Total Migrated: {allLanguagesMigrationResults.reduce((sum, r) => sum + (r.result?.migrated.length || 0), 0)}
+                </span>
+                <span className="text-gray-600">
+                  Total Skipped: {allLanguagesMigrationResults.reduce((sum, r) => sum + (r.result?.skipped.length || 0), 0)}
+                </span>
+                <span className="text-red-600">
+                  Total Errors: {allLanguagesMigrationResults.reduce((sum, r) => sum + (r.result?.errors.length || 0) + (r.error ? 1 : 0), 0)}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

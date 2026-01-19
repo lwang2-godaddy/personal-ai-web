@@ -23,7 +23,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest): Promise<NextResponse<BehaviorOverview | { error: string }>> {
   // Verify admin access
   const { user, response: authResponse } = await requireAdmin(request);
-  if (authResponse) return authResponse;
+  if (authResponse) return authResponse as NextResponse<{ error: string }>;
 
   try {
     const { searchParams } = new URL(request.url);

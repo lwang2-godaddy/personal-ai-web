@@ -25,7 +25,7 @@ export const dynamic = 'force-dynamic';
 export async function POST(request: NextRequest): Promise<NextResponse<StartSessionResponse | { error: string }>> {
   // Verify authentication
   const { user, response: authResponse } = await requireAuth(request);
-  if (authResponse) return authResponse;
+  if (authResponse) return authResponse as NextResponse<{ error: string }>;
 
   try {
     const body = await request.json() as StartSessionRequest;
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<StartSess
 export async function PATCH(request: NextRequest): Promise<NextResponse<EndSessionResponse | { error: string }>> {
   // Verify authentication
   const { user, response: authResponse } = await requireAuth(request);
-  if (authResponse) return authResponse;
+  if (authResponse) return authResponse as NextResponse<{ error: string }>;
 
   try {
     const body = await request.json() as EndSessionRequest;

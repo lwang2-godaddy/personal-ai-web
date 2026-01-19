@@ -22,7 +22,7 @@ export async function GET(
 ): Promise<NextResponse<UserBehaviorSummary | { error: string }>> {
   // Verify admin access
   const { user, response: authResponse } = await requireAdmin(request);
-  if (authResponse) return authResponse;
+  if (authResponse) return authResponse as NextResponse<{ error: string }>;
 
   try {
     const { userId } = await params;

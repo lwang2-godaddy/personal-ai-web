@@ -35,6 +35,7 @@ export function computeEffectiveSharing(
     shareHealth: circleSharing.shareHealth && friendSettings.shareHealth,
     shareLocation: circleSharing.shareLocation && friendSettings.shareLocation,
     shareActivities: circleSharing.shareActivities && friendSettings.shareActivities,
+    shareDiary: circleSharing.shareDiary && friendSettings.shareDiary,
     shareVoiceNotes: circleSharing.shareVoiceNotes && friendSettings.shareVoiceNotes,
     sharePhotos: circleSharing.sharePhotos && friendSettings.sharePhotos,
   };
@@ -49,6 +50,7 @@ export function getDefaultPrivacySettings(): FriendPrivacySettings {
     shareHealth: true,
     shareLocation: true,
     shareActivities: true,
+    shareDiary: true,
     shareVoiceNotes: true,
     sharePhotos: true,
   };

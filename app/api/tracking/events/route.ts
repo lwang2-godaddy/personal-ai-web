@@ -19,7 +19,7 @@ export const dynamic = 'force-dynamic';
 export async function POST(request: NextRequest): Promise<NextResponse<TrackEventsResponse | { error: string }>> {
   // Verify authentication
   const { user, response: authResponse } = await requireAuth(request);
-  if (authResponse) return authResponse;
+  if (authResponse) return authResponse as NextResponse<{ error: string }>;
 
   try {
     const body = await request.json() as TrackEventsRequest;
