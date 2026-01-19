@@ -16,6 +16,36 @@ import { MigrationDefinition } from '@/lib/models/Migration';
  */
 export const MIGRATION_REGISTRY: MigrationDefinition[] = [
   {
+    id: 'enableMemberInvites',
+    name: 'Enable Member Invites on Predefined Circles',
+    description:
+      'Updates existing predefined privacy circles to allow members to invite their friends. This sets allowMemberInvites: true in circle settings. Safe to run multiple times as it skips circles already configured.',
+    category: 'privacy',
+    type: 'callable',
+    endpoint: 'migrateEnableMemberInvites',
+    options: [
+      {
+        key: 'dryRun',
+        type: 'boolean',
+        label: 'Dry Run',
+        description: 'Simulate the migration without making changes',
+        default: true,
+      },
+      {
+        key: 'batchSize',
+        type: 'number',
+        label: 'Batch Size',
+        description: 'Number of circles to process per batch',
+        default: 100,
+        min: 10,
+        max: 500,
+      },
+    ],
+    supportsDryRun: true,
+    supportsResume: false,
+    destructive: false,
+  },
+  {
     id: 'createPredefinedCircles',
     name: 'Create Predefined Privacy Circles',
     description:

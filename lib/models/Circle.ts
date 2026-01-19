@@ -12,6 +12,9 @@ import { ContextReference } from './ChatMessage';
 // CIRCLE
 // ============================================================================
 
+// Privacy tiers for predefined circles
+export type PrivacyTier = 'acquaintances' | 'friends' | 'close_friends' | 'inner_circle';
+
 export interface Circle {
   id: string;
   name: string; // "Badminton Crew", "Running Buddies"
@@ -24,6 +27,12 @@ export interface Circle {
   settings: CircleSettings;
   createdAt: string; // ISO timestamp
   updatedAt: string; // ISO timestamp
+
+  // Predefined privacy circle fields
+  isPredefined?: boolean; // true for auto-created privacy tiers
+  privacyTier?: PrivacyTier; // Which tier this circle represents
+  ownerUserId?: string; // User who owns these predefined circles (different from createdBy for system)
+  systemCreatedAt?: string; // When system auto-created this circle
 }
 
 export interface CircleDataSharing {
@@ -214,4 +223,47 @@ export function isInviteExpired(invite: CircleInvite): boolean {
 export function formatMemberCount(count: number): string {
   if (count === 1) return '1 member';
   return `${count} members`;
+}
+
+/**
+ * Check if circle is a predefined privacy tier circle
+ */
+export function isPredefinedCircle(circle: Circle): boolean {
+  return circle.isPredefined === true && !!circle.privacyTier;
+}
+
+/**
+ * Check if user is owner of predefined circle
+ */
+export function isPredefinedCircleOwner(circle: Circle, userId: string): boolean {
+  return circle.isPredefined === true && circle.ownerUserId === userId;
+}
+
+/**
+ * Get privacy tier display info
+ */
+export function getPrivacyTierInfo(tier: PrivacyTier): { name: string; emoji: string; description: string } {
+  const tierInfo: Record<PrivacyTier, { name: string; emoji: string; description: string }> = {
+    acquaintances: {
+      name: 'Acquaintances',
+      emoji: '👋',
+      description: 'Life Feed summaries only',
+    },
+    friends: {
+      name: 'Friends',
+      emoji: '🤝',
+      description: 'Life Feed + Activity stats',
+    },
+    close_friends: {
+      name: 'Close Friends',
+      emoji: '💫',
+      description: 'Life Feed + Photos + Activity stats',
+    },
+    inner_circle: {
+      name: 'Inner Circle',
+      emoji: '❤️',
+      description: 'Everything (diary, voice, photos, health)',
+    },
+  };
+  return tierInfo[tier];
 }

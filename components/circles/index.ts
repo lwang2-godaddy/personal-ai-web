@@ -9,3 +9,4 @@ export { CircleMessageBubble } from './CircleMessageBubble';
 export { CircleMemberListItem } from './CircleMemberListItem';
 export { CircleChallengeCard } from './CircleChallengeCard';
 export { CircleInsightCard } from './CircleInsightCard';
+export { JoinCircleModal } from './JoinCircleModal';

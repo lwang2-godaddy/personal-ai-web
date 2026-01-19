@@ -795,4 +795,50 @@ export class CircleService {
       return false;
     }
   }
+
+  // ========================================================================
+  // INVITE PREVIEW HELPERS
+  // ========================================================================
+
+  /**
+   * Get circle details for invite preview (no membership validation)
+   * Used when showing the join circle modal to invited users
+   * @param circleId Circle ID
+   * @returns Circle data or null if not found
+   */
+  async getCircleForInvite(circleId: string): Promise<Circle | null> {
+    try {
+      const docSnap = await getDoc(doc(db, 'circles', circleId));
+
+      if (!docSnap.exists()) {
+        return null;
+      }
+
+      return { id: docSnap.id, ...docSnap.data() } as Circle;
+    } catch (error) {
+      console.error('[CircleService] Error fetching circle for invite:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Get user's display name by user ID
+   * @param userId User ID
+   * @returns Display name or fallback string
+   */
+  async getUserDisplayName(userId: string): Promise<string> {
+    try {
+      const userDoc = await getDoc(doc(db, 'users', userId));
+
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        return userData?.displayName || userData?.email || `User ${userId.slice(0, 6)}`;
+      }
+
+      return `User ${userId.slice(0, 6)}`;
+    } catch (error) {
+      console.error('[CircleService] Error fetching user display name:', error);
+      return `User ${userId.slice(0, 6)}`;
+    }
+  }
 }

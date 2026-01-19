@@ -2,19 +2,38 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAppSelector, useAppDispatch } from '@/lib/store/hooks';
+import { useAppSelector } from '@/lib/store/hooks';
 import { apiGet, apiPost } from '@/lib/api/client';
-import { CircleInvite } from '@/lib/models/Circle';
+import { CircleInvite, CircleDataSharing } from '@/lib/models/Circle';
+import { JoinCircleModal } from '@/components/circles';
+
+// Circle preview data from API
+interface CirclePreview {
+  id: string;
+  name: string;
+  emoji?: string;
+  description?: string;
+  dataSharing: CircleDataSharing;
+  memberCount: number;
+  isPredefined: boolean;
+  privacyTier?: string | null;
+}
 
 export default function CircleInvitesPage() {
   const router = useRouter();
-  const dispatch = useAppDispatch();
 
   const { user } = useAppSelector((state) => state.auth);
   const [invites, setInvites] = useState<CircleInvite[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [processingInviteId, setProcessingInviteId] = useState<string | null>(null);
+
+  // Modal state
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedInvite, setSelectedInvite] = useState<CircleInvite | null>(null);
+  const [circlePreview, setCirclePreview] = useState<CirclePreview | null>(null);
+  const [inviterName, setInviterName] = useState('');
+  const [isLoadingModal, setIsLoadingModal] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -38,21 +57,57 @@ export default function CircleInvitesPage() {
     }
   };
 
-  const handleAccept = async (inviteId: string) => {
+  const handleAcceptClick = async (invite: CircleInvite) => {
+    // Show modal with loading state while fetching circle details
+    setSelectedInvite(invite);
+    setModalVisible(true);
+    setIsLoadingModal(true);
+    setCirclePreview(null);
+    setInviterName('');
+
     try {
-      setProcessingInviteId(inviteId);
-      setError(null);
+      // Fetch circle preview and inviter name from API
+      const data = await apiPost<{ circle: CirclePreview; inviterName: string }>(
+        `/api/circles/${invite.circleId}/preview`,
+        { fromUserId: invite.fromUserId }
+      );
 
-      await apiPost(`/api/circles/invites/${inviteId}/accept`, {});
+      setCirclePreview(data.circle);
+      setInviterName(data.inviterName);
+    } catch (error: any) {
+      console.error('Error loading invite details:', error);
+      // Show modal with basic info if preview fails
+      setInviterName(`User ${invite.fromUserId.slice(0, 6)}`);
+    } finally {
+      setIsLoadingModal(false);
+    }
+  };
 
-      alert('Invite accepted! You are now a member of the circle.');
+  const handleModalConfirm = async () => {
+    if (!selectedInvite) return;
+
+    setIsLoadingModal(true);
+    try {
+      await apiPost(`/api/circles/invites/${selectedInvite.id}/accept`, {});
+
+      setModalVisible(false);
+      setSelectedInvite(null);
+      setCirclePreview(null);
+      alert('You have joined the circle!');
       fetchInvites();
     } catch (error: any) {
       console.error('Error accepting invite:', error);
       setError(error.message);
     } finally {
-      setProcessingInviteId(null);
+      setIsLoadingModal(false);
     }
+  };
+
+  const handleModalCancel = () => {
+    setModalVisible(false);
+    setSelectedInvite(null);
+    setCirclePreview(null);
+    setInviterName('');
   };
 
   const handleReject = async (inviteId: string) => {
@@ -174,7 +229,7 @@ export default function CircleInvitesPage() {
                     Reject
                   </button>
                   <button
-                    onClick={() => handleAccept(invite.id)}
+                    onClick={() => handleAcceptClick(invite)}
                     disabled={processingInviteId === invite.id}
                     className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
                   >
@@ -239,6 +294,17 @@ export default function CircleInvitesPage() {
           </div>
         </div>
       )}
+
+      {/* Join Circle Confirmation Modal */}
+      <JoinCircleModal
+        visible={modalVisible}
+        invite={selectedInvite}
+        circle={circlePreview}
+        inviterName={inviterName}
+        isLoading={isLoadingModal}
+        onConfirm={handleModalConfirm}
+        onCancel={handleModalCancel}
+      />
     </div>
   );
 }
