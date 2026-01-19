@@ -13,8 +13,6 @@ import {
   MigrationRunOptions,
   TriggerMigrationResponse,
 } from '@/lib/models/Migration';
-import { getFunctions, httpsCallable } from 'firebase/functions';
-import { app } from '@/lib/api/firebase/config';
 
 export const dynamic = 'force-dynamic';
 
@@ -132,18 +130,39 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     await runRef.set(runData);
 
-    // Trigger the Cloud Function
+    // Trigger the Cloud Function via HTTP with auth token
     if (migration.type === 'callable') {
       try {
-        const functions = getFunctions(app);
-        const migrationFn = httpsCallable(functions, migration.endpoint);
+        // Get the auth token from the request header
+        const authHeader = request.headers.get('authorization');
+        const idToken = authHeader?.startsWith('Bearer ')
+          ? authHeader.substring(7)
+          : null;
 
-        // Call the function asynchronously (don't await)
+        if (!idToken) {
+          throw new Error('No auth token available');
+        }
+
+        // Build the Cloud Function URL
+        const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+        const region = 'us-central1';
+        const functionUrl = `https://${region}-${projectId}.cloudfunctions.net/${migration.endpoint}`;
+
+        // Call the function asynchronously via HTTP POST
         // The function will update Firestore as it progresses
-        migrationFn({
-          runId: runRef.id,
-          options,
-          triggeredBy: user.uid,
+        fetch(functionUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`,
+          },
+          body: JSON.stringify({
+            data: {
+              runId: runRef.id,
+              options,
+              triggeredBy: user.uid,
+            },
+          }),
         }).catch(async (error) => {
           console.error('[Migration API] Cloud Function error:', error);
           // Update run status to failed
