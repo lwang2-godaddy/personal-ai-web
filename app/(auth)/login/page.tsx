@@ -51,6 +51,13 @@ export default function LoginPage() {
       <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
         {/* Header */}
         <div className="text-center mb-8">
+          <div className="flex justify-center mb-4">
+            <img
+              src="/icon-192x192.svg"
+              alt="SirCharge"
+              className="h-16 w-16"
+            />
+          </div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
             SirCharge
           </h1>

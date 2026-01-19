@@ -24,7 +24,12 @@ export function PublicNav() {
         <div className="flex justify-between h-16">
           <div className="flex">
             {/* Logo */}
-            <Link href="/" className="flex-shrink-0 flex items-center">
+            <Link href="/" className="flex-shrink-0 flex items-center gap-2">
+              <img
+                src="/icon-192x192.svg"
+                alt="SirCharge"
+                className="h-8 w-8"
+              />
               <h1 className="text-xl font-bold text-gray-900 dark:text-white">
                 SirCharge
               </h1>
