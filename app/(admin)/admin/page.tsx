@@ -199,6 +199,114 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
+      {/* External Service Links */}
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">Service Links</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* OpenAI Usage */}
+          <a
+            href="https://platform.openai.com/settings/organization/usage"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow border border-gray-200 hover:border-red-300"
+          >
+            <div className="flex items-center space-x-4">
+              <div className="text-4xl">🤖</div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900">OpenAI Usage</h3>
+                <p className="text-sm text-gray-600 mt-1">API usage & costs</p>
+              </div>
+              <span className="text-gray-400">↗</span>
+            </div>
+          </a>
+
+          {/* Firebase Console */}
+          <a
+            href="https://console.firebase.google.com/project/personalaiapp-90131"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow border border-gray-200 hover:border-red-300"
+          >
+            <div className="flex items-center space-x-4">
+              <div className="text-4xl">🔥</div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900">Firebase Console</h3>
+                <p className="text-sm text-gray-600 mt-1">Auth, Firestore, Functions</p>
+              </div>
+              <span className="text-gray-400">↗</span>
+            </div>
+          </a>
+
+          {/* Pinecone Console */}
+          <a
+            href="https://app.pinecone.io"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow border border-gray-200 hover:border-red-300"
+          >
+            <div className="flex items-center space-x-4">
+              <div className="text-4xl">🌲</div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900">Pinecone Console</h3>
+                <p className="text-sm text-gray-600 mt-1">Vector database</p>
+              </div>
+              <span className="text-gray-400">↗</span>
+            </div>
+          </a>
+
+          {/* Vercel Dashboard */}
+          <a
+            href="https://vercel.com/dashboard"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow border border-gray-200 hover:border-red-300"
+          >
+            <div className="flex items-center space-x-4">
+              <div className="text-4xl">▲</div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900">Vercel Dashboard</h3>
+                <p className="text-sm text-gray-600 mt-1">Deployments & analytics</p>
+              </div>
+              <span className="text-gray-400">↗</span>
+            </div>
+          </a>
+
+          {/* Google Cloud Console */}
+          <a
+            href="https://console.cloud.google.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow border border-gray-200 hover:border-red-300"
+          >
+            <div className="flex items-center space-x-4">
+              <div className="text-4xl">☁️</div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900">Google Cloud</h3>
+                <p className="text-sm text-gray-600 mt-1">Cloud services & APIs</p>
+              </div>
+              <span className="text-gray-400">↗</span>
+            </div>
+          </a>
+
+          {/* OpenAI API Keys */}
+          <a
+            href="https://platform.openai.com/api-keys"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow border border-gray-200 hover:border-red-300"
+          >
+            <div className="flex items-center space-x-4">
+              <div className="text-4xl">🔑</div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900">OpenAI API Keys</h3>
+                <p className="text-sm text-gray-600 mt-1">Manage API keys</p>
+              </div>
+              <span className="text-gray-400">↗</span>
+            </div>
+          </a>
+        </div>
+      </div>
+
       {/* Recent Activity Placeholder */}
       <div className="bg-white rounded-lg shadow-md p-6">
         <h2 className="text-xl font-bold text-gray-900 mb-4">Recent Activity</h2>
