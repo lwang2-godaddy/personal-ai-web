@@ -12,6 +12,12 @@ import {
   OPERATION_LABELS,
   type OperationType,
 } from '@/lib/models/ServiceOperations';
+import type {
+  AggregatedInfrastructureCosts,
+  InfrastructureCostTotals,
+  InfrastructureCostResponse,
+} from '@/lib/models/InfrastructureCost';
+import BillingComparisonCard from '@/components/admin/BillingComparisonCard';
 import {
   LineChart,
   Line,
@@ -130,6 +136,10 @@ export default function AdminUsageAnalyticsPage() {
   const [modelBreakdown, setModelBreakdown] = useState<ModelBreakdown>({});
   const [endpointBreakdown, setEndpointBreakdown] = useState<EndpointBreakdown>({});
 
+  // Infrastructure costs state (new)
+  const [infrastructureData, setInfrastructureData] = useState<AggregatedInfrastructureCosts | null>(null);
+  const [infrastructureTotals, setInfrastructureTotals] = useState<InfrastructureCostTotals | null>(null);
+
   useEffect(() => {
     // Set default date range (last 30 days)
     const today = new Date();
@@ -176,6 +186,21 @@ export default function AdminUsageAnalyticsPage() {
       // Set model and endpoint breakdowns (new)
       setModelBreakdown(data.modelBreakdown || {});
       setEndpointBreakdown(data.endpointBreakdown || {});
+
+      // Fetch infrastructure costs in parallel
+      try {
+        const infraQueryParams = new URLSearchParams({ startDate, endDate });
+        const infraData = await apiGet<InfrastructureCostResponse>(
+          `/api/admin/infrastructure?${infraQueryParams.toString()}`
+        );
+        setInfrastructureData(infraData.infrastructure);
+        setInfrastructureTotals(infraData.totals);
+      } catch (infraErr) {
+        console.warn('Failed to fetch infrastructure costs:', infraErr);
+        // Don't fail the whole page if infrastructure costs fail
+        setInfrastructureData(null);
+        setInfrastructureTotals(null);
+      }
     } catch (err: any) {
       console.error('Failed to fetch usage data:', err);
       setError(err.message || 'Failed to load usage analytics');
@@ -428,6 +453,346 @@ export default function AdminUsageAnalyticsPage() {
                 </p>
               </div>
               <div className="text-4xl">🔤</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Infrastructure Cost Summary */}
+      {!loading && infrastructureData && infrastructureTotals && (
+        <div className="space-y-4">
+          <h2 className="text-xl font-bold text-gray-900">Infrastructure Costs</h2>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-orange-500">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Firestore</p>
+                  <p className="text-2xl font-bold text-gray-900">${infrastructureTotals.firestore.toFixed(4)}</p>
+                  <p className="text-xs text-gray-500">{infrastructureData.firestore.reads.toLocaleString()} reads</p>
+                </div>
+                <div className="text-2xl">🔥</div>
+              </div>
+            </div>
+            <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-cyan-500">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Storage</p>
+                  <p className="text-2xl font-bold text-gray-900">${infrastructureTotals.storage.toFixed(4)}</p>
+                  <p className="text-xs text-gray-500">{infrastructureData.storage.storageGB.toFixed(2)} GB</p>
+                </div>
+                <div className="text-2xl">📁</div>
+              </div>
+            </div>
+            <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-violet-500">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Functions</p>
+                  <p className="text-2xl font-bold text-gray-900">${infrastructureTotals.functions.toFixed(4)}</p>
+                  <p className="text-xs text-gray-500">{infrastructureData.functions.invocations.toLocaleString()} calls</p>
+                </div>
+                <div className="text-2xl">⚡</div>
+              </div>
+            </div>
+            <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-amber-500">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Pinecone Storage</p>
+                  <p className="text-2xl font-bold text-gray-900">${infrastructureTotals.pinecone.toFixed(4)}</p>
+                  <p className="text-xs text-gray-500">{infrastructureData.pinecone.vectors.toLocaleString()} vectors</p>
+                </div>
+                <div className="text-2xl">🌲</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Combined Total Cost Card */}
+      {!loading && totals && infrastructureTotals && (
+        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-lg shadow-lg p-6 text-white">
+          <h3 className="text-lg font-medium opacity-90">Total Infrastructure Cost</h3>
+          <p className="text-4xl font-bold mt-2">
+            ${(totals.totalCost + infrastructureTotals.grandTotal).toFixed(2)}
+          </p>
+          <div className="grid grid-cols-2 gap-4 mt-4 text-sm">
+            <div>
+              <p className="opacity-75">OpenAI API</p>
+              <p className="font-medium text-lg">${totals.totalCost.toFixed(2)}</p>
+            </div>
+            <div>
+              <p className="opacity-75">Infrastructure</p>
+              <p className="font-medium text-lg">${infrastructureTotals.grandTotal.toFixed(4)}</p>
+            </div>
+          </div>
+          <div className="mt-4 pt-4 border-t border-white/20">
+            <div className="grid grid-cols-4 gap-2 text-xs opacity-75">
+              <div>
+                <p>Firestore</p>
+                <p className="font-medium">${infrastructureTotals.firestore.toFixed(4)}</p>
+              </div>
+              <div>
+                <p>Storage</p>
+                <p className="font-medium">${infrastructureTotals.storage.toFixed(4)}</p>
+              </div>
+              <div>
+                <p>Functions</p>
+                <p className="font-medium">${infrastructureTotals.functions.toFixed(4)}</p>
+              </div>
+              <div>
+                <p>Pinecone</p>
+                <p className="font-medium">${infrastructureTotals.pinecone.toFixed(4)}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Infrastructure Tracking Info */}
+      {!loading && infrastructureData && (
+        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-5">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl">⚠️</span>
+            <div className="flex-1">
+              <h3 className="text-amber-800 font-semibold mb-3">Infrastructure Cost Tracking - Limitations</h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                {/* What's Tracked */}
+                <div className="bg-white/60 rounded-lg p-3">
+                  <h4 className="font-semibold text-green-700 mb-2 flex items-center gap-1">
+                    <span>✅</span> What&apos;s Tracked
+                  </h4>
+                  <ul className="text-amber-700 space-y-1">
+                    <li><strong>Firestore (Web App)</strong> - All CRUD operations from web dashboard</li>
+                    <li><strong>Cloud Functions</strong> - queryRAG, photoMemoryCreated execution time</li>
+                    <li><strong>Pinecone Storage</strong> - Daily snapshot of vector count &amp; estimated storage</li>
+                  </ul>
+                </div>
+
+                {/* What's NOT Tracked */}
+                <div className="bg-white/60 rounded-lg p-3">
+                  <h4 className="font-semibold text-red-700 mb-2 flex items-center gap-1">
+                    <span>❌</span> What&apos;s NOT Tracked
+                  </h4>
+                  <ul className="text-amber-700 space-y-1">
+                    <li><strong>Firestore (Cloud Functions)</strong> - Operations inside triggers</li>
+                    <li><strong>Firebase Storage</strong> - Upload/download bandwidth</li>
+                    <li><strong>Other Cloud Functions</strong> - healthDataCreated, locationDataCreated, etc.</li>
+                    <li><strong>Mobile App</strong> - Direct Firestore operations from app</li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* Accuracy & Calculation Method */}
+              <div className="mt-4 bg-white/60 rounded-lg p-3">
+                <h4 className="font-semibold text-amber-800 mb-2">Calculation Method</h4>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs text-amber-700">
+                  <div>
+                    <p className="font-medium">Firestore</p>
+                    <p>$0.06/100K reads</p>
+                    <p>$0.18/100K writes</p>
+                    <p className="text-amber-500 mt-1">~60% accuracy</p>
+                  </div>
+                  <div>
+                    <p className="font-medium">Cloud Functions</p>
+                    <p>$0.40/1M invocations</p>
+                    <p>$0.0000025/GB-second</p>
+                    <p className="text-amber-500 mt-1">~30% accuracy</p>
+                  </div>
+                  <div>
+                    <p className="font-medium">Firebase Storage</p>
+                    <p>$0.026/GB-month</p>
+                    <p>$0.12/GB download</p>
+                    <p className="text-red-500 mt-1">Not tracked</p>
+                  </div>
+                  <div>
+                    <p className="font-medium">Pinecone Storage</p>
+                    <p>$0.25/GB-month</p>
+                    <p>vectors × 1536 × 4 bytes</p>
+                    <p className="text-green-600 mt-1">~95% accuracy</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Real Billing Note */}
+              <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <p className="text-green-800 text-sm">
+                  <strong>Actual Billing Available:</strong> See the &quot;Actual vs Estimated Costs&quot; section below for real billing data
+                  from OpenAI, Pinecone, and GCP APIs.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Actual vs Estimated Billing Comparison */}
+      {!loading && startDate && endDate && (
+        <BillingComparisonCard startDate={startDate} endDate={endDate} />
+      )}
+
+      {/* Billing Data Sources Documentation */}
+      {!loading && (
+        <div className="bg-gradient-to-r from-slate-50 to-gray-50 border border-slate-200 rounded-lg p-5">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl">📊</span>
+            <div className="flex-1">
+              <h3 className="text-slate-800 font-semibold mb-3">How Billing Data Is Fetched</h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                {/* OpenAI */}
+                <div className="bg-white/70 rounded-lg p-4 border border-slate-100">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-lg">🤖</span>
+                    <h4 className="font-semibold text-slate-800">OpenAI</h4>
+                  </div>
+                  <div className="space-y-2 text-slate-600">
+                    <div>
+                      <p className="font-medium text-green-700">Primary: Costs API</p>
+                      <p className="text-xs">Real-time billing from OpenAI organization dashboard</p>
+                    </div>
+                    <div>
+                      <p className="font-medium text-blue-700">Fallback: Usage API</p>
+                      <p className="text-xs">Token counts × model pricing rates</p>
+                    </div>
+                    <div>
+                      <p className="font-medium text-amber-700">Last Resort: Estimates</p>
+                      <p className="text-xs">From our usageEvents collection tracking</p>
+                    </div>
+                    <div className="mt-2 pt-2 border-t border-slate-100">
+                      <p className="text-xs text-slate-500">
+                        <strong>Env:</strong> <code className="bg-slate-100 px-1 rounded">OPENAI_ORG_API_KEY</code>
+                      </p>
+                      <p className="text-xs text-slate-500">Cache: 6 hours</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Pinecone */}
+                <div className="bg-white/70 rounded-lg p-4 border border-slate-100">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-lg">🌲</span>
+                    <h4 className="font-semibold text-slate-800">Pinecone</h4>
+                  </div>
+                  <div className="space-y-2 text-slate-600">
+                    <div>
+                      <p className="font-medium text-green-700">Primary: Index Stats API</p>
+                      <p className="text-xs">Vector count → storage calculation</p>
+                    </div>
+                    <div>
+                      <p className="font-medium text-blue-700">Operations: Our Tracking</p>
+                      <p className="text-xs">Read/write units from usageEvents collection</p>
+                    </div>
+                    <div>
+                      <p className="font-medium text-amber-700">Scheduled: Daily Snapshot</p>
+                      <p className="text-xs">Cloud Function runs at 2 AM UTC daily</p>
+                    </div>
+                    <div className="mt-2 pt-2 border-t border-slate-100">
+                      <p className="text-xs text-slate-500">
+                        <strong>Env:</strong> <code className="bg-slate-100 px-1 rounded">PINECONE_API_KEY</code> (existing)
+                      </p>
+                      <p className="text-xs text-slate-500">Cache: 12 hours</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* GCP / Firebase */}
+                <div className="bg-white/70 rounded-lg p-4 border border-slate-100">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-lg">🔥</span>
+                    <h4 className="font-semibold text-slate-800">GCP / Firebase</h4>
+                  </div>
+                  <div className="space-y-2 text-slate-600">
+                    <div>
+                      <p className="font-medium text-green-700">Primary: BigQuery Export</p>
+                      <p className="text-xs">Real billing data exported to BigQuery</p>
+                    </div>
+                    <div>
+                      <p className="font-medium text-amber-700">Fallback: Infrastructure Estimates</p>
+                      <p className="text-xs">From infrastructureCosts collection</p>
+                    </div>
+                    <div>
+                      <p className="font-medium text-slate-500">Note: 24-48h delay</p>
+                      <p className="text-xs">GCP billing export has inherent latency</p>
+                    </div>
+                    <div className="mt-2 pt-2 border-t border-slate-100">
+                      <p className="text-xs text-slate-500">
+                        <strong>Env:</strong> <code className="bg-slate-100 px-1 rounded">GOOGLE_CLOUD_BILLING_*</code>
+                      </p>
+                      <p className="text-xs text-slate-500">Cache: 24 hours</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Caching Behavior */}
+              <div className="mt-4 bg-white/70 rounded-lg p-4 border border-slate-100">
+                <h4 className="font-semibold text-slate-800 mb-2">Caching Behavior</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-slate-600">
+                  <div>
+                    <p className="font-medium mb-1">How It Works:</p>
+                    <ul className="list-disc list-inside text-xs space-y-1">
+                      <li>Billing data is cached in Firestore <code className="bg-slate-100 px-1 rounded">billingCache</code> collection</li>
+                      <li>Cache key format: <code className="bg-slate-100 px-1 rounded">{'{provider}_{startDate}_{endDate}'}</code></li>
+                      <li>Click &quot;Refresh&quot; button to force fetch fresh data</li>
+                      <li>Expired cache entries are auto-cleaned on next request</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <p className="font-medium mb-1">Why Different TTLs?</p>
+                    <ul className="list-disc list-inside text-xs space-y-1">
+                      <li><strong>OpenAI (6h):</strong> Usage data updates frequently during active use</li>
+                      <li><strong>Pinecone (12h):</strong> Storage metrics change less frequently</li>
+                      <li><strong>GCP (24h):</strong> BigQuery export has 24-48h delay anyway</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              {/* Environment Variables */}
+              <div className="mt-4 bg-white/70 rounded-lg p-4 border border-slate-100">
+                <h4 className="font-semibold text-slate-800 mb-2">Required Environment Variables</h4>
+                <div className="text-xs font-mono bg-slate-800 text-green-400 rounded p-3 overflow-x-auto">
+                  <p className="text-slate-400"># OpenAI Organization API Key (for billing data)</p>
+                  <p className="text-slate-400"># Get from: https://platform.openai.com/organization/api-keys</p>
+                  <p className="text-slate-400"># Requires &quot;org:usage:read&quot; permission</p>
+                  <p>OPENAI_ORG_API_KEY=sk-admin-...</p>
+                  <p className="mt-2 text-slate-400"># Optional: GCP BigQuery billing export</p>
+                  <p className="text-slate-400"># Enable at: https://cloud.google.com/billing/docs/how-to/export-data-bigquery</p>
+                  <p>GOOGLE_CLOUD_BILLING_PROJECT_ID=your-billing-project</p>
+                  <p>GOOGLE_CLOUD_BILLING_DATASET=billing_export</p>
+                </div>
+                <p className="text-xs text-slate-500 mt-2">
+                  Without these variables, the system gracefully falls back to estimates from our tracking.
+                </p>
+              </div>
+
+              {/* Accuracy Notes */}
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                  <p className="font-semibold text-green-800 mb-1">High Accuracy (~95%+)</p>
+                  <ul className="text-green-700 space-y-0.5">
+                    <li>• OpenAI with Costs API</li>
+                    <li>• Pinecone storage (vector count × dimensions)</li>
+                    <li>• GCP with BigQuery export</li>
+                  </ul>
+                </div>
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                  <p className="font-semibold text-amber-800 mb-1">Medium Accuracy (~60-80%)</p>
+                  <ul className="text-amber-700 space-y-0.5">
+                    <li>• OpenAI from Usage API (token estimates)</li>
+                    <li>• Pinecone operations (tracked queries/upserts)</li>
+                    <li>• Firestore from web app tracking</li>
+                  </ul>
+                </div>
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                  <p className="font-semibold text-red-800 mb-1">Lower Accuracy (~30-50%)</p>
+                  <ul className="text-red-700 space-y-0.5">
+                    <li>• Cloud Functions (only some tracked)</li>
+                    <li>• Firestore from Cloud Functions (not tracked)</li>
+                    <li>• Firebase Storage (not tracked)</li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
         </div>

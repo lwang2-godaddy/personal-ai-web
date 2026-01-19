@@ -16,6 +16,35 @@ import {
 import { db } from './config';
 
 /**
+ * Infrastructure cost tracking helper
+ * Only tracks on server-side; no-op on client-side
+ */
+const trackFirestoreOp = async (type: 'read' | 'write' | 'delete', count: number = 1) => {
+  // Only track on server-side (avoid browser errors)
+  if (typeof window !== 'undefined') return;
+
+  try {
+    const { getInfrastructureCostTracker } = await import('@/lib/services/usage/InfrastructureCostTracker');
+    const tracker = getInfrastructureCostTracker();
+
+    switch (type) {
+      case 'read':
+        tracker.trackFirestoreRead(count);
+        break;
+      case 'write':
+        tracker.trackFirestoreWrite(count);
+        break;
+      case 'delete':
+        tracker.trackFirestoreDelete(count);
+        break;
+    }
+  } catch (error) {
+    // Silently ignore tracking errors to not break operations
+    console.debug('[Firestore] Tracking skipped:', error);
+  }
+};
+
+/**
  * Helper to convert Firestore Timestamps to ISO strings for Redux serialization
  */
 function serializeFirestoreData(data: any): any {
@@ -68,6 +97,9 @@ export class FirestoreService {
     const docRef = doc(db, collectionName, documentId);
     const docSnap = await getDoc(docRef);
 
+    // Track read operation
+    trackFirestoreOp('read', 1);
+
     if (docSnap.exists()) {
       const data = docSnap.data();
       return {
@@ -87,6 +119,9 @@ export class FirestoreService {
   ): Promise<T[]> {
     const q = query(collection(db, collectionName), ...constraints);
     const querySnapshot = await getDocs(q);
+
+    // Track read operations (1 per document returned)
+    trackFirestoreOp('read', querySnapshot.size);
 
     return querySnapshot.docs.map((doc) => {
       const data = doc.data();
@@ -127,6 +162,10 @@ export class FirestoreService {
     const collectionRef = collection(db, collectionName);
     const docRef = doc(collectionRef);
     await setDoc(docRef, data);
+
+    // Track write operation
+    trackFirestoreOp('write', 1);
+
     return docRef.id;
   }
 
@@ -140,6 +179,9 @@ export class FirestoreService {
   ): Promise<void> {
     const docRef = doc(db, collectionName, documentId);
     await setDoc(docRef, data, { merge: true });
+
+    // Track write operation
+    trackFirestoreOp('write', 1);
   }
 
   /**
@@ -152,6 +194,9 @@ export class FirestoreService {
   ): Promise<void> {
     const docRef = doc(db, collectionName, documentId);
     await updateDoc(docRef, data);
+
+    // Track write operation
+    trackFirestoreOp('write', 1);
   }
 
   /**
@@ -160,6 +205,9 @@ export class FirestoreService {
   async deleteDocument(collectionName: string, documentId: string): Promise<void> {
     const docRef = doc(db, collectionName, documentId);
     await deleteDoc(docRef);
+
+    // Track delete operation
+    trackFirestoreOp('delete', 1);
   }
 
   /**
