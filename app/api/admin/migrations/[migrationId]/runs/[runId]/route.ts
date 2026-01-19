@@ -102,23 +102,30 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     const startedAt = new Date(runData.startedAt);
     const durationMs = Date.now() - startedAt.getTime();
 
+    // Build result object, excluding undefined values
+    const result: Record<string, any> = {
+      success: false,
+      usersProcessed: runData.progress?.current || 0,
+      usersCreated: 0,
+      usersSkipped: 0,
+      errors: [
+        {
+          message: `Migration cancelled by ${user.email || user.uid}`,
+          timestamp: now,
+        },
+      ],
+    };
+
+    // Only add lastProcessedUserId if it exists
+    if (runData.progress?.lastProcessedUserId) {
+      result.lastProcessedUserId = runData.progress.lastProcessedUserId;
+    }
+
     await runRef.update({
       status: 'cancelled',
       completedAt: now,
       durationMs,
-      result: {
-        success: false,
-        usersProcessed: runData.progress?.current || 0,
-        usersCreated: 0,
-        usersSkipped: 0,
-        errors: [
-          {
-            message: `Migration cancelled by ${user.email || user.uid}`,
-            timestamp: now,
-          },
-        ],
-        lastProcessedUserId: runData.progress?.lastProcessedUserId,
-      },
+      result,
     });
 
     return NextResponse.json({
