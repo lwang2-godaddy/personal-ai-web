@@ -20,7 +20,7 @@ const TOGGLE_ITEMS: ToggleItem[] = [
   {
     key: 'shareHealth',
     label: 'Health Data',
-    icon: '💪',
+    icon: '❤️',
     description: 'Steps, workouts, sleep, heart rate',
   },
   {
@@ -32,8 +32,14 @@ const TOGGLE_ITEMS: ToggleItem[] = [
   {
     key: 'shareActivities',
     label: 'Activities',
-    icon: '🏃',
+    icon: '🎯',
     description: 'Activity tags, shared activities',
+  },
+  {
+    key: 'shareDiary',
+    label: 'Diary',
+    icon: '📝',
+    description: 'Diary entries, text notes',
   },
   {
     key: 'shareVoiceNotes',
@@ -51,7 +57,7 @@ const TOGGLE_ITEMS: ToggleItem[] = [
 
 /**
  * Data sharing toggles component (Web)
- * 5 toggles for different data types
+ * 6 toggles for different data types (health, location, activities, diary, voice, photos)
  */
 export const DataSharingToggles: React.FC<DataSharingTogglesProps> = ({
   dataSharing,

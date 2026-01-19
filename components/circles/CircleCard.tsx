@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Circle } from '@/lib/models/Circle';
+import { DataSharingBadges } from './DataSharingBadges';
 
 interface CircleCardProps {
   circle: Circle;
@@ -47,12 +48,15 @@ export const CircleCard: React.FC<CircleCardProps> = ({ circle, onPress }) => {
           <p className="text-sm text-gray-600 line-clamp-2 mt-1">{circle.description}</p>
         )}
 
-        <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
-          <span>
-            {circle.memberIds.length} {circle.memberIds.length === 1 ? 'member' : 'members'}
-          </span>
-          <span>•</span>
-          <span>{formatLastActivity(circle.updatedAt)}</span>
+        <div className="flex items-center justify-between mt-2">
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <span>
+              {circle.memberIds.length} {circle.memberIds.length === 1 ? 'member' : 'members'}
+            </span>
+            <span>•</span>
+            <span>{formatLastActivity(circle.updatedAt)}</span>
+          </div>
+          <DataSharingBadges dataSharing={circle.dataSharing} size="sm" />
         </div>
       </div>
 

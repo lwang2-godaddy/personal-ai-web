@@ -39,6 +39,7 @@ export interface CircleDataSharing {
   shareHealth: boolean; // Steps, workouts, sleep
   shareLocation: boolean; // GPS history, places visited
   shareActivities: boolean; // Activity tags, shared activities
+  shareDiary: boolean; // Diary entries, text notes
   shareVoiceNotes: boolean; // Audio transcriptions
   sharePhotos: boolean; // Photo metadata
 }
@@ -176,6 +177,7 @@ export function getDefaultDataSharing(): CircleDataSharing {
     shareHealth: true,
     shareLocation: true,
     shareActivities: true,
+    shareDiary: false, // Diary entries private by default
     shareVoiceNotes: false, // Voice notes private by default
     sharePhotos: true,
   };
