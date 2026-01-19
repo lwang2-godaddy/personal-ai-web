@@ -1,7 +1,11 @@
 'use client';
 
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useAppSelector } from '@/lib/store/hooks';
+import { apiGet } from '@/lib/api/client';
+import { StorageUsage } from '@/lib/models/StorageUsage';
+import { StorageUsageCard } from '@/components/settings/StorageUsageCard';
 
 interface SettingsLinkCardProps {
   href: string;
@@ -39,7 +43,51 @@ function SettingsLinkCard({ href, title, description, icon }: SettingsLinkCardPr
 }
 
 export default function SettingsPage() {
-  const { user } = useAppSelector((state) => state.auth);
+  const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+  const [storageUsage, setStorageUsage] = useState<StorageUsage | null>(null);
+  const [isLoadingStorage, setIsLoadingStorage] = useState(false);
+  const [hasFetched, setHasFetched] = useState(false);
+
+  const fetchStorageUsage = useCallback(async () => {
+    // Only fetch if authenticated and not already loading
+    if (!isAuthenticated || !user?.uid || isLoadingStorage) return;
+
+    try {
+      setIsLoadingStorage(true);
+      const data = await apiGet<StorageUsage>('/api/storage-usage');
+      setStorageUsage(data);
+      setHasFetched(true);
+    } catch (error: any) {
+      // Don't log auth errors as they're expected during initial load
+      if (!error.message?.includes('not authenticated')) {
+        console.error('Failed to fetch storage usage:', error);
+      }
+    } finally {
+      setIsLoadingStorage(false);
+    }
+  }, [isAuthenticated, user?.uid, isLoadingStorage]);
+
+  // Only auto-fetch once when authenticated
+  useEffect(() => {
+    if (isAuthenticated && user?.uid && !hasFetched && !isLoadingStorage) {
+      fetchStorageUsage();
+    }
+  }, [isAuthenticated, user?.uid, hasFetched, isLoadingStorage, fetchStorageUsage]);
+
+  // Manual refresh handler (resets hasFetched to allow re-fetch)
+  const handleRefresh = useCallback(async () => {
+    if (!isAuthenticated || !user?.uid || isLoadingStorage) return;
+
+    try {
+      setIsLoadingStorage(true);
+      const data = await apiGet<StorageUsage>('/api/storage-usage');
+      setStorageUsage(data);
+    } catch (error: any) {
+      console.error('Failed to refresh storage usage:', error);
+    } finally {
+      setIsLoadingStorage(false);
+    }
+  }, [isAuthenticated, user?.uid, isLoadingStorage]);
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -84,6 +132,15 @@ export default function SettingsPage() {
             </p>
           </div>
         </div>
+      </div>
+
+      {/* Storage Usage */}
+      <div className="mb-6">
+        <StorageUsageCard
+          storageUsage={storageUsage}
+          isLoading={isLoadingStorage}
+          onRefresh={handleRefresh}
+        />
       </div>
 
       {/* Settings Navigation */}
