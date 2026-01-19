@@ -1,8 +1,18 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { apiGet } from '@/lib/api/client';
 import type { CombinedBillingResponse, CombinedBillingData } from '@/lib/models/BillingData';
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts';
 
 interface BillingComparisonCardProps {
   startDate: string;
@@ -57,6 +67,46 @@ export default function BillingComparisonCard({ startDate, endDate }: BillingCom
   const handleRefresh = () => {
     fetchBillingData(true);
   };
+
+  // Provider colors for charts
+  const PROVIDER_COLORS = {
+    openai: '#10b981',    // Green
+    pinecone: '#06b6d4',  // Cyan
+    gcp: '#f59e0b',       // Amber
+  };
+
+  // Process trend data for the chart
+  const trendData = useMemo(() => {
+    if (!billingData) return [];
+
+    const { openai, pinecone, gcp } = billingData;
+
+    // Collect all unique dates from all providers
+    const dateSet = new Set<string>();
+    openai.byDate.forEach(d => dateSet.add(d.date));
+    pinecone.byDate.forEach(d => dateSet.add(d.date));
+    gcp.byDate.forEach(d => dateSet.add(d.date));
+
+    // Create lookup maps for each provider
+    const openaiByDate = new Map(openai.byDate.map(d => [d.date, d.costUSD]));
+    const pineconeByDate = new Map(pinecone.byDate.map(d => [d.date, d.costUSD]));
+    const gcpByDate = new Map(gcp.byDate.map(d => [d.date, d.costUSD]));
+
+    // Sort dates and create combined data
+    const sortedDates = Array.from(dateSet).sort();
+
+    return sortedDates.map(date => ({
+      date,
+      displayDate: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      openai: openaiByDate.get(date) || 0,
+      pinecone: pineconeByDate.get(date) || 0,
+      gcp: gcpByDate.get(date) || 0,
+      total: (openaiByDate.get(date) || 0) + (pineconeByDate.get(date) || 0) + (gcpByDate.get(date) || 0),
+    }));
+  }, [billingData]);
+
+  // Check if there's any trend data to show
+  const hasTrendData = trendData.length > 0 && trendData.some(d => d.total > 0);
 
   // Format currency
   const formatCurrency = (value: number): string => {
@@ -317,6 +367,102 @@ export default function BillingComparisonCard({ startDate, endDate }: BillingCom
           </tbody>
         </table>
       </div>
+
+      {/* Cost Trend by Provider */}
+      {hasTrendData && (
+        <div className="mt-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Cost Trend by Provider</h3>
+          <div className="bg-gray-50 rounded-lg p-4">
+            <ResponsiveContainer width="100%" height={300}>
+              <AreaChart data={trendData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorOpenai" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={PROVIDER_COLORS.openai} stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor={PROVIDER_COLORS.openai} stopOpacity={0.1}/>
+                  </linearGradient>
+                  <linearGradient id="colorPinecone" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={PROVIDER_COLORS.pinecone} stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor={PROVIDER_COLORS.pinecone} stopOpacity={0.1}/>
+                  </linearGradient>
+                  <linearGradient id="colorGcp" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={PROVIDER_COLORS.gcp} stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor={PROVIDER_COLORS.gcp} stopOpacity={0.1}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis
+                  dataKey="displayDate"
+                  tick={{ fontSize: 12, fill: '#6b7280' }}
+                  tickLine={false}
+                  axisLine={{ stroke: '#e5e7eb' }}
+                />
+                <YAxis
+                  tick={{ fontSize: 12, fill: '#6b7280' }}
+                  tickLine={false}
+                  axisLine={{ stroke: '#e5e7eb' }}
+                  tickFormatter={(value) => `$${value.toFixed(2)}`}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'white',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                  }}
+                  formatter={(value, name) => [
+                    `$${(typeof value === 'number' ? value : 0).toFixed(4)}`,
+                    name === 'openai' ? 'OpenAI' : name === 'pinecone' ? 'Pinecone' : 'GCP/Firebase'
+                  ]}
+                  labelFormatter={(label) => `Date: ${label}`}
+                />
+                <Legend
+                  formatter={(value) =>
+                    value === 'openai' ? 'OpenAI' : value === 'pinecone' ? 'Pinecone' : 'GCP/Firebase'
+                  }
+                />
+                <Area
+                  type="monotone"
+                  dataKey="openai"
+                  stackId="1"
+                  stroke={PROVIDER_COLORS.openai}
+                  fill="url(#colorOpenai)"
+                  strokeWidth={2}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="pinecone"
+                  stackId="1"
+                  stroke={PROVIDER_COLORS.pinecone}
+                  fill="url(#colorPinecone)"
+                  strokeWidth={2}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="gcp"
+                  stackId="1"
+                  stroke={PROVIDER_COLORS.gcp}
+                  fill="url(#colorGcp)"
+                  strokeWidth={2}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+            <div className="mt-4 flex justify-center gap-6 text-sm">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: PROVIDER_COLORS.openai }} />
+                <span className="text-gray-600">OpenAI</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: PROVIDER_COLORS.pinecone }} />
+                <span className="text-gray-600">Pinecone</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: PROVIDER_COLORS.gcp }} />
+                <span className="text-gray-600">GCP/Firebase</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Provider Details */}
       <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
