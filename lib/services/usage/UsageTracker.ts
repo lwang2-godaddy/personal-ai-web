@@ -277,6 +277,9 @@ class UsageTracker {
   /**
    * Log usage event to Firestore
    * This is the core method that writes to the database
+   *
+   * NOTE: Writes to 'promptExecutions' collection (same as Cloud Functions & Mobile App)
+   * to unify all usage tracking in one place for the admin dashboard.
    */
   private async logUsageEvent(
     event: Omit<UsageEvent, 'id' | 'timestamp'>
@@ -288,23 +291,44 @@ class UsageTracker {
       // Get Firestore instance using the admin helper (ensures proper initialization)
       const db = getAdminFirestore();
 
-      // Create usage event document, filtering out undefined values
-      // Firestore doesn't accept undefined values
-      const usageEvent: Record<string, any> = {
-        timestamp: new Date().toISOString(),
+      // Create document in promptExecutions format (unified schema)
+      // This allows the admin dashboard to aggregate all sources in one place
+      const promptExecution: Record<string, any> = {
+        userId: event.userId,
+        service: 'WebApp',
+        promptId: event.operation,
+        model: event.model || 'unknown',
+        sourceType: event.operation,
+        inputTokens: event.promptTokens || event.totalTokens || 0,
+        outputTokens: event.completionTokens || 0,
+        totalTokens: event.totalTokens || 0,
+        estimatedCostUSD: event.estimatedCostUSD,
+        executedAt: new Date().toISOString(),
+        success: true,
+        latencyMs: 0,
+        inputSummary: '',
+        outputSummary: '',
+        language: 'en',
+        promptVersion: '1.0.0',
+        promptSource: 'inline',
+        temperature: 0,
+        maxTokens: 0,
       };
 
-      // Only add defined values to the document
-      for (const [key, value] of Object.entries(event)) {
-        if (value !== undefined) {
-          usageEvent[key] = value;
-        }
+      // Add optional metadata fields if present
+      const metadataFields: Record<string, any> = {};
+      if (event.endpoint) metadataFields.endpoint = event.endpoint;
+      if (event.provider) metadataFields.provider = event.provider;
+      if (event.metadata) Object.assign(metadataFields, event.metadata);
+
+      if (Object.keys(metadataFields).length > 0) {
+        promptExecution.metadata = metadataFields;
       }
 
-      // Write to usageEvents collection
-      await db.collection('usageEvents').add(usageEvent);
+      // Write to promptExecutions collection (unified with Cloud Functions & Mobile)
+      await db.collection('promptExecutions').add(promptExecution);
 
-      console.log(`[UsageTracker] ✓ Logged usage event: ${event.operation} for user ${event.userId}`);
+      console.log(`[UsageTracker] ✓ Logged to promptExecutions: ${event.operation} for user ${event.userId}`);
 
       // Note: Daily and monthly aggregations will be handled by a Cloud Function
       // that runs periodically (every hour) to aggregate events

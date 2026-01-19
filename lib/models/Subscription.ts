@@ -82,10 +82,12 @@ export interface UserSubscription {
  */
 export interface UserUsage {
   messagesThisMonth: number;
+  messagesToday: number; // Daily message counter for free tier limit
   photosThisMonth: number;
   voiceMinutesThisMonth: number;
   lastMessageAt?: string;
   monthlyResetAt: string;
+  dailyResetAt: string; // When the daily message counter resets
 }
 
 // ============================================================================
@@ -93,7 +95,7 @@ export interface UserUsage {
 // ============================================================================
 
 export const DEFAULT_FREE_QUOTAS: TierQuotas = {
-  messagesPerDay: 10,
+  messagesPerDay: 15,
   photosPerMonth: 5,
   voiceMinutesPerMonth: 5,
   customActivityTypes: 11,

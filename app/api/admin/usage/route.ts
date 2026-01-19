@@ -34,6 +34,48 @@ const SOURCE_TYPE_TO_OPERATION: Record<string, string> = {
   direct_stream: 'chat_completion',
   custom_prompt: 'chat_completion',
   pinecone_query: 'pinecone_query',
+  // New embedding source types from Cloud Functions
+  health_embedding: 'embedding',
+  location_embedding: 'embedding',
+  voice_embedding: 'embedding',
+  photo_embedding: 'embedding',
+  text_note_embedding: 'embedding',
+  event_embedding: 'embedding',
+  shared_activity_embedding: 'embedding',
+  rag_query: 'embedding',
+  circle_rag_query: 'embedding',
+  group_rag_query: 'embedding',
+};
+
+/**
+ * Map sourceType to OpenAI API endpoint for endpoint-level aggregation
+ */
+const SOURCE_TYPE_TO_ENDPOINT: Record<string, string> = {
+  // Embeddings endpoint
+  embedding: 'embeddings',
+  health_embedding: 'embeddings',
+  location_embedding: 'embeddings',
+  voice_embedding: 'embeddings',
+  photo_embedding: 'embeddings',
+  text_note_embedding: 'embeddings',
+  event_embedding: 'embeddings',
+  shared_activity_embedding: 'embeddings',
+  rag_query: 'embeddings',
+  circle_rag_query: 'embeddings',
+  group_rag_query: 'embeddings',
+  // Chat completions endpoint
+  rag: 'chat/completions',
+  rag_stream: 'chat/completions',
+  direct: 'chat/completions',
+  direct_stream: 'chat/completions',
+  vision: 'chat/completions',
+  custom_prompt: 'chat/completions',
+  chat_completion: 'chat/completions',
+  // Audio endpoints
+  transcription: 'audio/transcriptions',
+  tts: 'audio/speech',
+  // Photo description uses chat completions
+  image_description: 'chat/completions',
 };
 
 interface TopUser {
@@ -109,6 +151,10 @@ export async function GET(request: NextRequest) {
     const usageByPeriod = new Map<string, any>();
     // Track per-user stats
     const userStats = new Map<string, TopUser>();
+    // Track by OpenAI model
+    const modelStats = new Map<string, { cost: number; calls: number; tokens: number }>();
+    // Track by OpenAI endpoint
+    const endpointStats = new Map<string, { cost: number; calls: number; tokens: number }>();
 
     usageSnapshot.forEach((doc) => {
       const data = doc.data();
@@ -182,6 +228,26 @@ export async function GET(request: NextRequest) {
         userStat.totalApiCalls += 1;
         userStat.totalTokens += tokens;
       }
+
+      // Aggregate by OpenAI model
+      const model = data.model as string;
+      if (model) {
+        const existing = modelStats.get(model) || { cost: 0, calls: 0, tokens: 0 };
+        existing.cost += cost;
+        existing.calls += 1;
+        existing.tokens += tokens;
+        modelStats.set(model, existing);
+      }
+
+      // Aggregate by OpenAI API endpoint
+      const endpoint = sourceType ? SOURCE_TYPE_TO_ENDPOINT[sourceType] : undefined;
+      if (endpoint) {
+        const existing = endpointStats.get(endpoint) || { cost: 0, calls: 0, tokens: 0 };
+        existing.cost += cost;
+        existing.calls += 1;
+        existing.tokens += tokens;
+        endpointStats.set(endpoint, existing);
+      }
     });
 
     const usage = Array.from(usageByPeriod.values())
@@ -238,6 +304,22 @@ export async function GET(request: NextRequest) {
       })
     );
 
+    // Build model breakdown with rounded costs
+    const modelBreakdown = Object.fromEntries(
+      Array.from(modelStats.entries()).map(([k, v]) => [
+        k,
+        { ...v, cost: Number(v.cost.toFixed(4)) },
+      ])
+    );
+
+    // Build endpoint breakdown with rounded costs
+    const endpointBreakdown = Object.fromEntries(
+      Array.from(endpointStats.entries()).map(([k, v]) => [
+        k,
+        { ...v, cost: Number(v.cost.toFixed(4)) },
+      ])
+    );
+
     return NextResponse.json({
       usage,
       totals: {
@@ -245,6 +327,8 @@ export async function GET(request: NextRequest) {
         totalCost: Number(totals.totalCost.toFixed(4)),
       },
       topUsers,
+      modelBreakdown,
+      endpointBreakdown,
       startDate: startDateStr,
       endDate: endDateStr,
       groupBy,

@@ -47,6 +47,8 @@ interface UsageResponse {
     totalTokens: number;
   };
   topUsers: TopUser[];
+  modelBreakdown?: ModelBreakdown;
+  endpointBreakdown?: EndpointBreakdown;
   startDate: string;
   endDate: string;
   groupBy: 'day' | 'month';
@@ -61,11 +63,44 @@ interface TopUser {
   totalTokens?: number;
 }
 
+interface ModelBreakdown {
+  [model: string]: { cost: number; calls: number; tokens: number };
+}
+
+interface EndpointBreakdown {
+  [endpoint: string]: { cost: number; calls: number; tokens: number };
+}
+
 const COLORS = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#22c55e', '#14b8a6', '#06b6d4', '#3b82f6', '#6366f1', '#8b5cf6'];
 
 // Legacy labels for backwards compatibility (not in ServiceOperations.ts)
 const LEGACY_OPERATION_LABELS: Record<string, string> = {
   image_description: 'Photo Description',
+};
+
+// Endpoint display labels
+const ENDPOINT_LABELS: Record<string, string> = {
+  'embeddings': 'Embeddings',
+  'chat/completions': 'Chat Completions',
+  'audio/transcriptions': 'Whisper',
+  'audio/speech': 'TTS',
+};
+
+// Endpoint icons
+const ENDPOINT_ICONS: Record<string, string> = {
+  'embeddings': '📊',
+  'chat/completions': '💬',
+  'audio/transcriptions': '🎤',
+  'audio/speech': '🔊',
+};
+
+// Model colors for pie chart
+const MODEL_COLORS: Record<string, string> = {
+  'gpt-4o': '#10b981',
+  'gpt-4o-mini': '#3b82f6',
+  'text-embedding-3-small': '#f59e0b',
+  'whisper-1': '#ef4444',
+  'tts-1': '#8b5cf6',
 };
 
 /**
@@ -90,6 +125,10 @@ export default function AdminUsageAnalyticsPage() {
 
   // Top users state
   const [topUsers, setTopUsers] = useState<TopUser[]>([]);
+
+  // Model and endpoint breakdown state (new)
+  const [modelBreakdown, setModelBreakdown] = useState<ModelBreakdown>({});
+  const [endpointBreakdown, setEndpointBreakdown] = useState<EndpointBreakdown>({});
 
   useEffect(() => {
     // Set default date range (last 30 days)
@@ -133,6 +172,10 @@ export default function AdminUsageAnalyticsPage() {
       } else {
         setTopUsers([]);
       }
+
+      // Set model and endpoint breakdowns (new)
+      setModelBreakdown(data.modelBreakdown || {});
+      setEndpointBreakdown(data.endpointBreakdown || {});
     } catch (err: any) {
       console.error('Failed to fetch usage data:', err);
       setError(err.message || 'Failed to load usage analytics');
@@ -524,6 +567,108 @@ export default function AdminUsageAnalyticsPage() {
                 </table>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cost by OpenAI Model */}
+      {!loading && Object.keys(modelBreakdown).length > 0 && (
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Cost by OpenAI Model</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Pie Chart */}
+            <div>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={Object.entries(modelBreakdown).map(([model, stats]) => ({
+                      name: model,
+                      value: stats.cost,
+                    }))}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name} (${percent ? (percent * 100).toFixed(0) : '0'}%)`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {Object.keys(modelBreakdown).map((model, index) => (
+                      <Cell key={`cell-${index}`} fill={MODEL_COLORS[model] || COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value: any) => `$${value.toFixed(4)}`} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Table */}
+            <div>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Model</th>
+                      <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Calls</th>
+                      <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Tokens</th>
+                      <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Cost</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {Object.entries(modelBreakdown)
+                      .sort((a, b) => b[1].cost - a[1].cost)
+                      .map(([model, stats], index) => (
+                        <tr key={index}>
+                          <td className="px-4 py-2 text-sm font-medium text-gray-900">
+                            <span
+                              className="inline-block w-3 h-3 rounded-full mr-2"
+                              style={{ backgroundColor: MODEL_COLORS[model] || COLORS[index % COLORS.length] }}
+                            />
+                            {model}
+                          </td>
+                          <td className="px-4 py-2 text-sm text-gray-600 text-right">
+                            {stats.calls.toLocaleString()}
+                          </td>
+                          <td className="px-4 py-2 text-sm text-gray-600 text-right">
+                            {stats.tokens.toLocaleString()}
+                          </td>
+                          <td className="px-4 py-2 text-sm text-gray-900 text-right font-medium">
+                            ${stats.cost.toFixed(4)}
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cost by API Endpoint */}
+      {!loading && Object.keys(endpointBreakdown).length > 0 && (
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Cost by API Endpoint</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {Object.entries(endpointBreakdown)
+              .sort((a, b) => b[1].cost - a[1].cost)
+              .map(([endpoint, stats]) => (
+                <div
+                  key={endpoint}
+                  className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-4 border border-gray-200"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-2xl">{ENDPOINT_ICONS[endpoint] || '📦'}</span>
+                    <span className="text-lg font-bold text-gray-900">${stats.cost.toFixed(4)}</span>
+                  </div>
+                  <div className="text-sm font-medium text-gray-700">
+                    {ENDPOINT_LABELS[endpoint] || endpoint}
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {stats.calls.toLocaleString()} calls · {stats.tokens.toLocaleString()} tokens
+                  </div>
+                </div>
+              ))}
           </div>
         </div>
       )}

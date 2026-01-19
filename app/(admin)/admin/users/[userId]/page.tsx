@@ -61,6 +61,7 @@ interface SubscriptionDetails {
   };
   usage: {
     messagesThisMonth: number;
+    messagesToday: number;
     photosThisMonth: number;
     voiceMinutesThisMonth: number;
   };
@@ -550,9 +551,9 @@ export default function AdminUserDetailPage() {
             <h3 className="text-lg font-semibold text-gray-900 mb-3">Current Usage</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-blue-50 rounded-lg p-4">
-                <p className="text-sm text-blue-600 font-medium">Messages</p>
+                <p className="text-sm text-blue-600 font-medium">Messages Today</p>
                 <p className="text-2xl font-bold text-blue-900">
-                  {subscriptionDetails.usage.messagesThisMonth} / {formatQuotaValue(subscriptionDetails.effectiveLimits.messagesPerDay)}
+                  {subscriptionDetails.usage.messagesToday} / {formatQuotaValue(subscriptionDetails.effectiveLimits.messagesPerDay)}
                 </p>
                 <p className="text-xs text-blue-500 mt-1">
                   Tier default: {formatQuotaValue(subscriptionDetails.tierDefaults.messagesPerDay)}

@@ -56,8 +56,10 @@ export async function GET(
       subscription: subscription || { tier: 'free', status: 'active' },
       usage: usage || {
         messagesThisMonth: 0,
+        messagesToday: 0,
         photosThisMonth: 0,
         voiceMinutesThisMonth: 0,
+        dailyResetAt: null,
       },
       tierDefaults: tierQuotas,
       effectiveLimits,
@@ -185,10 +187,12 @@ export async function PATCH(
     if (resetUsage === true) {
       updates.usage = {
         messagesThisMonth: 0,
+        messagesToday: 0,
         photosThisMonth: 0,
         voiceMinutesThisMonth: 0,
         lastMessageAt: null,
         monthlyResetAt: now,
+        dailyResetAt: now,
       };
     }
 
