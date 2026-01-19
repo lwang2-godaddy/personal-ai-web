@@ -15,6 +15,7 @@ interface User {
   subscription?: 'free' | 'premium' | 'pro';
   createdAt: string;
   lastLoginAt?: string;
+  currentMonthCost?: number;
 }
 
 interface UsersResponse {
@@ -116,6 +117,20 @@ export default function AdminUsersPage() {
     }
   };
 
+  const getCostColor = (cost: number) => {
+    if (cost > 50) return 'text-red-600 font-semibold';
+    if (cost > 10) return 'text-orange-600 font-medium';
+    if (cost > 1) return 'text-yellow-600';
+    return 'text-green-600';
+  };
+
+  const formatCost = (cost?: number) => {
+    if (cost === undefined || cost === null || cost === 0) {
+      return '$0.00';
+    }
+    return `$${cost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -203,6 +218,9 @@ export default function AdminUsersPage() {
                       Subscription
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Cost (This Month)
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Created
                     </th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -241,6 +259,9 @@ export default function AdminUsersPage() {
                         >
                           {user.subscription || 'free'}
                         </span>
+                      </td>
+                      <td className={`px-6 py-4 text-sm ${getCostColor(user.currentMonthCost || 0)}`}>
+                        {formatCost(user.currentMonthCost)}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-500">
                         {new Date(user.createdAt).toLocaleDateString()}

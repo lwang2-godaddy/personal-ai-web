@@ -63,8 +63,27 @@ export async function GET(request: NextRequest) {
       const startIndex = (page - 1) * limit;
       const paginatedUsers = filteredUsers.slice(startIndex, startIndex + limit);
 
+      // Fetch current month cost data for paginated users
+      const currentMonth = new Date().toISOString().slice(0, 7); // "YYYY-MM"
+      const userIds = paginatedUsers.map((u: any) => u.id);
+
+      const usagePromises = userIds.map(async (userId: string) => {
+        const docId = `${userId}_${currentMonth}`;
+        const doc = await db.collection('usageMonthly').doc(docId).get();
+        return { userId, cost: doc.exists ? doc.data()?.totalCostUSD || 0 : 0 };
+      });
+
+      const usageResults = await Promise.all(usagePromises);
+      const costMap = new Map(usageResults.map((r) => [r.userId, r.cost]));
+
+      // Merge cost data into users
+      const usersWithCost = paginatedUsers.map((user: any) => ({
+        ...user,
+        currentMonthCost: costMap.get(user.id) || 0,
+      }));
+
       return NextResponse.json({
-        users: paginatedUsers,
+        users: usersWithCost,
         total,
         page,
         limit,
@@ -97,8 +116,27 @@ export async function GET(request: NextRequest) {
       };
     });
 
+    // Fetch current month cost data for all users
+    const currentMonth = new Date().toISOString().slice(0, 7); // "YYYY-MM"
+    const userIds = users.map((u: any) => u.id);
+
+    const usagePromises = userIds.map(async (userId: string) => {
+      const docId = `${userId}_${currentMonth}`;
+      const doc = await db.collection('usageMonthly').doc(docId).get();
+      return { userId, cost: doc.exists ? doc.data()?.totalCostUSD || 0 : 0 };
+    });
+
+    const usageResults = await Promise.all(usagePromises);
+    const costMap = new Map(usageResults.map((r) => [r.userId, r.cost]));
+
+    // Merge cost data into users
+    const usersWithCost = users.map((user: any) => ({
+      ...user,
+      currentMonthCost: costMap.get(user.id) || 0,
+    }));
+
     return NextResponse.json({
-      users,
+      users: usersWithCost,
       total,
       page,
       limit,
