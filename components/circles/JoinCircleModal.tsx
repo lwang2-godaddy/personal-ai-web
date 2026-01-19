@@ -8,6 +8,8 @@ import {
   isPredefinedCircle,
   getPrivacyTierInfo,
 } from '@/lib/models/Circle';
+import { FriendPrivacySettings } from '@/lib/models/Friend';
+import { computeEffectiveSharing, hasRestrictedSharing } from '@/lib/utils/privacyUtils';
 
 interface JoinCircleModalProps {
   visible: boolean;
@@ -15,6 +17,8 @@ interface JoinCircleModalProps {
   circle: CirclePreview | null;
   inviterName: string;
   isLoading?: boolean;
+  /** Per-friend privacy settings for the inviter (to show effective sharing preview) */
+  inviterPrivacySettings?: FriendPrivacySettings;
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -81,6 +85,7 @@ export const JoinCircleModal: React.FC<JoinCircleModalProps> = ({
   circle,
   inviterName,
   isLoading = false,
+  inviterPrivacySettings,
   onConfirm,
   onCancel,
 }) => {
@@ -94,6 +99,14 @@ export const JoinCircleModal: React.FC<JoinCircleModalProps> = ({
   const tierInfo = circle?.privacyTier
     ? getPrivacyTierInfo(circle.privacyTier as 'acquaintances' | 'friends' | 'close_friends' | 'inner_circle')
     : null;
+
+  // Compute effective sharing if we have per-friend settings for the inviter
+  const effectiveSharing = circle?.dataSharing && inviterPrivacySettings
+    ? computeEffectiveSharing(circle.dataSharing, inviterPrivacySettings)
+    : null;
+  const hasRestrictions = circle?.dataSharing && inviterPrivacySettings
+    ? hasRestrictedSharing(circle.dataSharing, inviterPrivacySettings)
+    : false;
 
   // Handle keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -164,26 +177,41 @@ export const JoinCircleModal: React.FC<JoinCircleModalProps> = ({
             ) : (
               <div className="space-y-3">
                 {DATA_SHARING_ITEMS.map((item) => {
-                  const isEnabled = circle?.dataSharing?.[item.key] ?? false;
+                  const circleWantsThis = circle?.dataSharing?.[item.key] ?? false;
+                  // If we have effective sharing data, use it; otherwise fall back to circle settings
+                  const isEffectivelyEnabled = effectiveSharing
+                    ? effectiveSharing[item.key]
+                    : circleWantsThis;
+                  // Check if this is limited by per-friend settings
+                  const isLimitedByFriend = circleWantsThis && !isEffectivelyEnabled;
+
                   return (
                     <div key={item.key} className="flex items-center gap-3">
                       <span
                         className={`font-bold ${
-                          isEnabled ? 'text-green-600' : 'text-gray-400'
+                          isEffectivelyEnabled
+                            ? 'text-green-600'
+                            : isLimitedByFriend
+                              ? 'text-amber-500'
+                              : 'text-gray-400'
                         }`}
                       >
-                        {isEnabled ? '✓' : '✗'}
+                        {isEffectivelyEnabled ? '✓' : '✗'}
                       </span>
                       <span className="text-xl">{item.icon}</span>
                       <div className="flex-1">
                         <span
                           className={`font-medium ${
-                            isEnabled ? 'text-gray-900' : 'text-gray-400'
+                            isEffectivelyEnabled ? 'text-gray-900' : 'text-gray-400'
                           }`}
                         >
                           {item.label}
                         </span>
-                        <p className="text-xs text-gray-500">{item.description}</p>
+                        <p className="text-xs text-gray-500">
+                          {isLimitedByFriend
+                            ? `Limited by your settings for ${inviterName}`
+                            : item.description}
+                        </p>
                       </div>
                     </div>
                   );
@@ -195,6 +223,16 @@ export const JoinCircleModal: React.FC<JoinCircleModalProps> = ({
             <p className="text-center text-sm text-gray-500 mt-6">
               {memberCount} member{memberCount !== 1 ? 's' : ''} in this circle
             </p>
+
+            {/* Per-friend restriction note */}
+            {hasRestrictions && (
+              <div className="mt-4 p-3 bg-amber-50 border-l-4 border-amber-500 rounded-r-lg">
+                <p className="text-sm text-gray-700">
+                  💡 Some items are limited by your settings for {inviterName}.
+                  You can change these in Friends anytime.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Optional invite message */}

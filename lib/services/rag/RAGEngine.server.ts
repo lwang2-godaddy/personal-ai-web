@@ -2,6 +2,8 @@ import OpenAIService from '@/lib/api/openai/client';
 import PineconeService from '@/lib/api/pinecone/client';
 import FirestoreService from '@/lib/api/firebase/firestore';
 import { ChatMessage, PineconeQueryResult, ContextReference, Circle, CircleDataSharing } from '@/lib/models';
+import { FriendPrivacySettings } from '@/lib/models/Friend';
+import { computeEffectiveSharing } from '@/lib/utils/privacyUtils';
 
 // Constants (adapted from mobile APP_CONSTANTS)
 const RAG_TOP_K_RESULTS = 10;
@@ -696,7 +698,15 @@ export class RAGEngine {
         throw new Error('Not authorized to access this circle');
       }
 
-      // 2. Generate query embedding
+      // 2. Fetch per-friend settings for all circle members (excluding self)
+      const memberIdsExcludingSelf = circle.memberIds.filter((id: string) => id !== currentUserId);
+      const perFriendSettings = await this.firestoreService.getPrivacySettingsForFriends(
+        currentUserId,
+        memberIdsExcludingSelf
+      );
+      console.log(`[RAGEngine] Fetched per-friend settings for ${perFriendSettings.size} friends`);
+
+      // 3. Generate query embedding
       console.log('[RAGEngine] Generating embedding for circle query...');
       const queryEmbedding = await this.openAIService.generateEmbedding(
         userMessage,
@@ -704,10 +714,10 @@ export class RAGEngine {
         'rag_circle_query_embedding'
       );
 
-      // 3. Build data type filter based on circle sharing rules
+      // 4. Build data type filter based on circle sharing rules
       const dataTypeFilter = this.buildCircleDataFilter(circle.dataSharing);
 
-      // 4. Query Pinecone with multi-user filter + data type filter
+      // 5. Query Pinecone with multi-user filter + data type filter
       console.log(`[RAGEngine] Querying Pinecone for ${circle.memberIds.length} circle members...`);
       const relevantVectors = await this.pineconeService.queryMultiUserVectors(
         queryEmbedding,
@@ -719,16 +729,25 @@ export class RAGEngine {
 
       console.log(`[RAGEngine] Found ${relevantVectors.length} relevant data points across circle members`);
 
-      // 5. Build context with member attribution
-      const context = await this.buildCircleContext(relevantVectors, circle, currentUserId);
+      // 6. Filter results by effective sharing (circle AND per-friend settings intersection)
+      const filteredVectors = this.filterByEffectiveSharing(
+        relevantVectors,
+        currentUserId,
+        circle.dataSharing,
+        perFriendSettings
+      );
+      console.log(`[RAGEngine] After per-friend filtering: ${filteredVectors.length} results remain`);
 
-      // 6. System prompt for circle context
+      // 7. Build context with member attribution
+      const context = await this.buildCircleContext(filteredVectors, circle, currentUserId);
+
+      // 8. System prompt for circle context
       const systemPrompt = `You are analyzing data for a friend circle called "${circle.name}" with ${circle.memberIds.length} members.
 When referencing data, mention which member it's from by name.
 Be conversational and friendly - this is a private circle of close friends.
 Respect the data sharing settings - only data types enabled for this circle are included.`;
 
-      // 7. Generate response
+      // 9. Generate response
       console.log('[RAGEngine] Generating GPT-4 response with circle context...');
       const response = await this.openAIService.chatCompletionWithSystemPrompt(
         [{ role: 'user', content: userMessage, timestamp: new Date().toISOString() }],
@@ -740,8 +759,8 @@ Respect the data sharing settings - only data types enabled for this circle are 
         }
       );
 
-      // 8. Return response with attributed context
-      const contextUsed: ContextReference[] = relevantVectors.map((vector) => ({
+      // 10. Return response with attributed context
+      const contextUsed: ContextReference[] = filteredVectors.map((vector) => ({
         id: vector.id,
         type: vector.metadata.type as any,
         snippet: vector.metadata.text,
@@ -790,6 +809,65 @@ Respect the data sharing settings - only data types enabled for this circle are 
 
     // Return filter for allowed types
     return { type: { $in: allowedTypes } };
+  }
+
+  /**
+   * Filter vectors by effective sharing (circle AND per-friend settings intersection)
+   *
+   * This implements the key privacy rule: per-friend settings define the MAXIMUM
+   * you're willing to share with that friend. Circle settings can only request
+   * UP TO that limit.
+   *
+   * @param vectors - Vectors returned from Pinecone query
+   * @param currentUserId - The user making the query
+   * @param circleSharing - The circle's data sharing configuration
+   * @param perFriendSettings - Map of friendId -> FriendPrivacySettings
+   * @returns Filtered vectors respecting both circle and per-friend settings
+   */
+  private filterByEffectiveSharing(
+    vectors: PineconeQueryResult[],
+    currentUserId: string,
+    circleSharing: CircleDataSharing,
+    perFriendSettings: Map<string, FriendPrivacySettings>
+  ): PineconeQueryResult[] {
+    return vectors.filter(vector => {
+      const ownerId = vector.metadata.userId;
+
+      // Current user always sees their own data
+      if (ownerId === currentUserId) {
+        return true;
+      }
+
+      // Get per-friend settings (default to all-false if no friendship exists)
+      const friendSettings = perFriendSettings.get(ownerId) ?? {
+        shareHealth: false,
+        shareLocation: false,
+        shareActivities: false,
+        shareVoiceNotes: false,
+        sharePhotos: false,
+      };
+
+      // Compute effective sharing (intersection of circle and per-friend settings)
+      const effective = computeEffectiveSharing(circleSharing, friendSettings);
+
+      // Apply filter based on data type
+      const dataType = vector.metadata.type;
+      switch (dataType) {
+        case 'health':
+          return effective.shareHealth;
+        case 'location':
+          return effective.shareLocation;
+        case 'voice':
+          return effective.shareVoiceNotes;
+        case 'photo':
+          return effective.sharePhotos;
+        case 'shared_activity':
+          return effective.shareActivities;
+        default:
+          // Unknown data type - deny access by default for security
+          return false;
+      }
+    });
   }
 
   /**

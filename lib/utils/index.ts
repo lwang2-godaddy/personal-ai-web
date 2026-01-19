@@ -6,3 +6,4 @@
 export * from './validation';
 export * from './geography';
 export * from './version';
+export * from './privacyUtils';

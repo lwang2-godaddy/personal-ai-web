@@ -392,6 +392,52 @@ export class FirestoreService {
   async getCircle(circleId: string): Promise<any> {
     return this.getDocument('circles', circleId);
   }
+
+  /**
+   * Get privacy settings for multiple friends (batch fetch)
+   *
+   * Used by RAGEngine to efficiently fetch per-friend settings when
+   * processing circle queries. This allows computing effective sharing
+   * (intersection of circle settings and per-friend settings).
+   *
+   * @param userId - Current user's ID
+   * @param friendIds - Array of friend user IDs to fetch settings for
+   * @returns Map of friendId -> FriendPrivacySettings
+   */
+  async getPrivacySettingsForFriends(
+    userId: string,
+    friendIds: string[]
+  ): Promise<Map<string, { shareHealth: boolean; shareLocation: boolean; shareActivities: boolean; shareVoiceNotes: boolean; sharePhotos: boolean }>> {
+    console.log('[Firestore] Fetching privacy settings for', friendIds.length, 'friends');
+    const result = new Map<string, { shareHealth: boolean; shareLocation: boolean; shareActivities: boolean; shareVoiceNotes: boolean; sharePhotos: boolean }>();
+
+    if (friendIds.length === 0) {
+      return result;
+    }
+
+    // Fetch friendship documents in parallel
+    const friendshipPromises = friendIds.map(friendId =>
+      this.getDocuments('friends', [
+        where('userId', '==', userId),
+        where('friendUid', '==', friendId),
+        firestoreLimit(1),
+      ])
+    );
+
+    const friendshipResults = await Promise.all(friendshipPromises);
+
+    friendshipResults.forEach((docs, index) => {
+      if (docs.length > 0) {
+        const data = docs[0] as any;
+        if (data.privacySettings) {
+          result.set(friendIds[index], data.privacySettings);
+        }
+      }
+    });
+
+    console.log('[Firestore] Retrieved privacy settings for', result.size, 'friends');
+    return result;
+  }
 }
 
 // Export singleton instance
