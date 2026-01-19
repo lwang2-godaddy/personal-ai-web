@@ -339,36 +339,50 @@ export default function AdminPromptsPage() {
                           → View cost breakdown for this service
                         </Link>
 
-                        {/* Status Badge */}
-                        <div className="flex items-center justify-between mb-3">
-                          <span
-                            className={`px-2 py-1 text-xs font-medium rounded-full ${
-                              service.status === 'published'
-                                ? 'bg-green-100 text-green-800'
-                                : service.status === 'draft'
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : service.status === 'archived'
-                                ? 'bg-gray-100 text-gray-800'
-                                : 'bg-blue-100 text-blue-800'
-                            }`}
-                          >
-                            {service.isMigrated ? (
-                              <>
-                                {service.status === 'published' && '✅ '}
-                                {service.status === 'draft' && '📝 '}
-                                {service.status === 'archived' && '📦 '}
-                                {service.status}
-                              </>
-                            ) : (
-                              'YAML Only'
-                            )}
-                          </span>
-                          {service.config && (
-                            <span className={`text-xs ${service.enabled ? 'text-green-600' : 'text-orange-600'}`}>
-                              {service.enabled ? 'Firestore' : 'YAML Fallback'}
+                        {/* Status and Source Badges */}
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            {/* Data Source Badge */}
+                            <span
+                              className={`px-2 py-1 text-xs font-medium rounded-full ${
+                                service.isMigrated
+                                  ? service.enabled
+                                    ? 'bg-green-100 text-green-800'
+                                    : 'bg-orange-100 text-orange-800'
+                                  : 'bg-gray-100 text-gray-600'
+                              }`}
+                            >
+                              {service.isMigrated
+                                ? service.enabled
+                                  ? '🔥 Firestore'
+                                  : '📄 YAML Fallback'
+                                : '📄 YAML Only'}
                             </span>
-                          )}
+                            {/* Status Badge */}
+                            {service.isMigrated && (
+                              <span
+                                className={`px-2 py-1 text-xs font-medium rounded-full ${
+                                  service.status === 'published'
+                                    ? 'bg-blue-100 text-blue-800'
+                                    : service.status === 'draft'
+                                    ? 'bg-yellow-100 text-yellow-800'
+                                    : 'bg-gray-100 text-gray-600'
+                                }`}
+                              >
+                                {service.status}
+                              </span>
+                            )}
+                          </div>
                         </div>
+
+                        {/* Version and Last Updated */}
+                        {service.config && (
+                          <div className="text-xs text-gray-500 mb-3">
+                            <span>v{service.config.version}</span>
+                            <span className="mx-1">•</span>
+                            <span>Updated {new Date(service.config.lastUpdated).toLocaleDateString()}</span>
+                          </div>
+                        )}
 
                         {/* Action Button */}
                         <Link

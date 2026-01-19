@@ -14,7 +14,13 @@ import {
   GetExecutionsResponse,
   PROMPT_SERVICES,
   SUPPORTED_LANGUAGES,
+  PromptVariable,
 } from '@/lib/models/Prompt';
+import {
+  PROMPT_TEMPLATES,
+  TEMPLATE_CATEGORIES,
+  PromptTemplate,
+} from '@/lib/data/promptTemplates';
 
 interface ServiceResponse {
   config: FirestorePromptConfig | null;
@@ -43,6 +49,19 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
   const [executions, setExecutions] = useState<PromptExecution[]>([]);
   const [executionStats, setExecutionStats] = useState<PromptExecutionStats | null>(null);
   const [executionsLoading, setExecutionsLoading] = useState(false);
+
+  // New prompt modal state
+  const [showNewPromptModal, setShowNewPromptModal] = useState(false);
+  const [newPromptId, setNewPromptId] = useState('');
+  const [newPromptType, setNewPromptType] = useState<'system' | 'user' | 'function'>('system');
+  const [newPromptContent, setNewPromptContent] = useState('');
+  const [newPromptDescription, setNewPromptDescription] = useState('');
+  const [newPromptModel, setNewPromptModel] = useState('gpt-4o-mini');
+  const [newPromptTemperature, setNewPromptTemperature] = useState(0.7);
+  const [newPromptMaxTokens, setNewPromptMaxTokens] = useState(1000);
+  const [newPromptVariables, setNewPromptVariables] = useState<PromptVariable[]>([]);
+  const [showTemplatePicker, setShowTemplatePicker] = useState(false);
+  const [templateCategory, setTemplateCategory] = useState('chat');
 
   const serviceInfo = PROMPT_SERVICES.find(s => s.id === service);
 
@@ -184,6 +203,156 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
 
   const selectedPrompt = selectedPromptId && config ? config.prompts[selectedPromptId] : null;
 
+  // Reset new prompt form
+  const resetNewPromptForm = () => {
+    setNewPromptId('');
+    setNewPromptType('system');
+    setNewPromptContent('');
+    setNewPromptDescription('');
+    setNewPromptModel('gpt-4o-mini');
+    setNewPromptTemperature(0.7);
+    setNewPromptMaxTokens(1000);
+    setNewPromptVariables([]);
+    setShowTemplatePicker(false);
+  };
+
+  // Handle creating a new prompt
+  const handleCreateNewPrompt = async () => {
+    if (!newPromptId.trim()) {
+      setError('Prompt ID is required');
+      return;
+    }
+    if (config?.prompts[newPromptId]) {
+      setError('Prompt ID already exists');
+      return;
+    }
+    if (!newPromptContent.trim()) {
+      setError('Prompt content is required');
+      return;
+    }
+
+    try {
+      setSaving(true);
+      setError(null);
+
+      const newPrompt: PromptDefinition = {
+        id: newPromptId,
+        service: service,
+        type: newPromptType,
+        content: newPromptContent,
+        description: newPromptDescription || undefined,
+        variables: newPromptVariables.length > 0 ? newPromptVariables : undefined,
+        metadata: {
+          model: newPromptModel,
+          temperature: newPromptTemperature,
+          maxTokens: newPromptMaxTokens,
+        },
+      };
+
+      await apiPatch(`/api/admin/prompts/${service}`, {
+        language: selectedLanguage,
+        promptId: newPromptId,
+        updates: newPrompt,
+        notes: `Created new prompt: ${newPromptId}`,
+      });
+
+      setSuccess(`Prompt "${newPromptId}" created successfully!`);
+      setShowNewPromptModal(false);
+      resetNewPromptForm();
+      fetchConfig();
+      setSelectedPromptId(newPromptId);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to create prompt';
+      setError(message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Handle deleting a prompt
+  const handleDeletePrompt = async (promptId: string) => {
+    if (!confirm(`Delete prompt "${promptId}"? This cannot be undone.`)) return;
+    if (!config) return;
+
+    try {
+      setSaving(true);
+      setError(null);
+
+      // Create updated prompts without the deleted one
+      const updatedPrompts = { ...config.prompts };
+      delete updatedPrompts[promptId];
+
+      // Update the entire config
+      await apiPatch(`/api/admin/prompts/${service}`, {
+        language: selectedLanguage,
+        prompts: updatedPrompts,
+        notes: `Deleted prompt: ${promptId}`,
+      });
+
+      setSuccess(`Prompt "${promptId}" deleted successfully!`);
+
+      // Clear selection if deleted prompt was selected
+      if (selectedPromptId === promptId) {
+        setSelectedPromptId(null);
+        setEditedContent('');
+      }
+
+      fetchConfig();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to delete prompt';
+      setError(message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Handle duplicating a prompt
+  const handleDuplicatePrompt = (promptId: string) => {
+    const sourcePrompt = config?.prompts[promptId];
+    if (!sourcePrompt) return;
+
+    setNewPromptId(`${promptId}_copy`);
+    setNewPromptType(sourcePrompt.type);
+    setNewPromptContent(sourcePrompt.content);
+    setNewPromptDescription(`${sourcePrompt.description || ''} (Copy)`);
+    setNewPromptModel(sourcePrompt.metadata?.model || 'gpt-4o-mini');
+    setNewPromptTemperature(sourcePrompt.metadata?.temperature ?? 0.7);
+    setNewPromptMaxTokens(sourcePrompt.metadata?.maxTokens ?? 1000);
+    setNewPromptVariables(sourcePrompt.variables || []);
+    setShowNewPromptModal(true);
+  };
+
+  // Apply template to new prompt form
+  const handleApplyTemplate = (template: PromptTemplate) => {
+    setNewPromptContent(template.data.systemPrompt + '\n\n' + template.data.userPromptTemplate);
+    setNewPromptModel(template.data.model);
+    setNewPromptTemperature(template.data.temperature);
+    setNewPromptMaxTokens(template.data.maxTokens);
+    setNewPromptVariables(template.data.variables);
+    setNewPromptDescription(template.description);
+    setShowTemplatePicker(false);
+  };
+
+  // Add a new variable
+  const addVariable = () => {
+    setNewPromptVariables([
+      ...newPromptVariables,
+      { name: '', type: 'string', description: '', required: true },
+    ]);
+  };
+
+  // Remove a variable
+  const removeVariable = (index: number) => {
+    setNewPromptVariables(newPromptVariables.filter((_, i) => i !== index));
+  };
+
+  // Update a variable
+  const updateVariable = (index: number, field: keyof PromptVariable, value: unknown) => {
+    const updated = [...newPromptVariables];
+    updated[index] = { ...updated[index], [field]: value };
+    setNewPromptVariables(updated);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -262,26 +431,68 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
           {/* Prompt List Sidebar */}
           <div className="col-span-3">
             <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-              <div className="p-4 border-b border-gray-200">
-                <h3 className="font-semibold text-gray-900">Prompts</h3>
-                <p className="text-xs text-gray-500 mt-1">
-                  {Object.keys(config.prompts).length} prompt(s)
-                </p>
+              <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold text-gray-900">Prompts</h3>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {Object.keys(config.prompts).length} prompt(s)
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    resetNewPromptForm();
+                    setShowNewPromptModal(true);
+                  }}
+                  className="px-3 py-1.5 text-xs font-medium bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                >
+                  + Add
+                </button>
               </div>
               <div className="divide-y divide-gray-100">
                 {Object.entries(config.prompts).map(([promptId, prompt]) => (
-                  <button
+                  <div
                     key={promptId}
-                    onClick={() => handlePromptSelect(promptId)}
-                    className={`w-full text-left p-3 hover:bg-gray-50 transition-colors ${
+                    className={`group relative hover:bg-gray-50 transition-colors ${
                       selectedPromptId === promptId ? 'bg-red-50 border-l-4 border-red-500' : ''
                     }`}
                   >
-                    <div className="font-medium text-sm text-gray-900">{promptId}</div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      {prompt.type} • {prompt.metadata?.model || 'default'}
+                    <button
+                      onClick={() => handlePromptSelect(promptId)}
+                      className="w-full text-left p-3 pr-20"
+                    >
+                      <div className="font-medium text-sm text-gray-900">{promptId}</div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        {prompt.type} • {prompt.metadata?.model || 'default'}
+                      </div>
+                    </button>
+                    {/* Action buttons */}
+                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDuplicatePrompt(promptId);
+                        }}
+                        className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded"
+                        title="Duplicate"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeletePrompt(promptId);
+                        }}
+                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded"
+                        title="Delete"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
                     </div>
-                  </button>
+                  </div>
                 ))}
               </div>
             </div>
@@ -558,6 +769,267 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
                 )}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* New Prompt Modal */}
+      {showNewPromptModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-gray-900">
+                Create New Prompt
+              </h2>
+              <button
+                onClick={() => setShowTemplatePicker(!showTemplatePicker)}
+                className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                  showTemplatePicker
+                    ? 'bg-purple-100 text-purple-700 border border-purple-300'
+                    : 'bg-purple-600 text-white hover:bg-purple-700'
+                }`}
+              >
+                {showTemplatePicker ? 'Hide Templates' : 'Use Template'}
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="px-6 py-4 space-y-6">
+              {/* Template Picker */}
+              {showTemplatePicker && (
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                  <h3 className="text-sm font-medium text-purple-900 mb-3">
+                    Choose a Template
+                  </h3>
+                  {/* Category tabs */}
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {TEMPLATE_CATEGORIES.map((cat) => (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => setTemplateCategory(cat.id)}
+                        className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
+                          templateCategory === cat.id
+                            ? 'bg-purple-600 text-white'
+                            : 'bg-white text-gray-700 border border-gray-200 hover:border-purple-300'
+                        }`}
+                      >
+                        {cat.icon} {cat.name}
+                      </button>
+                    ))}
+                  </div>
+                  {/* Template grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto">
+                    {PROMPT_TEMPLATES.filter(t => t.category === templateCategory).map((template) => (
+                      <button
+                        key={template.id}
+                        type="button"
+                        onClick={() => handleApplyTemplate(template)}
+                        className="text-left p-3 bg-white rounded-lg border border-gray-200 hover:border-purple-400 hover:shadow-sm transition-all"
+                      >
+                        <div className="font-medium text-sm text-gray-900">
+                          {template.name}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {template.description}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Prompt ID */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Prompt ID <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={newPromptId}
+                  onChange={(e) => setNewPromptId(e.target.value.toLowerCase().replace(/\s+/g, '_'))}
+                  placeholder="e.g., my_new_prompt"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500 font-mono text-sm"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Unique identifier for this prompt (lowercase, underscores)
+                </p>
+              </div>
+
+              {/* Type and Model Row */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                  <select
+                    value={newPromptType}
+                    onChange={(e) => setNewPromptType(e.target.value as 'system' | 'user' | 'function')}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
+                  >
+                    <option value="system">System</option>
+                    <option value="user">User</option>
+                    <option value="function">Function</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Model</label>
+                  <select
+                    value={newPromptModel}
+                    onChange={(e) => setNewPromptModel(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
+                  >
+                    <option value="gpt-4o-mini">gpt-4o-mini</option>
+                    <option value="gpt-4o">gpt-4o</option>
+                    <option value="gpt-4-turbo">gpt-4-turbo</option>
+                    <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Temperature and Max Tokens Row */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Temperature ({newPromptTemperature})
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="2"
+                    step="0.1"
+                    value={newPromptTemperature}
+                    onChange={(e) => setNewPromptTemperature(parseFloat(e.target.value))}
+                    className="w-full"
+                  />
+                  <div className="flex justify-between text-xs text-gray-500">
+                    <span>Precise (0)</span>
+                    <span>Creative (2)</span>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Max Tokens</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="16000"
+                    value={newPromptMaxTokens}
+                    onChange={(e) => setNewPromptMaxTokens(parseInt(e.target.value) || 1000)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
+                  />
+                </div>
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <input
+                  type="text"
+                  value={newPromptDescription}
+                  onChange={(e) => setNewPromptDescription(e.target.value)}
+                  placeholder="Brief description of this prompt"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
+                />
+              </div>
+
+              {/* Content */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Prompt Content <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={newPromptContent}
+                  onChange={(e) => setNewPromptContent(e.target.value)}
+                  placeholder="Enter your prompt content here... Use {{variableName}} for Handlebars variables."
+                  rows={10}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500 font-mono text-sm"
+                />
+              </div>
+
+              {/* Variables */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Variables (Handlebars)
+                </label>
+                <div className="space-y-2">
+                  {newPromptVariables.map((v, i) => (
+                    <div key={i} className="flex gap-2 items-center p-2 bg-gray-50 rounded-md">
+                      <input
+                        placeholder="name"
+                        value={v.name}
+                        onChange={(e) => updateVariable(i, 'name', e.target.value)}
+                        className="w-28 px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-red-500 focus:border-red-500 font-mono"
+                      />
+                      <select
+                        value={v.type}
+                        onChange={(e) => updateVariable(i, 'type', e.target.value)}
+                        className="w-24 px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-red-500 focus:border-red-500"
+                      >
+                        <option value="string">string</option>
+                        <option value="number">number</option>
+                        <option value="boolean">boolean</option>
+                        <option value="array">array</option>
+                        <option value="object">object</option>
+                      </select>
+                      <input
+                        placeholder="description"
+                        value={v.description}
+                        onChange={(e) => updateVariable(i, 'description', e.target.value)}
+                        className="flex-1 px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-red-500 focus:border-red-500"
+                      />
+                      <label className="flex items-center gap-1 text-sm whitespace-nowrap">
+                        <input
+                          type="checkbox"
+                          checked={v.required}
+                          onChange={(e) => updateVariable(i, 'required', e.target.checked)}
+                          className="w-4 h-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                        />
+                        Req
+                      </label>
+                      <button
+                        onClick={() => removeVariable(i)}
+                        className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    onClick={addVariable}
+                    className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                  >
+                    + Add Variable
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowNewPromptModal(false);
+                  resetNewPromptForm();
+                }}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleCreateNewPrompt}
+                disabled={saving || !newPromptId.trim() || !newPromptContent.trim()}
+                className={`px-4 py-2 text-sm font-medium text-white rounded-md ${
+                  saving || !newPromptId.trim() || !newPromptContent.trim()
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-red-600 hover:bg-red-700'
+                }`}
+              >
+                {saving ? 'Creating...' : 'Create Prompt'}
+              </button>
+            </div>
           </div>
         </div>
       )}
