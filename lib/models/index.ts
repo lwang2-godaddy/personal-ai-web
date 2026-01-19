@@ -10,3 +10,4 @@ export * from './Event';
 export * from './Circle';
 export * from './ServiceOperations';
 export * from './ExploreQuestion';
+export * from './BehaviorEvent';
