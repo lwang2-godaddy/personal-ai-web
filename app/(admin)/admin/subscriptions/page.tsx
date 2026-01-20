@@ -332,6 +332,44 @@ export default function AdminSubscriptionsPage() {
           </div>
         </div>
       )}
+
+      {/* Cache Propagation Info */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+        <div className="flex items-start gap-3">
+          <div className="text-blue-500 text-xl">&#8505;</div>
+          <div>
+            <h3 className="text-lg font-semibold text-blue-900 mb-2">
+              How Changes Propagate to Users
+            </h3>
+            <p className="text-blue-800 text-sm mb-3">
+              Changes made here are cached on user devices for performance. Here&apos;s when users will see updated quotas:
+            </p>
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center gap-2">
+                <span className="inline-block w-2 h-2 bg-blue-500 rounded-full"></span>
+                <span className="text-blue-900">
+                  <strong>Mobile App:</strong> Up to 24 hours (or on app restart if cache expired)
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="inline-block w-2 h-2 bg-blue-500 rounded-full"></span>
+                <span className="text-blue-900">
+                  <strong>Web Dashboard (Browser):</strong> Up to 24 hours
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="inline-block w-2 h-2 bg-blue-500 rounded-full"></span>
+                <span className="text-blue-900">
+                  <strong>Web API (Server):</strong> Up to 5 minutes
+                </span>
+              </div>
+            </div>
+            <p className="text-blue-700 text-xs mt-3">
+              Users can also force refresh by logging out and back in, which clears the local cache.
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -431,6 +469,32 @@ function TierCard({
 
         <hr className="my-3" />
 
+        {/* API Cost Limits */}
+        <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide">API Cost Limits</div>
+        <QuotaRow
+          label="Max Tokens/Day"
+          value={displayQuotas.maxTokensPerDay ?? 10000}
+          isEditing={isEditing}
+          onChange={(v) => onUpdateQuota('maxTokensPerDay', v)}
+          step={1000}
+          formatDisplay={(v) => v === -1 ? 'Unlimited' : `${(v / 1000).toFixed(0)}K`}
+        />
+        <QuotaRow
+          label="Max API Calls/Day"
+          value={displayQuotas.maxApiCallsPerDay ?? 100}
+          isEditing={isEditing}
+          onChange={(v) => onUpdateQuota('maxApiCallsPerDay', v)}
+          step={100}
+        />
+        <CostRow
+          label="Max Cost/Month"
+          value={displayQuotas.maxCostPerMonth ?? 5.0}
+          isEditing={isEditing}
+          onChange={(v) => onUpdateQuota('maxCostPerMonth', v)}
+        />
+
+        <hr className="my-3" />
+
         <FeatureRow
           label="Insights"
           enabled={displayQuotas.insightsEnabled}
@@ -480,10 +544,13 @@ interface QuotaRowProps {
   value: number;
   isEditing: boolean;
   onChange: (value: number) => void;
+  step?: number;
+  formatDisplay?: (value: number) => string;
 }
 
-function QuotaRow({ label, value, isEditing, onChange }: QuotaRowProps) {
+function QuotaRow({ label, value, isEditing, onChange, step = 1, formatDisplay }: QuotaRowProps) {
   const isUnlimited = value === -1;
+  const displayValue = formatDisplay ? formatDisplay(value) : formatQuotaValue(value);
 
   return (
     <div className="flex items-center justify-between">
@@ -495,6 +562,49 @@ function QuotaRow({ label, value, isEditing, onChange }: QuotaRowProps) {
             value={isUnlimited ? '' : value}
             onChange={(e) => onChange(e.target.value === '' ? -1 : parseInt(e.target.value, 10))}
             placeholder="∞"
+            step={step}
+            className="w-24 px-2 py-1 border border-gray-300 rounded text-sm text-right"
+          />
+          <button
+            onClick={() => onChange(-1)}
+            className={`px-2 py-1 text-xs rounded ${
+              isUnlimited ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500'
+            }`}
+          >
+            ∞
+          </button>
+        </div>
+      ) : (
+        <span className="font-semibold text-gray-900">{displayValue}</span>
+      )}
+    </div>
+  );
+}
+
+// Cost Row Component (for monetary values)
+interface CostRowProps {
+  label: string;
+  value: number;
+  isEditing: boolean;
+  onChange: (value: number) => void;
+}
+
+function CostRow({ label, value, isEditing, onChange }: CostRowProps) {
+  const isUnlimited = value === -1;
+
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-sm text-gray-600">{label}</span>
+      {isEditing ? (
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-500">$</span>
+          <input
+            type="number"
+            value={isUnlimited ? '' : value}
+            onChange={(e) => onChange(e.target.value === '' ? -1 : parseFloat(e.target.value))}
+            placeholder="∞"
+            step={0.01}
+            min={0}
             className="w-20 px-2 py-1 border border-gray-300 rounded text-sm text-right"
           />
           <button
@@ -507,7 +617,9 @@ function QuotaRow({ label, value, isEditing, onChange }: QuotaRowProps) {
           </button>
         </div>
       ) : (
-        <span className="font-semibold text-gray-900">{formatQuotaValue(value)}</span>
+        <span className="font-semibold text-gray-900">
+          {isUnlimited ? 'Unlimited' : `$${value.toFixed(2)}`}
+        </span>
       )}
     </div>
   );

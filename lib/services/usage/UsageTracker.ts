@@ -340,7 +340,8 @@ class UsageTracker {
   }
 
   /**
-   * Get user's usage limits (custom or default)
+   * Get user's usage limits (custom > dynamic tier config > default)
+   * Priority: 1. Custom user limits, 2. Tier-based dynamic config, 3. Hardcoded defaults
    */
   private async getUserLimits(userId: string): Promise<{
     maxTokensPerDay: number;
@@ -354,12 +355,39 @@ class UsageTracker {
       const userDoc = await db.collection('users').doc(userId).get();
       const userData = userDoc.data();
 
-      // Return custom limits if set, otherwise defaults
-      return {
-        maxTokensPerDay: userData?.customLimits?.maxTokensPerDay || DEFAULT_LIMITS.maxTokensPerDay,
-        maxApiCallsPerDay: userData?.customLimits?.maxApiCallsPerDay || DEFAULT_LIMITS.maxApiCallsPerDay,
-        maxCostPerMonth: userData?.customLimits?.maxCostPerMonth || DEFAULT_LIMITS.maxCostPerMonth,
-      };
+      // Check for custom user limits first (highest priority)
+      if (userData?.customLimits) {
+        return {
+          maxTokensPerDay: userData.customLimits.maxTokensPerDay ?? DEFAULT_LIMITS.maxTokensPerDay,
+          maxApiCallsPerDay: userData.customLimits.maxApiCallsPerDay ?? DEFAULT_LIMITS.maxApiCallsPerDay,
+          maxCostPerMonth: userData.customLimits.maxCostPerMonth ?? DEFAULT_LIMITS.maxCostPerMonth,
+        };
+      }
+
+      // Get user's subscription tier (default to 'free')
+      const tier = userData?.subscription?.tier || 'free';
+
+      // Try to get limits from dynamic subscription config
+      try {
+        const { SubscriptionConfigService } = await import('@/lib/services/config/SubscriptionConfigService');
+        const configService = SubscriptionConfigService.getInstance();
+        await configService.initialize();
+        const config = await configService.getConfig();
+
+        if (config.enableDynamicConfig && config.tiers[tier as 'free' | 'premium' | 'pro']) {
+          const tierQuotas = config.tiers[tier as 'free' | 'premium' | 'pro'];
+          return {
+            maxTokensPerDay: tierQuotas.maxTokensPerDay ?? DEFAULT_LIMITS.maxTokensPerDay,
+            maxApiCallsPerDay: tierQuotas.maxApiCallsPerDay ?? DEFAULT_LIMITS.maxApiCallsPerDay,
+            maxCostPerMonth: tierQuotas.maxCostPerMonth ?? DEFAULT_LIMITS.maxCostPerMonth,
+          };
+        }
+      } catch (configError) {
+        console.warn('[UsageTracker] Failed to get dynamic config, using defaults:', configError);
+      }
+
+      // Fallback to hardcoded defaults
+      return DEFAULT_LIMITS;
     } catch (error) {
       console.error('[UsageTracker] Error getting user limits:', error);
       return DEFAULT_LIMITS;

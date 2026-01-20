@@ -27,15 +27,19 @@ const VERSIONS_COLLECTION = 'subscriptionTierVersions';
 
 // Default tier quotas (matching mobile app's SUBSCRIPTION_TIERS)
 const DEFAULT_FREE_QUOTAS = {
-  messagesPerDay: 10,
-  photosPerMonth: 5,
-  voiceMinutesPerMonth: 5,
+  messagesPerDay: 50,
+  photosPerMonth: 15,
+  voiceMinutesPerMonth: 30,
   customActivityTypes: 11,
   insightsEnabled: false,
   prioritySupport: false,
   advancedAnalytics: false,
   dataExport: false,
   offlineMode: true,
+  // API cost limits
+  maxTokensPerDay: 10000, // 10K tokens/day
+  maxApiCallsPerDay: 100, // 100 API calls/day
+  maxCostPerMonth: 5.0, // $5/month
 };
 
 const DEFAULT_PREMIUM_QUOTAS = {
@@ -48,6 +52,10 @@ const DEFAULT_PREMIUM_QUOTAS = {
   advancedAnalytics: false,
   dataExport: false,
   offlineMode: true,
+  // API cost limits
+  maxTokensPerDay: 100000, // 100K tokens/day
+  maxApiCallsPerDay: 1000, // 1000 API calls/day
+  maxCostPerMonth: 50.0, // $50/month
 };
 
 const DEFAULT_PRO_QUOTAS = {
@@ -60,6 +68,10 @@ const DEFAULT_PRO_QUOTAS = {
   advancedAnalytics: true,
   dataExport: true,
   offlineMode: true,
+  // API cost limits
+  maxTokensPerDay: 500000, // 500K tokens/day
+  maxApiCallsPerDay: 5000, // 5000 API calls/day
+  maxCostPerMonth: 200.0, // $200/month
 };
 
 // Initialize Firebase Admin
