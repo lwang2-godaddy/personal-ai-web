@@ -242,7 +242,7 @@ export default function TermsOfServicePage() {
 
           <h3>14.1 Informal Resolution</h3>
           <p>
-            Before filing a claim, you agree to try to resolve the dispute informally by contacting us at <a href="mailto:legal@sircharge.app">legal@sircharge.app</a>.
+            Before filing a claim, you agree to try to resolve the dispute informally by contacting us at <a href="mailto:fitness.w@gmail.com">fitness.w@gmail.com</a>.
           </p>
 
           <h3>14.2 Arbitration</h3>
@@ -273,7 +273,7 @@ export default function TermsOfServicePage() {
             If you have questions about these Terms, contact us:
           </p>
           <ul>
-            <li><strong>Email:</strong> <a href="mailto:legal@sircharge.app">legal@sircharge.app</a></li>
+            <li><strong>Email:</strong> <a href="mailto:fitness.w@gmail.com">fitness.w@gmail.com</a></li>
             <li><strong>Support:</strong> <Link href="/support">Support Center</Link></li>
           </ul>
         </article>

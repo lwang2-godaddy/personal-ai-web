@@ -166,7 +166,7 @@ export default function PrivacyPolicyPage() {
           </ul>
 
           <p>
-            To exercise these rights, contact us at <a href="mailto:privacy@sircharge.app">privacy@sircharge.app</a>.
+            To exercise these rights, contact us at <a href="mailto:fitness.w@gmail.com">fitness.w@gmail.com</a>.
           </p>
 
           <h2 id="data-export">Data Export and Portability</h2>
@@ -206,7 +206,7 @@ export default function PrivacyPolicyPage() {
 
           <p>If you have questions about this Privacy Policy, contact us:</p>
           <ul>
-            <li><strong>Email:</strong> <a href="mailto:privacy@sircharge.app">privacy@sircharge.app</a></li>
+            <li><strong>Email:</strong> <a href="mailto:fitness.w@gmail.com">fitness.w@gmail.com</a></li>
             <li><strong>Support:</strong> <Link href="/support">Support Center</Link></li>
           </ul>
 
@@ -223,7 +223,7 @@ export default function PrivacyPolicyPage() {
           </p>
 
           <p>
-            For region-specific requests, contact <a href="mailto:privacy@sircharge.app">privacy@sircharge.app</a>.
+            For region-specific requests, contact <a href="mailto:fitness.w@gmail.com">fitness.w@gmail.com</a>.
           </p>
         </article>
       </div>
