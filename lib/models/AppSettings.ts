@@ -66,9 +66,9 @@ export interface AppSettingsVersion {
  */
 export const DEFAULT_APP_SETTINGS: AppSettings = {
   // Email Configuration
-  supportEmail: 'fitness.w@gmail.com',
-  feedbackEmail: 'fitness.w@gmail.com',
-  bugReportEmail: 'fitness.w@gmail.com',
+  supportEmail: 'sircharge.ai@gmail.com',
+  feedbackEmail: 'sircharge.ai@gmail.com',
+  bugReportEmail: 'sircharge.ai@gmail.com',
 
   // Documentation URLs
   docsBaseUrl: 'https://www.sircharge.ai/docs',
