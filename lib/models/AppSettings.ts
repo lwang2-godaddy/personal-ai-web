@@ -33,6 +33,9 @@ export interface AppSettings {
   appName: string;
   companyName: string;
   copyrightYear: number;
+
+  // AI Features
+  enableLearnedVocabulary?: boolean; // Enable/disable learned vocabulary in transcription cleanup
 }
 
 /**
@@ -86,6 +89,9 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   appName: 'SirCharge',
   companyName: 'SirCharge',
   copyrightYear: 2025,
+
+  // AI Features
+  enableLearnedVocabulary: true, // Enabled by default
 };
 
 /**

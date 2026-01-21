@@ -138,7 +138,7 @@ export default function AdminAppSettingsPage() {
     setChangeNotes('');
   };
 
-  const updateSetting = (field: keyof AppSettings, value: string | number) => {
+  const updateSetting = (field: keyof AppSettings, value: string | number | boolean) => {
     setEditedSettings((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -452,6 +452,17 @@ export default function AdminAppSettingsPage() {
               type="number"
             />
           </SettingsSection>
+
+          {/* AI Features Section */}
+          <SettingsSection title="AI Features" icon="🤖">
+            <SettingsToggle
+              label="Learned Vocabulary"
+              description="Use user's learned vocabulary corrections during transcription cleanup. Disable if cleanup quality degrades."
+              enabled={editedSettings.enableLearnedVocabulary ?? true}
+              onChange={(enabled) => updateSetting('enableLearnedVocabulary', enabled)}
+              isEditing={isEditing}
+            />
+          </SettingsSection>
         </>
       )}
     </div>
@@ -532,6 +543,61 @@ function SettingsField({
             <p className="text-sm text-gray-900 truncate" title={value}>
               {value || <span className="text-gray-400 italic">Not set</span>}
             </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Settings Toggle Component
+interface SettingsToggleProps {
+  label: string;
+  description: string;
+  enabled: boolean;
+  onChange: (enabled: boolean) => void;
+  isEditing: boolean;
+}
+
+function SettingsToggle({
+  label,
+  description,
+  enabled,
+  onChange,
+  isEditing,
+}: SettingsToggleProps) {
+  return (
+    <div className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div className="flex-1">
+          <label className="block text-sm font-medium text-gray-700">{label}</label>
+          <p className="text-xs text-gray-500 mt-0.5">{description}</p>
+        </div>
+        <div className="sm:w-1/2 flex justify-end">
+          {isEditing ? (
+            <button
+              type="button"
+              onClick={() => onChange(!enabled)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                enabled ? 'bg-green-600' : 'bg-gray-300'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  enabled ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          ) : (
+            <span
+              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                enabled
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-gray-100 text-gray-800'
+              }`}
+            >
+              {enabled ? 'Enabled' : 'Disabled'}
+            </span>
           )}
         </div>
       </div>
