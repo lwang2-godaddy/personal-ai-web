@@ -51,6 +51,7 @@ export interface AIModelsConfig {
     queryRAG: ServiceModelConfig;
     queryRAGSimple: ServiceModelConfig;
     queryCircleRAG: ServiceModelConfig;
+    photoDescription: ServiceModelConfig;
     dailySummary: ServiceModelConfig;
     sentimentAnalysis: ServiceModelConfig;
     entityExtraction: ServiceModelConfig;
@@ -85,7 +86,7 @@ export interface AIModelsConfigVersion {
 /**
  * Service names and their descriptions for display in the admin UI
  */
-export const SERVICE_METADATA: Record<keyof AIModelsConfig['services'], { name: string; description: string }> = {
+export const SERVICE_METADATA: Record<keyof AIModelsConfig['services'], { name: string; description: string; note?: string }> = {
   queryRAG: {
     name: 'Chat (RAG Query)',
     description: 'Main chat queries that use RAG context (complex questions)',
@@ -97,6 +98,11 @@ export const SERVICE_METADATA: Record<keyof AIModelsConfig['services'], { name: 
   queryCircleRAG: {
     name: 'Circle Chat',
     description: 'Circle/group chat queries with shared data',
+  },
+  photoDescription: {
+    name: 'Photo Description',
+    description: 'Generates descriptions for uploaded photos (Vision API)',
+    note: 'Configured via Prompts page - runs on mobile app',
   },
   dailySummary: {
     name: 'Daily Summary',
@@ -172,6 +178,7 @@ export const DEFAULT_SERVICE_MODELS: AIModelsConfig['services'] = {
   queryRAG: { default: 'gpt-4o' },
   queryRAGSimple: { default: 'gpt-4o-mini' },
   queryCircleRAG: { default: 'gpt-4o' },
+  photoDescription: { default: 'gpt-4o' }, // Vision API - configured via Prompts
   dailySummary: { default: 'gpt-4o-mini' },
   sentimentAnalysis: { default: 'gpt-4o-mini' },
   entityExtraction: { default: 'gpt-4o-mini' },

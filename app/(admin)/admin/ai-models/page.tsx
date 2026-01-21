@@ -304,11 +304,16 @@ export default function AdminAIModelsPage() {
               return (
                 <div
                   key={serviceName}
-                  className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                  className={`flex items-center justify-between p-4 rounded-lg ${
+                    meta.note ? 'bg-amber-50 border border-amber-200' : 'bg-gray-50'
+                  }`}
                 >
                   <div className="flex-1">
                     <h4 className="font-semibold text-gray-900">{meta.name}</h4>
                     <p className="text-sm text-gray-600">{meta.description}</p>
+                    {meta.note && (
+                      <p className="text-xs text-amber-600 mt-1">* {meta.note}</p>
+                    )}
                   </div>
                   <div className="flex items-center gap-4">
                     {isEditing ? (
