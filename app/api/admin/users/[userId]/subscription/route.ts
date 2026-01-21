@@ -123,6 +123,7 @@ export async function PATCH(
         tier,
         status: 'active',
         source: 'admin_override',
+        manualOverride: true, // Prevents RevenueCat from overwriting this subscription
         overrideBy: adminUser.uid,
         overrideAt: now,
       };

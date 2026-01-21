@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { apiGet, apiPatch } from '@/lib/api/client';
+import { useRef } from 'react';
 import { useAppSelector } from '@/lib/store/hooks';
 
 interface User {
@@ -40,6 +41,9 @@ export default function AdminUsersPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+  const [openDropdownUserId, setOpenDropdownUserId] = useState<string | null>(null);
+  const [updatingSubscription, setUpdatingSubscription] = useState<string | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Wait for auth to be ready before fetching
@@ -78,6 +82,36 @@ export default function AdminUsersPage() {
     e.preventDefault();
     setPage(1); // Reset to first page on new search
     fetchUsers();
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setOpenDropdownUserId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleSubscriptionChange = async (userId: string, newTier: 'free' | 'premium' | 'pro') => {
+    if (!confirm(`Are you sure you want to change this user's subscription to ${newTier}?`)) {
+      return;
+    }
+
+    try {
+      setUpdatingSubscription(userId);
+      await apiPatch(`/api/admin/users/${userId}/subscription`, { tier: newTier });
+      setOpenDropdownUserId(null);
+      // Refresh users list
+      fetchUsers();
+    } catch (err: any) {
+      console.error('Failed to update subscription:', err);
+      alert(`Failed to update subscription: ${err.message}`);
+    } finally {
+      setUpdatingSubscription(null);
+    }
   };
 
   const handleToggleStatus = async (userId: string, currentStatus: 'active' | 'suspended') => {
@@ -254,11 +288,38 @@ export default function AdminUsersPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <span
-                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getSubscriptionBadgeColor(user.subscription)}`}
-                        >
-                          {user.subscription || 'free'}
-                        </span>
+                        <div className="relative" ref={openDropdownUserId === user.id ? dropdownRef : null}>
+                          <button
+                            onClick={() => setOpenDropdownUserId(openDropdownUserId === user.id ? null : user.id)}
+                            disabled={updatingSubscription === user.id}
+                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full cursor-pointer hover:ring-2 hover:ring-offset-1 hover:ring-gray-300 transition-all ${getSubscriptionBadgeColor(user.subscription)} ${updatingSubscription === user.id ? 'opacity-50' : ''}`}
+                          >
+                            {updatingSubscription === user.id ? 'Updating...' : (user.subscription || 'free')}
+                          </button>
+                          {openDropdownUserId === user.id && (
+                            <div className="absolute z-10 mt-1 w-32 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5">
+                              <div className="py-1">
+                                {['free', 'premium', 'pro'].map((tier) => (
+                                  <button
+                                    key={tier}
+                                    onClick={() => handleSubscriptionChange(user.id, tier as 'free' | 'premium' | 'pro')}
+                                    className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
+                                      user.subscription === tier || (!user.subscription && tier === 'free')
+                                        ? 'bg-gray-50 font-semibold'
+                                        : ''
+                                    }`}
+                                  >
+                                    <span className={`inline-block w-2 h-2 rounded-full mr-2 ${
+                                      tier === 'pro' ? 'bg-purple-500' :
+                                      tier === 'premium' ? 'bg-blue-500' : 'bg-gray-400'
+                                    }`}></span>
+                                    {tier}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </td>
                       <td className={`px-6 py-4 text-sm ${getCostColor(user.currentMonthCost || 0)}`}>
                         {formatCost(user.currentMonthCost)}
