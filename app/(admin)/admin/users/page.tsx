@@ -43,6 +43,8 @@ export default function AdminUsersPage() {
   const [total, setTotal] = useState(0);
   const [openDropdownUserId, setOpenDropdownUserId] = useState<string | null>(null);
   const [updatingSubscription, setUpdatingSubscription] = useState<string | null>(null);
+  const [calculatingCosts, setCalculatingCosts] = useState(false);
+  const [costsCalculated, setCostsCalculated] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -75,6 +77,33 @@ export default function AdminUsersPage() {
       setError(err.message || 'Failed to load users');
     } finally {
       setLoading(false);
+      setCostsCalculated(false); // Reset when users change
+    }
+  };
+
+  const calculateCosts = async () => {
+    if (users.length === 0) return;
+
+    try {
+      setCalculatingCosts(true);
+      const userIds = users.map(u => u.id);
+      const data = await apiGet<{ costs: Record<string, number> }>(
+        `/api/admin/users/costs?userIds=${userIds.join(',')}`
+      );
+
+      // Merge costs into users
+      setUsers(prevUsers =>
+        prevUsers.map(user => ({
+          ...user,
+          currentMonthCost: data.costs[user.id] || 0,
+        }))
+      );
+      setCostsCalculated(true);
+    } catch (err: any) {
+      console.error('Failed to calculate costs:', err);
+      alert(`Failed to calculate costs: ${err.message}`);
+    } finally {
+      setCalculatingCosts(false);
     }
   };
 
@@ -252,7 +281,21 @@ export default function AdminUsersPage() {
                       Subscription
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Cost (This Month)
+                      <div className="flex items-center gap-2">
+                        <span>Cost (This Month)</span>
+                        {!costsCalculated && (
+                          <button
+                            onClick={calculateCosts}
+                            disabled={calculatingCosts}
+                            className="px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 disabled:opacity-50 transition-colors"
+                          >
+                            {calculatingCosts ? 'Calculating...' : 'Calculate'}
+                          </button>
+                        )}
+                        {costsCalculated && (
+                          <span className="text-green-600 text-xs">✓</span>
+                        )}
+                      </div>
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Created

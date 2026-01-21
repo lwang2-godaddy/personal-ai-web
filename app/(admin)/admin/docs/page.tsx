@@ -90,6 +90,7 @@ const MOBILE_DOCS: DocSection[] = [
     title: 'AI Features',
     icon: '🤖',
     items: [
+      { id: 'mobile-related-memories', title: 'Related Memories', path: 'mobile/RELATED_MEMORIES.md', description: 'Semantic memory connections' },
       { id: 'mobile-transcription-cleanup', title: 'Transcription Cleanup', path: 'mobile/TRANSCRIPTION_CLEANUP.md', description: 'AI cleanup for voice notes' },
       { id: 'mobile-learned-vocabulary', title: 'Learned Vocabulary', path: 'mobile/LEARNED_VOCABULARY.md', description: 'User-learned corrections for transcription' },
       { id: 'mobile-voice-topic-icons', title: 'Voice Topic Icons', path: 'mobile/VOICE_TOPIC_ICONS.md', description: 'Auto-categorization of voice notes' },

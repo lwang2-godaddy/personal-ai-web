@@ -36,6 +36,12 @@ PersonalAI Mobile is a React Native + Expo application that collects personal da
 - [Build Guide](./BUILD.md) - iOS and Android build instructions
 - [Firebase Functions](./FIREBASE_FUNCTIONS.md) - Cloud Functions for embedding generation
 
+### AI Features
+- [Related Memories](./RELATED_MEMORIES.md) - Semantic memory connections
+- [Transcription Cleanup](./TRANSCRIPTION_CLEANUP.md) - AI cleanup for voice notes
+- [Learned Vocabulary](./LEARNED_VOCABULARY.md) - User-learned corrections for transcription
+- [Voice Topic Icons](./VOICE_TOPIC_ICONS.md) - Auto-categorization of voice notes
+
 ---
 
 ## Project Structure
