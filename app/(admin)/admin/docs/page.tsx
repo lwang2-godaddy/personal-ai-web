@@ -86,6 +86,14 @@ const MOBILE_DOCS: DocSection[] = [
     ],
   },
   {
+    id: 'mobile-ai',
+    title: 'AI Features',
+    icon: '🤖',
+    items: [
+      { id: 'mobile-transcription-cleanup', title: 'Transcription Cleanup', path: 'mobile/TRANSCRIPTION_CLEANUP.md', description: 'AI cleanup for voice notes' },
+    ],
+  },
+  {
     id: 'mobile-services',
     title: 'Services',
     icon: '🛠️',
