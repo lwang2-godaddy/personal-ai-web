@@ -196,6 +196,25 @@ export default function AdminDashboardPage() {
               Manage Plans →
             </div>
           </Link>
+
+          {/* AI Models Configuration */}
+          <Link
+            href="/admin/ai-models"
+            className="block bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow border border-gray-200 hover:border-red-300"
+          >
+            <div className="flex items-center space-x-4">
+              <div className="text-5xl">🤖</div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">AI Models</h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  Configure OpenAI models for services
+                </p>
+              </div>
+            </div>
+            <div className="mt-4 text-red-600 font-medium text-sm flex items-center">
+              Configure Models →
+            </div>
+          </Link>
         </div>
       </div>
 
