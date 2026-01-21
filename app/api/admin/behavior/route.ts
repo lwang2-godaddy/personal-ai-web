@@ -43,8 +43,8 @@ export async function GET(request: NextRequest): Promise<NextResponse<BehaviorOv
 
     const sessions = sessionsQuery.docs.map(doc => doc.data());
 
-    // Calculate unique users
-    const userIds = new Set(sessions.map(s => s.userId));
+    // Calculate unique users (filter out undefined/null userIds)
+    const userIds = new Set(sessions.map(s => s.userId).filter(Boolean));
     const activeUsers = userIds.size;
 
     // Get first-time users (users with no sessions before startDate)
@@ -95,6 +95,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<BehaviorOv
     const webUsers = new Set<string>();
 
     for (const session of sessions) {
+      if (!session.userId) continue;
       if (session.platform === 'mobile') {
         platformBreakdown.mobile.sessions++;
         mobileUsers.add(session.userId);
@@ -110,11 +111,14 @@ export async function GET(request: NextRequest): Promise<NextResponse<BehaviorOv
     // Top screens
     const screenCounts: Record<string, { count: number; users: Set<string> }> = {};
     for (const event of screenViews) {
+      if (!event.target) continue;
       if (!screenCounts[event.target]) {
         screenCounts[event.target] = { count: 0, users: new Set() };
       }
       screenCounts[event.target].count++;
-      screenCounts[event.target].users.add(event.userId);
+      if (event.userId) {
+        screenCounts[event.target].users.add(event.userId);
+      }
     }
 
     const topScreens = Object.entries(screenCounts)
@@ -129,11 +133,14 @@ export async function GET(request: NextRequest): Promise<NextResponse<BehaviorOv
     // Top features
     const featureCounts: Record<string, { count: number; users: Set<string> }> = {};
     for (const event of featureUses) {
+      if (!event.target) continue;
       if (!featureCounts[event.target]) {
         featureCounts[event.target] = { count: 0, users: new Set() };
       }
       featureCounts[event.target].count++;
-      featureCounts[event.target].users.add(event.userId);
+      if (event.userId) {
+        featureCounts[event.target].users.add(event.userId);
+      }
     }
 
     const topFeatures = Object.entries(featureCounts)
@@ -169,15 +176,19 @@ export async function GET(request: NextRequest): Promise<NextResponse<BehaviorOv
 
     // Aggregate sessions by day
     for (const session of sessions) {
+      if (!session.startedAt) continue;
       const date = session.startedAt.split('T')[0];
       if (dailyData[date]) {
         dailyData[date].sessions++;
-        dailyData[date].activeUsers.add(session.userId);
+        if (session.userId) {
+          dailyData[date].activeUsers.add(session.userId);
+        }
       }
     }
 
     // Aggregate events by day
     for (const event of events) {
+      if (!event.timestamp) continue;
       const date = event.timestamp.split('T')[0];
       if (dailyData[date]) {
         if (event.eventType === 'screen_view' && event.action === 'view') {
