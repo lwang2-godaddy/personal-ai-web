@@ -134,8 +134,9 @@ export default function AdminUsageAnalyticsPage() {
   const searchParams = useSearchParams();
   const [usageData, setUsageData] = useState<UsageData[]>([]);
   const [totals, setTotals] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [dataLoaded, setDataLoaded] = useState(false);
 
   // Date range states
   const [groupBy, setGroupBy] = useState<'day' | 'month'>('day');
@@ -166,12 +167,10 @@ export default function AdminUsageAnalyticsPage() {
     setStartDate(thirtyDaysAgo.toISOString().split('T')[0]);
   }, []);
 
+  // Reset dataLoaded when date range changes so user knows to reload
   useEffect(() => {
-    // Wait for auth to be ready before fetching
-    if (startDate && endDate && !authLoading && isAuthenticated) {
-      fetchUsageData();
-    }
-  }, [startDate, endDate, groupBy, authLoading, isAuthenticated, serviceFilter]);
+    setDataLoaded(false);
+  }, [startDate, endDate, groupBy, serviceFilter]);
 
   const fetchUsageData = async () => {
     try {
@@ -366,7 +365,7 @@ export default function AdminUsageAnalyticsPage() {
           </div>
 
           {/* Custom Date Range */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
               <input
@@ -395,6 +394,18 @@ export default function AdminUsageAnalyticsPage() {
                 <option value="day">Day</option>
                 <option value="month">Month</option>
               </select>
+            </div>
+            <div className="flex items-end">
+              <button
+                onClick={() => {
+                  fetchUsageData();
+                  setDataLoaded(true);
+                }}
+                disabled={loading || !startDate || !endDate}
+                className="w-full px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+              >
+                {loading ? 'Loading...' : dataLoaded ? 'Refresh Data' : 'Load Analytics'}
+              </button>
             </div>
             <div className="flex items-end">
               <button
@@ -433,7 +444,7 @@ export default function AdminUsageAnalyticsPage() {
       )}
 
       {/* Summary Cards */}
-      {!loading && totals && (
+      {!loading && dataLoaded && totals && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-purple-500">
             <div className="flex items-center justify-between">
@@ -477,7 +488,7 @@ export default function AdminUsageAnalyticsPage() {
       )}
 
       {/* Feature Cost Breakdown - For Subscription Quota Planning */}
-      {!loading && featureBreakdown.length > 0 && (
+      {!loading && dataLoaded && featureBreakdown.length > 0 && (
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="mb-4">
             <h2 className="text-xl font-bold text-gray-900">Cost by Feature</h2>
@@ -606,7 +617,7 @@ export default function AdminUsageAnalyticsPage() {
       )}
 
       {/* Infrastructure Cost Summary */}
-      {!loading && infrastructureData && infrastructureTotals && (
+      {!loading && dataLoaded && infrastructureData && infrastructureTotals && (
         <div className="space-y-4">
           <h2 className="text-xl font-bold text-gray-900">Infrastructure Costs</h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -655,7 +666,7 @@ export default function AdminUsageAnalyticsPage() {
       )}
 
       {/* Combined Total Cost Card */}
-      {!loading && totals && infrastructureTotals && (
+      {!loading && dataLoaded && totals && infrastructureTotals && (
         <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-lg shadow-lg p-6 text-white">
           <h3 className="text-lg font-medium opacity-90">Total Infrastructure Cost</h3>
           <p className="text-4xl font-bold mt-2">
@@ -695,7 +706,7 @@ export default function AdminUsageAnalyticsPage() {
       )}
 
       {/* Infrastructure Tracking Info */}
-      {!loading && infrastructureData && (
+      {!loading && dataLoaded && infrastructureData && (
         <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-5">
           <div className="flex items-start gap-3">
             <span className="text-2xl">⚠️</span>
@@ -773,12 +784,12 @@ export default function AdminUsageAnalyticsPage() {
       )}
 
       {/* Actual vs Estimated Billing Comparison */}
-      {!loading && startDate && endDate && (
+      {!loading && dataLoaded && startDate && endDate && (
         <BillingComparisonCard startDate={startDate} endDate={endDate} />
       )}
 
       {/* Billing Data Sources Documentation */}
-      {!loading && (
+      {!loading && dataLoaded && (
         <div className="bg-gradient-to-r from-slate-50 to-gray-50 border border-slate-200 rounded-lg p-5">
           <div className="flex items-start gap-3">
             <span className="text-2xl">📊</span>
@@ -946,7 +957,7 @@ export default function AdminUsageAnalyticsPage() {
       )}
 
       {/* Service Filter Banner */}
-      {serviceFilter && !loading && (
+      {serviceFilter && !loading && dataLoaded && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <span className="text-blue-600 text-xl">🔍</span>
@@ -969,7 +980,7 @@ export default function AdminUsageAnalyticsPage() {
       )}
 
       {/* Info Section: Operations vs Services */}
-      {!loading && operationBreakdownData.length > 0 && (
+      {!loading && dataLoaded && operationBreakdownData.length > 0 && (
         <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-lg p-5">
           <div className="flex items-start gap-3">
             <span className="text-2xl">ℹ️</span>
@@ -995,7 +1006,7 @@ export default function AdminUsageAnalyticsPage() {
       )}
 
       {/* Cost Breakdown by Operation */}
-      {!loading && operationBreakdownData.length > 0 && (
+      {!loading && dataLoaded && operationBreakdownData.length > 0 && (
         <div className="bg-white rounded-lg shadow-md p-6">
           <h2 className="text-xl font-bold text-gray-900 mb-4">Cost Breakdown by Operation</h2>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -1084,7 +1095,7 @@ export default function AdminUsageAnalyticsPage() {
       )}
 
       {/* Cost by OpenAI Model */}
-      {!loading && Object.keys(modelBreakdown).length > 0 && (
+      {!loading && dataLoaded && Object.keys(modelBreakdown).length > 0 && (
         <div className="bg-white rounded-lg shadow-md p-6">
           <h2 className="text-xl font-bold text-gray-900 mb-4">Cost by OpenAI Model</h2>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -1158,7 +1169,7 @@ export default function AdminUsageAnalyticsPage() {
       )}
 
       {/* Cost by API Endpoint */}
-      {!loading && Object.keys(endpointBreakdown).length > 0 && (
+      {!loading && dataLoaded && Object.keys(endpointBreakdown).length > 0 && (
         <div className="bg-white rounded-lg shadow-md p-6">
           <h2 className="text-xl font-bold text-gray-900 mb-4">Cost by API Endpoint</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -1186,7 +1197,7 @@ export default function AdminUsageAnalyticsPage() {
       )}
 
       {/* Daily Usage Trend */}
-      {!loading && timeSeriesData.length > 0 && (
+      {!loading && dataLoaded && timeSeriesData.length > 0 && (
         <div className="bg-white rounded-lg shadow-md p-6">
           <h2 className="text-xl font-bold text-gray-900 mb-4">Usage Trend Over Time</h2>
           <ResponsiveContainer width="100%" height={300}>
@@ -1212,7 +1223,7 @@ export default function AdminUsageAnalyticsPage() {
       )}
 
       {/* Top 10 Users by Cost */}
-      {!loading && topUsersChartData.length > 0 && (
+      {!loading && dataLoaded && topUsersChartData.length > 0 && (
         <div className="bg-white rounded-lg shadow-md p-6">
           <h2 className="text-xl font-bold text-gray-900 mb-4">Top 10 Users by Cost</h2>
           <ResponsiveContainer width="100%" height={400}>
@@ -1228,8 +1239,18 @@ export default function AdminUsageAnalyticsPage() {
         </div>
       )}
 
-      {/* Empty State */}
-      {!loading && !error && usageData.length === 0 && (
+      {/* Initial State - Prompt to Load Data */}
+      {!loading && !error && !dataLoaded && (
+        <div className="bg-white rounded-lg shadow-md p-12 text-center">
+          <div className="text-6xl mb-4">📊</div>
+          <p className="text-gray-800 text-xl font-medium">Ready to Load Analytics</p>
+          <p className="text-gray-500 mt-2">Select a date range above and click &quot;Load Analytics&quot; to view usage data.</p>
+          <p className="text-gray-400 text-sm mt-4">This page fetches data on-demand to ensure fast load times.</p>
+        </div>
+      )}
+
+      {/* Empty State - Data Loaded but No Results */}
+      {!loading && !error && dataLoaded && usageData.length === 0 && (
         <div className="bg-white rounded-lg shadow-md p-12 text-center">
           <p className="text-gray-600 text-lg">No usage data found for the selected date range</p>
           <p className="text-gray-500 text-sm mt-2">Try adjusting the date range or check back later</p>
