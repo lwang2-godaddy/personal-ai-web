@@ -30,10 +30,17 @@ const SOURCE_TYPE_TO_OPERATION: Record<string, string> = {
   tts: 'tts', // OpenAI Text-to-Speech
   rag: 'chat_completion',
   rag_stream: 'chat_completion',
+  circle_rag: 'chat_completion',
   direct: 'chat_completion',
   direct_stream: 'chat_completion',
   custom_prompt: 'chat_completion',
   pinecone_query: 'pinecone_query',
+  // Cloud Functions sourceType values (short names)
+  photo: 'vision',  // Photo description uses GPT-4 Vision
+  voice: 'transcription',  // Voice note transcription
+  health: 'embedding',  // Health data embedding
+  location: 'embedding',  // Location data embedding
+  text: 'embedding',  // Text note embedding
   // New embedding source types from Cloud Functions
   health_embedding: 'embedding',
   location_embedding: 'embedding',
@@ -55,24 +62,32 @@ const SOURCE_TYPE_TO_FEATURE: Record<string, string> = {
   // Vision/Photo (EXPENSIVE - ~$0.01-0.03 per call)
   vision: 'Photo Description',
   image_description: 'Photo Description',
+  photo: 'Photo Description',  // Cloud Functions use 'photo' sourceType
+  photo_description: 'Photo Description',
 
   // Chat (RAG vs Direct)
   rag: 'AI Chat (RAG)',
   rag_stream: 'AI Chat (RAG)',
+  circle_rag: 'AI Chat (RAG)',
   direct: 'AI Chat (Direct)',
   direct_stream: 'AI Chat (Direct)',
   custom_prompt: 'AI Chat (Custom)',
 
   // Audio
   transcription: 'Voice Transcription',
+  voice: 'Voice Transcription',  // Cloud Functions use 'voice' sourceType
+  voice_transcription: 'Voice Transcription',
   tts: 'Text-to-Speech',
 
   // Embeddings (group all into one)
   embedding: 'Search Indexing',
+  health: 'Search Indexing',  // Cloud Functions use 'health' sourceType
   health_embedding: 'Search Indexing',
+  location: 'Search Indexing',  // Cloud Functions use 'location' sourceType
   location_embedding: 'Search Indexing',
   voice_embedding: 'Search Indexing',
   photo_embedding: 'Search Indexing',
+  text: 'Search Indexing',  // Cloud Functions use 'text' sourceType
   text_note_embedding: 'Search Indexing',
   event_embedding: 'Search Indexing',
   shared_activity_embedding: 'Search Indexing',
@@ -116,6 +131,9 @@ const FEATURE_ICONS: Record<string, string> = {
 const SOURCE_TYPE_TO_ENDPOINT: Record<string, string> = {
   // Embeddings endpoint
   embedding: 'embeddings',
+  health: 'embeddings',  // Cloud Functions sourceType
+  location: 'embeddings',  // Cloud Functions sourceType
+  text: 'embeddings',  // Cloud Functions sourceType
   health_embedding: 'embeddings',
   location_embedding: 'embeddings',
   voice_embedding: 'embeddings',
@@ -129,13 +147,16 @@ const SOURCE_TYPE_TO_ENDPOINT: Record<string, string> = {
   // Chat completions endpoint
   rag: 'chat/completions',
   rag_stream: 'chat/completions',
+  circle_rag: 'chat/completions',
   direct: 'chat/completions',
   direct_stream: 'chat/completions',
   vision: 'chat/completions',
+  photo: 'chat/completions',  // Cloud Functions sourceType - uses GPT-4 Vision
   custom_prompt: 'chat/completions',
   chat_completion: 'chat/completions',
   // Audio endpoints
   transcription: 'audio/transcriptions',
+  voice: 'audio/transcriptions',  // Cloud Functions sourceType
   tts: 'audio/speech',
   // Photo description uses chat completions
   image_description: 'chat/completions',
@@ -219,7 +240,16 @@ export async function GET(request: NextRequest) {
     // Track by OpenAI endpoint
     const endpointStats = new Map<string, { cost: number; calls: number; tokens: number }>();
     // Track by user-facing feature (for subscription quota planning)
-    const featureStats = new Map<string, { cost: number; calls: number; tokens: number }>();
+    // Includes breakdown by source (mobile vs web)
+    const featureStats = new Map<string, {
+      cost: number;
+      calls: number;
+      tokens: number;
+      mobileCost: number;
+      mobileCalls: number;
+      webCost: number;
+      webCalls: number;
+    }>();
 
     usageSnapshot.forEach((doc) => {
       const data = doc.data();
@@ -319,10 +349,25 @@ export async function GET(request: NextRequest) {
         ? SOURCE_TYPE_TO_FEATURE[sourceType]
         : SERVICE_TO_OPERATION[service] || 'Other';
       if (feature) {
-        const existing = featureStats.get(feature) || { cost: 0, calls: 0, tokens: 0 };
+        const existing = featureStats.get(feature) || {
+          cost: 0, calls: 0, tokens: 0,
+          mobileCost: 0, mobileCalls: 0,
+          webCost: 0, webCalls: 0,
+        };
         existing.cost += cost;
         existing.calls += 1;
         existing.tokens += tokens;
+
+        // Track source: WebApp service = web, everything else = mobile/cloud functions
+        const isWeb = service === 'WebApp';
+        if (isWeb) {
+          existing.webCost += cost;
+          existing.webCalls += 1;
+        } else {
+          existing.mobileCost += cost;
+          existing.mobileCalls += 1;
+        }
+
         featureStats.set(feature, existing);
       }
     });
@@ -408,6 +453,11 @@ export async function GET(request: NextRequest) {
         tokens: stats.tokens,
         avgCostPerCall: stats.calls > 0 ? Number((stats.cost / stats.calls).toFixed(6)) : 0,
         percentOfTotal: Number(((stats.cost / totalCostForPercent) * 100).toFixed(1)),
+        // Source breakdown (mobile vs web)
+        mobileCost: Number(stats.mobileCost.toFixed(4)),
+        mobileCalls: stats.mobileCalls,
+        webCost: Number(stats.webCost.toFixed(4)),
+        webCalls: stats.webCalls,
       }))
       .sort((a, b) => b.cost - a.cost);
 

@@ -86,6 +86,11 @@ interface FeatureBreakdown {
   tokens: number;
   avgCostPerCall: number;
   percentOfTotal: number;
+  // Source breakdown
+  mobileCost: number;
+  mobileCalls: number;
+  webCost: number;
+  webCalls: number;
 }
 
 const COLORS = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#22c55e', '#14b8a6', '#06b6d4', '#3b82f6', '#6366f1', '#8b5cf6'];
@@ -512,6 +517,7 @@ export default function AdminUsageAnalyticsPage() {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Feature</th>
+                      <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase">Source</th>
                       <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Cost</th>
                       <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Calls</th>
                       <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Avg/Call</th>
@@ -529,6 +535,20 @@ export default function AdminUsageAnalyticsPage() {
                               Most Expensive
                             </span>
                           )}
+                        </td>
+                        <td className="px-4 py-2 text-sm text-center">
+                          <div className="flex flex-col gap-1">
+                            {item.mobileCalls > 0 && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                                📱 {item.mobileCalls.toLocaleString()} (${item.mobileCost.toFixed(4)})
+                              </span>
+                            )}
+                            {item.webCalls > 0 && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                                🌐 {item.webCalls.toLocaleString()} (${item.webCost.toFixed(4)})
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-4 py-2 text-sm text-gray-900 text-right font-medium">
                           ${item.cost.toFixed(4)}

@@ -63,18 +63,31 @@ export async function GET(request: NextRequest) {
       const startIndex = (page - 1) * limit;
       const paginatedUsers = filteredUsers.slice(startIndex, startIndex + limit);
 
-      // Fetch current month cost data for paginated users
+      // Fetch current month cost data from promptExecutions collection
       const currentMonth = new Date().toISOString().slice(0, 7); // "YYYY-MM"
       const userIds = paginatedUsers.map((u: any) => u.id);
 
-      const usagePromises = userIds.map(async (userId: string) => {
-        const docId = `${userId}_${currentMonth}`;
-        const doc = await db.collection('usageMonthly').doc(docId).get();
-        return { userId, cost: doc.exists ? doc.data()?.totalCostUSD || 0 : 0 };
-      });
+      // Calculate current month date range
+      const monthStart = new Date(currentMonth + '-01T00:00:00.000Z').toISOString();
+      const monthEnd = new Date(new Date(currentMonth + '-01').getFullYear(), new Date(currentMonth + '-01').getMonth() + 1, 0, 23, 59, 59, 999).toISOString();
 
-      const usageResults = await Promise.all(usagePromises);
-      const costMap = new Map(usageResults.map((r) => [r.userId, r.cost]));
+      // Query all promptExecutions for current month and aggregate per user
+      const promptsSnapshot = await db
+        .collection('promptExecutions')
+        .where('executedAt', '>=', monthStart)
+        .where('executedAt', '<=', monthEnd)
+        .get();
+
+      // Aggregate costs per user
+      const costMap = new Map<string, number>();
+      promptsSnapshot.forEach((doc) => {
+        const data = doc.data();
+        const userId = data.userId as string;
+        const cost = (data.estimatedCostUSD as number) || 0;
+        if (userId && userIds.includes(userId)) {
+          costMap.set(userId, (costMap.get(userId) || 0) + cost);
+        }
+      });
 
       // Merge cost data into users
       const usersWithCost = paginatedUsers.map((user: any) => ({
@@ -116,18 +129,31 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    // Fetch current month cost data for all users
+    // Fetch current month cost data from promptExecutions collection
     const currentMonth = new Date().toISOString().slice(0, 7); // "YYYY-MM"
     const userIds = users.map((u: any) => u.id);
 
-    const usagePromises = userIds.map(async (userId: string) => {
-      const docId = `${userId}_${currentMonth}`;
-      const doc = await db.collection('usageMonthly').doc(docId).get();
-      return { userId, cost: doc.exists ? doc.data()?.totalCostUSD || 0 : 0 };
-    });
+    // Calculate current month date range
+    const monthStart = new Date(currentMonth + '-01T00:00:00.000Z').toISOString();
+    const monthEnd = new Date(new Date(currentMonth + '-01').getFullYear(), new Date(currentMonth + '-01').getMonth() + 1, 0, 23, 59, 59, 999).toISOString();
 
-    const usageResults = await Promise.all(usagePromises);
-    const costMap = new Map(usageResults.map((r) => [r.userId, r.cost]));
+    // Query all promptExecutions for current month and aggregate per user
+    const promptsSnapshot = await db
+      .collection('promptExecutions')
+      .where('executedAt', '>=', monthStart)
+      .where('executedAt', '<=', monthEnd)
+      .get();
+
+    // Aggregate costs per user
+    const costMap = new Map<string, number>();
+    promptsSnapshot.forEach((doc) => {
+      const data = doc.data();
+      const userId = data.userId as string;
+      const cost = (data.estimatedCostUSD as number) || 0;
+      if (userId && userIds.includes(userId)) {
+        costMap.set(userId, (costMap.get(userId) || 0) + cost);
+      }
+    });
 
     // Merge cost data into users
     const usersWithCost = users.map((user: any) => ({
