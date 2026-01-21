@@ -48,17 +48,24 @@ export async function GET(request: NextRequest): Promise<NextResponse<BehaviorOv
     const activeUsers = userIds.size;
 
     // Get first-time users (users with no sessions before startDate)
+    // Note: This query requires a composite index on behaviorSessions (userId, startedAt)
     let newUsers = 0;
-    for (const userId of userIds) {
-      const firstSessionQuery = await db.collection('behaviorSessions')
-        .where('userId', '==', userId)
-        .where('startedAt', '<', startDate)
-        .limit(1)
-        .get();
+    try {
+      for (const userId of userIds) {
+        const firstSessionQuery = await db.collection('behaviorSessions')
+          .where('userId', '==', userId)
+          .where('startedAt', '<', startDate)
+          .limit(1)
+          .get();
 
-      if (firstSessionQuery.empty) {
-        newUsers++;
+        if (firstSessionQuery.empty) {
+          newUsers++;
+        }
       }
+    } catch (indexError: any) {
+      // If index is missing, skip new user calculation
+      console.warn('[Admin Behavior API] Skipping new users calculation - index may be missing:', indexError?.message);
+      newUsers = 0;
     }
 
     // Calculate session metrics
@@ -227,9 +234,19 @@ export async function GET(request: NextRequest): Promise<NextResponse<BehaviorOv
 
     return NextResponse.json(overview);
   } catch (error: any) {
-    console.error('[Admin Behavior API] Error:', error);
+    console.error('[Admin Behavior API] Error:', error?.message || error);
+    console.error('[Admin Behavior API] Stack:', error?.stack);
+
+    // Check for Firestore index error
+    if (error?.message?.includes('index')) {
+      return NextResponse.json(
+        { error: `Firestore index required. Please create the index: ${error.message}` },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json(
-      { error: 'Failed to fetch behavior analytics' },
+      { error: `Failed to fetch behavior analytics: ${error?.message || 'Unknown error'}` },
       { status: 500 }
     );
   }
