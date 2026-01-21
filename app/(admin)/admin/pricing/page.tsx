@@ -96,6 +96,168 @@ const FEATURE_CONFIG: Record<ModelFeature, FeatureConfig> = {
 };
 
 /**
+ * Detailed feature documentation for the Learn More section
+ */
+interface FeatureDoc {
+  title: string;
+  icon: string;
+  summary: string;
+  howItWorks: string;
+  example: string;
+  usedInApp: boolean;
+  usageNote: string;
+  extraDetail?: string;
+}
+
+const FEATURE_DOCS: Record<string, FeatureDoc> = {
+  'chat': {
+    title: 'Chat (Completions API)',
+    icon: '💬',
+    summary: 'Send text to AI, get text back. Powers your RAG chatbot.',
+    howItWorks: `The core AI conversation feature. You send text, AI sends text back.
+
+How your app uses it:
+• RAG chatbot sends user questions + retrieved context to GPT-4o
+• AI generates natural language responses
+• This is the foundation of your entire chat feature`,
+    example: `You: "How many times did I play badminton?"
+AI: "Based on your location data, you visited SF Badminton Club 15 times this year."`,
+    usedInApp: true,
+    usageNote: 'Used by RAGEngine.server.ts for all chat responses',
+  },
+  'streaming': {
+    title: 'Streaming',
+    icon: '📡',
+    summary: 'Words appear one-by-one instead of waiting for full response.',
+    howItWorks: `Instead of waiting for the complete response, words appear as the AI generates them (like ChatGPT's typing effect).
+
+Without streaming:
+[Send message] → [Wait 5 seconds] → [Full response appears]
+
+With streaming:
+[Send message] → [Instantly see "Based"] → ["Based on"] → ["Based on your"] → ...
+
+Why it matters: Makes the app feel faster and more responsive. Users see progress immediately instead of staring at a loading spinner.`,
+    example: `// Non-streaming (current web implementation)
+const response = await openai.chat.completions.create({
+  model: "gpt-4o",
+  messages: [...],
+  stream: false  // Wait for complete response
+});
+
+// Streaming (mobile implementation)
+const response = await openai.chat.completions.create({
+  model: "gpt-4o",
+  messages: [...],
+  stream: true  // Get tokens as they're generated
+});
+for await (const chunk of response) {
+  process.stdout.write(chunk.choices[0]?.delta?.content || "");
+}`,
+    usedInApp: true,
+    usageNote: 'Mobile uses streaming. Web waits for full response.',
+  },
+  'function-calling': {
+    title: 'Function Calling (Tools)',
+    icon: '⚡',
+    summary: 'AI tells your code which function to call with what parameters.',
+    howItWorks: `You define "tools" the AI can use. When the AI needs information it doesn't have, it asks YOUR code to run a function and return the result.
+
+Important: The AI doesn't execute code itself - it just tells you WHAT to call and with WHAT parameters.
+
+Example flow:
+1. User: "What's the weather in Tokyo?"
+2. AI thinks: "I need weather data. I'll call the get_weather function."
+3. AI returns: { function: "get_weather", args: { city: "Tokyo" } }
+4. YOUR CODE calls a weather API → returns "72°F, Sunny"
+5. You send that result back to AI
+6. AI responds: "It's currently 72°F and sunny in Tokyo!"`,
+    example: `const response = await openai.chat.completions.create({
+  model: "gpt-4o",
+  messages: [{ role: "user", content: "What's the weather in Tokyo?" }],
+  tools: [{
+    type: "function",
+    function: {
+      name: "get_weather",
+      description: "Get current weather for a city",
+      parameters: {
+        type: "object",
+        properties: {
+          city: { type: "string", description: "City name" }
+        },
+        required: ["city"]
+      }
+    }
+  }]
+});
+
+// AI returns tool_calls asking to run get_weather({ city: "Tokyo" })
+// You execute the function, then send result back to AI`,
+    usedInApp: false,
+    usageNote: 'Not used. You do RAG (search Pinecone → add context → ask AI), but AI doesn\'t call any tools.',
+    extraDetail: `Real use cases you could add:
+• "Show me last week's data" → AI calls date-filter function
+• "Book an appointment" → AI calls booking function
+• "Send me a summary email" → AI calls email function`,
+  },
+  'json-mode': {
+    title: 'JSON Mode',
+    icon: '📋',
+    summary: 'Forces AI to output valid JSON only - no extra text, guaranteed parseable.',
+    howItWorks: `Forces the AI to output ONLY valid JSON - no extra text, no explanations, just a JSON object you can parse in code.
+
+The problem it solves:
+
+Without JSON mode, you ask AI to return structured data:
+You: "Extract the person's name and age from: 'John is 25 years old'"
+
+AI might return:
+"Here's the extracted information:
+- Name: John
+- Age: 25
+
+Let me know if you need anything else!"
+
+This is useless if your code needs to parse it!
+
+With JSON mode:
+You: "Extract name and age as JSON from: 'John is 25 years old'"
+
+AI returns EXACTLY:
+{"name": "John", "age": 25}
+
+Now your code can reliably do:
+const data = JSON.parse(aiResponse);
+console.log(data.name); // "John"`,
+    example: `const response = await openai.chat.completions.create({
+  model: "gpt-4o",
+  messages: [
+    { role: "system", content: "Return JSON with name and age fields" },
+    { role: "user", content: "Extract from: 'John is 25 years old'" }
+  ],
+  response_format: { type: "json_object" }  // Forces JSON output
+});
+
+// GUARANTEED valid JSON - no try/catch needed for parsing
+const data = JSON.parse(response.choices[0].message.content);
+console.log(data);  // { name: "John", age: 25 }`,
+    usedInApp: false,
+    usageNote: 'Not used. Your chatbot returns free-form text.',
+    extraDetail: `Why this matters:
+1. Guaranteed valid JSON - AI can't return "Here you go: {data}"
+2. No parsing errors - Your code can depend on the format
+3. Reliable for integrations - Frontend gets consistent data structure
+
+You could use this to return:
+{
+  "answer": "You played badminton 15 times",
+  "sources": ["location_123", "location_456"],
+  "confidence": 0.85
+}`,
+  },
+};
+
+/**
  * Model pricing configuration
  */
 interface ModelPricing {
@@ -146,6 +308,8 @@ export default function AdminPricingPage() {
   const [changeNotes, setChangeNotes] = useState('');
   const [showAddModel, setShowAddModel] = useState(false);
   const [newModel, setNewModel] = useState<NewModel>({ id: '', name: '', inputPer1M: '', outputPer1M: '', features: [] });
+  const [showFeatureDocs, setShowFeatureDocs] = useState(false);
+  const [expandedFeature, setExpandedFeature] = useState<string | null>(null);
 
   useEffect(() => {
     fetchConfig();
@@ -464,6 +628,94 @@ export default function AdminPricingPage() {
             <span>🌐 = Web dashboard</span>
             <span>📱🌐 = Both platforms</span>
           </div>
+
+          {/* Learn More Button */}
+          <button
+            onClick={() => setShowFeatureDocs(!showFeatureDocs)}
+            className="mt-4 flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 font-medium"
+          >
+            <span>📖</span>
+            <span>Learn More About Features</span>
+            <span className={`transition-transform ${showFeatureDocs ? 'rotate-180' : ''}`}>▼</span>
+          </button>
+
+          {/* Expanded Feature Documentation */}
+          {showFeatureDocs && (
+            <div className="mt-4 border-t border-gray-200 pt-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {Object.entries(FEATURE_DOCS).map(([key, doc]) => (
+                  <div
+                    key={key}
+                    className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow"
+                  >
+                    {/* Card Header */}
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">{doc.icon}</span>
+                        <h4 className="font-semibold text-gray-900">{doc.title}</h4>
+                      </div>
+                      <span
+                        className={`px-2 py-0.5 text-xs rounded-full ${
+                          doc.usedInApp
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-gray-100 text-gray-500'
+                        }`}
+                      >
+                        {doc.usedInApp ? '✅ Used' : '❌ Not used'}
+                      </span>
+                    </div>
+
+                    {/* Summary */}
+                    <p className="text-sm text-gray-600 mb-3">{doc.summary}</p>
+
+                    {/* Usage Note */}
+                    <p className="text-xs text-gray-500 italic mb-3">
+                      {doc.usageNote}
+                    </p>
+
+                    {/* Expandable Details */}
+                    <button
+                      onClick={() => setExpandedFeature(expandedFeature === key ? null : key)}
+                      className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
+                    >
+                      {expandedFeature === key ? 'Hide details' : 'Show details'}
+                      <span className={`transition-transform ${expandedFeature === key ? 'rotate-180' : ''}`}>▼</span>
+                    </button>
+
+                    {expandedFeature === key && (
+                      <div className="mt-3 space-y-3">
+                        {/* How It Works */}
+                        <div>
+                          <h5 className="text-xs font-semibold text-gray-700 mb-1">How it works:</h5>
+                          <pre className="text-xs text-gray-600 whitespace-pre-wrap bg-gray-50 p-2 rounded">
+                            {doc.howItWorks}
+                          </pre>
+                        </div>
+
+                        {/* Code Example */}
+                        <div>
+                          <h5 className="text-xs font-semibold text-gray-700 mb-1">Example:</h5>
+                          <pre className="text-xs text-gray-800 bg-gray-900 text-green-400 p-2 rounded overflow-x-auto">
+                            {doc.example}
+                          </pre>
+                        </div>
+
+                        {/* Extra Detail (for JSON mode) */}
+                        {doc.extraDetail && (
+                          <div>
+                            <h5 className="text-xs font-semibold text-gray-700 mb-1">Additional info:</h5>
+                            <pre className="text-xs text-gray-600 whitespace-pre-wrap bg-yellow-50 border border-yellow-200 p-2 rounded">
+                              {doc.extraDetail}
+                            </pre>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
