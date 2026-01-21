@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/middleware/auth';
 import { getAdminFirestore } from '@/lib/api/firebase/admin';
 
+// Cache for user count (refreshed every 5 minutes)
+let cachedUserCount: { count: number; timestamp: number } | null = null;
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
 /**
  * GET /api/admin/users
  * List all users with pagination and search
@@ -30,88 +34,82 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search') || '';
 
     const db = getAdminFirestore();
-    let usersQuery = db.collection('users');
+    const usersCollection = db.collection('users');
 
     // Apply search filter if provided
     if (search && search.trim().length > 0) {
-      // Firestore doesn't support case-insensitive search or LIKE queries
-      // So we'll fetch all and filter in memory (not ideal for large datasets)
-      // Alternative: Use Algolia or similar search service
-      const allUsersSnapshot = await usersQuery.get();
+      // Use Firestore prefix search for email (more efficient than fetching all)
       const searchLower = search.toLowerCase();
 
-      const filteredUsers = allUsersSnapshot.docs
-        .map((doc) => {
+      // Try email prefix search first (works for exact prefix matches)
+      let usersSnapshot = await usersCollection
+        .where('email', '>=', searchLower)
+        .where('email', '<=', searchLower + '\uf8ff')
+        .orderBy('email')
+        .limit(limit)
+        .get();
+
+      let users = usersSnapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          subscription: typeof data.subscription === 'object' && data.subscription?.tier
+            ? data.subscription.tier
+            : data.subscription || 'free',
+          currentMonthCost: 0, // Skip cost calculation for search results (too slow)
+        };
+      });
+
+      // If no results from email prefix, try displayName prefix
+      if (users.length === 0) {
+        usersSnapshot = await usersCollection
+          .where('displayName', '>=', search)
+          .where('displayName', '<=', search + '\uf8ff')
+          .orderBy('displayName')
+          .limit(limit)
+          .get();
+
+        users = usersSnapshot.docs.map((doc) => {
           const data = doc.data();
           return {
             id: doc.id,
             ...data,
-            // Normalize subscription: extract tier string from object if needed
             subscription: typeof data.subscription === 'object' && data.subscription?.tier
               ? data.subscription.tier
               : data.subscription || 'free',
+            currentMonthCost: 0,
           };
-        })
-        .filter((userData: any) => {
-          const email = (userData.email || '').toLowerCase();
-          const displayName = (userData.displayName || '').toLowerCase();
-          return email.includes(searchLower) || displayName.includes(searchLower);
         });
-
-      const total = filteredUsers.length;
-      const totalPages = Math.ceil(total / limit);
-      const startIndex = (page - 1) * limit;
-      const paginatedUsers = filteredUsers.slice(startIndex, startIndex + limit);
-
-      // Fetch current month cost data from promptExecutions collection
-      const currentMonth = new Date().toISOString().slice(0, 7); // "YYYY-MM"
-      const userIds = paginatedUsers.map((u: any) => u.id);
-
-      // Calculate current month date range
-      const monthStart = new Date(currentMonth + '-01T00:00:00.000Z').toISOString();
-      const monthEnd = new Date(new Date(currentMonth + '-01').getFullYear(), new Date(currentMonth + '-01').getMonth() + 1, 0, 23, 59, 59, 999).toISOString();
-
-      // Query all promptExecutions for current month and aggregate per user
-      const promptsSnapshot = await db
-        .collection('promptExecutions')
-        .where('executedAt', '>=', monthStart)
-        .where('executedAt', '<=', monthEnd)
-        .get();
-
-      // Aggregate costs per user
-      const costMap = new Map<string, number>();
-      promptsSnapshot.forEach((doc) => {
-        const data = doc.data();
-        const userId = data.userId as string;
-        const cost = (data.estimatedCostUSD as number) || 0;
-        if (userId && userIds.includes(userId)) {
-          costMap.set(userId, (costMap.get(userId) || 0) + cost);
-        }
-      });
-
-      // Merge cost data into users
-      const usersWithCost = paginatedUsers.map((user: any) => ({
-        ...user,
-        currentMonthCost: costMap.get(user.id) || 0,
-      }));
+      }
 
       return NextResponse.json({
-        users: usersWithCost,
-        total,
-        page,
+        users,
+        total: users.length,
+        page: 1,
         limit,
-        totalPages,
+        totalPages: 1,
       });
     }
 
-    // No search - use pagination
-    const totalSnapshot = await usersQuery.get();
-    const total = totalSnapshot.size;
+    // No search - use efficient pagination
+    // Get cached total count or refresh if stale
+    let total: number;
+    const now = Date.now();
+    if (cachedUserCount && (now - cachedUserCount.timestamp) < CACHE_TTL_MS) {
+      total = cachedUserCount.count;
+    } else {
+      // Use count() aggregation (much faster than fetching all docs)
+      const countSnapshot = await usersCollection.count().get();
+      total = countSnapshot.data().count;
+      cachedUserCount = { count: total, timestamp: now };
+    }
+
     const totalPages = Math.ceil(total / limit);
 
     // Get paginated results
     const offset = (page - 1) * limit;
-    const usersSnapshot = await usersQuery
+    const usersSnapshot = await usersCollection
       .orderBy('createdAt', 'desc')
       .limit(limit)
       .offset(offset)
@@ -122,47 +120,16 @@ export async function GET(request: NextRequest) {
       return {
         id: doc.id,
         ...data,
-        // Normalize subscription: extract tier string from object if needed
         subscription: typeof data.subscription === 'object' && data.subscription?.tier
           ? data.subscription.tier
           : data.subscription || 'free',
+        // Get cost from pre-aggregated field if available, otherwise 0
+        currentMonthCost: data.currentMonthCost || 0,
       };
     });
 
-    // Fetch current month cost data from promptExecutions collection
-    const currentMonth = new Date().toISOString().slice(0, 7); // "YYYY-MM"
-    const userIds = users.map((u: any) => u.id);
-
-    // Calculate current month date range
-    const monthStart = new Date(currentMonth + '-01T00:00:00.000Z').toISOString();
-    const monthEnd = new Date(new Date(currentMonth + '-01').getFullYear(), new Date(currentMonth + '-01').getMonth() + 1, 0, 23, 59, 59, 999).toISOString();
-
-    // Query all promptExecutions for current month and aggregate per user
-    const promptsSnapshot = await db
-      .collection('promptExecutions')
-      .where('executedAt', '>=', monthStart)
-      .where('executedAt', '<=', monthEnd)
-      .get();
-
-    // Aggregate costs per user
-    const costMap = new Map<string, number>();
-    promptsSnapshot.forEach((doc) => {
-      const data = doc.data();
-      const userId = data.userId as string;
-      const cost = (data.estimatedCostUSD as number) || 0;
-      if (userId && userIds.includes(userId)) {
-        costMap.set(userId, (costMap.get(userId) || 0) + cost);
-      }
-    });
-
-    // Merge cost data into users
-    const usersWithCost = users.map((user: any) => ({
-      ...user,
-      currentMonthCost: costMap.get(user.id) || 0,
-    }));
-
     return NextResponse.json({
-      users: usersWithCost,
+      users,
       total,
       page,
       limit,
