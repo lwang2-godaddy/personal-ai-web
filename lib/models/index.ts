@@ -11,3 +11,4 @@ export * from './Circle';
 export * from './ServiceOperations';
 export * from './ExploreQuestion';
 export * from './BehaviorEvent';
+export * from './VoiceCategory';

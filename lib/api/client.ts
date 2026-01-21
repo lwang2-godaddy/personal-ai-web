@@ -168,18 +168,21 @@ export class ApiClient {
    * DELETE request with authentication
    *
    * @param url - API endpoint URL
+   * @param body - Optional request body
    * @param options - Additional fetch options
    * @returns Fetch Response object
    */
-  static async delete(url: string, options?: RequestInit): Promise<Response> {
+  static async delete(url: string, body?: any, options?: RequestInit): Promise<Response> {
     const headers = await this.getAuthHeaders();
 
     return fetch(url, {
       method: 'DELETE',
       headers: {
+        'Content-Type': 'application/json',
         ...headers,
         ...(options?.headers || {}),
       },
+      body: body ? JSON.stringify(body) : undefined,
       ...options,
     });
   }
@@ -254,7 +257,7 @@ export async function apiPut<T = any>(url: string, body?: any): Promise<T> {
 /**
  * Make authenticated DELETE request and return parsed JSON
  */
-export async function apiDelete<T = any>(url: string): Promise<T> {
-  const response = await ApiClient.delete(url);
+export async function apiDelete<T = any>(url: string, body?: any): Promise<T> {
+  const response = await ApiClient.delete(url, body);
   return ApiClient.handleResponse<T>(response);
 }

@@ -12,6 +12,9 @@ export interface VoiceNote {
   embeddingError?: string;
   embeddingErrorAt?: string;
   updatedAt?: string;
+  // Topic classification fields
+  topicCategory?: string;       // Category key e.g., 'work', 'health', 'other'
+  topicIcon?: string;           // Ionicons name e.g., 'briefcase-outline'
 }
 
 export interface VoiceRecordingState {
