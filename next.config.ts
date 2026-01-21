@@ -36,6 +36,22 @@ function getVersionEnv() {
 const nextConfig: NextConfig = {
   env: getVersionEnv(),
 
+  // Image optimization for Firebase Storage
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'firebasestorage.googleapis.com',
+        pathname: '/v0/b/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.googleusercontent.com',
+        pathname: '/**',
+      },
+    ],
+  },
+
   // Rewrites for subdomain URL support
   // Mobile app links to docs.sircharge.app/* and support.sircharge.app
   // These rewrites handle those subdomains when DNS is configured
