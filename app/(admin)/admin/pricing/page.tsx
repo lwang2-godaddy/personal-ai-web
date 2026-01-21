@@ -19,15 +19,80 @@ type ModelFeature =
 /**
  * Feature display configuration
  */
-const FEATURE_CONFIG: Record<ModelFeature, { label: string; icon: string; color: string }> = {
-  'chat': { label: 'Chat', icon: '💬', color: 'bg-blue-100 text-blue-700' },
-  'vision': { label: 'Vision', icon: '👁️', color: 'bg-purple-100 text-purple-700' },
-  'embeddings': { label: 'Embeddings', icon: '🔢', color: 'bg-green-100 text-green-700' },
-  'audio-transcription': { label: 'Transcription', icon: '🎤', color: 'bg-orange-100 text-orange-700' },
-  'audio-generation': { label: 'Audio Gen', icon: '🔊', color: 'bg-pink-100 text-pink-700' },
-  'function-calling': { label: 'Functions', icon: '⚡', color: 'bg-yellow-100 text-yellow-700' },
-  'json-mode': { label: 'JSON Mode', icon: '📋', color: 'bg-cyan-100 text-cyan-700' },
-  'streaming': { label: 'Streaming', icon: '📡', color: 'bg-indigo-100 text-indigo-700' },
+interface FeatureConfig {
+  label: string;
+  icon: string;
+  color: string;
+  description: string;
+  platform: 'mobile' | 'web' | 'both' | 'none';
+  inUse: boolean;
+}
+
+const FEATURE_CONFIG: Record<ModelFeature, FeatureConfig> = {
+  'chat': {
+    label: 'Chat',
+    icon: '💬',
+    color: 'bg-blue-100 text-blue-700',
+    description: 'Text conversations with AI',
+    platform: 'both',
+    inUse: true,
+  },
+  'vision': {
+    label: 'Vision',
+    icon: '👁️',
+    color: 'bg-purple-100 text-purple-700',
+    description: 'Analyze images and photos',
+    platform: 'mobile',
+    inUse: true,
+  },
+  'embeddings': {
+    label: 'Embeddings',
+    icon: '🔢',
+    color: 'bg-green-100 text-green-700',
+    description: 'Convert text to vectors for search',
+    platform: 'both',
+    inUse: true,
+  },
+  'audio-transcription': {
+    label: 'Transcription',
+    icon: '🎤',
+    color: 'bg-orange-100 text-orange-700',
+    description: 'Convert speech to text (Whisper)',
+    platform: 'mobile',
+    inUse: true,
+  },
+  'audio-generation': {
+    label: 'Audio Gen',
+    icon: '🔊',
+    color: 'bg-pink-100 text-pink-700',
+    description: 'Convert text to speech (TTS)',
+    platform: 'mobile',
+    inUse: true,
+  },
+  'function-calling': {
+    label: 'Functions',
+    icon: '⚡',
+    color: 'bg-gray-100 text-gray-500',
+    description: 'AI calls predefined tools/APIs',
+    platform: 'none',
+    inUse: false,
+  },
+  'json-mode': {
+    label: 'JSON Mode',
+    icon: '📋',
+    color: 'bg-gray-100 text-gray-500',
+    description: 'Force structured JSON output',
+    platform: 'none',
+    inUse: false,
+  },
+  'streaming': {
+    label: 'Streaming',
+    icon: '📡',
+    color: 'bg-indigo-100 text-indigo-700',
+    description: 'Real-time token-by-token output',
+    platform: 'mobile',
+    inUse: true,
+  },
 };
 
 /**
@@ -370,6 +435,38 @@ export default function AdminPricingPage() {
         </div>
       )}
 
+      {/* Feature Legend */}
+      {config && !isDefault && (
+        <div className="bg-gray-50 rounded-lg p-4">
+          <h3 className="font-semibold text-gray-700 mb-3">Feature Reference</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+            {(Object.entries(FEATURE_CONFIG) as [ModelFeature, FeatureConfig][]).map(([key, featureConfig]) => (
+              <div key={key} className={`p-2 rounded ${featureConfig.inUse ? 'bg-white' : 'bg-gray-100 opacity-60'}`}>
+                <div className="flex items-center gap-1">
+                  <span>{featureConfig.icon}</span>
+                  <span className="font-medium">{featureConfig.label}</span>
+                  {featureConfig.platform !== 'none' && (
+                    <span className="text-xs">
+                      {featureConfig.platform === 'both' ? '📱🌐' :
+                       featureConfig.platform === 'mobile' ? '📱' : '🌐'}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">{featureConfig.description}</p>
+                {!featureConfig.inUse && (
+                  <p className="text-xs text-red-500 mt-1">Not used in this app</p>
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="mt-3 text-xs text-gray-500 flex gap-4">
+            <span>📱 = Mobile app</span>
+            <span>🌐 = Web dashboard</span>
+            <span>📱🌐 = Both platforms</span>
+          </div>
+        </div>
+      )}
+
       {/* Model Cards */}
       {config && !isDefault && (
         <>
@@ -437,7 +534,10 @@ export default function AdminPricingPage() {
                 <div className="flex flex-wrap gap-2">
                   {(Object.keys(FEATURE_CONFIG) as ModelFeature[]).map((feature) => {
                     const isSelected = newModel.features.includes(feature);
-                    const config = FEATURE_CONFIG[feature];
+                    const featureConfig = FEATURE_CONFIG[feature];
+                    const platformIndicator = featureConfig.platform === 'both' ? '📱🌐' :
+                      featureConfig.platform === 'mobile' ? '📱' :
+                      featureConfig.platform === 'web' ? '🌐' : '';
                     return (
                       <button
                         key={feature}
@@ -452,11 +552,15 @@ export default function AdminPricingPage() {
                         }}
                         className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
                           isSelected
-                            ? config.color + ' ring-2 ring-offset-1 ring-gray-400'
-                            : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                            ? (featureConfig.inUse ? featureConfig.color : 'bg-gray-200 text-gray-500') + ' ring-2 ring-offset-1 ring-gray-400'
+                            : featureConfig.inUse ? 'bg-gray-100 text-gray-500 hover:bg-gray-200' : 'bg-gray-50 text-gray-300 hover:bg-gray-100'
                         }`}
+                        title={`${featureConfig.description}${!featureConfig.inUse ? ' (Not used in this app)' : ''}`}
                       >
-                        {config.icon} {config.label}
+                        {featureConfig.icon} {featureConfig.label}
+                        {featureConfig.platform !== 'none' && (
+                          <span className="ml-1 opacity-60">{platformIndicator}</span>
+                        )}
                       </button>
                     );
                   })}
@@ -660,7 +764,10 @@ function ModelCard({
               {(Object.keys(FEATURE_CONFIG) as ModelFeature[]).map((feature) => {
                 const features = displayPricing.features || [];
                 const isSelected = features.includes(feature);
-                const config = FEATURE_CONFIG[feature];
+                const featureConfig = FEATURE_CONFIG[feature];
+                const platformIndicator = featureConfig.platform === 'both' ? '📱🌐' :
+                  featureConfig.platform === 'mobile' ? '📱' :
+                  featureConfig.platform === 'web' ? '🌐' : '';
                 return (
                   <button
                     key={feature}
@@ -673,11 +780,15 @@ function ModelCard({
                     }}
                     className={`px-2 py-1 rounded-full text-xs font-medium transition-all ${
                       isSelected
-                        ? config.color + ' ring-1 ring-offset-1 ring-gray-300'
-                        : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                        ? (featureConfig.inUse ? featureConfig.color : 'bg-gray-200 text-gray-500') + ' ring-1 ring-offset-1 ring-gray-300'
+                        : featureConfig.inUse ? 'bg-gray-100 text-gray-500 hover:bg-gray-200' : 'bg-gray-50 text-gray-300 hover:bg-gray-100'
                     }`}
+                    title={`${featureConfig.description}${!featureConfig.inUse ? ' (Not used in this app)' : ''}`}
                   >
-                    {config.icon} {config.label}
+                    {featureConfig.icon} {featureConfig.label}
+                    {featureConfig.platform !== 'none' && (
+                      <span className="ml-1 opacity-60">{platformIndicator}</span>
+                    )}
                   </button>
                 );
               })}
@@ -686,13 +797,27 @@ function ModelCard({
             <div className="flex flex-wrap gap-1.5">
               {displayPricing.features && displayPricing.features.length > 0 ? (
                 displayPricing.features.map((feature) => {
-                  const config = FEATURE_CONFIG[feature];
+                  const featureConfig = FEATURE_CONFIG[feature];
+                  const platformIndicator = featureConfig.platform === 'both' ? '📱🌐' :
+                    featureConfig.platform === 'mobile' ? '📱' :
+                    featureConfig.platform === 'web' ? '🌐' : '';
                   return (
                     <span
                       key={feature}
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${config.color}`}
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        featureConfig.inUse ? featureConfig.color : 'bg-gray-100 text-gray-400 line-through'
+                      }`}
+                      title={`${featureConfig.description}\n${
+                        featureConfig.platform === 'both' ? '📱🌐 Mobile + Web' :
+                        featureConfig.platform === 'mobile' ? '📱 Mobile only' :
+                        featureConfig.platform === 'web' ? '🌐 Web only' :
+                        '⚠️ Not used in this app'
+                      }`}
                     >
-                      {config.icon} {config.label}
+                      {featureConfig.icon} {featureConfig.label}
+                      {featureConfig.platform !== 'none' && (
+                        <span className="ml-1 opacity-60">{platformIndicator}</span>
+                      )}
                     </span>
                   );
                 })
