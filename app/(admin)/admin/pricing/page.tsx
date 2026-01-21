@@ -4,6 +4,33 @@ import { useEffect, useState } from 'react';
 import { apiGet, apiPost, apiPatch } from '@/lib/api/client';
 
 /**
+ * Available model features
+ */
+type ModelFeature =
+  | 'chat'
+  | 'vision'
+  | 'embeddings'
+  | 'audio-transcription'
+  | 'audio-generation'
+  | 'function-calling'
+  | 'json-mode'
+  | 'streaming';
+
+/**
+ * Feature display configuration
+ */
+const FEATURE_CONFIG: Record<ModelFeature, { label: string; icon: string; color: string }> = {
+  'chat': { label: 'Chat', icon: '💬', color: 'bg-blue-100 text-blue-700' },
+  'vision': { label: 'Vision', icon: '👁️', color: 'bg-purple-100 text-purple-700' },
+  'embeddings': { label: 'Embeddings', icon: '🔢', color: 'bg-green-100 text-green-700' },
+  'audio-transcription': { label: 'Transcription', icon: '🎤', color: 'bg-orange-100 text-orange-700' },
+  'audio-generation': { label: 'Audio Gen', icon: '🔊', color: 'bg-pink-100 text-pink-700' },
+  'function-calling': { label: 'Functions', icon: '⚡', color: 'bg-yellow-100 text-yellow-700' },
+  'json-mode': { label: 'JSON Mode', icon: '📋', color: 'bg-cyan-100 text-cyan-700' },
+  'streaming': { label: 'Streaming', icon: '📡', color: 'bg-indigo-100 text-indigo-700' },
+};
+
+/**
  * Model pricing configuration
  */
 interface ModelPricing {
@@ -11,6 +38,7 @@ interface ModelPricing {
   inputPer1M: number;
   outputPer1M: number;
   enabled: boolean;
+  features?: ModelFeature[];
 }
 
 /**
@@ -35,6 +63,7 @@ interface NewModel {
   name: string;
   inputPer1M: string;
   outputPer1M: string;
+  features: ModelFeature[];
 }
 
 /**
@@ -51,7 +80,7 @@ export default function AdminPricingPage() {
   const [editingModel, setEditingModel] = useState<EditingModel | null>(null);
   const [changeNotes, setChangeNotes] = useState('');
   const [showAddModel, setShowAddModel] = useState(false);
-  const [newModel, setNewModel] = useState<NewModel>({ id: '', name: '', inputPer1M: '', outputPer1M: '' });
+  const [newModel, setNewModel] = useState<NewModel>({ id: '', name: '', inputPer1M: '', outputPer1M: '', features: [] });
 
   useEffect(() => {
     fetchConfig();
@@ -145,6 +174,7 @@ export default function AdminPricingPage() {
               inputPer1M: inputPrice,
               outputPer1M: outputPrice,
               enabled: true,
+              features: newModel.features,
             },
           },
           changeNotes: changeNotes || `Added new model: ${newModel.name}`,
@@ -153,7 +183,7 @@ export default function AdminPricingPage() {
 
       setConfig(data.config);
       setShowAddModel(false);
-      setNewModel({ id: '', name: '', inputPer1M: '', outputPer1M: '' });
+      setNewModel({ id: '', name: '', inputPer1M: '', outputPer1M: '', features: [] });
       setChangeNotes('');
       setSuccessMessage(`${newModel.name} added successfully!`);
       setTimeout(() => setSuccessMessage(null), 3000);
@@ -229,7 +259,7 @@ export default function AdminPricingPage() {
     setChangeNotes('');
   };
 
-  const updateEditingPricing = (field: keyof ModelPricing, value: string | number | boolean) => {
+  const updateEditingPricing = (field: keyof ModelPricing, value: string | number | boolean | ModelFeature[]) => {
     if (!editingModel) return;
     setEditingModel({
       ...editingModel,
@@ -403,6 +433,36 @@ export default function AdminPricingPage() {
                 </div>
               </div>
               <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Model Features</label>
+                <div className="flex flex-wrap gap-2">
+                  {(Object.keys(FEATURE_CONFIG) as ModelFeature[]).map((feature) => {
+                    const isSelected = newModel.features.includes(feature);
+                    const config = FEATURE_CONFIG[feature];
+                    return (
+                      <button
+                        key={feature}
+                        type="button"
+                        onClick={() => {
+                          setNewModel({
+                            ...newModel,
+                            features: isSelected
+                              ? newModel.features.filter(f => f !== feature)
+                              : [...newModel.features, feature],
+                          });
+                        }}
+                        className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                          isSelected
+                            ? config.color + ' ring-2 ring-offset-1 ring-gray-400'
+                            : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                        }`}
+                      >
+                        {config.icon} {config.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="mt-4">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Change Notes</label>
                 <input
                   type="text"
@@ -423,7 +483,7 @@ export default function AdminPricingPage() {
                 <button
                   onClick={() => {
                     setShowAddModel(false);
-                    setNewModel({ id: '', name: '', inputPer1M: '', outputPer1M: '' });
+                    setNewModel({ id: '', name: '', inputPer1M: '', outputPer1M: '', features: [] });
                     setChangeNotes('');
                   }}
                   className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
@@ -470,7 +530,7 @@ interface ModelCardProps {
   onCancel: () => void;
   onSave: () => void;
   onRemove: () => void;
-  onUpdatePricing: (field: keyof ModelPricing, value: string | number | boolean) => void;
+  onUpdatePricing: (field: keyof ModelPricing, value: string | number | boolean | ModelFeature[]) => void;
   saving: boolean;
   changeNotes: string;
   onChangeNotesUpdate: (notes: string) => void;
@@ -588,6 +648,58 @@ function ModelCard({
             <span className={displayPricing.enabled ? 'text-green-600 font-medium' : 'text-gray-400'}>
               {displayPricing.enabled ? 'Yes' : 'No'}
             </span>
+          )}
+        </div>
+
+        {/* Features Section */}
+        <hr className="my-2" />
+        <div>
+          <span className="text-sm text-gray-600 block mb-2">Features</span>
+          {isEditing ? (
+            <div className="flex flex-wrap gap-1.5">
+              {(Object.keys(FEATURE_CONFIG) as ModelFeature[]).map((feature) => {
+                const features = displayPricing.features || [];
+                const isSelected = features.includes(feature);
+                const config = FEATURE_CONFIG[feature];
+                return (
+                  <button
+                    key={feature}
+                    type="button"
+                    onClick={() => {
+                      const newFeatures = isSelected
+                        ? features.filter(f => f !== feature)
+                        : [...features, feature];
+                      onUpdatePricing('features', newFeatures);
+                    }}
+                    className={`px-2 py-1 rounded-full text-xs font-medium transition-all ${
+                      isSelected
+                        ? config.color + ' ring-1 ring-offset-1 ring-gray-300'
+                        : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                    }`}
+                  >
+                    {config.icon} {config.label}
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-1.5">
+              {displayPricing.features && displayPricing.features.length > 0 ? (
+                displayPricing.features.map((feature) => {
+                  const config = FEATURE_CONFIG[feature];
+                  return (
+                    <span
+                      key={feature}
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${config.color}`}
+                    >
+                      {config.icon} {config.label}
+                    </span>
+                  );
+                })
+              ) : (
+                <span className="text-gray-400 text-xs italic">No features set</span>
+              )}
+            </div>
           )}
         </div>
       </div>

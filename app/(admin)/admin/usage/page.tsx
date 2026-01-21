@@ -55,6 +55,7 @@ interface UsageResponse {
   topUsers: TopUser[];
   modelBreakdown?: ModelBreakdown;
   endpointBreakdown?: EndpointBreakdown;
+  featureBreakdown?: FeatureBreakdown[];
   startDate: string;
   endDate: string;
   groupBy: 'day' | 'month';
@@ -75,6 +76,16 @@ interface ModelBreakdown {
 
 interface EndpointBreakdown {
   [endpoint: string]: { cost: number; calls: number; tokens: number };
+}
+
+interface FeatureBreakdown {
+  feature: string;
+  icon: string;
+  cost: number;
+  calls: number;
+  tokens: number;
+  avgCostPerCall: number;
+  percentOfTotal: number;
 }
 
 const COLORS = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#22c55e', '#14b8a6', '#06b6d4', '#3b82f6', '#6366f1', '#8b5cf6'];
@@ -132,9 +143,10 @@ export default function AdminUsageAnalyticsPage() {
   // Top users state
   const [topUsers, setTopUsers] = useState<TopUser[]>([]);
 
-  // Model and endpoint breakdown state (new)
+  // Model, endpoint, and feature breakdown state
   const [modelBreakdown, setModelBreakdown] = useState<ModelBreakdown>({});
   const [endpointBreakdown, setEndpointBreakdown] = useState<EndpointBreakdown>({});
+  const [featureBreakdown, setFeatureBreakdown] = useState<FeatureBreakdown[]>([]);
 
   // Infrastructure costs state (new)
   const [infrastructureData, setInfrastructureData] = useState<AggregatedInfrastructureCosts | null>(null);
@@ -183,9 +195,10 @@ export default function AdminUsageAnalyticsPage() {
         setTopUsers([]);
       }
 
-      // Set model and endpoint breakdowns (new)
+      // Set model, endpoint, and feature breakdowns
       setModelBreakdown(data.modelBreakdown || {});
       setEndpointBreakdown(data.endpointBreakdown || {});
+      setFeatureBreakdown(data.featureBreakdown || []);
 
       // Fetch infrastructure costs in parallel
       try {
@@ -455,6 +468,120 @@ export default function AdminUsageAnalyticsPage() {
               <div className="text-4xl">🔤</div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Feature Cost Breakdown - For Subscription Quota Planning */}
+      {!loading && featureBreakdown.length > 0 && (
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="mb-4">
+            <h2 className="text-xl font-bold text-gray-900">Cost by Feature</h2>
+            <p className="text-sm text-gray-600 mt-1">
+              Understand which features cost the most to define subscription quotas
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Pie Chart */}
+            <div>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={featureBreakdown.map((f) => ({ name: f.feature, value: f.cost }))}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name} (${((percent ?? 0) * 100).toFixed(0)}%)`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {featureBreakdown.map((_, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value) => `$${(value as number).toFixed(4)}`} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Table */}
+            <div>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Feature</th>
+                      <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Cost</th>
+                      <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Calls</th>
+                      <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Avg/Call</th>
+                      <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">%</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {featureBreakdown.map((item, index) => (
+                      <tr key={index} className={index === 0 ? 'bg-red-50' : ''}>
+                        <td className="px-4 py-2 text-sm font-medium text-gray-900">
+                          <span className="mr-2">{item.icon}</span>
+                          {item.feature}
+                          {index === 0 && (
+                            <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                              Most Expensive
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-2 text-sm text-gray-900 text-right font-medium">
+                          ${item.cost.toFixed(4)}
+                        </td>
+                        <td className="px-4 py-2 text-sm text-gray-600 text-right">
+                          {item.calls.toLocaleString()}
+                        </td>
+                        <td className="px-4 py-2 text-sm text-gray-600 text-right">
+                          ${item.avgCostPerCall.toFixed(6)}
+                        </td>
+                        <td className="px-4 py-2 text-sm text-gray-500 text-right">
+                          {item.percentOfTotal.toFixed(1)}%
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          {/* Photo Description Highlight (if exists) */}
+          {featureBreakdown.some((f) => f.feature === 'Photo Description') && (
+            <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xl">📷</span>
+                <h3 className="font-semibold text-amber-800">Photo Description Deep Dive</h3>
+              </div>
+              {(() => {
+                const photo = featureBreakdown.find((f) => f.feature === 'Photo Description');
+                if (!photo) return null;
+                return (
+                  <div className="grid grid-cols-3 gap-4 text-sm">
+                    <div>
+                      <p className="text-amber-700">Photos Processed</p>
+                      <p className="text-xl font-bold text-amber-900">{photo.calls.toLocaleString()}</p>
+                    </div>
+                    <div>
+                      <p className="text-amber-700">Total Cost</p>
+                      <p className="text-xl font-bold text-amber-900">${photo.cost.toFixed(2)}</p>
+                    </div>
+                    <div>
+                      <p className="text-amber-700">Avg per Photo</p>
+                      <p className="text-xl font-bold text-amber-900">${photo.avgCostPerCall.toFixed(4)}</p>
+                    </div>
+                  </div>
+                );
+              })()}
+              <p className="text-xs text-amber-600 mt-3">
+                Photo descriptions use GPT-4o vision (~$0.01-0.03 per image). Consider limiting free tier to 5-10 photos/month.
+              </p>
+            </div>
+          )}
         </div>
       )}
 

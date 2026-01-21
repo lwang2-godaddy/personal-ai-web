@@ -48,6 +48,69 @@ const SOURCE_TYPE_TO_OPERATION: Record<string, string> = {
 };
 
 /**
+ * Map sourceType to user-friendly feature name for cost breakdown
+ * Groups related operations into business-meaningful categories
+ */
+const SOURCE_TYPE_TO_FEATURE: Record<string, string> = {
+  // Vision/Photo (EXPENSIVE - ~$0.01-0.03 per call)
+  vision: 'Photo Description',
+  image_description: 'Photo Description',
+
+  // Chat (RAG vs Direct)
+  rag: 'AI Chat (RAG)',
+  rag_stream: 'AI Chat (RAG)',
+  direct: 'AI Chat (Direct)',
+  direct_stream: 'AI Chat (Direct)',
+  custom_prompt: 'AI Chat (Custom)',
+
+  // Audio
+  transcription: 'Voice Transcription',
+  tts: 'Text-to-Speech',
+
+  // Embeddings (group all into one)
+  embedding: 'Search Indexing',
+  health_embedding: 'Search Indexing',
+  location_embedding: 'Search Indexing',
+  voice_embedding: 'Search Indexing',
+  photo_embedding: 'Search Indexing',
+  text_note_embedding: 'Search Indexing',
+  event_embedding: 'Search Indexing',
+  shared_activity_embedding: 'Search Indexing',
+  rag_query: 'Search Indexing',
+  circle_rag_query: 'Search Indexing',
+  group_rag_query: 'Search Indexing',
+
+  // AI Analysis Services
+  sentiment: 'Sentiment Analysis',
+  entity_extraction: 'Entity Extraction',
+  event_extraction: 'Event Extraction',
+  memory: 'Memory Generation',
+  daily_summary: 'Daily Summary',
+  life_feed: 'Life Feed',
+  suggestion: 'Smart Suggestions',
+};
+
+/**
+ * Feature icons for UI display
+ */
+const FEATURE_ICONS: Record<string, string> = {
+  'Photo Description': '📷',
+  'AI Chat (RAG)': '💬',
+  'AI Chat (Direct)': '💬',
+  'AI Chat (Custom)': '💬',
+  'Voice Transcription': '🎤',
+  'Text-to-Speech': '🔊',
+  'Search Indexing': '🔍',
+  'Sentiment Analysis': '😊',
+  'Entity Extraction': '👤',
+  'Event Extraction': '📅',
+  'Memory Generation': '🧠',
+  'Daily Summary': '📊',
+  'Life Feed': '📰',
+  'Smart Suggestions': '💡',
+};
+
+/**
  * Map sourceType to OpenAI API endpoint for endpoint-level aggregation
  */
 const SOURCE_TYPE_TO_ENDPOINT: Record<string, string> = {
@@ -155,6 +218,8 @@ export async function GET(request: NextRequest) {
     const modelStats = new Map<string, { cost: number; calls: number; tokens: number }>();
     // Track by OpenAI endpoint
     const endpointStats = new Map<string, { cost: number; calls: number; tokens: number }>();
+    // Track by user-facing feature (for subscription quota planning)
+    const featureStats = new Map<string, { cost: number; calls: number; tokens: number }>();
 
     usageSnapshot.forEach((doc) => {
       const data = doc.data();
@@ -248,6 +313,18 @@ export async function GET(request: NextRequest) {
         existing.tokens += tokens;
         endpointStats.set(endpoint, existing);
       }
+
+      // Aggregate by user-facing feature (for subscription quota planning)
+      const feature = sourceType
+        ? SOURCE_TYPE_TO_FEATURE[sourceType]
+        : SERVICE_TO_OPERATION[service] || 'Other';
+      if (feature) {
+        const existing = featureStats.get(feature) || { cost: 0, calls: 0, tokens: 0 };
+        existing.cost += cost;
+        existing.calls += 1;
+        existing.tokens += tokens;
+        featureStats.set(feature, existing);
+      }
     });
 
     const usage = Array.from(usageByPeriod.values())
@@ -320,6 +397,20 @@ export async function GET(request: NextRequest) {
       ])
     );
 
+    // Build feature breakdown with calculated metrics (sorted by cost descending)
+    const totalCostForPercent = totals.totalCost || 1; // Avoid division by zero
+    const featureBreakdown = Array.from(featureStats.entries())
+      .map(([feature, stats]) => ({
+        feature,
+        icon: FEATURE_ICONS[feature] || '📦',
+        cost: Number(stats.cost.toFixed(4)),
+        calls: stats.calls,
+        tokens: stats.tokens,
+        avgCostPerCall: stats.calls > 0 ? Number((stats.cost / stats.calls).toFixed(6)) : 0,
+        percentOfTotal: Number(((stats.cost / totalCostForPercent) * 100).toFixed(1)),
+      }))
+      .sort((a, b) => b.cost - a.cost);
+
     return NextResponse.json({
       usage,
       totals: {
@@ -329,6 +420,7 @@ export async function GET(request: NextRequest) {
       topUsers,
       modelBreakdown,
       endpointBreakdown,
+      featureBreakdown,
       startDate: startDateStr,
       endDate: endDateStr,
       groupBy,
