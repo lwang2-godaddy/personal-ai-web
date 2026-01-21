@@ -6,6 +6,19 @@ const CONFIG_DOC_PATH = 'config/pricing';
 const VERSIONS_COLLECTION = 'pricingVersions';
 
 /**
+ * Available model features
+ */
+type ModelFeature =
+  | 'chat'
+  | 'vision'
+  | 'embeddings'
+  | 'audio-transcription'
+  | 'audio-generation'
+  | 'function-calling'
+  | 'json-mode'
+  | 'streaming';
+
+/**
  * Model pricing configuration
  */
 interface ModelPricing {
@@ -13,6 +26,7 @@ interface ModelPricing {
   inputPer1M: number;     // Price per 1M input tokens
   outputPer1M: number;    // Price per 1M output tokens
   enabled: boolean;       // Show in UI / allow usage
+  features?: ModelFeature[]; // Model capabilities
 }
 
 /**
@@ -56,30 +70,70 @@ function getDefaultPricingConfig(): PricingConfig {
         inputPer1M: 2.50,
         outputPer1M: 10.00,
         enabled: true,
+        features: ['chat', 'vision', 'function-calling', 'json-mode', 'streaming'],
       },
       'gpt-4o-mini': {
         name: 'GPT-4o Mini',
         inputPer1M: 0.15,
         outputPer1M: 0.60,
         enabled: true,
+        features: ['chat', 'vision', 'function-calling', 'json-mode', 'streaming'],
       },
       'gpt-4-turbo': {
         name: 'GPT-4 Turbo',
         inputPer1M: 10.00,
         outputPer1M: 30.00,
         enabled: true,
+        features: ['chat', 'vision', 'function-calling', 'json-mode', 'streaming'],
       },
       'gpt-4': {
         name: 'GPT-4',
         inputPer1M: 30.00,
         outputPer1M: 60.00,
         enabled: true,
+        features: ['chat', 'function-calling', 'streaming'],
       },
       'gpt-3.5-turbo': {
         name: 'GPT-3.5 Turbo',
         inputPer1M: 0.50,
         outputPer1M: 1.50,
         enabled: true,
+        features: ['chat', 'function-calling', 'json-mode', 'streaming'],
+      },
+      'text-embedding-3-small': {
+        name: 'Text Embedding 3 Small',
+        inputPer1M: 0.02,
+        outputPer1M: 0,
+        enabled: true,
+        features: ['embeddings'],
+      },
+      'text-embedding-3-large': {
+        name: 'Text Embedding 3 Large',
+        inputPer1M: 0.13,
+        outputPer1M: 0,
+        enabled: true,
+        features: ['embeddings'],
+      },
+      'whisper-1': {
+        name: 'Whisper',
+        inputPer1M: 0.006,  // $0.006 per minute, not tokens
+        outputPer1M: 0,
+        enabled: true,
+        features: ['audio-transcription'],
+      },
+      'tts-1': {
+        name: 'TTS Standard',
+        inputPer1M: 15.00,  // $15 per 1M characters
+        outputPer1M: 0,
+        enabled: true,
+        features: ['audio-generation'],
+      },
+      'tts-1-hd': {
+        name: 'TTS HD',
+        inputPer1M: 30.00,  // $30 per 1M characters
+        outputPer1M: 0,
+        enabled: true,
+        features: ['audio-generation'],
       },
     },
   };
@@ -332,6 +386,10 @@ function validateAndMergeModelPricing(
     merged.enabled = updates.enabled;
   }
 
+  if (Array.isArray(updates.features)) {
+    merged.features = updates.features;
+  }
+
   return merged;
 }
 
@@ -356,5 +414,6 @@ function validateModelPricing(pricing: ModelPricing): ModelPricing {
     inputPer1M: pricing.inputPer1M,
     outputPer1M: pricing.outputPer1M,
     enabled: pricing.enabled ?? true,
+    features: Array.isArray(pricing.features) ? pricing.features : [],
   };
 }
