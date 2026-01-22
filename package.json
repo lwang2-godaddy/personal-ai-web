@@ -31,7 +31,7 @@
     "react-redux": "^9.2.0",
     "recharts": "^3.6.0",
     "redux-persist": "^6.0.0",
-    "vercel": "^50.4.8"
+    "vercel": "^50.4.9"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

@@ -162,9 +162,85 @@ export default function FeaturesPage() {
             <li>Reference specific data types when relevant</li>
           </ul>
 
-          <h2 id="data-insights">Data Insights</h2>
+          <h2 id="insights-feed">Insights Feed</h2>
           <p>
-            SirCharge automatically generates insights from your collected data.
+            The Insights feed is your personalized AI-generated timeline about your life. It analyzes your data and creates meaningful posts about your patterns, achievements, and predictions.
+          </p>
+
+          <h3>Content Categories</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th>Icon</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Health</td>
+                <td>❤️</td>
+                <td>Health data, sleep, heart rate insights</td>
+              </tr>
+              <tr>
+                <td>Activity</td>
+                <td>🏃</td>
+                <td>Workouts, streaks, activity patterns</td>
+              </tr>
+              <tr>
+                <td>Location</td>
+                <td>📍</td>
+                <td>Places visited, location patterns</td>
+              </tr>
+              <tr>
+                <td>Social</td>
+                <td>👥</td>
+                <td>Social activities and connections</td>
+              </tr>
+              <tr>
+                <td>Memory</td>
+                <td>💭</td>
+                <td>Memory highlights and anniversaries</td>
+              </tr>
+              <tr>
+                <td>Achievement</td>
+                <td>🏆</td>
+                <td>Milestones and achievements</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h3>Post Types</h3>
+          <ul>
+            <li><strong>📋 Life Updates:</strong> Weekly and daily summaries</li>
+            <li><strong>🏆 Milestones:</strong> &quot;100th gym visit!&quot;</li>
+            <li><strong>🔮 Predictions:</strong> &quot;Tomorrow is your usual badminton day&quot;</li>
+            <li><strong>💡 Insights:</strong> &quot;You&apos;re 30% more active on weekdays&quot;</li>
+            <li><strong>📸 Memories:</strong> Photo and voice note highlights</li>
+            <li><strong>🔥 Streaks:</strong> &quot;7-day workout streak!&quot;</li>
+            <li><strong>📊 Comparisons:</strong> This month vs last month</li>
+          </ul>
+
+          <h3>AI Features Powering Insights</h3>
+          <ul>
+            <li><strong>Fun Facts:</strong> Daily trivia about your data (&quot;You&apos;ve walked 500 miles!&quot;)</li>
+            <li><strong>Pattern Detection:</strong> Identifies your activity patterns</li>
+            <li><strong>Anomaly Alerts:</strong> Notices unusual behavior changes</li>
+            <li><strong>Mood Insights:</strong> Correlates activities with your mood</li>
+            <li><strong>Life Forecaster:</strong> Predictions based on your patterns</li>
+          </ul>
+
+          <h3>Interacting with Insights</h3>
+          <ul>
+            <li><strong>Like:</strong> Save insights you find valuable</li>
+            <li><strong>Share:</strong> Share with friends or to social circles</li>
+            <li><strong>Prediction Feedback:</strong> Mark predictions as correct/incorrect to improve accuracy</li>
+            <li><strong>Filter:</strong> View by category (Health, Activity, etc.)</li>
+          </ul>
+
+          <h2 id="data-insights">Dashboard</h2>
+          <p>
+            The dashboard gives you a quick overview of all your collected data.
           </p>
 
           <h3>Dashboard Features</h3>
