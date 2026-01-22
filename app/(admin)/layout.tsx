@@ -1,24 +1,25 @@
 'use client';
 
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import AdminGuard from '@/components/admin/AdminGuard';
+import AdminSidebar from '@/components/admin/AdminSidebar';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { getAuth, signOut } from 'firebase/auth';
 import { useTrackingSession } from '@/lib/hooks/useTrackPage';
 
 /**
  * Admin Layout
- * Red-themed layout to distinguish admin panel from regular dashboard
- * Includes navigation and admin guard protection
+ * Red-themed layout with collapsible sidebar navigation
+ * Includes admin guard protection and behavior tracking
  */
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   // Initialize behavior tracking session
   useTrackingSession();
 
-  const pathname = usePathname();
   const router = useRouter();
   const { user } = useAuth();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleSignOut = async () => {
     try {
@@ -30,112 +31,65 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
   };
 
-  const navLinks = [
-    { href: '/admin', label: 'Overview', icon: '📊' },
-    { href: '/admin/users', label: 'Users', icon: '👥' },
-    { href: '/admin/subscriptions', label: 'Subscriptions', icon: '💳' },
-    { href: '/admin/usage', label: 'Usage Analytics', icon: '📈' },
-    { href: '/admin/behavior', label: 'Behavior', icon: '🎯' },
-    { href: '/admin/insights', label: 'Insights', icon: '💡' },
-    { href: '/admin/pricing', label: 'Pricing', icon: '💰' },
-    { href: '/admin/prompts', label: 'Prompts', icon: '💬' },
-    { href: '/admin/ai-models', label: 'AI Models', icon: '🤖' },
-    { href: '/admin/explore-questions', label: 'Explore', icon: '🔍' },
-    { href: '/admin/voice-categories', label: 'Voice Categories', icon: '🎤' },
-    { href: '/admin/app-settings', label: 'App Settings', icon: '⚙️' },
-    { href: '/admin/migrations', label: 'Migrations', icon: '🔄' },
-    { href: '/admin/docs', label: 'Docs', icon: '📚' },
-  ];
-
   return (
     <AdminGuard>
-      <div className="min-h-screen bg-gray-50">
-        {/* Admin Navigation Bar - Red Theme */}
-        <nav className="bg-red-600 text-white shadow-lg">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between h-16">
-              {/* Left side - Title and Nav Links */}
-              <div className="flex items-center space-x-8">
+      <div className="flex min-h-screen bg-gray-50">
+        {/* Sidebar */}
+        <AdminSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+        {/* Main content area */}
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* Top bar */}
+          <header className="bg-red-600 text-white shadow-lg">
+            <div className="px-4 sm:px-6 lg:px-8">
+              <div className="flex items-center justify-between h-16">
+                {/* Left side - Hamburger and Title */}
                 <div className="flex items-center">
-                  <span className="text-2xl font-bold">⚙️</span>
-                  <span className="ml-2 text-xl font-semibold">Admin Panel</span>
-                </div>
-
-                {/* Navigation Links */}
-                <div className="hidden md:flex space-x-4">
-                  {navLinks.map((link) => {
-                    const isActive = pathname === link.href;
-                    return (
-                      <Link
-                        key={link.href}
-                        href={link.href}
-                        className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                          isActive
-                            ? 'bg-red-700 text-white'
-                            : 'text-red-100 hover:bg-red-500 hover:text-white'
-                        }`}
-                      >
-                        <span className="mr-1">{link.icon}</span>
-                        {link.label}
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Right side - User Info and Actions */}
-              <div className="flex items-center space-x-4">
-                {/* Back to Dashboard Link */}
-                <Link
-                  href="/dashboard"
-                  className="px-3 py-2 rounded-md text-sm font-medium text-red-100 hover:bg-red-500 hover:text-white transition-colors"
-                >
-                  ← Back to Dashboard
-                </Link>
-
-                {/* User Info */}
-                <div className="hidden md:block text-sm">
-                  <div className="font-medium">{user?.displayName || user?.email}</div>
-                  <div className="text-red-200 text-xs">Admin</div>
-                </div>
-
-                {/* Sign Out Button */}
-                <button
-                  onClick={handleSignOut}
-                  className="px-4 py-2 rounded-md text-sm font-medium bg-red-700 hover:bg-red-800 transition-colors"
-                >
-                  Sign Out
-                </button>
-              </div>
-            </div>
-
-            {/* Mobile Navigation */}
-            <div className="md:hidden pb-3 space-y-1">
-              {navLinks.map((link) => {
-                const isActive = pathname === link.href;
-                return (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className={`block px-3 py-2 rounded-md text-base font-medium ${
-                      isActive
-                        ? 'bg-red-700 text-white'
-                        : 'text-red-100 hover:bg-red-500 hover:text-white'
-                    }`}
+                  {/* Mobile hamburger button */}
+                  <button
+                    onClick={() => setSidebarOpen(true)}
+                    className="p-2 rounded-md hover:bg-red-500 transition-colors md:hidden mr-2"
+                    aria-label="Open sidebar"
                   >
-                    <span className="mr-2">{link.icon}</span>
-                    {link.label}
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        </nav>
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                  </button>
 
-        {/* Main Content */}
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {children}
-        </main>
+                  {/* Title */}
+                  <div className="flex items-center">
+                    <span className="text-2xl font-bold">⚙️</span>
+                    <span className="ml-2 text-xl font-semibold">Admin Panel</span>
+                  </div>
+                </div>
+
+                {/* Right side - User Info and Actions */}
+                <div className="flex items-center space-x-4">
+                  {/* User Info */}
+                  <div className="hidden sm:block text-sm">
+                    <div className="font-medium">{user?.displayName || user?.email}</div>
+                    <div className="text-red-200 text-xs">Admin</div>
+                  </div>
+
+                  {/* Sign Out Button */}
+                  <button
+                    onClick={handleSignOut}
+                    className="px-4 py-2 rounded-md text-sm font-medium bg-red-700 hover:bg-red-800 transition-colors"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          {/* Main Content */}
+          <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-auto">
+            <div className="max-w-7xl mx-auto">
+              {children}
+            </div>
+          </main>
+        </div>
       </div>
     </AdminGuard>
   );
