@@ -30,31 +30,88 @@ const PLATFORM_COLORS: Record<string, string> = {
   web: '#22c55e',
 };
 
-// Screen categories for hierarchical display
+// Screen categories for hierarchical display - derived from TRACKED_SCREENS
 const SCREEN_CATEGORIES: Record<string, { label: string; screens: string[] }> = {
   dashboard: {
     label: 'Dashboard',
-    screens: ['dashboard', 'chat', 'create', 'search'],
+    screens: [
+      TRACKED_SCREENS.dashboard,
+      TRACKED_SCREENS.chat,
+      TRACKED_SCREENS.create,
+      TRACKED_SCREENS.search,
+    ],
   },
   events: {
     label: 'Events',
-    screens: ['events', 'events_search'],
+    screens: [
+      TRACKED_SCREENS.events,
+      TRACKED_SCREENS.eventsSearch,
+    ],
   },
   circles: {
     label: 'Circles',
-    screens: ['circles', 'circles_create', 'circles_invites', 'circle_detail', 'circle_chat', 'circle_members', 'circle_challenges', 'circle_analytics'],
+    screens: [
+      TRACKED_SCREENS.circles,
+      TRACKED_SCREENS.circlesCreate,
+      TRACKED_SCREENS.circlesInvites,
+      TRACKED_SCREENS.circleDetail,
+      TRACKED_SCREENS.circleChat,
+      TRACKED_SCREENS.circleMembers,
+      TRACKED_SCREENS.circleChallenges,
+      TRACKED_SCREENS.circleAnalytics,
+    ],
   },
   settings: {
     label: 'Settings',
-    screens: ['settings', 'settings_notifications', 'settings_quiet_hours', 'settings_life_feed'],
+    screens: [
+      TRACKED_SCREENS.settings,
+      TRACKED_SCREENS.settingsNotifications,
+      TRACKED_SCREENS.settingsQuietHours,
+      TRACKED_SCREENS.settingsLifeFeed,
+    ],
   },
   admin: {
     label: 'Admin',
-    screens: ['admin_overview', 'admin_users', 'admin_user_detail', 'admin_usage', 'admin_behavior', 'admin_subscriptions', 'admin_pricing', 'admin_ai_models', 'admin_prompts', 'admin_prompt_detail', 'admin_voice_categories', 'admin_app_settings', 'admin_migrations', 'admin_migration_detail', 'admin_explore_questions', 'admin_docs'],
+    screens: [
+      TRACKED_SCREENS.adminOverview,
+      TRACKED_SCREENS.adminUsers,
+      TRACKED_SCREENS.adminUserDetail,
+      TRACKED_SCREENS.adminUsage,
+      TRACKED_SCREENS.adminUsageTest,
+      TRACKED_SCREENS.adminBehavior,
+      TRACKED_SCREENS.adminSubscriptions,
+      TRACKED_SCREENS.adminPricing,
+      TRACKED_SCREENS.adminAiModels,
+      TRACKED_SCREENS.adminPrompts,
+      TRACKED_SCREENS.adminPromptDetail,
+      TRACKED_SCREENS.adminVoiceCategories,
+      TRACKED_SCREENS.adminAppSettings,
+      TRACKED_SCREENS.adminMigrations,
+      TRACKED_SCREENS.adminMigrationDetail,
+      TRACKED_SCREENS.adminExploreQuestions,
+      TRACKED_SCREENS.adminDocs,
+    ],
   },
-  other: {
-    label: 'Other',
-    screens: ['login', 'notifications_history'],
+  notifications: {
+    label: 'Notifications',
+    screens: [
+      TRACKED_SCREENS.notificationsHistory,
+    ],
+  },
+  auth: {
+    label: 'Auth',
+    screens: [
+      TRACKED_SCREENS.login,
+    ],
+  },
+  mobile: {
+    label: 'Mobile Only',
+    screens: [
+      TRACKED_SCREENS.home,
+      TRACKED_SCREENS.diary,
+      TRACKED_SCREENS.diaryEditor,
+      TRACKED_SCREENS.profile,
+    ],
   },
 };
 
