@@ -132,22 +132,29 @@ export const SUPPORTED_LANGUAGES = [
 export type LanguageCode = typeof SUPPORTED_LANGUAGES[number]['code'];
 
 /**
- * Categories for organizing prompt services
+ * AI Features for organizing prompt services
+ * Maps to the "AI Features" section in mobile app Settings + Chat
+ *
+ * Mobile app location: ProfileScreen → "AI Features" section with toggles
+ * See: PersonalAIApp/src/screens/profile/ProfileScreen.tsx
  */
 export const PROMPT_CATEGORIES = [
-  { id: 'chat', name: 'Chat & Conversations', icon: '💬', description: 'Prompts that power the chat interface' },
-  { id: 'processing', name: 'Content Processing', icon: '📝', description: 'Automatic analysis when content is created' },
-  { id: 'proactive', name: 'Proactive Features', icon: '✨', description: 'AI-generated insights and suggestions' },
+  { id: 'chat', name: 'Chat', icon: '💬', description: 'Main chat interface & context search' },
+  { id: 'life_feed', name: 'Life Feed', icon: '📰', description: 'AI-generated posts about your daily life' },
+  { id: 'fun_facts', name: 'Fun Facts', icon: '✨', description: 'Daily trivia and milestones' },
+  { id: 'mood_compass', name: 'Mood Compass', icon: '😊', description: 'Track emotional patterns and insights' },
+  { id: 'memory_companion', name: 'Memory Companion', icon: '📸', description: 'Surface memories at the right time' },
+  { id: 'life_forecaster', name: 'Life Forecaster', icon: '🔮', description: 'Predictions and proactive suggestions' },
 ] as const;
 
 export type PromptCategoryId = typeof PROMPT_CATEGORIES[number]['id'];
 
 /**
  * Services that use the prompt system
- * Organized by category with metadata for the admin UI
+ * Organized by AI Features (from mobile app Settings) with metadata for the admin UI
  */
 export const PROMPT_SERVICES = [
-  // Chat & Conversations
+  // Chat - Main chat interface & context search
   {
     id: 'OpenAIService',
     name: 'Chat Responses',
@@ -178,52 +185,11 @@ export const PROMPT_SERVICES = [
     platform: 'server' as const,
     example: 'Web dashboard chat requests',
   },
-  // Content Processing
-  {
-    id: 'MemoryGeneratorService',
-    name: 'Memory Summaries',
-    category: 'processing' as PromptCategoryId,
-    icon: '📝',
-    description: 'Generates titles and summaries for memories',
-    trigger: 'When new memory/note is created',
-    platform: 'server' as const,
-    example: 'Auto-generating title for a voice note',
-  },
-  {
-    id: 'SentimentAnalysisService',
-    name: 'Mood Detection',
-    category: 'processing' as PromptCategoryId,
-    icon: '😊',
-    description: 'Analyzes emotional tone of content',
-    trigger: 'When processing user-created content',
-    platform: 'server' as const,
-    example: 'Detecting positive mood in diary entry',
-  },
-  {
-    id: 'EntityExtractionService',
-    name: 'People & Places',
-    category: 'processing' as PromptCategoryId,
-    icon: '👥',
-    description: 'Extracts people, locations, and things',
-    trigger: 'When processing text content',
-    platform: 'server' as const,
-    example: 'Finding "John" and "coffee shop" in note',
-  },
-  {
-    id: 'EventExtractionService',
-    name: 'Events & Dates',
-    category: 'processing' as PromptCategoryId,
-    icon: '📅',
-    description: 'Extracts events and dates from text',
-    trigger: 'When processing text content',
-    platform: 'server' as const,
-    example: 'Finding "meeting tomorrow at 3pm"',
-  },
-  // Proactive Features
+  // Life Feed - AI-generated social-style posts
   {
     id: 'LifeFeedGenerator',
     name: 'Life Feed Posts',
-    category: 'proactive' as PromptCategoryId,
+    category: 'life_feed' as PromptCategoryId,
     icon: '📰',
     description: 'Generates social-style life updates',
     trigger: 'Periodically from user activity',
@@ -231,24 +197,68 @@ export const PROMPT_SERVICES = [
     example: 'Creating "You visited 3 new places this week!"',
   },
   {
-    id: 'SuggestionEngine',
-    name: 'Smart Suggestions',
-    category: 'proactive' as PromptCategoryId,
-    icon: '💡',
-    description: 'Generates proactive suggestions',
-    trigger: 'Based on user patterns and context',
-    platform: 'server' as const,
-    example: 'Suggesting "Time for your daily walk?"',
-  },
-  {
     id: 'DailySummaryService',
     name: 'Daily Summaries',
-    category: 'proactive' as PromptCategoryId,
+    category: 'life_feed' as PromptCategoryId,
     icon: '📊',
     description: 'Generates daily and weekly activity summaries',
     trigger: 'Daily at user-preferred time or on-demand',
     platform: 'server' as const,
     example: 'Creating "You walked 12,000 steps and completed 2 workouts today!"',
+  },
+  // Fun Facts - Daily insights & smart suggestions
+  {
+    id: 'SuggestionEngine',
+    name: 'Smart Suggestions',
+    category: 'fun_facts' as PromptCategoryId,
+    icon: '💡',
+    description: 'Generates proactive suggestions and daily insights',
+    trigger: 'Based on user patterns and context',
+    platform: 'server' as const,
+    example: 'Suggesting "Time for your daily walk?"',
+  },
+  // Mood Compass - Mood detection & sentiment analysis
+  {
+    id: 'SentimentAnalysisService',
+    name: 'Mood Detection',
+    category: 'mood_compass' as PromptCategoryId,
+    icon: '😊',
+    description: 'Analyzes emotional tone of content',
+    trigger: 'When processing user-created content',
+    platform: 'server' as const,
+    example: 'Detecting positive mood in diary entry',
+  },
+  // Memory Companion - Memory summaries & entity extraction
+  {
+    id: 'MemoryGeneratorService',
+    name: 'Memory Summaries',
+    category: 'memory_companion' as PromptCategoryId,
+    icon: '📝',
+    description: 'Generates titles and summaries for memories',
+    trigger: 'When new memory/note is created',
+    platform: 'server' as const,
+    example: 'Auto-generating title for a voice note',
+  },
+  {
+    id: 'EntityExtractionService',
+    name: 'People & Places',
+    category: 'memory_companion' as PromptCategoryId,
+    icon: '👥',
+    description: 'Extracts people, locations, and things',
+    trigger: 'When processing text content',
+    platform: 'server' as const,
+    example: 'Finding "John" and "coffee shop" in note',
+  },
+  // Life Forecaster - Pattern predictions & event extraction
+  {
+    id: 'EventExtractionService',
+    name: 'Events & Dates',
+    category: 'life_forecaster' as PromptCategoryId,
+    icon: '📅',
+    description: 'Extracts events and dates from text for predictions',
+    trigger: 'When processing text content',
+    platform: 'server' as const,
+    example: 'Finding "meeting tomorrow at 3pm"',
   },
 ] as const;
 

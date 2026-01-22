@@ -439,12 +439,43 @@ export default function AdminPromptsPage() {
 
                       {/* Divider */}
                       <div className="border-t border-gray-100 pt-3 mt-3">
+                        {/* Prompts Section - Show all prompts with types */}
+                        <div className="mb-3">
+                          <p className="text-xs font-medium text-gray-500 mb-1.5">
+                            Prompts ({service.config ? Object.keys(service.config.prompts).length : 0}):
+                          </p>
+                          {service.config && (
+                            <div className="space-y-1 max-h-32 overflow-y-auto">
+                              {Object.values(service.config.prompts).map((prompt: any) => (
+                                <div key={prompt.id} className="flex items-center gap-1.5">
+                                  {/* Type Badge */}
+                                  <span
+                                    className={`px-1.5 py-0.5 text-xs rounded shrink-0 ${
+                                      prompt.type === 'system'
+                                        ? 'bg-purple-100 text-purple-700'
+                                        : prompt.type === 'user'
+                                        ? 'bg-blue-100 text-blue-700'
+                                        : 'bg-yellow-100 text-yellow-700'
+                                    }`}
+                                  >
+                                    {prompt.type}
+                                  </span>
+                                  {/* Prompt ID */}
+                                  <span className="text-xs text-gray-600 truncate" title={prompt.description || prompt.id}>
+                                    {prompt.id}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {!service.config && (
+                            <p className="text-xs text-gray-400 italic">Not migrated yet</p>
+                          )}
+                        </div>
+
                         {/* Stats Row */}
                         <div className="flex items-center justify-between text-sm mb-3">
                           <div className="flex items-center gap-4">
-                            <span className="text-gray-600">
-                              <span className="font-medium">{service.config ? Object.keys(service.config.prompts).length : 0}</span> prompts
-                            </span>
                             <span className="text-gray-600">
                               <span className="font-medium">{executions.toLocaleString()}</span> runs
                             </span>
@@ -563,6 +594,203 @@ export default function AdminPromptsPage() {
               <li>4. Use the &quot;Enabled&quot; toggle to switch between Firestore and YAML</li>
             </ul>
           </div>
+
+          {/* How To Add Guide */}
+          <details className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <summary className="p-4 cursor-pointer hover:bg-gray-50 font-semibold text-gray-900 flex items-center gap-2">
+              <span>📖</span> How to Add AI Features, Services, Types & Prompts
+            </summary>
+            <div className="p-4 pt-0 space-y-6 text-sm">
+              {/* Type Badges Legend */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h4 className="font-semibold text-gray-900 mb-2">Prompt Types</h4>
+                <div className="flex flex-wrap gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-1 text-xs rounded bg-purple-100 text-purple-700">system</span>
+                    <span className="text-gray-600">Configuration/setup prompts for AI behavior</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-1 text-xs rounded bg-blue-100 text-blue-700">user</span>
+                    <span className="text-gray-600">User-facing prompts that generate output</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-1 text-xs rounded bg-yellow-100 text-yellow-700">function</span>
+                    <span className="text-gray-600">Tool/function call prompts</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Add New AI Feature */}
+              <div className="border-l-4 border-blue-500 pl-4">
+                <h4 className="font-semibold text-gray-900 mb-2">1. Add New AI Feature</h4>
+                <p className="text-gray-600 mb-2">AI Features match the &quot;AI Features&quot; section in mobile app Settings (ProfileScreen).</p>
+                <div className="bg-gray-900 text-gray-100 rounded-lg p-3 font-mono text-xs overflow-x-auto">
+                  <div className="text-green-400">// personal-ai-web/lib/models/Prompt.ts</div>
+                  <div className="text-gray-300">export const PROMPT_CATEGORIES = [</div>
+                  <div className="text-gray-300 pl-4">...</div>
+                  <div className="text-yellow-300 pl-4">{`{ id: 'new_feature', name: 'New Feature', icon: '🆕', description: 'Your description' },`}</div>
+                  <div className="text-gray-300">] as const;</div>
+                </div>
+              </div>
+
+              {/* Add New Service */}
+              <div className="border-l-4 border-green-500 pl-4">
+                <h4 className="font-semibold text-gray-900 mb-2">2. Add New Service</h4>
+                <p className="text-gray-600 mb-2">Services are the AI components that use prompts. Requires changes in 3 files:</p>
+
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-gray-700 font-medium mb-1">Step A: Register service → YAML mapping</p>
+                    <div className="bg-gray-900 text-gray-100 rounded-lg p-3 font-mono text-xs overflow-x-auto">
+                      <div className="text-green-400">// personal-ai-web/lib/models/Prompt.ts</div>
+                      <div className="text-gray-300">export const SERVICE_FILE_MAP = {`{`}</div>
+                      <div className="text-gray-300 pl-4">...</div>
+                      <div className="text-yellow-300 pl-4">NewService: &apos;newService.yaml&apos;,</div>
+                      <div className="text-gray-300">{`}`};</div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-gray-700 font-medium mb-1">Step B: Add to PROMPT_SERVICES array</p>
+                    <div className="bg-gray-900 text-gray-100 rounded-lg p-3 font-mono text-xs overflow-x-auto">
+                      <div className="text-green-400">// personal-ai-web/lib/models/Prompt.ts</div>
+                      <div className="text-gray-300">export const PROMPT_SERVICES = [</div>
+                      <div className="text-gray-300 pl-4">...</div>
+                      <div className="text-yellow-300 pl-4">{`{`}</div>
+                      <div className="text-yellow-300 pl-6">id: &apos;NewService&apos;,</div>
+                      <div className="text-yellow-300 pl-6">name: &apos;Display Name&apos;,</div>
+                      <div className="text-yellow-300 pl-6">category: &apos;your_ai_feature&apos; as PromptCategoryId,  <span className="text-gray-500">// matches AI Feature id</span></div>
+                      <div className="text-yellow-300 pl-6">icon: &apos;🆕&apos;,</div>
+                      <div className="text-yellow-300 pl-6">description: &apos;What this service does&apos;,</div>
+                      <div className="text-yellow-300 pl-6">trigger: &apos;When X happens&apos;,</div>
+                      <div className="text-yellow-300 pl-6">platform: &apos;server&apos; as const,</div>
+                      <div className="text-yellow-300 pl-6">example: &apos;Example output&apos;,</div>
+                      <div className="text-yellow-300 pl-4">{`}`},</div>
+                      <div className="text-gray-300">];</div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-gray-700 font-medium mb-1">Step C: Register in PromptLoader (3 locations)</p>
+                    <div className="bg-gray-900 text-gray-100 rounded-lg p-3 font-mono text-xs overflow-x-auto">
+                      <div className="text-green-400">// PersonalAIApp/firebase/functions/src/config/prompts/loader.ts</div>
+                      <div className="text-gray-300">const fileMap = {`{`}</div>
+                      <div className="text-gray-300 pl-4">...</div>
+                      <div className="text-yellow-300 pl-4">&apos;NewService&apos;: &apos;newService.yaml&apos;,</div>
+                      <div className="text-gray-300">{`}`};</div>
+                      <div className="text-gray-500 mt-2">// Update fileMap in loadPrompts(), getPrompt(), and reloadPrompts()</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Add New Prompts */}
+              <div className="border-l-4 border-purple-500 pl-4">
+                <h4 className="font-semibold text-gray-900 mb-2">3. Add New Prompts</h4>
+                <p className="text-gray-600 mb-2">Create a YAML file for your prompts, then migrate to Firestore.</p>
+
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-gray-700 font-medium mb-1">Step A: Create YAML file</p>
+                    <div className="bg-gray-900 text-gray-100 rounded-lg p-3 font-mono text-xs overflow-x-auto">
+                      <div className="text-green-400"># PersonalAIApp/firebase/functions/src/config/prompts/locales/en/newService.yaml</div>
+                      <div className="text-gray-300">version: &quot;1.0.0&quot;</div>
+                      <div className="text-gray-300">language: &quot;en&quot;</div>
+                      <div className="text-gray-300">lastUpdated: &quot;2025-01-21&quot;</div>
+                      <div className="text-gray-300">prompts:</div>
+                      <div className="text-yellow-300 pl-2">system:</div>
+                      <div className="text-yellow-300 pl-4">id: &quot;new-service-system&quot;</div>
+                      <div className="text-yellow-300 pl-4">service: &quot;NewService&quot;</div>
+                      <div className="text-yellow-300 pl-4">type: &quot;system&quot;  <span className="text-gray-500"># system | user | function</span></div>
+                      <div className="text-yellow-300 pl-4">description: &quot;System prompt for NewService&quot;</div>
+                      <div className="text-yellow-300 pl-4">content: |</div>
+                      <div className="text-yellow-300 pl-6">You are an AI assistant that...</div>
+                      <div className="text-yellow-300 pl-6">{`{{#if context}}`}Context: {`{{context}}`}{`{{/if}}`}</div>
+                      <div className="text-yellow-300 pl-4">metadata:</div>
+                      <div className="text-yellow-300 pl-6">model: &quot;gpt-4o-mini&quot;</div>
+                      <div className="text-yellow-300 pl-6">temperature: 0.7</div>
+                      <div className="text-yellow-300 pl-6">maxTokens: 300</div>
+                      <div className="text-yellow-300 pl-6">responseFormat: &quot;text&quot;  <span className="text-gray-500"># text | json_object</span></div>
+                      <div className="text-yellow-300 pl-4">variables:</div>
+                      <div className="text-yellow-300 pl-6">- name: &quot;context&quot;</div>
+                      <div className="text-yellow-300 pl-8">type: &quot;string&quot;</div>
+                      <div className="text-yellow-300 pl-8">required: false</div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-gray-700 font-medium mb-1">Step B: Migrate to Firestore</p>
+                    <p className="text-gray-600 text-xs mb-2">Use the &quot;Migrate&quot; button on this page, or run the CLI script:</p>
+                    <div className="bg-gray-900 text-gray-100 rounded-lg p-3 font-mono text-xs overflow-x-auto">
+                      <div className="text-green-400"># From personal-ai-web directory</div>
+                      <div className="text-gray-300">npm run migrate:prompts</div>
+                      <div className="text-gray-300">npm run migrate:prompts -- --overwrite  <span className="text-gray-500"># To replace existing</span></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Add New Type */}
+              <div className="border-l-4 border-yellow-500 pl-4">
+                <h4 className="font-semibold text-gray-900 mb-2">4. Add New Prompt Type (Advanced)</h4>
+                <p className="text-gray-600 mb-2">Currently supports: system, user, function. To add a new type:</p>
+                <div className="bg-gray-900 text-gray-100 rounded-lg p-3 font-mono text-xs overflow-x-auto">
+                  <div className="text-green-400">// personal-ai-web/lib/models/Prompt.ts</div>
+                  <div className="text-gray-300">export interface PromptDefinition {`{`}</div>
+                  <div className="text-gray-300 pl-4">...</div>
+                  <div className="text-yellow-300 pl-4">type: &apos;system&apos; | &apos;user&apos; | &apos;function&apos; | &apos;new_type&apos;;</div>
+                  <div className="text-gray-300">{`}`}</div>
+                  <div className="text-gray-500 mt-2">// Also update page.tsx badge colors (lines ~453-459)</div>
+                </div>
+              </div>
+
+              {/* Use in Cloud Functions */}
+              <div className="border-l-4 border-red-500 pl-4">
+                <h4 className="font-semibold text-gray-900 mb-2">5. Use Prompts in Cloud Functions</h4>
+                <div className="bg-gray-900 text-gray-100 rounded-lg p-3 font-mono text-xs overflow-x-auto">
+                  <div className="text-green-400">// In your Cloud Function</div>
+                  <div className="text-gray-300">import {`{`} PromptLoader {`}`} from &apos;../../config/prompts&apos;;</div>
+                  <div className="text-gray-300 mt-2">const promptLoader = PromptLoader.getInstance();</div>
+                  <div className="text-gray-300">await promptLoader.loadPrompts(&apos;NewService&apos;, &apos;en&apos;);</div>
+                  <div className="text-gray-300 mt-2">const prompt = promptLoader.getPrompt(</div>
+                  <div className="text-gray-300 pl-2">&apos;NewService&apos;,</div>
+                  <div className="text-gray-300 pl-2">&apos;system&apos;,  <span className="text-gray-500">// prompt ID from YAML</span></div>
+                  <div className="text-gray-300 pl-2">{`{`} language: &apos;en&apos;, variables: {`{`} context: &apos;...&apos; {`}`} {`}`}</div>
+                  <div className="text-gray-300">);</div>
+                  <div className="text-gray-300 mt-2">// Use prompt.content and prompt.metadata</div>
+                </div>
+              </div>
+
+              {/* File Locations Summary */}
+              <div className="bg-gray-100 rounded-lg p-4">
+                <h4 className="font-semibold text-gray-900 mb-2">📁 Key File Locations</h4>
+                <table className="w-full text-xs">
+                  <tbody>
+                    <tr className="border-b border-gray-200">
+                      <td className="py-1 text-gray-600">AI Features & Services</td>
+                      <td className="py-1 font-mono text-gray-900">personal-ai-web/lib/models/Prompt.ts</td>
+                    </tr>
+                    <tr className="border-b border-gray-200">
+                      <td className="py-1 text-gray-600">YAML Prompts</td>
+                      <td className="py-1 font-mono text-gray-900">PersonalAIApp/firebase/functions/src/config/prompts/locales/</td>
+                    </tr>
+                    <tr className="border-b border-gray-200">
+                      <td className="py-1 text-gray-600">PromptLoader</td>
+                      <td className="py-1 font-mono text-gray-900">PersonalAIApp/firebase/functions/src/config/prompts/loader.ts</td>
+                    </tr>
+                    <tr className="border-b border-gray-200">
+                      <td className="py-1 text-gray-600">Migration Script</td>
+                      <td className="py-1 font-mono text-gray-900">personal-ai-web/scripts/migrate-prompts.ts</td>
+                    </tr>
+                    <tr>
+                      <td className="py-1 text-gray-600">Full Documentation</td>
+                      <td className="py-1 font-mono text-gray-900">PersonalAIApp/firebase/functions/docs/PROMPT_CONFIGURATION.md</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </details>
 
           {/* Language Status */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
