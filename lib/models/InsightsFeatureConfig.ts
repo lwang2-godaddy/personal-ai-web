@@ -54,6 +54,8 @@ export interface PostTypeMetadata {
     name: string;
     description: string;
   }[];
+  /** Data requirements for this post type to be eligible for generation */
+  requirements: string;
 }
 
 export const POST_TYPE_METADATA: Record<InsightsPostType, PostTypeMetadata> = {
@@ -63,6 +65,7 @@ export const POST_TYPE_METADATA: Record<InsightsPostType, PostTypeMetadata> = {
     displayName: 'Life Update',
     description: 'Weekly/daily summaries',
     prompts: [{ id: 'life_summary', name: 'life-summary-post', description: 'Weekly life update posts' }],
+    requirements: 'Always eligible - no specific data requirements',
   },
   milestone: {
     icon: '🏆',
@@ -70,6 +73,7 @@ export const POST_TYPE_METADATA: Record<InsightsPostType, PostTypeMetadata> = {
     displayName: 'Milestone',
     description: 'Achievement announcements',
     prompts: [{ id: 'milestone', name: 'milestone-post', description: 'Personal milestone celebrations' }],
+    requirements: 'Requires detected milestones (activity counts reaching thresholds like 10th, 25th, 50th visit)',
   },
   pattern_prediction: {
     icon: '🔮',
@@ -77,6 +81,7 @@ export const POST_TYPE_METADATA: Record<InsightsPostType, PostTypeMetadata> = {
     displayName: 'Prediction',
     description: 'Future activity predictions',
     prompts: [{ id: 'pattern_prediction', name: 'pattern-prediction-post', description: 'Behavior predictions based on patterns' }],
+    requirements: 'Requires detected patterns (recurring activities, consistent schedules)',
   },
   reflective_insight: {
     icon: '💡',
@@ -84,6 +89,7 @@ export const POST_TYPE_METADATA: Record<InsightsPostType, PostTypeMetadata> = {
     displayName: 'Insight',
     description: 'Behavioral insights',
     prompts: [{ id: 'reflective_insight', name: 'reflective-insight-post', description: 'Thoughtful observations about habits' }],
+    requirements: 'Requires steps > 0 OR activities > 0 OR locations > 0',
   },
   memory_highlight: {
     icon: '📸',
@@ -91,6 +97,7 @@ export const POST_TYPE_METADATA: Record<InsightsPostType, PostTypeMetadata> = {
     displayName: 'Memory',
     description: 'Anniversary highlights',
     prompts: [{ id: 'memory_highlight', name: 'memory-highlight-post', description: 'Recent memory celebrations' }],
+    requirements: 'Requires photos > 0 OR voice notes > 0 OR text notes > 0',
   },
   streak_achievement: {
     icon: '🔥',
@@ -98,6 +105,7 @@ export const POST_TYPE_METADATA: Record<InsightsPostType, PostTypeMetadata> = {
     displayName: 'Streak',
     description: 'Streak achievements',
     prompts: [{ id: 'streak_achievement', name: 'streak-achievement-post', description: 'Consistent habit celebrations' }],
+    requirements: 'Requires detected streaks (consecutive days of activity)',
   },
   comparison: {
     icon: '📊',
@@ -105,6 +113,7 @@ export const POST_TYPE_METADATA: Record<InsightsPostType, PostTypeMetadata> = {
     displayName: 'Comparison',
     description: 'Time period comparisons',
     prompts: [{ id: 'comparison', name: 'comparison-post', description: 'Activity period comparisons' }],
+    requirements: 'Requires steps > 0 OR activities > 0 OR locations > 0',
   },
   seasonal_reflection: {
     icon: '🌟',
@@ -112,6 +121,7 @@ export const POST_TYPE_METADATA: Record<InsightsPostType, PostTypeMetadata> = {
     displayName: 'Reflection',
     description: 'Seasonal summaries',
     prompts: [{ id: 'seasonal_reflection', name: 'seasonal-reflection-post', description: 'Long-term reflections' }],
+    requirements: 'Requires activities >= 2 OR patterns >= 2 OR events >= 1',
   },
 };
 

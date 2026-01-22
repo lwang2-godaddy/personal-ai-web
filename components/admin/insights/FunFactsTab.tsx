@@ -168,6 +168,64 @@ export default function FunFactsTab({ onSaving }: FunFactsTabProps) {
         </div>
       </div>
 
+      {/* How It Works */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+        <h3 className="text-lg font-bold text-blue-900 mb-3 flex items-center">
+          <span className="mr-2">💡</span>
+          How Fun Facts Work
+        </h3>
+        <div className="space-y-4 text-sm text-blue-800">
+          <div>
+            <p className="font-semibold mb-1">📅 Scheduled Generation (Cloud Function)</p>
+            <p className="text-blue-700">
+              New fun facts are generated automatically by the scheduler. The cooldown setting controls how often
+              new facts can be created. Facts are saved to Firestore and synced to users&apos; devices.
+            </p>
+          </div>
+          <div>
+            <p className="font-semibold mb-1">🔄 Carousel Refresh Button (Mobile App)</p>
+            <p className="text-blue-700">
+              The refresh button in the fun fact carousel does <strong>NOT</strong> generate new fun facts from the scheduler.
+              Instead, it regenerates the text content of the current fact locally using RAG (Retrieval-Augmented Generation).
+            </p>
+            <ul className="list-disc list-inside mt-2 ml-2 text-blue-600">
+              <li>Calls OpenAI API for embeddings and GPT-4 response</li>
+              <li>Queries Pinecone for relevant user data</li>
+              <li>Result is cached locally only (not saved to Firestore)</li>
+              <li>Counts toward user&apos;s daily RAG query quota</li>
+              <li>Not affected by the cooldown setting above</li>
+            </ul>
+          </div>
+          <div className="bg-blue-100 rounded p-3 mt-3">
+            <p className="font-semibold text-blue-900">📊 Summary</p>
+            <table className="w-full mt-2 text-xs">
+              <thead>
+                <tr className="text-left">
+                  <th className="pb-1">Action</th>
+                  <th className="pb-1">Source</th>
+                  <th className="pb-1">Storage</th>
+                  <th className="pb-1">Cooldown</th>
+                </tr>
+              </thead>
+              <tbody className="text-blue-700">
+                <tr>
+                  <td className="py-1">Scheduler generates</td>
+                  <td>Cloud Function</td>
+                  <td>Firestore</td>
+                  <td>Yes ({config.cooldownHours}h)</td>
+                </tr>
+                <tr>
+                  <td className="py-1">Refresh button</td>
+                  <td>Mobile RAG</td>
+                  <td>Local cache</td>
+                  <td>No (uses quota)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
       {/* Global Settings */}
       <div className="bg-white rounded-lg shadow-md p-6">
         <h3 className="text-lg font-bold text-gray-900 mb-4">Global Settings</h3>

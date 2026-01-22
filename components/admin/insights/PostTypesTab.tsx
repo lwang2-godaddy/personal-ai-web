@@ -154,6 +154,58 @@ export default function PostTypesTab({ onSaving }: PostTypesTabProps) {
         </div>
       </div>
 
+      {/* How It Works */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+        <h3 className="text-lg font-bold text-blue-900 mb-3 flex items-center">
+          <span className="mr-2">⚙️</span>
+          How Insight Feed Generation Works
+        </h3>
+        <div className="space-y-4 text-sm text-blue-800">
+          <div>
+            <p className="font-semibold mb-2">🔄 Generation Process</p>
+            <p className="text-blue-700 mb-2">
+              When generating insights (via scheduler or manual trigger), the system iterates through <strong>all {INSIGHTS_POST_TYPES.length} post types</strong> dynamically:
+            </p>
+            <ol className="list-decimal list-inside space-y-1 ml-2 text-blue-700">
+              <li><strong>Check if enabled</strong> — Skip disabled post types</li>
+              <li><strong>Check cooldown period</strong> — Skip if a post of this type was generated within the cooldown days</li>
+              <li><strong>Check data requirements</strong> — Skip if user doesn&apos;t have sufficient data (e.g., no health data for milestones)</li>
+              <li><strong>Generate post</strong> — If all checks pass, generate one post for this type</li>
+            </ol>
+          </div>
+
+          <div className="bg-blue-100 rounded p-3">
+            <p className="font-semibold text-blue-900 mb-2">📊 Example Scenario</p>
+            <p className="text-blue-700 text-xs">
+              User clicks &quot;Generate&quot; with 8 post types configured. The system checks each:
+            </p>
+            <ul className="mt-2 space-y-1 text-xs text-blue-600">
+              <li>✅ <strong>life_summary</strong> — Enabled, past cooldown, has data → <span className="text-green-600">Generated</span></li>
+              <li>⏳ <strong>milestone</strong> — Enabled, but generated 2 days ago (cooldown: 7d) → <span className="text-amber-600">Skipped</span></li>
+              <li>❌ <strong>pattern_prediction</strong> — Disabled → <span className="text-gray-500">Skipped</span></li>
+              <li>✅ <strong>reflective_insight</strong> — Enabled, past cooldown, has data → <span className="text-green-600">Generated</span></li>
+              <li>📭 <strong>memory_highlight</strong> — Enabled, but no memories older than 30 days → <span className="text-gray-500">Skipped</span></li>
+              <li>✅ <strong>streak_achievement</strong> — Enabled, past cooldown, has streak data → <span className="text-green-600">Generated</span></li>
+              <li>⏳ <strong>comparison</strong> — Enabled, but generated yesterday (cooldown: 3d) → <span className="text-amber-600">Skipped</span></li>
+              <li>✅ <strong>seasonal_reflection</strong> — Enabled, past cooldown, has data → <span className="text-green-600">Generated</span></li>
+            </ul>
+            <p className="mt-2 text-xs text-blue-800">
+              <strong>Result:</strong> 4 posts generated in one batch. Each eligible post type gets one post per generation cycle.
+            </p>
+          </div>
+
+          <div>
+            <p className="font-semibold mb-1">💡 Key Points</p>
+            <ul className="list-disc list-inside ml-2 text-blue-600">
+              <li>New post types added to the code are automatically included in generation</li>
+              <li>Cooldown is per post type, not global — different types can generate simultaneously</li>
+              <li>The &quot;max per day&quot; setting limits how many of each type can be generated daily</li>
+              <li>Priority affects selection order when multiple candidates compete</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
       {/* Post Types Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {INSIGHTS_POST_TYPES.map((postType) => {
@@ -193,6 +245,16 @@ export default function PostTypesTab({ onSaving }: PostTypesTabProps) {
 
               {/* Description */}
               <p className="text-sm text-gray-600 mb-2">{typeConfig.description}</p>
+
+              {/* Data Requirements */}
+              <div className="bg-amber-50 border border-amber-200 rounded-md p-2 mb-3">
+                <div className="flex items-start gap-1.5">
+                  <svg className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <p className="text-xs text-amber-800">{meta.requirements}</p>
+                </div>
+              </div>
 
               {/* Stats */}
               <div className="flex items-center justify-between text-sm mb-3">
