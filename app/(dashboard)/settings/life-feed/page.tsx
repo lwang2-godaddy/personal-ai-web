@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useAppSelector } from '@/lib/store/hooks';
 import { LifeFeedPreferences, DEFAULT_LIFE_FEED_PREFERENCES } from '@/lib/models/User';
+import { useTrackPage } from '@/lib/hooks/useTrackPage';
+import { TRACKED_SCREENS } from '@/lib/models/BehaviorEvent';
 
 const POST_TYPE_INFO: Record<string, { label: string; description: string; emoji: string }> = {
   life_summary: {
@@ -62,6 +64,7 @@ const VOICE_STYLE_OPTIONS = [
 ];
 
 export default function LifeFeedSettingsPage() {
+  useTrackPage(TRACKED_SCREENS.settingsLifeFeed);
   const { user } = useAppSelector((state) => state.auth);
   const [preferences, setPreferences] = useState<LifeFeedPreferences>(DEFAULT_LIFE_FEED_PREFERENCES);
   const [originalPreferences, setOriginalPreferences] = useState<LifeFeedPreferences>(DEFAULT_LIFE_FEED_PREFERENCES);

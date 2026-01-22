@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { apiGet, apiPatch } from '@/lib/api/client';
+import { useTrackPage } from '@/lib/hooks/useTrackPage';
+import { TRACKED_SCREENS } from '@/lib/models/BehaviorEvent';
 import {
   LineChart,
   Line,
@@ -136,6 +138,9 @@ function formatQuotaValue(value: number): string {
  * View and manage individual user with usage analytics
  */
 export default function AdminUserDetailPage() {
+  // Track page view
+  useTrackPage(TRACKED_SCREENS.adminUserDetail);
+
   const router = useRouter();
   const params = useParams();
   const userId = params.userId as string;

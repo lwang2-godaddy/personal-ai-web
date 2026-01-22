@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { apiGet, apiPatch } from '@/lib/api/client';
-import { useRef } from 'react';
 import { useAppSelector } from '@/lib/store/hooks';
+import { useTrackPage } from '@/lib/hooks/useTrackPage';
+import { TRACKED_SCREENS } from '@/lib/models/BehaviorEvent';
 
 interface User {
   id: string;
@@ -32,6 +33,9 @@ interface UsersResponse {
  * List, search, and manage all users
  */
 export default function AdminUsersPage() {
+  // Track page view
+  useTrackPage(TRACKED_SCREENS.adminUsers);
+
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useAppSelector((state) => state.auth);
   const [users, setUsers] = useState<User[]>([]);

@@ -5,6 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { apiGet, apiPatch } from '@/lib/api/client';
+import { useTrackPage } from '@/lib/hooks/useTrackPage';
+import { TRACKED_SCREENS } from '@/lib/models/BehaviorEvent';
 import {
   FirestorePromptConfig,
   PromptDefinition,
@@ -28,6 +30,9 @@ interface ServiceResponse {
 }
 
 export default function EditPromptsPage({ params }: { params: Promise<{ service: string }> }) {
+  // Track page view
+  useTrackPage(TRACKED_SCREENS.adminPromptDetail);
+
   const { service } = use(params);
   const router = useRouter();
   const searchParams = useSearchParams();

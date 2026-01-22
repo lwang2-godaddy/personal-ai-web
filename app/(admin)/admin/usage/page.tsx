@@ -5,6 +5,8 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { apiGet } from '@/lib/api/client';
 import { useAppSelector } from '@/lib/store/hooks';
+import { useTrackPage } from '@/lib/hooks/useTrackPage';
+import { TRACKED_SCREENS } from '@/lib/models/BehaviorEvent';
 import {
   getOperationLabel,
   getOperationIcon,
@@ -130,6 +132,9 @@ const MODEL_COLORS: Record<string, string> = {
  * System-wide usage metrics and cost analysis
  */
 export default function AdminUsageAnalyticsPage() {
+  // Track page view
+  useTrackPage(TRACKED_SCREENS.adminUsage);
+
   const { isAuthenticated, isLoading: authLoading } = useAppSelector((state) => state.auth);
   const searchParams = useSearchParams();
   const [usageData, setUsageData] = useState<UsageData[]>([]);

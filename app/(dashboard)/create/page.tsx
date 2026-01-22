@@ -14,6 +14,8 @@
 import { useState } from 'react';
 import { useAppDispatch } from '@/lib/store/hooks';
 import { openQuickCreate } from '@/lib/store/slices/quickCreateSlice';
+import { useTrackPage } from '@/lib/hooks/useTrackPage';
+import { TRACKED_SCREENS } from '@/lib/models/BehaviorEvent';
 
 interface Template {
   id: string;
@@ -142,6 +144,9 @@ const diaryTemplates: Template[] = [
 ];
 
 export default function TemplatesPage() {
+  // Track page view
+  useTrackPage(TRACKED_SCREENS.create);
+
   const [selectedCategory, setSelectedCategory] = useState<'all' | 'productivity' | 'wellness' | 'reflection'>('all');
   const dispatch = useAppDispatch();
 

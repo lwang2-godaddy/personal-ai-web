@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import AdminGuard from '@/components/admin/AdminGuard';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { getAuth, signOut } from 'firebase/auth';
+import { useTrackingSession } from '@/lib/hooks/useTrackPage';
 
 /**
  * Admin Layout
@@ -12,6 +13,9 @@ import { getAuth, signOut } from 'firebase/auth';
  * Includes navigation and admin guard protection
  */
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  // Initialize behavior tracking session
+  useTrackingSession();
+
   const pathname = usePathname();
   const router = useRouter();
   const { user } = useAuth();

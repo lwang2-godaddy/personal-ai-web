@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useAppSelector } from '@/lib/store/hooks';
 import { getAdminFirestore } from '@/lib/api/firebase/admin';
 import { User, NotificationPreferences } from '@/lib/models/User';
+import { useTrackPage } from '@/lib/hooks/useTrackPage';
+import { TRACKED_SCREENS } from '@/lib/models/BehaviorEvent';
 
 const DEFAULT_PREFERENCES: NotificationPreferences = {
   enabled: true,
@@ -38,6 +40,7 @@ const DAYS_OF_WEEK = [
 ];
 
 export default function NotificationPreferencesPage() {
+  useTrackPage(TRACKED_SCREENS.settingsNotifications);
   const { user } = useAppSelector((state) => state.auth);
   const [preferences, setPreferences] = useState<NotificationPreferences>(DEFAULT_PREFERENCES);
   const [originalPreferences, setOriginalPreferences] = useState<NotificationPreferences>(DEFAULT_PREFERENCES);

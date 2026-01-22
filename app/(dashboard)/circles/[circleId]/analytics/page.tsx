@@ -5,6 +5,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { useAppSelector } from '@/lib/store/hooks';
 import { apiGet } from '@/lib/api/client';
 import { CircleInsightCard } from '@/components/circles';
+import { useTrackPage } from '@/lib/hooks/useTrackPage';
+import { TRACKED_SCREENS } from '@/lib/models/BehaviorEvent';
 
 interface CircleAnalytics {
   id: string;
@@ -29,6 +31,7 @@ interface CircleAnalytics {
 }
 
 export default function CircleAnalyticsPage() {
+  useTrackPage(TRACKED_SCREENS.circleAnalytics);
   const params = useParams();
   const router = useRouter();
   const circleId = params.circleId as string;

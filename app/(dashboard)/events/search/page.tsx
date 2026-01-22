@@ -6,6 +6,8 @@ import { useAppSelector } from '@/lib/store/hooks';
 import EventSearchBar, { SearchFilters } from '@/components/events/EventSearchBar';
 import EventSearchService from '@/lib/services/search/EventSearchService';
 import { Event } from '@/lib/models/Event';
+import { useTrackPage } from '@/lib/hooks/useTrackPage';
+import { TRACKED_SCREENS } from '@/lib/models/BehaviorEvent';
 
 const EVENT_TYPE_COLORS: Record<Event['type'], string> = {
   appointment: 'bg-blue-100 text-blue-800',
@@ -25,6 +27,7 @@ const STATUS_COLORS: Record<Event['status'], string> = {
 };
 
 export default function EventSearchPage() {
+  useTrackPage(TRACKED_SCREENS.eventsSearch);
   const router = useRouter();
   const { user } = useAppSelector((state) => state.auth);
 

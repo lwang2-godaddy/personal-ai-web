@@ -14,8 +14,12 @@ import {
   ClickableStatCard,
   InfoModal,
 } from '@/components/dashboard';
+import { useTrackPage } from '@/lib/hooks/useTrackPage';
+import { TRACKED_SCREENS } from '@/lib/models/BehaviorEvent';
 
 export default function DashboardPage() {
+  // Track page view
+  useTrackPage(TRACKED_SCREENS.dashboard);
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
   const {

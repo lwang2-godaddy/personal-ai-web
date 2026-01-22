@@ -4,12 +4,15 @@ import React, { useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAppSelector } from '@/lib/store/hooks';
 import Link from 'next/link';
+import { useTrackPage } from '@/lib/hooks/useTrackPage';
+import { TRACKED_SCREENS } from '@/lib/models/BehaviorEvent';
 
 /**
  * Circle detail page
  * Shows circle info with navigation to sub-pages
  */
 export default function CircleDetailPage() {
+  useTrackPage(TRACKED_SCREENS.circleDetail);
   const router = useRouter();
   const params = useParams();
   const circleId = params.circleId as string;

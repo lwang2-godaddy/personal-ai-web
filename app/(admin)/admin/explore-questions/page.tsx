@@ -13,6 +13,8 @@ import {
   UserDataState,
 } from '@/lib/models/ExploreQuestion';
 import ExploreQuestionEditor from '@/components/admin/ExploreQuestionEditor';
+import { useTrackPage } from '@/lib/hooks/useTrackPage';
+import { TRACKED_SCREENS } from '@/lib/models/BehaviorEvent';
 
 /**
  * Category display rules - defines when each category appears
@@ -90,6 +92,9 @@ interface AllLanguagesMigrationResult {
 }
 
 export default function AdminExploreQuestionsPage() {
+  // Track page view
+  useTrackPage(TRACKED_SCREENS.adminExploreQuestions);
+
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

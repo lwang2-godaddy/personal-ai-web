@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useAppSelector } from '@/lib/store/hooks';
 import { QuietHours, QuietHoursSchedule } from '@/lib/models/User';
+import { useTrackPage } from '@/lib/hooks/useTrackPage';
+import { TRACKED_SCREENS } from '@/lib/models/BehaviorEvent';
 
 const DEFAULT_QUIET_HOURS: QuietHours = {
   enabled: false,
@@ -45,6 +47,7 @@ const FULL_DAYS_OF_WEEK = [
 ];
 
 export default function QuietHoursPage() {
+  useTrackPage(TRACKED_SCREENS.settingsQuietHours);
   const { user } = useAppSelector((state) => state.auth);
   const [quietHours, setQuietHours] = useState<QuietHours>(DEFAULT_QUIET_HOURS);
   const [originalQuietHours, setOriginalQuietHours] = useState<QuietHours>(DEFAULT_QUIET_HOURS);

@@ -6,6 +6,8 @@ import { useAppSelector } from '@/lib/store/hooks';
 import { apiGet, apiPost } from '@/lib/api/client';
 import { CircleInvite, CircleDataSharing } from '@/lib/models/Circle';
 import { JoinCircleModal } from '@/components/circles';
+import { useTrackPage } from '@/lib/hooks/useTrackPage';
+import { TRACKED_SCREENS } from '@/lib/models/BehaviorEvent';
 
 // Circle preview data from API
 interface CirclePreview {
@@ -20,6 +22,7 @@ interface CirclePreview {
 }
 
 export default function CircleInvitesPage() {
+  useTrackPage(TRACKED_SCREENS.circlesInvites);
   const router = useRouter();
 
   const { user } = useAppSelector((state) => state.auth);

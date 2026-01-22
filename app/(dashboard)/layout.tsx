@@ -8,12 +8,16 @@ import { FloatingActionButton, ToastContainer } from '@/components/common';
 import QuickCreateModal from '@/components/create/QuickCreateModal';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useTrackingSession } from '@/lib/hooks/useTrackPage';
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // Initialize behavior tracking session
+  useTrackingSession();
+
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
   const pathname = usePathname();

@@ -5,12 +5,17 @@ import { useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/lib/store/hooks';
 import { fetchCircles } from '@/lib/store/slices/circleSlice';
 import CircleCard from '@/components/circles/CircleCard';
+import { useTrackPage } from '@/lib/hooks/useTrackPage';
+import { TRACKED_SCREENS } from '@/lib/models/BehaviorEvent';
 
 /**
  * Circles list page
  * Shows all circles the user is a member of
  */
 export default function CirclesPage() {
+  // Track page view
+  useTrackPage(TRACKED_SCREENS.circles);
+
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);

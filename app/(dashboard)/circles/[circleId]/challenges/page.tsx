@@ -4,8 +4,11 @@ import React from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAppSelector } from '@/lib/store/hooks';
 import { CircleChallengeCard } from '@/components/circles';
+import { useTrackPage } from '@/lib/hooks/useTrackPage';
+import { TRACKED_SCREENS } from '@/lib/models/BehaviorEvent';
 
 export default function CircleChallengesPage() {
+  useTrackPage(TRACKED_SCREENS.circleChallenges);
   const params = useParams();
   const router = useRouter();
   const circleId = params.circleId as string;

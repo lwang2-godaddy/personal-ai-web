@@ -11,6 +11,8 @@ import {
   getStatusColor,
 } from '@/lib/models/NotificationRecord';
 import { getAdminFirestore } from '@/lib/api/firebase/admin';
+import { useTrackPage } from '@/lib/hooks/useTrackPage';
+import { TRACKED_SCREENS } from '@/lib/models/BehaviorEvent';
 
 const NOTIFICATION_TYPES: { label: string; value: NotificationType | 'all' }[] = [
   { label: 'All Types', value: 'all' },
@@ -40,6 +42,7 @@ const TIME_RANGES = [
 ];
 
 export default function NotificationHistoryPage() {
+  useTrackPage(TRACKED_SCREENS.notificationsHistory);
   const { user } = useAppSelector((state) => state.auth);
   const [notifications, setNotifications] = useState<NotificationRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);

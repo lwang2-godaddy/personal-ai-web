@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { apiGet } from '@/lib/api/client';
+import { useTrackPage } from '@/lib/hooks/useTrackPage';
+import { TRACKED_SCREENS } from '@/lib/models/BehaviorEvent';
 
 interface DashboardStats {
   totalUsers: number;
@@ -17,6 +19,9 @@ interface DashboardStats {
  * Displays key statistics and quick action cards
  */
 export default function AdminDashboardPage() {
+  // Track page view
+  useTrackPage(TRACKED_SCREENS.adminOverview);
+
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

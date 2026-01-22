@@ -15,12 +15,17 @@ import {
   ActiveMigrationBanner,
   MigrationDocs,
 } from '@/components/admin/migrations';
+import { useTrackPage } from '@/lib/hooks/useTrackPage';
+import { TRACKED_SCREENS } from '@/lib/models/BehaviorEvent';
 
 /**
  * Migrations Admin Page
  * List all available migrations with stats and recent runs
  */
 export default function MigrationsPage() {
+  // Track page view
+  useTrackPage(TRACKED_SCREENS.adminMigrations);
+
   const [migrations, setMigrations] = useState<MigrationWithStats[]>([]);
   const [activeMigrations, setActiveMigrations] = useState<MigrationRun[]>([]);
   const [totalRuns, setTotalRuns] = useState(0);

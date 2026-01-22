@@ -5,6 +5,8 @@ import { useAppDispatch, useAppSelector } from '@/lib/store/hooks';
 import { submitQuickThought } from '@/lib/store/slices/quickCreateSlice';
 import { fetchDashboardData } from '@/lib/store/slices/dashboardSlice';
 import { QuickVoiceRecorder } from './QuickVoiceRecorder';
+import { useTrackFeature } from '@/lib/hooks/useTrackPage';
+import { TRACKED_FEATURES } from '@/lib/models/BehaviorEvent';
 
 const MAX_LENGTH = 280;
 
@@ -20,12 +22,14 @@ export function QuickThoughtInput() {
   const dispatch = useAppDispatch();
   const { isSubmitting } = useAppSelector((state) => state.quickCreate);
   const userId = useAppSelector((state) => state.auth.user?.uid);
+  const { trackFeature } = useTrackFeature();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!content.trim() || content.length > MAX_LENGTH) return;
 
+    trackFeature(TRACKED_FEATURES.submitQuickThought, { category: 'data_input' });
     await dispatch(submitQuickThought({
       content: content.trim(),
       tags: [],

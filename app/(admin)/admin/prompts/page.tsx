@@ -6,6 +6,8 @@ import { useAuth } from '@/lib/hooks/useAuth';
 import { apiGet, apiPost } from '@/lib/api/client';
 import { FirestorePromptConfig, PROMPT_SERVICES, PROMPT_CATEGORIES, SUPPORTED_LANGUAGES } from '@/lib/models/Prompt';
 import { getOperationsForService } from '@/lib/models/ServiceOperations';
+import { useTrackPage } from '@/lib/hooks/useTrackPage';
+import { TRACKED_SCREENS } from '@/lib/models/BehaviorEvent';
 
 interface PromptsResponse {
   configs: FirestorePromptConfig[];
@@ -48,6 +50,9 @@ interface StatsResponse {
 }
 
 export default function AdminPromptsPage() {
+  // Track page view
+  useTrackPage(TRACKED_SCREENS.adminPrompts);
+
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

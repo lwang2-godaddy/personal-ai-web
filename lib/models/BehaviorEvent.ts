@@ -294,24 +294,62 @@ export interface EndSessionResponse {
  * Predefined screens for consistent tracking
  */
 export const TRACKED_SCREENS = {
-  // Mobile
-  home: 'home',
-  chat: 'chat',
-  diary: 'diary',
-  diaryEditor: 'diary_editor',
-  settings: 'settings',
-  search: 'search',
-  profile: 'profile',
-
-  // Web
-  dashboard: 'dashboard',
+  // Auth
   login: 'login',
 
-  // Admin
+  // Dashboard
+  dashboard: 'dashboard',
+  chat: 'chat',
+  create: 'create',
+  search: 'search',
+
+  // Events
+  events: 'events',
+  eventsSearch: 'events_search',
+
+  // Circles
+  circles: 'circles',
+  circlesCreate: 'circles_create',
+  circlesInvites: 'circles_invites',
+  circleDetail: 'circle_detail',
+  circleChat: 'circle_chat',
+  circleMembers: 'circle_members',
+  circleChallenges: 'circle_challenges',
+  circleAnalytics: 'circle_analytics',
+
+  // Notifications
+  notificationsHistory: 'notifications_history',
+
+  // Settings
+  settings: 'settings',
+  settingsNotifications: 'settings_notifications',
+  settingsQuietHours: 'settings_quiet_hours',
+  settingsLifeFeed: 'settings_life_feed',
+
+  // Admin (15 screens)
   adminOverview: 'admin_overview',
   adminUsers: 'admin_users',
+  adminUserDetail: 'admin_user_detail',
   adminUsage: 'admin_usage',
+  adminUsageTest: 'admin_usage_test',
   adminBehavior: 'admin_behavior',
+  adminSubscriptions: 'admin_subscriptions',
+  adminPricing: 'admin_pricing',
+  adminAiModels: 'admin_ai_models',
+  adminPrompts: 'admin_prompts',
+  adminPromptDetail: 'admin_prompt_detail',
+  adminVoiceCategories: 'admin_voice_categories',
+  adminAppSettings: 'admin_app_settings',
+  adminMigrations: 'admin_migrations',
+  adminMigrationDetail: 'admin_migration_detail',
+  adminExploreQuestions: 'admin_explore_questions',
+  adminDocs: 'admin_docs',
+
+  // Mobile (for cross-platform compatibility)
+  home: 'home',
+  diary: 'diary',
+  diaryEditor: 'diary_editor',
+  profile: 'profile',
 } as const;
 
 /**
@@ -320,8 +358,18 @@ export const TRACKED_SCREENS = {
 export const TRACKED_FEATURES = {
   // Chat
   sendChatMessage: 'send_chat_message',
+  clearChatHistory: 'clear_chat_history',
   startVoiceChat: 'start_voice_chat',
   stopVoiceChat: 'stop_voice_chat',
+
+  // Voice
+  startVoiceRecording: 'start_voice_recording',
+  stopVoiceRecording: 'stop_voice_recording',
+
+  // Dashboard
+  submitQuickThought: 'submit_quick_thought',
+  clickStatCard: 'click_stat_card',
+  clickQuickAction: 'click_quick_action',
 
   // Content creation
   createNote: 'create_note',
@@ -330,18 +378,55 @@ export const TRACKED_FEATURES = {
   uploadPhoto: 'upload_photo',
   recordVoice: 'record_voice',
 
+  // Events
+  createEvent: 'create_event',
+  editEvent: 'edit_event',
+  deleteEvent: 'delete_event',
+  changeCalendarView: 'change_calendar_view',
+  switchEventsTab: 'switch_events_tab',
+  changeEventFilter: 'change_event_filter',
+
+  // Circles
+  createCircle: 'create_circle',
+  joinCircle: 'join_circle',
+  leaveCircle: 'leave_circle',
+  sendCircleMessage: 'send_circle_message',
+  startChallenge: 'start_challenge',
+  completeChallenge: 'complete_challenge',
+  acceptInvite: 'accept_invite',
+  declineInvite: 'decline_invite',
+
   // Settings
   toggleSetting: 'toggle_setting',
+  refreshStorageUsage: 'refresh_storage_usage',
   changeTtsProvider: 'change_tts_provider',
   changeLanguage: 'change_language',
+  updateQuietHours: 'update_quiet_hours',
+  updateNotificationPreferences: 'update_notification_preferences',
 
   // Navigation
   search: 'search',
   filterResults: 'filter_results',
+  clickNavItem: 'click_nav_item',
 
-  // Analytics
-  viewAnalytics: 'view_analytics',
+  // Auth
+  signIn: 'sign_in',
+  signOut: 'sign_out',
+
+  // Admin
+  loadAnalyticsData: 'load_analytics_data',
   exportData: 'export_data',
+  changeDateRange: 'change_date_range',
+  suspendUser: 'suspend_user',
+  changeUserTier: 'change_user_tier',
+  updateAppSetting: 'update_app_setting',
+  runMigration: 'run_migration',
+  updatePrompt: 'update_prompt',
+  updatePricing: 'update_pricing',
+  updateAiModel: 'update_ai_model',
+
+  // Analytics (legacy)
+  viewAnalytics: 'view_analytics',
 
   // Social
   shareContent: 'share_content',

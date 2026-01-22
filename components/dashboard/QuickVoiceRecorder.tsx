@@ -5,6 +5,8 @@ import { useAppDispatch, useAppSelector } from '@/lib/store/hooks';
 import { uploadVoiceNote } from '@/lib/store/slices/inputSlice';
 import VoiceRecorderService from '@/lib/services/voiceRecorder';
 import { fetchDashboardData } from '@/lib/store/slices/dashboardSlice';
+import { useTrackFeature } from '@/lib/hooks/useTrackPage';
+import { TRACKED_FEATURES } from '@/lib/models/BehaviorEvent';
 
 /**
  * QuickVoiceRecorder Component
@@ -14,6 +16,7 @@ export function QuickVoiceRecorder() {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
   const { voice, isOnline } = useAppSelector((state) => state.input);
+  const { trackFeature } = useTrackFeature();
 
   const [isRecording, setIsRecording] = useState(false);
   const [duration, setDuration] = useState(0);
@@ -59,6 +62,7 @@ export function QuickVoiceRecorder() {
     }
 
     try {
+      trackFeature(TRACKED_FEATURES.startVoiceRecording, { category: 'data_input' });
       await voiceRecorder.startRecording();
     } catch (error: any) {
       console.error('Failed to start recording:', error);
@@ -68,6 +72,7 @@ export function QuickVoiceRecorder() {
 
   const handleStopRecording = async () => {
     try {
+      trackFeature(TRACKED_FEATURES.stopVoiceRecording, { category: 'data_input' });
       await voiceRecorder.stopRecording();
     } catch (error: any) {
       console.error('Failed to stop recording:', error);

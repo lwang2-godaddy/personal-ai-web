@@ -8,6 +8,8 @@ import {
   TierQuotas,
   formatQuotaValue,
 } from '@/lib/models/Subscription';
+import { useTrackPage } from '@/lib/hooks/useTrackPage';
+import { TRACKED_SCREENS } from '@/lib/models/BehaviorEvent';
 
 type TierName = 'free' | 'premium' | 'pro';
 
@@ -21,6 +23,9 @@ interface EditingTier {
  * Configure tier quotas and features
  */
 export default function AdminSubscriptionsPage() {
+  // Track page view
+  useTrackPage(TRACKED_SCREENS.adminSubscriptions);
+
   const [config, setConfig] = useState<SubscriptionTierConfig | null>(null);
   const [versions, setVersions] = useState<SubscriptionConfigVersion[]>([]);
   const [isDefault, setIsDefault] = useState(false);

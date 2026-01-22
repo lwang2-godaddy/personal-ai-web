@@ -18,10 +18,13 @@ import EventCalendar from '@/components/events/EventCalendar';
 import MiniCalendar from '@/components/events/MiniCalendar';
 import { useCalendarDragDrop } from '@/lib/hooks/useCalendarDragDrop';
 import { SlotInfo, View, Views } from 'react-big-calendar';
+import { useTrackPage, useTrackFeature } from '@/lib/hooks/useTrackPage';
+import { TRACKED_SCREENS, TRACKED_FEATURES } from '@/lib/models/BehaviorEvent';
 
 type TabType = 'calendar' | 'list' | 'search';
 
 export default function EventsPage() {
+  const { trackFeature } = useTrackFeature();
   const dispatch = useAppDispatch();
   const router = useRouter();
   const { user } = useAuth();
@@ -32,6 +35,20 @@ export default function EventsPage() {
   const [activeTab, setActiveTab] = useState<TabType>('calendar');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [calendarView, setCalendarView] = useState<View>(Views.MONTH);
+
+  // Track page view with current tab
+  useTrackPage(TRACKED_SCREENS.events, { tab: activeTab });
+
+  // Wrapper functions for tracking
+  const handleTabChange = (tab: TabType) => {
+    trackFeature(TRACKED_FEATURES.switchEventsTab, { metadata: { tab } });
+    setActiveTab(tab);
+  };
+
+  const handleViewChange = (view: View) => {
+    trackFeature(TRACKED_FEATURES.changeCalendarView, { metadata: { view } });
+    setCalendarView(view);
+  };
 
   // Calendar drag-and-drop hook
   const { handleEventDrop, handleEventResize, isValidating } = useCalendarDragDrop(
@@ -67,6 +84,7 @@ export default function EventsPage() {
   };
 
   const handleCreateClick = () => {
+    trackFeature(TRACKED_FEATURES.createEvent);
     setSelected(null);
     dispatch(setSelectedEvent(null));
     setModalMode('create');
@@ -193,7 +211,7 @@ export default function EventsPage() {
       {/* Tabs */}
       <div className="flex items-center gap-2 mb-6 border-b border-gray-200">
         <button
-          onClick={() => setActiveTab('calendar')}
+          onClick={() => handleTabChange('calendar')}
           className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${
             activeTab === 'calendar'
               ? 'border-blue-500 text-blue-600'
@@ -203,7 +221,7 @@ export default function EventsPage() {
           Calendar
         </button>
         <button
-          onClick={() => setActiveTab('list')}
+          onClick={() => handleTabChange('list')}
           className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${
             activeTab === 'list'
               ? 'border-blue-500 text-blue-600'
@@ -286,7 +304,7 @@ export default function EventsPage() {
         <div className="bg-white rounded-lg shadow p-4 mb-6">
           <div className="flex gap-2">
             <button
-              onClick={() => setCalendarView(Views.MONTH)}
+              onClick={() => handleViewChange(Views.MONTH)}
               className={`px-4 py-2 rounded-md font-medium transition-colors ${
                 calendarView === Views.MONTH
                   ? 'bg-blue-600 text-white'
@@ -296,7 +314,7 @@ export default function EventsPage() {
               Month
             </button>
             <button
-              onClick={() => setCalendarView(Views.WEEK)}
+              onClick={() => handleViewChange(Views.WEEK)}
               className={`px-4 py-2 rounded-md font-medium transition-colors ${
                 calendarView === Views.WEEK
                   ? 'bg-blue-600 text-white'
@@ -306,7 +324,7 @@ export default function EventsPage() {
               Week
             </button>
             <button
-              onClick={() => setCalendarView(Views.DAY)}
+              onClick={() => handleViewChange(Views.DAY)}
               className={`px-4 py-2 rounded-md font-medium transition-colors ${
                 calendarView === Views.DAY
                   ? 'bg-blue-600 text-white'
@@ -316,7 +334,7 @@ export default function EventsPage() {
               Day
             </button>
             <button
-              onClick={() => setCalendarView(Views.AGENDA)}
+              onClick={() => handleViewChange(Views.AGENDA)}
               className={`px-4 py-2 rounded-md font-medium transition-colors ${
                 calendarView === Views.AGENDA
                   ? 'bg-blue-600 text-white'
@@ -341,7 +359,7 @@ export default function EventsPage() {
               onEventResize={handleEventResize}
               loading={isValidating}
               view={calendarView}
-              onViewChange={setCalendarView}
+              onViewChange={handleViewChange}
               date={selectedDate}
               onNavigate={setSelectedDate}
             />

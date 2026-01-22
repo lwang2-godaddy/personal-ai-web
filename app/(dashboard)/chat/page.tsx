@@ -6,8 +6,13 @@ import { sendMessage, clearMessages } from '@/lib/store/slices/chatSlice';
 import { MessageBubble } from '@/components/chat/MessageBubble';
 import { ChatInput } from '@/components/chat/ChatInput';
 import { EmptyState } from '@/components/chat/EmptyState';
+import { useTrackPage, useTrackFeature } from '@/lib/hooks/useTrackPage';
+import { TRACKED_SCREENS, TRACKED_FEATURES } from '@/lib/models/BehaviorEvent';
 
 export default function ChatPage() {
+  // Track page view
+  useTrackPage(TRACKED_SCREENS.chat);
+  const { trackFeature } = useTrackFeature();
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
   const { messages, isLoading, error } = useAppSelector((state) => state.chat);
@@ -24,11 +29,13 @@ export default function ChatPage() {
       return;
     }
 
+    trackFeature(TRACKED_FEATURES.sendChatMessage, { category: 'ai_interaction' });
     await dispatch(sendMessage({ message, userId: user.uid }));
   };
 
   const handleClear = () => {
     if (window.confirm('Clear all messages?')) {
+      trackFeature(TRACKED_FEATURES.clearChatHistory, { category: 'ai_interaction' });
       dispatch(clearMessages());
     }
   };

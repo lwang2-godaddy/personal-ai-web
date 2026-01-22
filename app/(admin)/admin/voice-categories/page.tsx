@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { apiGet, apiPost, apiPatch, apiDelete } from '@/lib/api/client';
 import { VoiceCategory, DEFAULT_VOICE_CATEGORIES } from '@/lib/models/VoiceCategory';
+import { useTrackPage } from '@/lib/hooks/useTrackPage';
+import { TRACKED_SCREENS } from '@/lib/models/BehaviorEvent';
 import {
   IoBriefcaseOutline,
   IoFitnessOutline,
@@ -116,6 +118,9 @@ const renderIcon = (iconName: string, size: number = 18, color?: string) => {
  * Configure voice note topic categories for automatic classification
  */
 export default function AdminVoiceCategoriesPage() {
+  // Track page view
+  useTrackPage(TRACKED_SCREENS.adminVoiceCategories);
+
   const [categories, setCategories] = useState<VoiceCategory[]>([]);
   const [isDefault, setIsDefault] = useState(false);
   const [loading, setLoading] = useState(true);

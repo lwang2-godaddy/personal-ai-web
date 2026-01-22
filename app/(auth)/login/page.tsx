@@ -9,8 +9,11 @@ import {
   signUpWithEmailThunk,
   clearError,
 } from '@/lib/store/slices/authSlice';
+import { useTrackPage } from '@/lib/hooks/useTrackPage';
+import { TRACKED_SCREENS } from '@/lib/models/BehaviorEvent';
 
 export default function LoginPage() {
+  useTrackPage(TRACKED_SCREENS.login);
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { isAuthenticated, isLoading, error } = useAppSelector((state) => state.auth);

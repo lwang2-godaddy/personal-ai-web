@@ -5,12 +5,15 @@ import { useParams } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/lib/store/hooks';
 import { fetchCircleMessages, sendCircleMessage } from '@/lib/store/slices/circleSlice';
 import CircleMessageBubble from '@/components/circles/CircleMessageBubble';
+import { useTrackPage } from '@/lib/hooks/useTrackPage';
+import { TRACKED_SCREENS } from '@/lib/models/BehaviorEvent';
 
 /**
  * Circle chat page
  * RAG-powered group chat within a circle
  */
 export default function CircleChatPage() {
+  useTrackPage(TRACKED_SCREENS.circleChat);
   const params = useParams();
   const circleId = params.circleId as string;
   const dispatch = useAppDispatch();

@@ -9,6 +9,8 @@ import {
   formatModelCost,
   OpenAIModelId,
 } from '@/lib/models/AIModels';
+import { useTrackPage } from '@/lib/hooks/useTrackPage';
+import { TRACKED_SCREENS } from '@/lib/models/BehaviorEvent';
 
 type ServiceName = keyof AIModelsConfig['services'];
 
@@ -17,6 +19,9 @@ type ServiceName = keyof AIModelsConfig['services'];
  * Configure which OpenAI models are used for different services
  */
 export default function AdminAIModelsPage() {
+  // Track page view
+  useTrackPage(TRACKED_SCREENS.adminAiModels);
+
   const [config, setConfig] = useState<AIModelsConfig | null>(null);
   const [versions, setVersions] = useState<AIModelsConfigVersion[]>([]);
   const [isDefault, setIsDefault] = useState(false);

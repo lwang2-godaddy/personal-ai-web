@@ -1,8 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import { useTrackPage } from '@/lib/hooks/useTrackPage';
+import { TRACKED_SCREENS } from '@/lib/models/BehaviorEvent';
 
 export default function SearchPage() {
+  // Track page view
+  useTrackPage(TRACKED_SCREENS.search);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [searchType, setSearchType] = useState<'all' | 'health' | 'location' | 'voice' | 'photo'>('all');
 

@@ -7,6 +7,8 @@ import { apiGet, apiPost, apiPatch, apiDelete } from '@/lib/api/client';
 import { CircleMemberListItem } from '@/components/circles';
 import { CircleMember, CircleInvite } from '@/lib/models/Circle';
 import { FriendWithProfile } from '@/lib/models/Friend';
+import { useTrackPage } from '@/lib/hooks/useTrackPage';
+import { TRACKED_SCREENS } from '@/lib/models/BehaviorEvent';
 
 interface PendingInviteInfo {
   friendId: string;
@@ -14,6 +16,7 @@ interface PendingInviteInfo {
 }
 
 export default function CircleMembersPage() {
+  useTrackPage(TRACKED_SCREENS.circleMembers);
   const params = useParams();
   const router = useRouter();
   const circleId = params.circleId as string;

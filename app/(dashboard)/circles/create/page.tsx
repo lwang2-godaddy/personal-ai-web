@@ -6,12 +6,15 @@ import { useAppDispatch, useAppSelector } from '@/lib/store/hooks';
 import { createCircle } from '@/lib/store/slices/circleSlice';
 import DataSharingToggles from '@/components/circles/DataSharingToggles';
 import { Circle, CircleDataSharing, CircleSettings } from '@/lib/models/Circle';
+import { useTrackPage } from '@/lib/hooks/useTrackPage';
+import { TRACKED_SCREENS } from '@/lib/models/BehaviorEvent';
 
 /**
  * Create circle page
  * Form to create a new circle with friends
  */
 export default function CreateCirclePage() {
+  useTrackPage(TRACKED_SCREENS.circlesCreate);
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);

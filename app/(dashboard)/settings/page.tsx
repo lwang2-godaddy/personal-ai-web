@@ -6,6 +6,8 @@ import { useAppSelector } from '@/lib/store/hooks';
 import { apiGet } from '@/lib/api/client';
 import { StorageUsage } from '@/lib/models/StorageUsage';
 import { StorageUsageCard } from '@/components/settings/StorageUsageCard';
+import { useTrackPage, useTrackFeature } from '@/lib/hooks/useTrackPage';
+import { TRACKED_SCREENS, TRACKED_FEATURES } from '@/lib/models/BehaviorEvent';
 
 interface SettingsLinkCardProps {
   href: string;
@@ -43,6 +45,10 @@ function SettingsLinkCard({ href, title, description, icon }: SettingsLinkCardPr
 }
 
 export default function SettingsPage() {
+  // Track page view
+  useTrackPage(TRACKED_SCREENS.settings);
+  const { trackFeature } = useTrackFeature();
+
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
   const [storageUsage, setStorageUsage] = useState<StorageUsage | null>(null);
   const [isLoadingStorage, setIsLoadingStorage] = useState(false);
@@ -78,6 +84,7 @@ export default function SettingsPage() {
   const handleRefresh = useCallback(async () => {
     if (!isAuthenticated || !user?.uid || isLoadingStorage) return;
 
+    trackFeature(TRACKED_FEATURES.refreshStorageUsage, { category: 'settings' });
     try {
       setIsLoadingStorage(true);
       const data = await apiGet<StorageUsage>('/api/storage-usage');
@@ -87,7 +94,7 @@ export default function SettingsPage() {
     } finally {
       setIsLoadingStorage(false);
     }
-  }, [isAuthenticated, user?.uid, isLoadingStorage]);
+  }, [isAuthenticated, user?.uid, isLoadingStorage, trackFeature]);
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

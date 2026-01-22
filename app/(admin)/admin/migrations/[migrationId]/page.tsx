@@ -20,6 +20,8 @@ import {
   MigrationRunHistory,
   ConfirmMigrationModal,
 } from '@/components/admin/migrations';
+import { useTrackPage } from '@/lib/hooks/useTrackPage';
+import { TRACKED_SCREENS } from '@/lib/models/BehaviorEvent';
 
 interface MigrationDetailResponse {
   migration: MigrationDefinition;
@@ -36,6 +38,9 @@ interface PageProps {
  * Configure and run migrations, view history
  */
 export default function MigrationDetailPage({ params }: PageProps) {
+  // Track page view
+  useTrackPage(TRACKED_SCREENS.adminMigrationDetail);
+
   const router = useRouter();
   const { migrationId } = use(params);
 

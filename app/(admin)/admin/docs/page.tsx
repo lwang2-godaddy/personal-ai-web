@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ApiClient } from '@/lib/api/client';
+import { useTrackPage } from '@/lib/hooks/useTrackPage';
+import { TRACKED_SCREENS } from '@/lib/models/BehaviorEvent';
 
 interface DocSection {
   id: string;
@@ -117,6 +119,9 @@ const MOBILE_DOCS: DocSection[] = [
 ];
 
 export default function DocsPage() {
+  // Track page view
+  useTrackPage(TRACKED_SCREENS.adminDocs);
+
   const [selectedDoc, setSelectedDoc] = useState<string | null>(null);
   const [docContent, setDocContent] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);

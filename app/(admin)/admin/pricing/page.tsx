@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { apiGet, apiPost, apiPatch } from '@/lib/api/client';
+import { useTrackPage } from '@/lib/hooks/useTrackPage';
+import { TRACKED_SCREENS } from '@/lib/models/BehaviorEvent';
 
 /**
  * Available model features
@@ -298,6 +300,9 @@ interface NewModel {
  * Configure model pricing for cost estimation
  */
 export default function AdminPricingPage() {
+  // Track page view
+  useTrackPage(TRACKED_SCREENS.adminPricing);
+
   const [config, setConfig] = useState<PricingConfig | null>(null);
   const [isDefault, setIsDefault] = useState(false);
   const [loading, setLoading] = useState(true);

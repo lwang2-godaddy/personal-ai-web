@@ -8,12 +8,17 @@ import {
   isValidEmail,
   isValidUrl,
 } from '@/lib/models/AppSettings';
+import { useTrackPage } from '@/lib/hooks/useTrackPage';
+import { TRACKED_SCREENS } from '@/lib/models/BehaviorEvent';
 
 /**
  * Admin App Settings Page
  * Configure support email, documentation URLs, and app metadata
  */
 export default function AdminAppSettingsPage() {
+  // Track page view
+  useTrackPage(TRACKED_SCREENS.adminAppSettings);
+
   const [config, setConfig] = useState<AppSettingsConfig | null>(null);
   const [isDefault, setIsDefault] = useState(false);
   const [loading, setLoading] = useState(true);
