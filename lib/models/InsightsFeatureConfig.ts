@@ -64,7 +64,11 @@ export const POST_TYPE_METADATA: Record<InsightsPostType, PostTypeMetadata> = {
     color: '#607D8B',
     displayName: 'Life Update',
     description: 'Weekly/daily summaries',
-    prompts: [{ id: 'life_summary', name: 'life-summary-post', description: 'Weekly life update posts' }],
+    prompts: [
+      { id: 'life_summary', name: 'life_summary', description: 'Casual weekly life update posts' },
+      { id: 'life_summary_detailed', name: 'life_summary_detailed', description: 'Comprehensive update with specific stats and achievements' },
+      { id: 'life_summary_minimal', name: 'life_summary_minimal', description: 'Brief, punchy update focusing on one standout moment' },
+    ],
     requirements: 'Always eligible - no specific data requirements',
   },
   milestone: {
@@ -72,7 +76,7 @@ export const POST_TYPE_METADATA: Record<InsightsPostType, PostTypeMetadata> = {
     color: '#FFC107',
     displayName: 'Milestone',
     description: 'Achievement announcements',
-    prompts: [{ id: 'milestone', name: 'milestone-post', description: 'Personal milestone celebrations' }],
+    prompts: [{ id: 'milestone', name: 'milestone', description: 'Personal milestone celebrations' }],
     requirements: 'Requires detected milestones (activity counts reaching thresholds like 10th, 25th, 50th visit)',
   },
   pattern_prediction: {
@@ -80,7 +84,11 @@ export const POST_TYPE_METADATA: Record<InsightsPostType, PostTypeMetadata> = {
     color: '#9C27B0',
     displayName: 'Prediction',
     description: 'Future activity predictions',
-    prompts: [{ id: 'pattern_prediction', name: 'pattern-prediction-post', description: 'Behavior predictions based on patterns' }],
+    prompts: [
+      { id: 'pattern_prediction', name: 'pattern_prediction', description: 'Excited prediction about upcoming habits' },
+      { id: 'pattern_prediction_curious', name: 'pattern_prediction_curious', description: 'Curious, wondering tweet about pattern continuation' },
+      { id: 'pattern_prediction_playful', name: 'pattern_prediction_playful', description: 'Playful, self-aware tweet about predictability' },
+    ],
     requirements: 'Requires detected patterns (recurring activities, consistent schedules)',
   },
   reflective_insight: {
@@ -88,7 +96,11 @@ export const POST_TYPE_METADATA: Record<InsightsPostType, PostTypeMetadata> = {
     color: '#03A9F4',
     displayName: 'Insight',
     description: 'Behavioral insights',
-    prompts: [{ id: 'reflective_insight', name: 'reflective-insight-post', description: 'Thoughtful observations about habits' }],
+    prompts: [
+      { id: 'reflective_insight', name: 'reflective_insight', description: 'Thoughtful observations about habits' },
+      { id: 'reflective_insight_mood', name: 'reflective_insight_mood', description: 'Insight connecting activity patterns to feelings' },
+      { id: 'reflective_insight_discovery', name: 'reflective_insight_discovery', description: 'Tweet about a surprising self-discovery' },
+    ],
     requirements: 'Requires steps > 0 OR activities > 0 OR locations > 0',
   },
   memory_highlight: {
@@ -96,7 +108,11 @@ export const POST_TYPE_METADATA: Record<InsightsPostType, PostTypeMetadata> = {
     color: '#E91E63',
     displayName: 'Memory',
     description: 'Anniversary highlights',
-    prompts: [{ id: 'memory_highlight', name: 'memory-highlight-post', description: 'Recent memory celebrations' }],
+    prompts: [
+      { id: 'memory_highlight', name: 'memory_highlight', description: 'Nostalgic recent memory celebration' },
+      { id: 'memory_highlight_celebration', name: 'memory_highlight_celebration', description: 'Upbeat, celebratory tweet about a moment' },
+      { id: 'memory_highlight_story', name: 'memory_highlight_story', description: 'Mini-story tweet with beginning, middle, and end' },
+    ],
     requirements: 'Requires photos > 0 OR voice notes > 0 OR text notes > 0',
   },
   streak_achievement: {
@@ -104,7 +120,7 @@ export const POST_TYPE_METADATA: Record<InsightsPostType, PostTypeMetadata> = {
     color: '#FF5722',
     displayName: 'Streak',
     description: 'Streak achievements',
-    prompts: [{ id: 'streak_achievement', name: 'streak-achievement-post', description: 'Consistent habit celebrations' }],
+    prompts: [{ id: 'streak_achievement', name: 'streak_achievement', description: 'Consistent habit celebrations' }],
     requirements: 'Requires detected streaks (consecutive days of activity)',
   },
   comparison: {
@@ -112,7 +128,7 @@ export const POST_TYPE_METADATA: Record<InsightsPostType, PostTypeMetadata> = {
     color: '#00BCD4',
     displayName: 'Comparison',
     description: 'Time period comparisons',
-    prompts: [{ id: 'comparison', name: 'comparison-post', description: 'Activity period comparisons' }],
+    prompts: [{ id: 'comparison', name: 'comparison', description: 'Activity period comparisons' }],
     requirements: 'Requires steps > 0 OR activities > 0 OR locations > 0',
   },
   seasonal_reflection: {
@@ -120,7 +136,11 @@ export const POST_TYPE_METADATA: Record<InsightsPostType, PostTypeMetadata> = {
     color: '#8BC34A',
     displayName: 'Reflection',
     description: 'Seasonal summaries',
-    prompts: [{ id: 'seasonal_reflection', name: 'seasonal-reflection-post', description: 'Long-term reflections' }],
+    prompts: [
+      { id: 'seasonal_reflection', name: 'seasonal_reflection', description: 'Thoughtful review of season activities' },
+      { id: 'seasonal_reflection_growth', name: 'seasonal_reflection_growth', description: 'Focus on personal growth and change' },
+      { id: 'seasonal_reflection_gratitude', name: 'seasonal_reflection_gratitude', description: 'Gratitude-focused seasonal experiences' },
+    ],
     requirements: 'Requires activities >= 2 OR patterns >= 2 OR events >= 1',
   },
 };

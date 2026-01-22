@@ -37,6 +37,7 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialLanguage = searchParams.get('language') || 'en';
+  const initialPromptId = searchParams.get('prompt') || null;
   const { user } = useAuth();
 
   const [loading, setLoading] = useState(true);
@@ -48,6 +49,9 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
   const [selectedLanguage, setSelectedLanguage] = useState(initialLanguage);
   const [selectedPromptId, setSelectedPromptId] = useState<string | null>(null);
   const [editedContent, setEditedContent] = useState('');
+  const [editedModel, setEditedModel] = useState('gpt-4o-mini');
+  const [editedTemperature, setEditedTemperature] = useState(0.7);
+  const [editedMaxTokens, setEditedMaxTokens] = useState(1000);
   const [editNotes, setEditNotes] = useState('');
 
   // Executions state
@@ -112,12 +116,15 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
       setConfig(response.config);
       setVersions(response.versions || []);
 
-      // Select first prompt if available
+      // Select prompt from URL or first available
       if (response.config && !selectedPromptId) {
-        const firstPromptId = Object.keys(response.config.prompts)[0];
-        if (firstPromptId) {
-          setSelectedPromptId(firstPromptId);
-          setEditedContent(response.config.prompts[firstPromptId].content);
+        // Check if URL has a specific prompt to select
+        const promptToSelect = initialPromptId && response.config.prompts[initialPromptId]
+          ? initialPromptId
+          : Object.keys(response.config.prompts)[0];
+        if (promptToSelect) {
+          setSelectedPromptId(promptToSelect);
+          setEditedContent(response.config.prompts[promptToSelect].content);
         }
       }
     } catch (err: unknown) {
@@ -131,7 +138,11 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
   const handlePromptSelect = (promptId: string) => {
     setSelectedPromptId(promptId);
     if (config) {
-      setEditedContent(config.prompts[promptId].content);
+      const prompt = config.prompts[promptId];
+      setEditedContent(prompt.content);
+      setEditedModel(prompt.metadata?.model || 'gpt-4o-mini');
+      setEditedTemperature(prompt.metadata?.temperature ?? 0.7);
+      setEditedMaxTokens(prompt.metadata?.maxTokens ?? 1000);
     }
     setEditNotes('');
     setSuccess(null);
@@ -148,7 +159,15 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
       await apiPatch(`/api/admin/prompts/${service}`, {
         language: selectedLanguage,
         promptId: selectedPromptId,
-        updates: { content: editedContent },
+        updates: {
+          content: editedContent,
+          metadata: {
+            ...config.prompts[selectedPromptId].metadata,
+            model: editedModel,
+            temperature: editedTemperature,
+            maxTokens: editedMaxTokens,
+          },
+        },
         notes: editNotes || `Updated ${selectedPromptId}`,
       });
 
@@ -578,20 +597,58 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
                   </div>
                 </div>
 
-                {/* Metadata */}
-                {selectedPrompt.metadata && (
-                  <div className="p-4 bg-gray-50 border-b border-gray-200 flex items-center space-x-4 text-sm">
-                    {selectedPrompt.metadata.temperature !== undefined && (
-                      <span>Temperature: <strong>{selectedPrompt.metadata.temperature}</strong></span>
-                    )}
-                    {selectedPrompt.metadata.maxTokens !== undefined && (
-                      <span>Max Tokens: <strong>{selectedPrompt.metadata.maxTokens}</strong></span>
-                    )}
-                    {selectedPrompt.metadata.responseFormat && (
-                      <span>Format: <strong>{selectedPrompt.metadata.responseFormat}</strong></span>
-                    )}
+                {/* Editable Metadata */}
+                <div className="p-4 bg-gray-50 border-b border-gray-200">
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Model</label>
+                      <select
+                        value={editedModel}
+                        onChange={(e) => setEditedModel(e.target.value)}
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500 bg-white"
+                      >
+                        <option value="gpt-4o-mini">gpt-4o-mini</option>
+                        <option value="gpt-4o">gpt-4o</option>
+                        <option value="gpt-4-turbo">gpt-4-turbo</option>
+                        <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">
+                        Temperature: {editedTemperature}
+                      </label>
+                      <input
+                        type="range"
+                        min="0"
+                        max="2"
+                        step="0.1"
+                        value={editedTemperature}
+                        onChange={(e) => setEditedTemperature(parseFloat(e.target.value))}
+                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-red-600"
+                      />
+                      <div className="flex justify-between text-xs text-gray-400 mt-1">
+                        <span>Precise</span>
+                        <span>Creative</span>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Max Tokens</label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="16000"
+                        value={editedMaxTokens}
+                        onChange={(e) => setEditedMaxTokens(parseInt(e.target.value) || 1000)}
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
+                      />
+                    </div>
                   </div>
-                )}
+                  {selectedPrompt.metadata?.responseFormat && (
+                    <div className="mt-2 text-xs text-gray-500">
+                      Response Format: <strong>{selectedPrompt.metadata.responseFormat}</strong>
+                    </div>
+                  )}
+                </div>
 
                 {/* Content Editor */}
                 <div className="p-4">
@@ -649,9 +706,19 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
                       </div>
                       <button
                         onClick={handleSavePrompt}
-                        disabled={saving || editedContent === selectedPrompt.content}
+                        disabled={saving || (
+                          editedContent === selectedPrompt.content &&
+                          editedModel === (selectedPrompt.metadata?.model || 'gpt-4o-mini') &&
+                          editedTemperature === (selectedPrompt.metadata?.temperature ?? 0.7) &&
+                          editedMaxTokens === (selectedPrompt.metadata?.maxTokens ?? 1000)
+                        )}
                         className={`px-6 py-2 rounded-md text-white font-medium transition-colors ${
-                          saving || editedContent === selectedPrompt.content
+                          saving || (
+                            editedContent === selectedPrompt.content &&
+                            editedModel === (selectedPrompt.metadata?.model || 'gpt-4o-mini') &&
+                            editedTemperature === (selectedPrompt.metadata?.temperature ?? 0.7) &&
+                            editedMaxTokens === (selectedPrompt.metadata?.maxTokens ?? 1000)
+                          )
                             ? 'bg-gray-400 cursor-not-allowed'
                             : 'bg-red-600 hover:bg-red-700'
                         }`}

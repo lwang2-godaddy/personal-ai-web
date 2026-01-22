@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { apiGet, apiPost } from '@/lib/api/client';
 import { FirestorePromptConfig, PROMPT_SERVICES, PROMPT_CATEGORIES, SUPPORTED_LANGUAGES } from '@/lib/models/Prompt';
@@ -53,7 +54,22 @@ export default function AdminPromptsPage() {
   // Track page view
   useTrackPage(TRACKED_SCREENS.adminPrompts);
 
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
+
+  // Handle deep-link redirect: /admin/prompts?service=X&prompt=Y -> /admin/prompts/X?prompt=Y
+  useEffect(() => {
+    const serviceParam = searchParams.get('service');
+    if (serviceParam) {
+      const promptParam = searchParams.get('prompt');
+      const languageParam = searchParams.get('language') || 'en';
+      const redirectUrl = promptParam
+        ? `/admin/prompts/${serviceParam}?language=${languageParam}&prompt=${promptParam}`
+        : `/admin/prompts/${serviceParam}?language=${languageParam}`;
+      router.replace(redirectUrl);
+    }
+  }, [searchParams, router]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [configs, setConfigs] = useState<FirestorePromptConfig[]>([]);
@@ -84,8 +100,12 @@ export default function AdminPromptsPage() {
     }
   };
 
-  const handleMigrateAll = async () => {
-    if (!confirm('This will migrate all YAML prompts to Firestore for the selected language. Services that already exist will be skipped. Continue?')) {
+  const handleMigrateAll = async (overwrite: boolean = false) => {
+    const confirmMessage = overwrite
+      ? 'This will RE-SYNC all YAML prompts to Firestore for the selected language, OVERWRITING any existing prompts. This is useful when YAML files have been updated. Continue?'
+      : 'This will migrate all YAML prompts to Firestore for the selected language. Services that already exist will be skipped. Continue?';
+
+    if (!confirm(confirmMessage)) {
       return;
     }
 
@@ -98,7 +118,7 @@ export default function AdminPromptsPage() {
         '/api/admin/prompts/migrate',
         {
           language: selectedLanguage,
-          overwrite: false,
+          overwrite,
         }
       );
 
@@ -228,11 +248,19 @@ export default function AdminPromptsPage() {
           </div>
           {/* Migrate Buttons */}
           <button
-            onClick={handleMigrateAll}
+            onClick={() => handleMigrateAll(false)}
             disabled={migrating || migratingAllLanguages}
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {migrating ? 'Migrating...' : `Migrate ${selectedLanguage.toUpperCase()}`}
+          </button>
+          <button
+            onClick={() => handleMigrateAll(true)}
+            disabled={migrating || migratingAllLanguages}
+            className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Re-sync prompts from YAML files, overwriting existing Firestore data"
+          >
+            {migrating ? 'Syncing...' : `Re-sync ${selectedLanguage.toUpperCase()}`}
           </button>
           <button
             onClick={handleMigrateAllLanguages}
@@ -595,6 +623,29 @@ export default function AdminPromptsPage() {
             </ul>
           </div>
 
+          {/* CLI Migration Script Panel */}
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+            <h3 className="text-amber-800 font-medium mb-2 flex items-center gap-2">
+              <span>🔧</span> CLI Migration Script
+            </h3>
+            <p className="text-amber-700 text-sm mb-3">
+              For bulk migration or when updating YAML source files, use the CLI script which reads directly from YAML files:
+            </p>
+            <div className="bg-gray-900 text-gray-100 rounded-lg p-3 font-mono text-xs overflow-x-auto mb-3">
+              <div className="text-green-400"># Navigate to personal-ai-web directory first</div>
+              <div className="text-gray-300">cd personal-ai-web</div>
+              <div className="text-gray-300 mt-2"># Migrate all languages (skip existing)</div>
+              <div className="text-gray-300">npx tsx scripts/migrate-prompts.ts</div>
+              <div className="text-gray-300 mt-2"># Re-sync from YAML (overwrite existing)</div>
+              <div className="text-gray-300">npx tsx scripts/migrate-prompts.ts --overwrite</div>
+            </div>
+            <div className="text-amber-700 text-sm space-y-1">
+              <p><strong>Source:</strong> <code className="bg-amber-100 px-1 rounded text-xs">PersonalAIApp/firebase/functions/src/config/prompts/locales/[lang]/*.yaml</code></p>
+              <p><strong>Target:</strong> Firestore <code className="bg-amber-100 px-1 rounded text-xs">prompts/[service]/languages/[lang]</code></p>
+              <p><strong>When to use:</strong> After editing YAML files directly, or when the web &quot;Re-sync&quot; button doesn&apos;t include your service.</p>
+            </div>
+          </div>
+
           {/* How To Add Guide */}
           <details className="bg-white rounded-lg shadow-sm border border-gray-200">
             <summary className="p-4 cursor-pointer hover:bg-gray-50 font-semibold text-gray-900 flex items-center gap-2">
@@ -720,12 +771,15 @@ export default function AdminPromptsPage() {
 
                   <div>
                     <p className="text-gray-700 font-medium mb-1">Step B: Migrate to Firestore</p>
-                    <p className="text-gray-600 text-xs mb-2">Use the &quot;Migrate&quot; button on this page, or run the CLI script:</p>
+                    <p className="text-gray-600 text-xs mb-2">Use the &quot;Migrate&quot; or &quot;Re-sync&quot; button on this page, or run the CLI script:</p>
                     <div className="bg-gray-900 text-gray-100 rounded-lg p-3 font-mono text-xs overflow-x-auto">
                       <div className="text-green-400"># From personal-ai-web directory</div>
-                      <div className="text-gray-300">npm run migrate:prompts</div>
-                      <div className="text-gray-300">npm run migrate:prompts -- --overwrite  <span className="text-gray-500"># To replace existing</span></div>
+                      <div className="text-gray-300">npx tsx scripts/migrate-prompts.ts</div>
+                      <div className="text-gray-300">npx tsx scripts/migrate-prompts.ts --overwrite  <span className="text-gray-500"># To replace existing</span></div>
                     </div>
+                    <p className="text-gray-500 text-xs mt-2">
+                      The script reads YAML files from <code className="bg-gray-100 px-1 rounded">PersonalAIApp/firebase/functions/src/config/prompts/locales/</code> and syncs them to Firestore.
+                    </p>
                   </div>
                 </div>
               </div>

@@ -300,7 +300,7 @@ export default function PostTypesTab({ onSaving }: PostTypesTabProps) {
               {/* Edit button */}
               <button
                 onClick={() => setEditingType(postType)}
-                className="mt-3 w-full px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-50"
+                className="mt-3 w-full px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
               >
                 Edit Settings
               </button>
@@ -372,12 +372,13 @@ function EditPostTypeModal({ postType, config, onSave, onClose, saving }: EditPo
               type="number"
               min="0"
               max="365"
+              step="0.5"
               value={cooldownDays}
-              onChange={(e) => setCooldownDays(Number(e.target.value))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              onChange={(e) => setCooldownDays(parseFloat(e.target.value) || 0)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
             <p className="text-xs text-gray-500 mt-1">
-              Minimum days between posts of this type
+              Minimum days between posts (e.g., 0.5 = 12 hours)
             </p>
           </div>
 
@@ -391,7 +392,7 @@ function EditPostTypeModal({ postType, config, onSave, onClose, saving }: EditPo
               max="10"
               value={priority}
               onChange={(e) => setPriority(Number(e.target.value))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
             <p className="text-xs text-gray-500 mt-1">
               Higher priority = generated more often
@@ -409,7 +410,7 @@ function EditPostTypeModal({ postType, config, onSave, onClose, saving }: EditPo
               step="0.1"
               value={minConfidence}
               onChange={(e) => setMinConfidence(Number(e.target.value))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
             <p className="text-xs text-gray-500 mt-1">
               Minimum confidence score to publish
@@ -426,7 +427,7 @@ function EditPostTypeModal({ postType, config, onSave, onClose, saving }: EditPo
               max="20"
               value={maxPerDay}
               onChange={(e) => setMaxPerDay(Number(e.target.value))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
             <p className="text-xs text-gray-500 mt-1">
               Maximum posts of this type per day

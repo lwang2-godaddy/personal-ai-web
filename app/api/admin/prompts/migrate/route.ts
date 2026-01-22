@@ -409,9 +409,328 @@ Guidelines:
     },
   };
 
+  // LifeFeedGenerator prompts (all variants)
+  const lifeFeedGeneratorPrompts = {
+    system: {
+      id: 'life-feed-system',
+      service: 'LifeFeedGenerator',
+      type: 'system' as const,
+      description: 'System prompt for Life Feed post generation',
+      content: `You are an AI that generates personal social media-style posts about someone's life based on their data.
+Write in first person as if you ARE the person. Be casual, authentic, and relatable.
+Keep posts concise (1-3 sentences). Use occasional emojis naturally.
+Never mention being an AI or analyzing data - just write naturally as the person would.
+Avoid generic statements. Be specific based on the data provided.`,
+      metadata: { model: 'gpt-4o-mini', temperature: 0.8, maxTokens: 200 },
+    },
+    life_summary: {
+      id: 'life-summary-post',
+      service: 'LifeFeedGenerator',
+      type: 'user' as const,
+      description: 'Prompt for generating weekly life summary posts',
+      content: `Write a casual life update tweet summarizing my recent activities.
+Focus on what I've been doing and how active/busy I've been. If there's a mood trend, subtly incorporate it.
+Example: "What a week! 5 gym sessions, 12k steps daily, and finally tried that new coffee place. Feeling good about my routine lately."
+Enhanced example: "This week's energy has been amazing! 5 gym sessions, tons of steps, and that new coffee place was perfect. Mood definitely trending up 📈"
+
+My recent data:
+{{context}}
+
+Write the post:`,
+      metadata: { model: 'gpt-4o-mini', temperature: 0.8, maxTokens: 200 },
+      variables: [{ name: 'context', type: 'string' as const, required: true, description: "User's recent activity data summary" }],
+    },
+    life_summary_detailed: {
+      id: 'life-summary-detailed-post',
+      service: 'LifeFeedGenerator',
+      type: 'user' as const,
+      description: 'Detailed life summary with specific achievements and stats',
+      content: `Write a comprehensive life update tweet highlighting specific achievements and stats from my recent activities.
+Include numbers and specific accomplishments. Make it feel like a proud recap.
+Example: "Week in review: 45,000 steps, 3 badminton matches (won 2!), discovered 2 new coffee spots, and hit a new personal best at the gym. Data doesn't lie - this was a good one! 📊"
+
+My recent data:
+{{context}}
+
+Write the post:`,
+      metadata: { model: 'gpt-4o-mini', temperature: 0.8, maxTokens: 200 },
+      variables: [{ name: 'context', type: 'string' as const, required: true, description: "User's recent activity data summary" }],
+    },
+    life_summary_minimal: {
+      id: 'life-summary-minimal-post',
+      service: 'LifeFeedGenerator',
+      type: 'user' as const,
+      description: 'Brief, punchy life update focusing on one standout moment',
+      content: `Write a brief, punchy life update focusing on ONE standout moment or highlight from my recent activities.
+Keep it super concise - just one sentence that captures the essence.
+Example: "That spontaneous evening run changed everything. 🌅"
+Example: "Finally nailed that yoga pose I've been working on for months. Small wins hit different."
+
+My recent data:
+{{context}}
+
+Write the post:`,
+      metadata: { model: 'gpt-4o-mini', temperature: 0.8, maxTokens: 200 },
+      variables: [{ name: 'context', type: 'string' as const, required: true, description: "User's recent activity data summary" }],
+    },
+    milestone: {
+      id: 'milestone-post',
+      service: 'LifeFeedGenerator',
+      type: 'user' as const,
+      description: 'Prompt for celebrating personal milestones',
+      content: `Write an excited tweet celebrating a personal milestone or achievement.
+Make it feel celebratory but not boastful. Include the specific milestone data.
+Example: "100th visit to my favorite gym! Never thought I'd be this consistent. Here's to 100 more! 💪"
+
+My milestone data:
+{{context}}
+
+Write the post:`,
+      metadata: { model: 'gpt-4o-mini', temperature: 0.8, maxTokens: 200 },
+      variables: [{ name: 'context', type: 'string' as const, required: true, description: "User's milestone data" }],
+    },
+    pattern_prediction: {
+      id: 'pattern-prediction-post',
+      service: 'LifeFeedGenerator',
+      type: 'user' as const,
+      description: 'Prompt for predicting user behavior based on patterns',
+      content: `Write a friendly reminder/prediction tweet about what I'll probably do based on my habits.
+Make it feel like a fun self-observation, not a command. Mention confidence if it's high.
+Example: "It's Tuesday which means... badminton night! Already looking forward to it."
+Enhanced example: "It's Tuesday which means... badminton night! My Tuesday streak is so consistent, I'd bet on it happening 😄"
+
+My recent data:
+{{context}}
+
+Write the post:`,
+      metadata: { model: 'gpt-4o-mini', temperature: 0.8, maxTokens: 200 },
+      variables: [{ name: 'context', type: 'string' as const, required: true, description: "User's pattern and prediction data" }],
+    },
+    pattern_prediction_curious: {
+      id: 'pattern-prediction-curious-post',
+      service: 'LifeFeedGenerator',
+      type: 'user' as const,
+      description: 'Curious, wondering tweet about pattern continuation',
+      content: `Write a curious, wondering tweet about whether my pattern will continue today.
+Frame it as a question or speculation - not a certainty. Be playful about it.
+Example: "Will I actually make it to yoga today or break my streak? My track record says yes, but the couch is looking real comfortable... 🤔"
+Example: "Thursday run prediction: 87% likely according to my habits. Let's see if future me agrees with past me's commitment."
+
+My recent data:
+{{context}}
+
+Write the post:`,
+      metadata: { model: 'gpt-4o-mini', temperature: 0.8, maxTokens: 200 },
+      variables: [{ name: 'context', type: 'string' as const, required: true, description: "User's pattern and prediction data" }],
+    },
+    pattern_prediction_playful: {
+      id: 'pattern-prediction-playful-post',
+      service: 'LifeFeedGenerator',
+      type: 'user' as const,
+      description: 'Playful, self-aware tweet about predictability',
+      content: `Write a playful, self-aware tweet about how predictable I've become based on my patterns.
+Embrace the routine with humor. Make fun of your own consistency.
+Example: "My gym attendance is so predictable at this point that they probably mark their calendar by my visits. Monday, Wednesday, Friday - like clockwork ⏰"
+Example: "Plot twist: I might NOT go to my usual coffee shop today. Just kidding, we all know I will. I'm nothing if not consistent 😂☕"
+
+My recent data:
+{{context}}
+
+Write the post:`,
+      metadata: { model: 'gpt-4o-mini', temperature: 0.8, maxTokens: 200 },
+      variables: [{ name: 'context', type: 'string' as const, required: true, description: "User's pattern and prediction data" }],
+    },
+    reflective_insight: {
+      id: 'reflective-insight-post',
+      service: 'LifeFeedGenerator',
+      type: 'user' as const,
+      description: 'Prompt for thoughtful observations about habits',
+      content: `Write a thoughtful observation tweet about something interesting I noticed about my habits.
+Make it feel like a genuine self-discovery moment. Connect to mood or well-being if relevant.
+Example: "Turns out I walk 30% more on weekdays than weekends. Guess the office commute adds up more than I thought!"
+Enhanced example: "Noticed I'm happiest on days with morning workouts. The 30% activity boost really does change the whole day's vibe!"
+
+My recent data:
+{{context}}
+
+Write the post:`,
+      metadata: { model: 'gpt-4o-mini', temperature: 0.8, maxTokens: 200 },
+      variables: [{ name: 'context', type: 'string' as const, required: true, description: "User's habit analysis data" }],
+    },
+    reflective_insight_mood: {
+      id: 'reflective-insight-mood-post',
+      service: 'LifeFeedGenerator',
+      type: 'user' as const,
+      description: 'Insight connecting activity patterns to feelings',
+      content: `Write an observation tweet connecting my activity patterns to how I've been feeling lately.
+Focus on the mood-activity connection. Make it introspective but relatable.
+Example: "Just realized my best mood days always follow a good night's sleep + morning movement. The body keeps score, and mine's been winning lately. 🧘‍♀️"
+Example: "Funny how my energy tracks almost perfectly with my step count. Active body, active mind I guess?"
+
+My recent data:
+{{context}}
+
+Write the post:`,
+      metadata: { model: 'gpt-4o-mini', temperature: 0.8, maxTokens: 200 },
+      variables: [{ name: 'context', type: 'string' as const, required: true, description: "User's habit analysis data" }],
+    },
+    reflective_insight_discovery: {
+      id: 'reflective-insight-discovery-post',
+      service: 'LifeFeedGenerator',
+      type: 'user' as const,
+      description: 'Tweet about a surprising self-discovery',
+      content: `Write a tweet about a surprising discovery I made about myself based on my activity data.
+Make it feel like an "aha!" moment - something unexpected that the data revealed.
+Example: "Plot twist: I'm apparently a morning person now? Data shows I'm 40% more productive before noon. Who even am I anymore 😂"
+Example: "Just discovered I visit the same 3 coffee shops in a rotation. Creature of habit much? ☕"
+
+My recent data:
+{{context}}
+
+Write the post:`,
+      metadata: { model: 'gpt-4o-mini', temperature: 0.8, maxTokens: 200 },
+      variables: [{ name: 'context', type: 'string' as const, required: true, description: "User's habit analysis data" }],
+    },
+    memory_highlight: {
+      id: 'memory-highlight-post',
+      service: 'LifeFeedGenerator',
+      type: 'user' as const,
+      description: 'Prompt for celebrating recent memories',
+      content: `Write a nostalgic tweet celebrating a recent memory (photo or voice note).
+Focus on the moment and feeling. If part of a series of similar memories, acknowledge the connection.
+Example: "Found this photo from last week's hike. Those views never get old."
+Enhanced example: "Another beautiful hike captured! This trail has become my monthly tradition. Each visit feels special in its own way."
+
+My recent data:
+{{context}}
+
+Write the post:`,
+      metadata: { model: 'gpt-4o-mini', temperature: 0.8, maxTokens: 200 },
+      variables: [{ name: 'context', type: 'string' as const, required: true, description: "User's memory data" }],
+    },
+    memory_highlight_celebration: {
+      id: 'memory-highlight-celebration-post',
+      service: 'LifeFeedGenerator',
+      type: 'user' as const,
+      description: 'Upbeat, celebratory tweet about a recent moment',
+      content: `Write an upbeat, celebratory tweet about a recent moment worth remembering.
+Make it enthusiastic and joyful - like sharing good news with friends.
+Example: "YES! Finally captured that perfect sunset shot I've been chasing for weeks! 🌅 Worth every early morning and late evening wait."
+Example: "That spontaneous game night became an instant core memory. Good people + good vibes = magic ✨"
+
+My recent data:
+{{context}}
+
+Write the post:`,
+      metadata: { model: 'gpt-4o-mini', temperature: 0.8, maxTokens: 200 },
+      variables: [{ name: 'context', type: 'string' as const, required: true, description: "User's memory data" }],
+    },
+    memory_highlight_story: {
+      id: 'memory-highlight-story-post',
+      service: 'LifeFeedGenerator',
+      type: 'user' as const,
+      description: 'Mini-story tweet with beginning, middle, and end',
+      content: `Write a mini-story tweet about a recent memory with a beginning, middle, and end.
+Tell a tiny narrative that captures the experience - setup, action, payoff.
+Example: "Started the hike thinking 'just a quick one.' Three hours later, found a hidden waterfall, made a new trail friend, and came back a different person. 🥾"
+Example: "Walked into that new restaurant skeptical. Left three hours later, full and happy, already planning my next visit. Sometimes the unexpected wins are the best."
+
+My recent data:
+{{context}}
+
+Write the post:`,
+      metadata: { model: 'gpt-4o-mini', temperature: 0.8, maxTokens: 200 },
+      variables: [{ name: 'context', type: 'string' as const, required: true, description: "User's memory data" }],
+    },
+    streak_achievement: {
+      id: 'streak-achievement-post',
+      service: 'LifeFeedGenerator',
+      type: 'user' as const,
+      description: 'Prompt for streak celebration posts',
+      content: `Write a proud tweet celebrating a consistency streak.
+Make it feel earned and encouraging. Include the specific streak data.
+Example: "7 days in a row of hitting my step goal! Small win but it feels huge. 🔥"
+
+My streak data:
+{{context}}
+
+Write the post:`,
+      metadata: { model: 'gpt-4o-mini', temperature: 0.8, maxTokens: 200 },
+      variables: [{ name: 'context', type: 'string' as const, required: true, description: "User's streak data" }],
+    },
+    comparison: {
+      id: 'comparison-post',
+      service: 'LifeFeedGenerator',
+      type: 'user' as const,
+      description: 'Prompt for comparing time periods',
+      content: `Write a tweet comparing my activity between two time periods.
+Make it observational and reflective, not judgmental. Find the interesting story in the data.
+Example: "Walked 50% more this month than last month. Guess spring weather really does make a difference! 🌸"
+
+My comparison data:
+{{context}}
+
+Write the post:`,
+      metadata: { model: 'gpt-4o-mini', temperature: 0.8, maxTokens: 200 },
+      variables: [{ name: 'context', type: 'string' as const, required: true, description: "User's comparison data" }],
+    },
+    seasonal_reflection: {
+      id: 'seasonal-reflection-post',
+      service: 'LifeFeedGenerator',
+      type: 'user' as const,
+      description: 'Prompt for seasonal or long-term reflections',
+      content: `Write a reflective tweet looking back at my activities over a season or longer period.
+Make it feel like a thoughtful review of time well spent. Highlight patterns or growth.
+Example: "This summer I visited 15 new places, played badminton 30 times, and took more photos than ever. Not bad!"
+Enhanced example: "Summer recap: 15 new places explored, 30 badminton games (Tuesday tradition strong!), countless memories captured. Best season yet!"
+
+My recent data:
+{{context}}
+
+Write the post:`,
+      metadata: { model: 'gpt-4o-mini', temperature: 0.8, maxTokens: 200 },
+      variables: [{ name: 'context', type: 'string' as const, required: true, description: "User's seasonal activity data" }],
+    },
+    seasonal_reflection_growth: {
+      id: 'seasonal-reflection-growth-post',
+      service: 'LifeFeedGenerator',
+      type: 'user' as const,
+      description: 'Tweet focusing on personal growth and change',
+      content: `Write a tweet focusing on how I've grown or changed this season based on my activity patterns.
+Highlight the transformation - who I was vs who I'm becoming. Celebrate the progress.
+Example: "Looking at my data from January vs now... I've gone from 'I should probably exercise' to 5 gym sessions a week. Growth is real. 💪"
+Example: "This season taught me I'm capable of more than I thought. From struggling to run 1 mile to completing my first 10K. The data tells the whole story."
+
+My recent data:
+{{context}}
+
+Write the post:`,
+      metadata: { model: 'gpt-4o-mini', temperature: 0.8, maxTokens: 200 },
+      variables: [{ name: 'context', type: 'string' as const, required: true, description: "User's seasonal activity data" }],
+    },
+    seasonal_reflection_gratitude: {
+      id: 'seasonal-reflection-gratitude-post',
+      service: 'LifeFeedGenerator',
+      type: 'user' as const,
+      description: 'Gratitude-focused tweet about seasonal experiences',
+      content: `Write a gratitude-focused tweet about the experiences I've had this season.
+Express appreciation for the activities, places, and moments. Be warm and genuine.
+Example: "Grateful for every step, every game, every sunset captured this season. Looking at my activity log feels like reading a thank-you note to life. 🙏"
+Example: "This season gave me 42 workouts, 15 new places discovered, and countless moments of joy. Thankful for a body that moves and a life that's full."
+
+My recent data:
+{{context}}
+
+Write the post:`,
+      metadata: { model: 'gpt-4o-mini', temperature: 0.8, maxTokens: 200 },
+      variables: [{ name: 'context', type: 'string' as const, required: true, description: "User's seasonal activity data" }],
+    },
+  };
+
   return [
     { service: 'OpenAIService', version: '1.0.0', prompts: openAIServicePrompts },
     { service: 'RAGEngine', version: '1.0.0', prompts: ragEnginePrompts },
     { service: 'QueryRAGServer', version: '1.0.0', prompts: queryRAGServerPrompts },
+    { service: 'LifeFeedGenerator', version: '1.0.0', prompts: lifeFeedGeneratorPrompts },
   ];
 }
