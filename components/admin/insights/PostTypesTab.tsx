@@ -207,6 +207,34 @@ export default function PostTypesTab({ onSaving }: PostTypesTabProps) {
                 <span className="text-gray-500">7d: {last7d}</span>
               </div>
 
+              {/* Prompts Section */}
+              <div className="mt-3 pt-3 border-t border-gray-100">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-medium text-gray-500 uppercase">
+                    Prompts ({meta.prompts.length})
+                  </span>
+                </div>
+                {meta.prompts.map((prompt) => (
+                  <Link
+                    key={prompt.id}
+                    href={`/admin/prompts?service=LifeFeedGenerator&prompt=${prompt.id}`}
+                    className="flex items-center justify-between p-2 bg-gray-50 rounded-md hover:bg-gray-100 transition-colors mb-1 last:mb-0"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-gray-700 truncate">
+                        {prompt.name}
+                      </p>
+                      <p className="text-xs text-gray-500 truncate">
+                        {prompt.description}
+                      </p>
+                    </div>
+                    <svg className="w-4 h-4 text-gray-400 flex-shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </Link>
+                ))}
+              </div>
+
               {/* Edit button */}
               <button
                 onClick={() => setEditingType(postType)}

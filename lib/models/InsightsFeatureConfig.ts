@@ -44,15 +44,75 @@ export const INSIGHTS_POST_TYPES: InsightsPostType[] = [
 /**
  * Post type metadata (display info)
  */
-export const POST_TYPE_METADATA: Record<InsightsPostType, { icon: string; color: string; displayName: string; description: string }> = {
-  life_summary: { icon: '📋', color: '#607D8B', displayName: 'Life Update', description: 'Weekly/daily summaries' },
-  milestone: { icon: '🏆', color: '#FFC107', displayName: 'Milestone', description: 'Achievement announcements' },
-  pattern_prediction: { icon: '🔮', color: '#9C27B0', displayName: 'Prediction', description: 'Future activity predictions' },
-  reflective_insight: { icon: '💡', color: '#03A9F4', displayName: 'Insight', description: 'Behavioral insights' },
-  memory_highlight: { icon: '📸', color: '#E91E63', displayName: 'Memory', description: 'Anniversary highlights' },
-  streak_achievement: { icon: '🔥', color: '#FF5722', displayName: 'Streak', description: 'Streak achievements' },
-  comparison: { icon: '📊', color: '#00BCD4', displayName: 'Comparison', description: 'Time period comparisons' },
-  seasonal_reflection: { icon: '🌟', color: '#8BC34A', displayName: 'Reflection', description: 'Seasonal summaries' },
+export interface PostTypeMetadata {
+  icon: string;
+  color: string;
+  displayName: string;
+  description: string;
+  prompts: {
+    id: string;
+    name: string;
+    description: string;
+  }[];
+}
+
+export const POST_TYPE_METADATA: Record<InsightsPostType, PostTypeMetadata> = {
+  life_summary: {
+    icon: '📋',
+    color: '#607D8B',
+    displayName: 'Life Update',
+    description: 'Weekly/daily summaries',
+    prompts: [{ id: 'life_summary', name: 'life-summary-post', description: 'Weekly life update posts' }],
+  },
+  milestone: {
+    icon: '🏆',
+    color: '#FFC107',
+    displayName: 'Milestone',
+    description: 'Achievement announcements',
+    prompts: [{ id: 'milestone', name: 'milestone-post', description: 'Personal milestone celebrations' }],
+  },
+  pattern_prediction: {
+    icon: '🔮',
+    color: '#9C27B0',
+    displayName: 'Prediction',
+    description: 'Future activity predictions',
+    prompts: [{ id: 'pattern_prediction', name: 'pattern-prediction-post', description: 'Behavior predictions based on patterns' }],
+  },
+  reflective_insight: {
+    icon: '💡',
+    color: '#03A9F4',
+    displayName: 'Insight',
+    description: 'Behavioral insights',
+    prompts: [{ id: 'reflective_insight', name: 'reflective-insight-post', description: 'Thoughtful observations about habits' }],
+  },
+  memory_highlight: {
+    icon: '📸',
+    color: '#E91E63',
+    displayName: 'Memory',
+    description: 'Anniversary highlights',
+    prompts: [{ id: 'memory_highlight', name: 'memory-highlight-post', description: 'Recent memory celebrations' }],
+  },
+  streak_achievement: {
+    icon: '🔥',
+    color: '#FF5722',
+    displayName: 'Streak',
+    description: 'Streak achievements',
+    prompts: [{ id: 'streak_achievement', name: 'streak-achievement-post', description: 'Consistent habit celebrations' }],
+  },
+  comparison: {
+    icon: '📊',
+    color: '#00BCD4',
+    displayName: 'Comparison',
+    description: 'Time period comparisons',
+    prompts: [{ id: 'comparison', name: 'comparison-post', description: 'Activity period comparisons' }],
+  },
+  seasonal_reflection: {
+    icon: '🌟',
+    color: '#8BC34A',
+    displayName: 'Reflection',
+    description: 'Seasonal summaries',
+    prompts: [{ id: 'seasonal_reflection', name: 'seasonal-reflection-post', description: 'Long-term reflections' }],
+  },
 };
 
 // ============================================================================
