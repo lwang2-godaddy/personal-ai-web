@@ -108,10 +108,12 @@ export const SERVICE_FILE_MAP: Record<string, string> = {
   SuggestionEngine: 'suggestions.yaml',
   LifeFeedGenerator: 'lifeFeed.yaml',
   DailySummaryService: 'dailySummary.yaml',
+  KeywordGenerator: 'lifeKeywords.yaml',
   // Mobile app / Server services
   OpenAIService: 'chat.yaml',
   RAGEngine: 'rag.yaml',
   QueryRAGServer: 'rag.yaml',
+  CarouselInsights: 'carouselInsights.yaml',
 };
 
 /**
@@ -216,6 +218,26 @@ export const PROMPT_SERVICES = [
     trigger: 'Based on user patterns and context',
     platform: 'server' as const,
     example: 'Suggesting "Time for your daily walk?"',
+  },
+  {
+    id: 'KeywordGenerator',
+    name: 'Life Keywords',
+    category: 'fun_facts' as PromptCategoryId,
+    icon: '🔑',
+    description: 'Generates meaningful keywords from user activity patterns',
+    trigger: 'Periodically or on-demand (weekly, monthly, quarterly, yearly)',
+    platform: 'server' as const,
+    example: 'Generating "Badminton Renaissance" from weekly badminton activity',
+  },
+  {
+    id: 'CarouselInsights',
+    name: 'Carousel Fun Facts',
+    category: 'fun_facts' as PromptCategoryId,
+    icon: '🎠',
+    description: 'AI-generated insights shown in home screen carousel',
+    trigger: 'On pull-to-refresh or carousel refresh button',
+    platform: 'mobile' as const,
+    example: 'Generating "You walked 20% more this week than last!"',
   },
   // Mood Compass - Mood detection & sentiment analysis
   {

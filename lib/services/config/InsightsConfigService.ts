@@ -185,20 +185,27 @@ class InsightsConfigService {
       .get();
     const postsLast7d = last7dSnapshot.data().count;
 
-    // Initialize category counts
+    // Initialize category counts (12 categories)
     const postsByCategory: Record<InsightsCategory, number> = {
       health: 0,
       activity: 0,
-      location: 0,
       social: 0,
-      productivity: 0,
+      work: 0,
+      travel: 0,
+      learning: 0,
+      creativity: 0,
+      routine: 0,
+      milestone: 0,
       memory: 0,
-      achievement: 0,
+      location: 0,
       general: 0,
     };
 
     // Get counts by category (limited sample for performance)
-    const categories: InsightsCategory[] = ['health', 'activity', 'location', 'social', 'productivity', 'memory', 'achievement', 'general'];
+    const categories: InsightsCategory[] = [
+      'health', 'activity', 'social', 'work', 'travel', 'learning',
+      'creativity', 'routine', 'milestone', 'memory', 'location', 'general'
+    ];
 
     for (const category of categories) {
       const categorySnapshot = await postsCollection

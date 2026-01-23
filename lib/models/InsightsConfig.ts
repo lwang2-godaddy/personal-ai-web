@@ -11,43 +11,56 @@
 
 /**
  * Insights category types - maps to LifeFeedCategory in mobile app
+ * 12 categories that posts can be assigned to
  */
 export type InsightsCategory =
   | 'health'
   | 'activity'
-  | 'location'
   | 'social'
-  | 'productivity'
+  | 'work'
+  | 'travel'
+  | 'learning'
+  | 'creativity'
+  | 'routine'
+  | 'milestone'
   | 'memory'
-  | 'achievement'
+  | 'location'
   | 'general';
 
 /**
- * All available categories
+ * All available categories (12 total)
  */
 export const INSIGHTS_CATEGORIES: InsightsCategory[] = [
   'health',
   'activity',
-  'location',
   'social',
-  'productivity',
+  'work',
+  'travel',
+  'learning',
+  'creativity',
+  'routine',
+  'milestone',
   'memory',
-  'achievement',
+  'location',
   'general',
 ];
 
 /**
- * Category metadata (display info)
+ * Category metadata (display info) - 12 categories
  */
 export const CATEGORY_METADATA: Record<InsightsCategory, { icon: string; color: string; displayName: string }> = {
-  health: { icon: '❤️', color: '#FF5252', displayName: 'Health Insights' },
-  activity: { icon: '🏃', color: '#2196F3', displayName: 'Activity Insights' },
-  location: { icon: '📍', color: '#4CAF50', displayName: 'Location Insights' },
-  social: { icon: '👥', color: '#9C27B0', displayName: 'Social Insights' },
-  productivity: { icon: '⚡', color: '#FF9800', displayName: 'Productivity Insights' },
-  memory: { icon: '💭', color: '#3F51B5', displayName: 'Memory Highlights' },
-  achievement: { icon: '🏆', color: '#FFC107', displayName: 'Achievements' },
-  general: { icon: '📝', color: '#607D8B', displayName: 'General Insights' },
+  health: { icon: '❤️', color: '#FF5252', displayName: 'Health' },
+  activity: { icon: '🏃', color: '#2196F3', displayName: 'Activity' },
+  social: { icon: '👥', color: '#9C27B0', displayName: 'Social' },
+  work: { icon: '💼', color: '#795548', displayName: 'Work' },
+  travel: { icon: '✈️', color: '#00BCD4', displayName: 'Travel' },
+  learning: { icon: '📚', color: '#673AB7', displayName: 'Learning' },
+  creativity: { icon: '🎨', color: '#E91E63', displayName: 'Creativity' },
+  routine: { icon: '🔄', color: '#607D8B', displayName: 'Routine' },
+  milestone: { icon: '🏆', color: '#FFC107', displayName: 'Milestone' },
+  memory: { icon: '💭', color: '#3F51B5', displayName: 'Memory' },
+  location: { icon: '📍', color: '#4CAF50', displayName: 'Location' },
+  general: { icon: '📝', color: '#9E9E9E', displayName: 'General' },
 };
 
 // ============================================================================
@@ -193,18 +206,6 @@ export const DEFAULT_INSIGHTS_ADMIN_CONFIG: InsightsAdminConfig = {
       cooldownHours: 6,
       notifications: { enabled: true, immediate: false, includeInSummary: true, priority: 'normal' },
     },
-    location: {
-      enabled: true,
-      displayName: 'Location Insights',
-      icon: '📍',
-      color: '#4CAF50',
-      description: 'Places, visits, patterns',
-      schedule: { frequency: 'smart', time: '', timezone: 'UTC' },
-      minConfidence: 0.7,
-      maxPerDay: 3,
-      cooldownHours: 6,
-      notifications: { enabled: true, immediate: true, includeInSummary: false, priority: 'normal' },
-    },
     social: {
       enabled: true,
       displayName: 'Social Insights',
@@ -217,48 +218,108 @@ export const DEFAULT_INSIGHTS_ADMIN_CONFIG: InsightsAdminConfig = {
       cooldownHours: 24,
       notifications: { enabled: true, immediate: false, includeInSummary: true, priority: 'low' },
     },
-    productivity: {
+    work: {
       enabled: true,
-      displayName: 'Productivity Insights',
-      icon: '⚡',
-      color: '#FF9800',
-      description: 'Productivity insights',
+      displayName: 'Work Insights',
+      icon: '💼',
+      color: '#795548',
+      description: 'Productivity, career, projects',
       schedule: { frequency: 'daily', time: '18:00', timezone: 'UTC' },
       minConfidence: 0.7,
       maxPerDay: 2,
       cooldownHours: 12,
       notifications: { enabled: true, immediate: false, includeInSummary: true, priority: 'normal' },
     },
-    memory: {
+    travel: {
       enabled: true,
-      displayName: 'Memory Highlights',
-      icon: '💭',
-      color: '#3F51B5',
-      description: 'Memory highlights, anniversaries',
-      schedule: { frequency: 'weekly', time: '09:00', dayOfWeek: 6, timezone: 'UTC' },
+      displayName: 'Travel Insights',
+      icon: '✈️',
+      color: '#00BCD4',
+      description: 'Places, trips, exploration',
+      schedule: { frequency: 'smart', time: '', timezone: 'UTC' },
+      minConfidence: 0.7,
+      maxPerDay: 2,
+      cooldownHours: 12,
+      notifications: { enabled: true, immediate: true, includeInSummary: true, priority: 'normal' },
+    },
+    learning: {
+      enabled: true,
+      displayName: 'Learning Insights',
+      icon: '📚',
+      color: '#673AB7',
+      description: 'Education, skills, growth',
+      schedule: { frequency: 'weekly', time: '10:00', dayOfWeek: 0, timezone: 'UTC' },
       minConfidence: 0.7,
       maxPerDay: 2,
       cooldownHours: 24,
-      notifications: { enabled: true, immediate: true, includeInSummary: false, priority: 'normal' },
+      notifications: { enabled: true, immediate: false, includeInSummary: true, priority: 'normal' },
     },
-    achievement: {
+    creativity: {
       enabled: true,
-      displayName: 'Achievements',
+      displayName: 'Creativity Insights',
+      icon: '🎨',
+      color: '#E91E63',
+      description: 'Art, music, writing',
+      schedule: { frequency: 'weekly', time: '10:00', dayOfWeek: 6, timezone: 'UTC' },
+      minConfidence: 0.7,
+      maxPerDay: 2,
+      cooldownHours: 24,
+      notifications: { enabled: true, immediate: false, includeInSummary: true, priority: 'normal' },
+    },
+    routine: {
+      enabled: true,
+      displayName: 'Routine Insights',
+      icon: '🔄',
+      color: '#607D8B',
+      description: 'Daily habits, patterns',
+      schedule: { frequency: 'daily', time: '20:00', timezone: 'UTC' },
+      minConfidence: 0.6,
+      maxPerDay: 2,
+      cooldownHours: 12,
+      notifications: { enabled: true, immediate: false, includeInSummary: true, priority: 'normal' },
+    },
+    milestone: {
+      enabled: true,
+      displayName: 'Milestone Insights',
       icon: '🏆',
       color: '#FFC107',
-      description: 'Milestones, achievements',
+      description: 'Achievements, firsts, celebrations',
       schedule: { frequency: 'realtime', time: '', timezone: 'UTC' },
       minConfidence: 0.8,
       maxPerDay: 5,
       cooldownHours: 0,
       notifications: { enabled: true, immediate: true, includeInSummary: false, priority: 'high' },
     },
+    memory: {
+      enabled: true,
+      displayName: 'Memory Insights',
+      icon: '💭',
+      color: '#3F51B5',
+      description: 'Photos, voice notes, special moments',
+      schedule: { frequency: 'weekly', time: '09:00', dayOfWeek: 6, timezone: 'UTC' },
+      minConfidence: 0.7,
+      maxPerDay: 2,
+      cooldownHours: 24,
+      notifications: { enabled: true, immediate: true, includeInSummary: false, priority: 'normal' },
+    },
+    location: {
+      enabled: true,
+      displayName: 'Location Insights',
+      icon: '📍',
+      color: '#4CAF50',
+      description: 'Places visited, check-ins',
+      schedule: { frequency: 'smart', time: '', timezone: 'UTC' },
+      minConfidence: 0.7,
+      maxPerDay: 3,
+      cooldownHours: 6,
+      notifications: { enabled: true, immediate: true, includeInSummary: false, priority: 'normal' },
+    },
     general: {
       enabled: true,
       displayName: 'General Insights',
       icon: '📝',
-      color: '#607D8B',
-      description: 'General summaries, comparisons',
+      color: '#9E9E9E',
+      description: 'General summaries, other themes',
       schedule: { frequency: 'daily', time: '20:00', timezone: 'UTC' },
       minConfidence: 0.6,
       maxPerDay: 3,
@@ -270,7 +331,7 @@ export const DEFAULT_INSIGHTS_ADMIN_CONFIG: InsightsAdminConfig = {
   homeFeed: {
     enabled: true,
     maxItems: 3,
-    showCategories: ['achievement', 'health', 'activity'],
+    showCategories: ['milestone', 'health', 'activity'],
     refreshInterval: 4,
     cardStyle: 'compact',
   },

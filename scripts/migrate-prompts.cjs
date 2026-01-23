@@ -39,6 +39,7 @@ const FILE_TO_SERVICE = {
   'chat.yaml': 'OpenAIService',
   'rag.yaml': 'RAGEngine',
   'dailySummary.yaml': 'DailySummaryService',
+  'lifeKeywords.yaml': 'KeywordGenerator',
 };
 
 function initializeFirebase() {

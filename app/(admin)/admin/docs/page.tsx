@@ -60,6 +60,7 @@ const WEB_DOCS: DocSection[] = [
       { id: 'dashboard', title: 'Dashboard', path: 'features/DASHBOARD.md', description: 'Stats and quick input' },
       { id: 'chat', title: 'Chat & RAG', path: 'features/CHAT_RAG.md', description: 'AI chat interface' },
       { id: 'insights', title: 'Insights System', path: 'features/INSIGHTS_SYSTEM.md', description: 'AI-generated content & post types' },
+      { id: 'life-keywords', title: 'Life Keywords', path: 'features/LIFE_KEYWORDS.md', description: 'AI keyword generation algorithm' },
       { id: 'circles', title: 'Circles', path: 'features/CIRCLES.md', description: 'Social circles' },
       { id: 'events', title: 'Events', path: 'features/EVENTS.md', description: 'Calendar & reminders' },
       { id: 'settings', title: 'Settings', path: 'features/SETTINGS.md', description: 'User preferences' },
@@ -94,6 +95,7 @@ const MOBILE_DOCS: DocSection[] = [
     icon: '🤖',
     items: [
       { id: 'mobile-insights', title: 'Insights System', path: 'features/INSIGHTS_SYSTEM.md', description: '5 AI features, 8 categories, 8 post types' },
+      { id: 'mobile-life-keywords', title: 'Life Keywords', path: 'features/LIFE_KEYWORDS.md', description: 'AI keyword generation algorithm' },
       { id: 'mobile-related-memories', title: 'Related Memories', path: 'mobile/RELATED_MEMORIES.md', description: 'Semantic memory connections' },
       { id: 'mobile-transcription-cleanup', title: 'Transcription Cleanup', path: 'mobile/TRANSCRIPTION_CLEANUP.md', description: 'AI cleanup for voice notes' },
       { id: 'mobile-learned-vocabulary', title: 'Learned Vocabulary', path: 'mobile/LEARNED_VOCABULARY.md', description: 'User-learned corrections for transcription' },

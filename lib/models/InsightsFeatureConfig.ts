@@ -146,6 +146,24 @@ export const POST_TYPE_METADATA: Record<InsightsPostType, PostTypeMetadata> = {
 };
 
 // ============================================================================
+// Life Keywords Prompts Metadata
+// ============================================================================
+
+/**
+ * Prompt metadata for Life Keywords feature
+ * Maps to prompts in lifeKeywords.yaml
+ */
+export const LIFE_KEYWORDS_PROMPTS = [
+  { id: 'system', name: 'System Prompt', description: 'AI persona and guidelines for keyword generation' },
+  { id: 'weekly_keyword', name: 'Weekly Keyword', description: 'Generate keywords from weekly data clusters' },
+  { id: 'monthly_keyword', name: 'Monthly Keyword', description: 'Generate keywords from monthly data clusters' },
+  { id: 'quarterly_keyword', name: 'Quarterly Keyword', description: 'Generate keywords from quarterly data clusters' },
+  { id: 'yearly_keyword', name: 'Yearly Keyword', description: 'Generate keywords from yearly data clusters' },
+  { id: 'enhance_keyword', name: 'Enhance Keyword', description: 'Improve low-confidence keywords' },
+  { id: 'compare_keywords', name: 'Compare Keywords', description: 'Compare two time periods' },
+] as const;
+
+// ============================================================================
 // Post Type Configuration
 // ============================================================================
 
@@ -198,6 +216,19 @@ export interface FunFactsConfig {
   enabled: boolean;
   maxFactsPerDay: number;
   cooldownHours: number;
+
+  // Lookback periods (days) - how far back to analyze data
+  lookbackDays: {
+    healthData: number;      // Default: 90 - steps, sleep, heart rate
+    activityData: number;    // Default: 90 - location with activities
+    recentWindow: number;    // Default: 7 - for "this week" comparisons
+  };
+
+  // Cache settings (for carousel fun facts on mobile)
+  cache: {
+    carouselTTLHours: number;    // Default: 4 - how long to cache carousel facts
+    promptTTLMinutes: number;    // Default: 60 - how long to cache prompts from API
+  };
 
   // Milestone thresholds
   stepMilestones: number[];         // e.g., [100000, 500000, 1000000, ...]
@@ -470,6 +501,19 @@ export const DEFAULT_FUN_FACTS_CONFIG: FunFactsConfig = {
   maxFactsPerDay: 3,
   cooldownHours: 6,
 
+  // Lookback periods (days)
+  lookbackDays: {
+    healthData: 90,      // Steps, sleep, heart rate analysis
+    activityData: 90,    // Location with activities
+    recentWindow: 7,     // "This week" comparisons
+  },
+
+  // Cache settings (for carousel fun facts on mobile)
+  cache: {
+    carouselTTLHours: 4,    // How long to cache carousel facts before regenerating
+    promptTTLMinutes: 60,   // How long to cache prompts from API
+  },
+
   stepMilestones: [50000, 100000, 250000, 500000, 1000000, 2500000, 5000000, 10000000],
   locationMilestones: [10, 25, 50, 100, 250, 500, 1000],
   activityMilestones: [10, 25, 50, 100, 250, 500, 1000],
@@ -573,6 +617,166 @@ export const DEFAULT_LIFE_FORECASTER_CONFIG: LifeForecasterConfig = {
   notificationTime: '08:00',
 };
 
+/**
+ * Default Life Keywords configuration
+ */
+export const DEFAULT_LIFE_KEYWORDS_CONFIG: LifeKeywordsConfig = {
+  version: '1.0.0',
+  lastUpdatedAt: new Date().toISOString(),
+  lastUpdatedBy: 'system',
+
+  enabled: true,
+
+  keywordsPerWeek: 3,
+  keywordsPerMonth: 5,
+  keywordsPerQuarter: 3,
+  keywordsPerYear: 10,
+
+  enabledPeriods: {
+    weekly: true,
+    monthly: true,
+    quarterly: true,
+    yearly: true,
+  },
+
+  minDataPointsWeekly: 10,
+  minDataPointsMonthly: 30,
+  minConfidence: 0.6,
+
+  maxLookbackMonths: 12,
+
+  weeklyGenerationDay: 1,
+  monthlyGenerationDay: 1,
+  generationHourUTC: 8,
+
+  enabledCategories: {
+    health: true,
+    activity: true,
+    social: true,
+    work: true,
+    travel: true,
+    learning: true,
+    creativity: true,
+    routine: true,
+    milestone: true,
+    memory: true,
+    location: true,
+    general: true,
+  },
+};
+
+// ============================================================================
+// Life Keywords Configuration
+// ============================================================================
+
+/**
+ * Life Keywords feature configuration
+ * Maps to user toggle in ProfileScreen: preferences.aiFeatures.lifeKeywords
+ * Stored in Firestore at config/lifeKeywordsSettings
+ */
+export interface LifeKeywordsConfig {
+  version: string;
+  lastUpdatedAt: string;
+  lastUpdatedBy: string;
+
+  // Global toggle
+  enabled: boolean;
+
+  // Generation settings per period type
+  keywordsPerWeek: number;      // Default: 3
+  keywordsPerMonth: number;     // Default: 5
+  keywordsPerQuarter: number;   // Default: 3
+  keywordsPerYear: number;      // Default: 10
+
+  // Period settings
+  enabledPeriods: {
+    weekly: boolean;            // Default: true
+    monthly: boolean;           // Default: true
+    quarterly: boolean;         // Default: true
+    yearly: boolean;            // Default: true
+  };
+
+  // Data requirements
+  minDataPointsWeekly: number;  // Default: 10
+  minDataPointsMonthly: number; // Default: 30
+  minConfidence: number;        // Default: 0.6
+
+  // Lookback
+  maxLookbackMonths: number;    // Default: 12 (show up to 1 year)
+
+  // Generation schedule
+  weeklyGenerationDay: number;  // 0=Sunday, 1=Monday, etc. Default: 1 (Monday)
+  monthlyGenerationDay: number; // Day of month. Default: 1
+  generationHourUTC: number;    // Hour to run. Default: 8
+
+  // Categories (uses unified 12-category system)
+  enabledCategories: Record<UnifiedCategory, boolean>;
+}
+
+/**
+ * Unified category type for Life Feed posts and Life Keywords
+ * This is the single source of truth for all category types.
+ */
+export type UnifiedCategory =
+  | 'health'      // Fitness, sleep, wellness
+  | 'activity'    // Hobbies, sports, recreation
+  | 'social'      // People, relationships, gatherings
+  | 'work'        // Productivity, career, projects
+  | 'travel'      // Places, trips, exploration
+  | 'learning'    // Education, skills, growth
+  | 'creativity'  // Art, music, writing
+  | 'routine'     // Daily habits, patterns
+  | 'milestone'   // Achievements, firsts, celebrations
+  | 'memory'      // Photos, voice notes, special moments
+  | 'location'    // Places visited, check-ins
+  | 'general';    // Other themes
+
+// Alias for backward compatibility
+export type LifeKeywordCategory = UnifiedCategory;
+
+/**
+ * All unified categories in display order
+ */
+export const UNIFIED_CATEGORIES: UnifiedCategory[] = [
+  'health',
+  'activity',
+  'social',
+  'work',
+  'travel',
+  'learning',
+  'creativity',
+  'routine',
+  'milestone',
+  'memory',
+  'location',
+  'general',
+];
+
+// Alias for backward compatibility
+export const LIFE_KEYWORD_CATEGORIES = UNIFIED_CATEGORIES;
+
+/**
+ * Category metadata for display (unified for all features)
+ */
+export const KEYWORD_CATEGORY_METADATA: Record<UnifiedCategory, {
+  icon: string;
+  color: string;
+  displayName: string;
+}> = {
+  health: { icon: '💪', color: '#4CAF50', displayName: 'Health & Wellness' },
+  activity: { icon: '🏃', color: '#2196F3', displayName: 'Activities' },
+  social: { icon: '👥', color: '#E91E63', displayName: 'Social' },
+  work: { icon: '💼', color: '#607D8B', displayName: 'Work' },
+  travel: { icon: '✈️', color: '#FF9800', displayName: 'Travel' },
+  learning: { icon: '📚', color: '#9C27B0', displayName: 'Learning' },
+  creativity: { icon: '🎨', color: '#F44336', displayName: 'Creativity' },
+  routine: { icon: '📅', color: '#00BCD4', displayName: 'Routines' },
+  milestone: { icon: '🏆', color: '#FFC107', displayName: 'Milestones' },
+  memory: { icon: '📸', color: '#3F51B5', displayName: 'Memories' },
+  location: { icon: '📍', color: '#8BC34A', displayName: 'Locations' },
+  general: { icon: '✨', color: '#795548', displayName: 'General' },
+};
+
 // ============================================================================
 // Analytics Types
 // ============================================================================
@@ -609,4 +813,55 @@ export interface FeatureAnalytics {
     predictionsGenerated: number;
     accuracyRate: number;
   };
+  lifeKeywords: {
+    totalGenerated: number;
+    last24h: number;
+    last7d: number;
+    byPeriodType: Record<string, number>;
+    byCategory: Record<string, number>;
+    avgConfidence: number;
+    viewRate: number;
+    expandRate: number;
+  };
 }
+
+// ============================================================================
+// Scheduler Configuration
+// ============================================================================
+
+/**
+ * Insights Scheduler Configuration
+ * Controls when insights are generated. Note: Schedule changes require
+ * redeploying Firebase Cloud Functions to take effect.
+ * Stored in Firestore at config/insightsSchedulerSettings
+ */
+export interface InsightsSchedulerConfig {
+  version: string;
+  lastUpdatedAt: string;
+  lastUpdatedBy: string;
+
+  // Schedule times (24-hour format, UTC)
+  morningHour: number;    // Default: 8
+  afternoonHour: number;  // Default: 14
+  eveningHour: number;    // Default: 20
+
+  // Timezone (fixed to UTC for Firebase scheduler)
+  timezone: 'UTC';
+
+  // Generated cron expression (derived from hours)
+  cronExpression: string; // Generated: '0 8,14,20 * * *'
+}
+
+/**
+ * Default scheduler configuration
+ */
+export const DEFAULT_SCHEDULER_CONFIG: InsightsSchedulerConfig = {
+  version: '1.0.0',
+  lastUpdatedAt: new Date().toISOString(),
+  lastUpdatedBy: 'system',
+  morningHour: 8,
+  afternoonHour: 14,
+  eveningHour: 20,
+  timezone: 'UTC',
+  cronExpression: '0 8,14,20 * * *',
+};

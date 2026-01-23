@@ -44,6 +44,8 @@ export const SERVICE_OPERATIONS_MAP: Record<string, OperationType[]> = {
   LifeFeedGenerator: ['life_feed'],
   SuggestionEngine: ['suggestion'],
   DailySummaryService: ['chat_completion'],
+  KeywordGenerator: ['chat_completion'],
+  CarouselInsights: ['chat_completion'],
 };
 
 /**
@@ -131,6 +133,8 @@ export const SERVICE_DISPLAY_NAMES: Record<string, string> = {
   LifeFeedGenerator: 'Life Feed Posts',
   SuggestionEngine: 'Smart Suggestions',
   DailySummaryService: 'Daily Summaries',
+  KeywordGenerator: 'Life Keywords',
+  CarouselInsights: 'Carousel Fun Facts',
 };
 
 /**
@@ -147,6 +151,8 @@ export const SERVICE_SHORT_NAMES: Record<string, string> = {
   LifeFeedGenerator: 'Feed',
   SuggestionEngine: 'Suggest',
   DailySummaryService: 'Summary',
+  KeywordGenerator: 'Keywords',
+  CarouselInsights: 'Carousel',
 };
 
 // ============================================================================

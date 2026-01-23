@@ -727,10 +727,337 @@ Write the post:`,
     },
   };
 
+  // KeywordGenerator prompts (Life Keywords)
+  const keywordGeneratorPrompts = {
+    system: {
+      id: 'life-keywords-system',
+      service: 'KeywordGenerator',
+      type: 'system' as const,
+      description: 'System prompt for Life Keywords generation',
+      content: `You are a personal life analyst. Your job is to identify meaningful themes
+and patterns from a user's personal data and express them as memorable keywords.
+
+Guidelines:
+- Keywords should be 2-4 words, catchy and memorable
+- Use creative, evocative language that captures the essence of the theme
+- Descriptions should be 2-4 sentences, insightful and personal
+- Use second person ("You've been..." or "Your...")
+- Be positive and encouraging, but also honest
+- Focus on patterns, not individual events
+- Make observations feel like discoveries
+- Choose emojis that visually represent the theme well
+
+Examples of good keywords:
+- "Badminton Renaissance" (for increased sports activity)
+- "Health Focus Month" (for wellness-related patterns)
+- "Social Butterfly Era" (for increased social activities)
+- "New Horizons" (for exploring new places)
+- "Creative Surge" (for artistic activities)
+- "Routine Master" (for consistent habits)
+
+Always respond in valid JSON format.`,
+      metadata: { model: 'gpt-4o-mini', temperature: 0.8, maxTokens: 300 },
+    },
+    weekly_keyword: {
+      id: 'weekly-keyword',
+      service: 'KeywordGenerator',
+      type: 'user' as const,
+      description: 'Generate keywords from weekly data clusters',
+      content: `Analyze this cluster of data points from {{periodLabel}} and generate a meaningful keyword.
+
+Data points ({{dataPointCount}} total in this theme):
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+Common themes identified: {{themes}}
+Dominant category: {{category}}
+
+Generate a keyword that captures this theme. The keyword should:
+1. Be 2-4 words that are catchy and memorable
+2. Capture the essence of what this data represents
+3. Feel personal and insightful
+
+Also generate:
+- A 2-4 sentence description explaining why this pattern is meaningful
+- An emoji that best represents this theme
+
+Respond in JSON format:
+{
+  "keyword": "Your Keyword Here",
+  "description": "Your 2-4 sentence description explaining the pattern...",
+  "emoji": "🎯"
+}`,
+      metadata: { model: 'gpt-4o-mini', temperature: 0.8, maxTokens: 200 },
+      variables: [
+        { name: 'periodLabel', type: 'string' as const, required: true, description: 'Label for the time period (e.g., "Week of Jan 15-21")' },
+        { name: 'dataPointCount', type: 'number' as const, required: true, description: 'Total data points in this theme' },
+        { name: 'sampleDataPoints', type: 'array' as const, required: true, description: 'Sample data points with date, summary, type' },
+        { name: 'themes', type: 'string' as const, required: true, description: 'Comma-separated list of identified themes' },
+        { name: 'category', type: 'string' as const, required: true, description: 'Dominant category for this cluster' },
+      ],
+    },
+    monthly_keyword: {
+      id: 'monthly-keyword',
+      service: 'KeywordGenerator',
+      type: 'user' as const,
+      description: 'Generate keywords from monthly data clusters',
+      content: `Analyze this month's data cluster from {{periodLabel}} and generate a meaningful keyword.
+
+This theme appears in {{dataPointCount}} data points this month:
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+Identified themes: {{themes}}
+Category: {{category}}
+
+For monthly keywords, focus on:
+- Trends that persisted throughout the month
+- Notable changes from previous patterns
+- The overall story of this month in this category
+
+Generate:
+{
+  "keyword": "2-4 word memorable phrase",
+  "description": "2-4 sentences about why this month was notable for this theme",
+  "emoji": "single emoji"
+}`,
+      metadata: { model: 'gpt-4o-mini', temperature: 0.8, maxTokens: 250 },
+      variables: [
+        { name: 'periodLabel', type: 'string' as const, required: true, description: 'Label for the month' },
+        { name: 'dataPointCount', type: 'number' as const, required: true, description: 'Total data points in this theme' },
+        { name: 'sampleDataPoints', type: 'array' as const, required: true, description: 'Sample data points' },
+        { name: 'themes', type: 'string' as const, required: true, description: 'Identified themes' },
+        { name: 'category', type: 'string' as const, required: true, description: 'Category' },
+      ],
+    },
+    quarterly_keyword: {
+      id: 'quarterly-keyword',
+      service: 'KeywordGenerator',
+      type: 'user' as const,
+      description: 'Generate keywords from quarterly data clusters',
+      content: `Analyze this quarter's dominant theme from {{periodLabel}}.
+
+This theme encompasses {{dataPointCount}} data points across the quarter:
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+Key themes: {{themes}}
+Category: {{category}}
+
+For quarterly keywords, consider:
+- How this theme evolved over the 3 months
+- Whether it represents growth, consistency, or change
+- The bigger picture story of this quarter
+
+Generate a keyword that captures the quarter's narrative:
+{
+  "keyword": "2-4 word phrase capturing the quarter",
+  "description": "2-4 sentences providing quarterly perspective",
+  "emoji": "single emoji"
+}`,
+      metadata: { model: 'gpt-4o-mini', temperature: 0.8, maxTokens: 250 },
+      variables: [
+        { name: 'periodLabel', type: 'string' as const, required: true, description: 'Label for the quarter' },
+        { name: 'dataPointCount', type: 'number' as const, required: true, description: 'Total data points' },
+        { name: 'sampleDataPoints', type: 'array' as const, required: true, description: 'Sample data points' },
+        { name: 'themes', type: 'string' as const, required: true, description: 'Key themes' },
+        { name: 'category', type: 'string' as const, required: true, description: 'Category' },
+      ],
+    },
+    yearly_keyword: {
+      id: 'yearly-keyword',
+      service: 'KeywordGenerator',
+      type: 'user' as const,
+      description: 'Generate keywords from yearly data clusters',
+      content: `Analyze one of the major themes from {{periodLabel}}.
+
+This theme represents {{dataPointCount}} moments throughout the year:
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+Major themes: {{themes}}
+Category: {{category}}
+
+For yearly keywords:
+- Identify what made this theme significant for the year
+- Consider how this reflects personal growth or interests
+- Frame it as a year-defining element
+
+Generate a keyword worthy of a year-in-review:
+{
+  "keyword": "2-4 word phrase defining this year's theme",
+  "description": "2-4 sentences summarizing the year's story with this theme",
+  "emoji": "single emoji"
+}`,
+      metadata: { model: 'gpt-4o-mini', temperature: 0.8, maxTokens: 300 },
+      variables: [
+        { name: 'periodLabel', type: 'string' as const, required: true, description: 'Label for the year' },
+        { name: 'dataPointCount', type: 'number' as const, required: true, description: 'Total data points' },
+        { name: 'sampleDataPoints', type: 'array' as const, required: true, description: 'Sample data points' },
+        { name: 'themes', type: 'string' as const, required: true, description: 'Major themes' },
+        { name: 'category', type: 'string' as const, required: true, description: 'Category' },
+      ],
+    },
+    enhance_keyword: {
+      id: 'enhance-keyword',
+      service: 'KeywordGenerator',
+      type: 'user' as const,
+      description: 'Improve low-confidence keywords',
+      content: `The following keyword was generated but needs improvement:
+
+Current keyword: "{{currentKeyword}}"
+Current description: "{{currentDescription}}"
+Current emoji: {{currentEmoji}}
+
+Data it represents:
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+Please improve this keyword to be more:
+- Catchy and memorable
+- Personally meaningful
+- Insightful about the pattern
+
+Generate an improved version:
+{
+  "keyword": "improved 2-4 word phrase",
+  "description": "improved 2-4 sentence description",
+  "emoji": "better emoji choice"
+}`,
+      metadata: { model: 'gpt-4o-mini', temperature: 0.9, maxTokens: 200 },
+      variables: [
+        { name: 'currentKeyword', type: 'string' as const, required: true, description: 'Current keyword to improve' },
+        { name: 'currentDescription', type: 'string' as const, required: true, description: 'Current description' },
+        { name: 'currentEmoji', type: 'string' as const, required: true, description: 'Current emoji' },
+        { name: 'sampleDataPoints', type: 'array' as const, required: true, description: 'Sample data points' },
+      ],
+    },
+    compare_keywords: {
+      id: 'compare-keywords',
+      service: 'KeywordGenerator',
+      type: 'user' as const,
+      description: 'Compare two time periods',
+      content: `Compare these two time periods and generate a keyword about the change:
+
+Previous period ({{previousPeriodLabel}}):
+{{#each previousDataPoints}}
+- {{this.summary}} ({{this.type}})
+{{/each}}
+
+Current period ({{currentPeriodLabel}}):
+{{#each currentDataPoints}}
+- {{this.summary}} ({{this.type}})
+{{/each}}
+
+Generate a keyword that captures how things have changed:
+{
+  "keyword": "2-4 word phrase about the change",
+  "description": "2-4 sentences comparing the periods",
+  "emoji": "emoji representing change/growth/shift"
+}`,
+      metadata: { model: 'gpt-4o-mini', temperature: 0.8, maxTokens: 200 },
+      variables: [
+        { name: 'previousPeriodLabel', type: 'string' as const, required: true, description: 'Label for previous period' },
+        { name: 'previousDataPoints', type: 'array' as const, required: true, description: 'Previous period data points' },
+        { name: 'currentPeriodLabel', type: 'string' as const, required: true, description: 'Label for current period' },
+        { name: 'currentDataPoints', type: 'array' as const, required: true, description: 'Current period data points' },
+      ],
+    },
+  };
+
+  // CarouselInsights prompts - AI-generated fun facts shown in home screen carousel
+  // Translations for all 9 supported languages
+  const carouselTranslations: Record<string, { patterns: string; surprising: string; recommendation: string }> = {
+    en: {
+      patterns: 'Tell me one interesting insight about my recent activities and patterns. One sentence only.',
+      surprising: 'What is one surprising thing about my data that I might not have noticed? One sentence only.',
+      recommendation: 'Give me one personalized recommendation based on my recent behavior. One sentence only.',
+    },
+    es: {
+      patterns: 'Cuéntame una observación interesante sobre mis actividades y patrones recientes. Solo una oración.',
+      surprising: '¿Qué es algo sorprendente en mis datos que quizás no haya notado? Solo una oración.',
+      recommendation: 'Dame una recomendación personalizada basada en mi comportamiento reciente. Solo una oración.',
+    },
+    fr: {
+      patterns: 'Donne-moi une observation intéressante sur mes activités et habitudes récentes. Une seule phrase.',
+      surprising: "Qu'y a-t-il de surprenant dans mes données que je n'aurais peut-être pas remarqué? Une seule phrase.",
+      recommendation: 'Donne-moi une recommandation personnalisée basée sur mon comportement récent. Une seule phrase.',
+    },
+    de: {
+      patterns: 'Sag mir eine interessante Erkenntnis über meine letzten Aktivitäten und Muster. Nur ein Satz.',
+      surprising: 'Was ist etwas Überraschendes in meinen Daten, das ich vielleicht nicht bemerkt habe? Nur ein Satz.',
+      recommendation: 'Gib mir eine personalisierte Empfehlung basierend auf meinem letzten Verhalten. Nur ein Satz.',
+    },
+    it: {
+      patterns: 'Dimmi un\'osservazione interessante sulle mie attività e abitudini recenti. Solo una frase.',
+      surprising: 'Qual è qualcosa di sorprendente nei miei dati che potrei non aver notato? Solo una frase.',
+      recommendation: 'Dammi un consiglio personalizzato basato sul mio comportamento recente. Solo una frase.',
+    },
+    pt: {
+      patterns: 'Conte-me uma observação interessante sobre minhas atividades e padrões recentes. Apenas uma frase.',
+      surprising: 'O que é algo surpreendente nos meus dados que eu talvez não tenha percebido? Apenas uma frase.',
+      recommendation: 'Dê-me uma recomendação personalizada baseada no meu comportamento recente. Apenas uma frase.',
+    },
+    zh: {
+      patterns: '告诉我一个关于我最近活动和习惯的有趣见解。只用一句话。',
+      surprising: '我的数据中有什么令人惊讶的地方是我可能没有注意到的？只用一句话。',
+      recommendation: '根据我最近的行为给我一个个性化的建议。只用一句话。',
+    },
+    ja: {
+      patterns: '最近の活動やパターンについて興味深い洞察を1つ教えてください。一文だけで。',
+      surprising: '私のデータで気づいていないかもしれない驚くべきことは何ですか？一文だけで。',
+      recommendation: '最近の行動に基づいた個人的なおすすめを1つください。一文だけで。',
+    },
+    ko: {
+      patterns: '최근 활동과 패턴에 대한 흥미로운 인사이트를 하나 알려주세요. 한 문장으로만.',
+      surprising: '제 데이터에서 제가 눈치채지 못했을 수 있는 놀라운 점이 무엇인가요? 한 문장으로만.',
+      recommendation: '최근 행동을 바탕으로 개인화된 추천을 하나 해주세요. 한 문장으로만.',
+    },
+  };
+
+  const translations = carouselTranslations[language] || carouselTranslations['en'];
+
+  const carouselInsightsPrompts = {
+    insight_patterns: {
+      id: 'carousel-insight-patterns',
+      service: 'CarouselInsights',
+      type: 'user' as const,
+      description: 'Generate insight about recent activities and patterns',
+      content: translations.patterns,
+      metadata: { model: 'gpt-4o-mini', temperature: 0.8, maxTokens: 100 },
+      culturalNotes: 'Keep the tone conversational and encouraging. Avoid being preachy or judgmental.',
+    },
+    insight_surprising: {
+      id: 'carousel-insight-surprising',
+      service: 'CarouselInsights',
+      type: 'user' as const,
+      description: 'Generate surprising observation from user data',
+      content: translations.surprising,
+      metadata: { model: 'gpt-4o-mini', temperature: 0.9, maxTokens: 100 },
+      culturalNotes: 'Focus on positive surprises. Make the user feel like their data reveals something interesting.',
+    },
+    insight_recommendation: {
+      id: 'carousel-insight-recommendation',
+      service: 'CarouselInsights',
+      type: 'user' as const,
+      description: 'Generate personalized recommendation based on behavior',
+      content: translations.recommendation,
+      metadata: { model: 'gpt-4o-mini', temperature: 0.7, maxTokens: 100 },
+      culturalNotes: 'Keep recommendations actionable and achievable. Be encouraging, not demanding.',
+    },
+  };
+
   return [
     { service: 'OpenAIService', version: '1.0.0', prompts: openAIServicePrompts },
     { service: 'RAGEngine', version: '1.0.0', prompts: ragEnginePrompts },
     { service: 'QueryRAGServer', version: '1.0.0', prompts: queryRAGServerPrompts },
     { service: 'LifeFeedGenerator', version: '1.0.0', prompts: lifeFeedGeneratorPrompts },
+    { service: 'KeywordGenerator', version: '1.0.0', prompts: keywordGeneratorPrompts },
+    { service: 'CarouselInsights', version: '1.0.0', prompts: carouselInsightsPrompts },
   ];
 }

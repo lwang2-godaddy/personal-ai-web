@@ -11,14 +11,15 @@ import {
   INSIGHTS_POST_TYPES,
 } from '@/lib/models/InsightsFeatureConfig';
 
-interface PostTypesTabProps {
+interface LifeFeedTabProps {
   onSaving?: (saving: boolean) => void;
 }
 
 /**
- * Post Types Tab - Configure post type behavior, cooldowns, and priorities
+ * Life Feed Tab - Configure the 8 post types that generate Life Feed content
+ * (Renamed from PostTypesTab for clearer organization)
  */
-export default function PostTypesTab({ onSaving }: PostTypesTabProps) {
+export default function LifeFeedTab({ onSaving }: LifeFeedTabProps) {
   const [config, setConfig] = useState<InsightsPostTypesConfig | null>(null);
   const [analytics, setAnalytics] = useState<PostTypeAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
@@ -132,9 +133,9 @@ export default function PostTypesTab({ onSaving }: PostTypesTabProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">Post Types Configuration</h2>
+          <h2 className="text-xl font-bold text-gray-900">Life Feed Configuration</h2>
           <p className="text-sm text-gray-600">
-            Configure how different post formats are generated
+            Configure how the 8 post types are generated for the Life Feed
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -158,7 +159,7 @@ export default function PostTypesTab({ onSaving }: PostTypesTabProps) {
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
         <h3 className="text-lg font-bold text-blue-900 mb-3 flex items-center">
           <span className="mr-2">⚙️</span>
-          How Insight Feed Generation Works
+          How Life Feed Generation Works
         </h3>
         <div className="space-y-4 text-sm text-blue-800">
           <div>
@@ -276,18 +277,18 @@ export default function PostTypesTab({ onSaving }: PostTypesTabProps) {
                     Prompts ({meta.prompts.length})
                   </span>
                 </div>
-                {meta.prompts.map((prompt) => (
+                {(meta.prompts || []).map((prompt) => (
                   <Link
-                    key={prompt.id}
-                    href={`/admin/prompts?service=LifeFeedGenerator&prompt=${prompt.id}`}
+                    key={prompt?.id || 'unknown'}
+                    href={`/admin/prompts?service=LifeFeedGenerator&prompt=${prompt?.id || ''}`}
                     className="flex items-center justify-between p-2 bg-gray-50 rounded-md hover:bg-gray-100 transition-colors mb-1 last:mb-0"
                   >
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium text-gray-700 truncate">
-                        {prompt.name}
+                        {prompt?.name || 'Unknown'}
                       </p>
                       <p className="text-xs text-gray-500 truncate">
-                        {prompt.description}
+                        {prompt?.description || 'No description'}
                       </p>
                     </div>
                     <svg className="w-4 h-4 text-gray-400 flex-shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

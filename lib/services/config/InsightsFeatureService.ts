@@ -18,12 +18,14 @@ import {
   MoodCompassConfig,
   MemoryCompanionConfig,
   LifeForecasterConfig,
+  LifeKeywordsConfig,
   PostTypeAnalytics,
   DEFAULT_POST_TYPES_CONFIG,
   DEFAULT_FUN_FACTS_CONFIG,
   DEFAULT_MOOD_COMPASS_CONFIG,
   DEFAULT_MEMORY_COMPANION_CONFIG,
   DEFAULT_LIFE_FORECASTER_CONFIG,
+  DEFAULT_LIFE_KEYWORDS_CONFIG,
   INSIGHTS_POST_TYPES,
 } from '@/lib/models/InsightsFeatureConfig';
 
@@ -35,6 +37,7 @@ const DOC_FUN_FACTS = 'funFactsSettings';
 const DOC_MOOD_COMPASS = 'moodCompassSettings';
 const DOC_MEMORY_COMPANION = 'memoryCompanionSettings';
 const DOC_LIFE_FORECASTER = 'lifeForecasterSettings';
+const DOC_LIFE_KEYWORDS = 'lifeKeywordsSettings';
 
 /**
  * Get the admin Firestore instance
@@ -413,6 +416,149 @@ class InsightsFeatureService {
   }
 
   // ==========================================================================
+  // Life Keywords Configuration
+  // ==========================================================================
+
+  /**
+   * Get the current Life Keywords configuration
+   */
+  async getLifeKeywordsConfig(): Promise<LifeKeywordsConfig> {
+    const db = getFirestore();
+    const docRef = db.collection(CONFIG_COLLECTION).doc(DOC_LIFE_KEYWORDS);
+    const doc = await docRef.get();
+
+    if (!doc.exists) {
+      await this.saveLifeKeywordsConfig(DEFAULT_LIFE_KEYWORDS_CONFIG);
+      return DEFAULT_LIFE_KEYWORDS_CONFIG;
+    }
+
+    return doc.data() as LifeKeywordsConfig;
+  }
+
+  /**
+   * Save the entire Life Keywords configuration
+   */
+  async saveLifeKeywordsConfig(config: LifeKeywordsConfig, updatedBy: string = 'admin'): Promise<void> {
+    const db = getFirestore();
+    const docRef = db.collection(CONFIG_COLLECTION).doc(DOC_LIFE_KEYWORDS);
+
+    const updatedConfig: LifeKeywordsConfig = {
+      ...config,
+      lastUpdatedAt: new Date().toISOString(),
+      lastUpdatedBy: updatedBy,
+    };
+
+    await docRef.set(updatedConfig);
+  }
+
+  /**
+   * Update Life Keywords configuration
+   */
+  async updateLifeKeywordsConfig(updates: Partial<LifeKeywordsConfig>, updatedBy: string = 'admin'): Promise<void> {
+    const db = getFirestore();
+    const docRef = db.collection(CONFIG_COLLECTION).doc(DOC_LIFE_KEYWORDS);
+
+    await docRef.update({
+      ...updates,
+      lastUpdatedAt: new Date().toISOString(),
+      lastUpdatedBy: updatedBy,
+    });
+  }
+
+  /**
+   * Reset Life Keywords to defaults
+   */
+  async resetLifeKeywordsToDefaults(updatedBy: string = 'admin'): Promise<void> {
+    await this.saveLifeKeywordsConfig(DEFAULT_LIFE_KEYWORDS_CONFIG, updatedBy);
+  }
+
+  /**
+   * Get Life Keywords analytics
+   */
+  async getLifeKeywordsAnalytics(): Promise<{
+    totalGenerated: number;
+    last24h: number;
+    last7d: number;
+    byPeriodType: Record<string, number>;
+    byCategory: Record<string, number>;
+    avgConfidence: number;
+    viewRate: number;
+    expandRate: number;
+  }> {
+    const db = getFirestore();
+    const keywordsCollection = db.collection('lifeKeywords');
+
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+    // Total count
+    const totalSnapshot = await keywordsCollection.count().get();
+    const totalGenerated = totalSnapshot.data().count;
+
+    // Last 24 hours
+    const last24hSnapshot = await keywordsCollection
+      .where('publishedAt', '>=', oneDayAgo)
+      .count()
+      .get();
+    const last24h = last24hSnapshot.data().count;
+
+    // Last 7 days
+    const last7dSnapshot = await keywordsCollection
+      .where('publishedAt', '>=', sevenDaysAgo)
+      .count()
+      .get();
+    const last7d = last7dSnapshot.data().count;
+
+    // By period type
+    const periodTypes = ['weekly', 'monthly', 'quarterly', 'yearly'];
+    const byPeriodType: Record<string, number> = {};
+    for (const type of periodTypes) {
+      const snapshot = await keywordsCollection.where('periodType', '==', type).count().get();
+      byPeriodType[type] = snapshot.data().count;
+    }
+
+    // By category
+    const categories = ['health', 'activity', 'social', 'work', 'travel', 'learning', 'creativity', 'routine', 'milestone', 'general'];
+    const byCategory: Record<string, number> = {};
+    for (const category of categories) {
+      const snapshot = await keywordsCollection.where('category', '==', category).count().get();
+      byCategory[category] = snapshot.data().count;
+    }
+
+    // Calculate average confidence and engagement rates
+    let totalConfidence = 0;
+    let viewedCount = 0;
+    let expandedCount = 0;
+
+    const recentSnapshot = await keywordsCollection
+      .orderBy('publishedAt', 'desc')
+      .limit(1000)
+      .get();
+
+    recentSnapshot.docs.forEach(doc => {
+      const data = doc.data();
+      totalConfidence += data.confidence || 0;
+      if (data.viewed) viewedCount++;
+      if (data.expanded) expandedCount++;
+    });
+
+    const avgConfidence = recentSnapshot.size > 0 ? totalConfidence / recentSnapshot.size : 0;
+    const viewRate = recentSnapshot.size > 0 ? viewedCount / recentSnapshot.size : 0;
+    const expandRate = recentSnapshot.size > 0 ? expandedCount / recentSnapshot.size : 0;
+
+    return {
+      totalGenerated,
+      last24h,
+      last7d,
+      byPeriodType,
+      byCategory,
+      avgConfidence,
+      viewRate,
+      expandRate,
+    };
+  }
+
+  // ==========================================================================
   // Unified Methods
   // ==========================================================================
 
@@ -425,13 +571,15 @@ class InsightsFeatureService {
     moodCompass: MoodCompassConfig;
     memoryCompanion: MemoryCompanionConfig;
     lifeForecaster: LifeForecasterConfig;
+    lifeKeywords: LifeKeywordsConfig;
   }> {
-    const [postTypes, funFacts, moodCompass, memoryCompanion, lifeForecaster] = await Promise.all([
+    const [postTypes, funFacts, moodCompass, memoryCompanion, lifeForecaster, lifeKeywords] = await Promise.all([
       this.getPostTypesConfig(),
       this.getFunFactsConfig(),
       this.getMoodCompassConfig(),
       this.getMemoryCompanionConfig(),
       this.getLifeForecasterConfig(),
+      this.getLifeKeywordsConfig(),
     ]);
 
     return {
@@ -440,6 +588,7 @@ class InsightsFeatureService {
       moodCompass,
       memoryCompanion,
       lifeForecaster,
+      lifeKeywords,
     };
   }
 
@@ -453,6 +602,7 @@ class InsightsFeatureService {
       this.resetMoodCompassToDefaults(updatedBy),
       this.resetMemoryCompanionToDefaults(updatedBy),
       this.resetLifeForecasterToDefaults(updatedBy),
+      this.resetLifeKeywordsToDefaults(updatedBy),
     ]);
   }
 }
