@@ -54,6 +54,7 @@ export const ADMIN_NAVIGATION: NavGroup[] = [
       { href: '/admin/ai-models', label: 'AI Models', icon: '🤖' },
       { href: '/admin/prompts', label: 'Prompts', icon: '💬' },
       { href: '/admin/insights', label: 'Insights', icon: '💡' },
+      { href: '/admin/notifications', label: 'Notifications', icon: '🔔' },
       { href: '/admin/voice-categories', label: 'Voice Categories', icon: '🎤' },
     ],
   },
