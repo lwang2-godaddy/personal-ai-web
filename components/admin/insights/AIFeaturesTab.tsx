@@ -165,19 +165,19 @@ export default function AIFeaturesTab({ onSaving }: AIFeaturesTabProps) {
               </tr>
               <tr className="border-b border-blue-100">
                 <td className="py-2 pr-4">🧭 Mood Compass</td>
-                <td className="py-2 pr-4 font-mono text-xs">2 AM UTC</td>
+                <td className="py-2 pr-4 font-mono text-xs">9 AM UTC daily</td>
                 <td className="py-2 pr-4"><code className="bg-blue-100 px-1 rounded">reflective_insight</code></td>
-                <td className="py-2">Template + data</td>
+                <td className="py-2">Template + stats</td>
               </tr>
               <tr className="border-b border-blue-100">
                 <td className="py-2 pr-4">📸 Memory Companion</td>
-                <td className="py-2 pr-4 font-mono text-xs">7 AM UTC</td>
+                <td className="py-2 pr-4 font-mono text-xs text-purple-600">Event-driven</td>
                 <td className="py-2 pr-4"><code className="bg-blue-100 px-1 rounded">memory_highlight</code></td>
-                <td className="py-2">Template + data</td>
+                <td className="py-2 text-green-700 font-medium">GPT-4o-mini</td>
               </tr>
               <tr className="border-b border-blue-100">
                 <td className="py-2 pr-4">🔮 Life Forecaster</td>
-                <td className="py-2 pr-4 font-mono text-xs">6 AM UTC</td>
+                <td className="py-2 pr-4 font-mono text-xs">9 AM UTC daily</td>
                 <td className="py-2 pr-4"><code className="bg-blue-100 px-1 rounded">pattern_prediction</code></td>
                 <td className="py-2">Template + stats</td>
               </tr>
@@ -266,7 +266,7 @@ export default function AIFeaturesTab({ onSaving }: AIFeaturesTabProps) {
         id="memory-companion"
         title="Memory Companion"
         icon="📸"
-        description="7 AM UTC daily • Creates memory posts"
+        description="Event-driven triggers • GPT-4o-mini • memory_highlight posts"
         enabled={memoryCompanionConfig?.enabled}
         expanded={expandedSection === 'memory-companion'}
         onToggle={() => toggleSection('memory-companion')}
@@ -861,20 +861,9 @@ function MoodCompassContent({ config, loading, error, saving, setSaving, onRefre
         </button>
       </div>
 
-      {/* Gap Warning */}
-      <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
-        <div className="flex items-start">
-          <span className="text-orange-500 mr-2">⚠️</span>
-          <div className="text-sm text-orange-800">
-            <strong>Configuration Gap:</strong> The settings below are saved to Firestore but <strong>NOT currently used</strong> by MoodCorrelationService.
-            The service uses hardcoded defaults (lookback: 30 days). Fix in progress.
-          </div>
-        </div>
-      </div>
-
       {/* Analysis Settings */}
-      <div className="opacity-60">
-        <h4 className="text-sm font-medium text-gray-700 mb-3">Analysis Settings <span className="text-xs text-orange-600">(not wired)</span></h4>
+      <div>
+        <h4 className="text-sm font-medium text-gray-700 mb-3">Analysis Settings</h4>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-xs text-gray-500 mb-1">Min Correlation (0-1)</label>
@@ -917,8 +906,8 @@ function MoodCompassContent({ config, loading, error, saving, setSaving, onRefre
       </div>
 
       {/* Correlation Factors */}
-      <div className="opacity-60">
-        <h4 className="text-sm font-medium text-gray-700 mb-3">Correlation Factors <span className="text-xs text-orange-600">(not wired)</span></h4>
+      <div>
+        <h4 className="text-sm font-medium text-gray-700 mb-3">Correlation Factors</h4>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {Object.entries(config.enabledFactors).map(([key, enabled]) => {
             const info = factorLabels[key] || { title: key, description: '', icon: '📝' };
@@ -1077,22 +1066,63 @@ function MemoryCompanionContent({ config, loading, error, saving, setSaving, onR
   };
 
   const triggerLabels: Record<string, { title: string; description: string; icon: string }> = {
-    anniversaries: { title: 'Anniversaries', description: '"1 year ago today..."', icon: '🎂' },
-    locationRevisits: { title: 'Location Revisits', description: '"You\'re back at..."', icon: '📍' },
+    anniversaries: { title: 'Anniversaries', description: '"1 year ago today..." (yearly)', icon: '🎂' },
+    locationRevisits: { title: 'Location Revisits', description: '"You\'re back at..." (500m radius)', icon: '📍' },
     activityMilestones: { title: 'Activity Milestones', description: '"Your 100th visit to..."', icon: '🏆' },
     seasonalMemories: { title: 'Seasonal Memories', description: '"This time last year..."', icon: '🌸' },
   };
 
+  // Additional triggers not yet configurable via admin (hardcoded in MemoryGeneratorService)
+  const additionalTriggers = [
+    { title: 'Entity Match', description: 'Surfaces when same person/place mentioned', icon: '👤' },
+    { title: 'Semantic Context', description: 'Pinecone similarity > 0.8', icon: '🔗' },
+    { title: 'Time Pattern', description: 'Same day/hour weekly', icon: '⏰' },
+  ];
+
   return (
     <div className="space-y-6">
-      {/* Not Fully Implemented Warning */}
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-        <div className="flex items-start">
-          <span className="text-yellow-500 mr-2">🚧</span>
-          <div className="text-sm text-yellow-800">
-            <strong>Partially Implemented:</strong> Memory Companion runs on schedule but full functionality is in development.
-            Currently generates anniversary-based memory posts.
+      {/* How It Works - Architecture */}
+      <div className="bg-pink-50 border border-pink-200 rounded-lg p-4">
+        <h4 className="font-semibold text-pink-900 mb-3">💡 How Memory Companion Works</h4>
+        <div className="text-sm text-pink-800 space-y-3">
+          <p className="font-medium">Unlike other features, Memory Companion is <strong>event-driven</strong>, not scheduled:</p>
+
+          <div className="bg-white/60 rounded p-3">
+            <p className="font-semibold text-pink-900 mb-2">🔄 Trigger Flow</p>
+            <ol className="text-xs space-y-1 ml-4 list-decimal">
+              <li>User creates data (photo, voice note, text, location)</li>
+              <li><strong>MemoryGeneratorService</strong> creates Memory object + extracts entities</li>
+              <li>GPT-4o-mini generates title &amp; summary</li>
+              <li>Embedding generated (text-embedding-3-small, 1536D)</li>
+              <li>Triggers stored in <code className="bg-pink-100 px-1 rounded">memoryTriggers</code> collection</li>
+              <li>When conditions match → surfaces as <code className="bg-pink-100 px-1 rounded">memory_highlight</code> post</li>
+            </ol>
           </div>
+
+          <div className="bg-white/60 rounded p-3">
+            <p className="font-semibold text-pink-900 mb-2">🎯 5 Trigger Types</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+              <div><span className="font-medium">🎂 Anniversary:</span> Same date yearly</div>
+              <div><span className="font-medium">📍 Location:</span> Within 500m proximity</div>
+              <div><span className="font-medium">👤 Entity:</span> Mentions same person/place</div>
+              <div><span className="font-medium">🔗 Context:</span> Semantic similarity &gt;0.8</div>
+              <div><span className="font-medium">⏰ Time:</span> Same day/hour weekly</div>
+            </div>
+          </div>
+
+          <div className="bg-white/60 rounded p-3">
+            <p className="font-semibold text-pink-900 mb-2">🤖 AI Components Used</p>
+            <ul className="text-xs space-y-1 ml-4 list-disc">
+              <li><strong>GPT-4o-mini:</strong> Title generation (max 50 chars) &amp; summary (max 150 chars)</li>
+              <li><strong>Entity Extraction:</strong> People, places, events, organizations, topics</li>
+              <li><strong>Embeddings:</strong> text-embedding-3-small (1536D) for semantic search</li>
+              <li><strong>Pinecone:</strong> Vector similarity for context triggers</li>
+            </ul>
+          </div>
+
+          <p className="text-xs text-pink-600">
+            <strong>Post Type:</strong> Only generates <code className="bg-pink-100 px-1 rounded">memory_highlight</code> posts (📸 Memory, Indigo #3F51B5, 7-day cooldown)
+          </p>
         </div>
       </div>
 
@@ -1158,7 +1188,7 @@ function MemoryCompanionContent({ config, loading, error, saving, setSaving, onR
 
       {/* Memory Triggers */}
       <div>
-        <h4 className="text-sm font-medium text-gray-700 mb-3">Memory Triggers</h4>
+        <h4 className="text-sm font-medium text-gray-700 mb-3">Configurable Triggers</h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {Object.entries(config.enabledTriggers).map(([key, enabled]) => {
             const info = triggerLabels[key] || { title: key, description: '', icon: '📝' };
@@ -1175,6 +1205,24 @@ function MemoryCompanionContent({ config, loading, error, saving, setSaving, onR
               />
             );
           })}
+        </div>
+
+        {/* Additional triggers (not yet configurable) */}
+        <div className="mt-4">
+          <h4 className="text-sm font-medium text-gray-500 mb-2">Additional Triggers (always enabled)</h4>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+            {additionalTriggers.map((trigger) => (
+              <div key={trigger.title} className="p-2 rounded border border-gray-200 bg-gray-50 opacity-75">
+                <div className="flex items-center">
+                  <span className="text-lg mr-2">{trigger.icon}</span>
+                  <div>
+                    <p className="font-medium text-gray-700 text-xs">{trigger.title}</p>
+                    <p className="text-xs text-gray-500">{trigger.description}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
