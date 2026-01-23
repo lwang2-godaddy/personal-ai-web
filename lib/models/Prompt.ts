@@ -145,7 +145,7 @@ export const PROMPT_CATEGORIES = [
   { id: 'life_feed', name: 'Life Feed', icon: '📰', description: 'AI-generated posts about your daily life' },
   { id: 'fun_facts', name: 'Fun Facts', icon: '✨', description: 'Daily trivia and milestones' },
   { id: 'mood_compass', name: 'Mood Compass', icon: '😊', description: 'Track emotional patterns and insights' },
-  { id: 'memory_companion', name: 'Memory Companion', icon: '📸', description: 'Surface memories at the right time' },
+  { id: 'memory_companion', name: 'Memory Companion', icon: '📸', description: 'GPT-4o-mini titles/summaries, entity extraction, embeddings for 5 trigger types' },
   { id: 'life_forecaster', name: 'Life Forecaster', icon: '🔮', description: 'Predictions and proactive suggestions' },
 ] as const;
 
@@ -250,26 +250,26 @@ export const PROMPT_SERVICES = [
     platform: 'server' as const,
     example: 'Detecting positive mood in diary entry',
   },
-  // Memory Companion - Memory summaries & entity extraction
+  // Memory Companion - Memory summaries & entity extraction (event-driven, not scheduled)
   {
     id: 'MemoryGeneratorService',
-    name: 'Memory Summaries',
+    name: 'Memory Titles & Summaries',
     category: 'memory_companion' as PromptCategoryId,
     icon: '📝',
-    description: 'Generates titles and summaries for memories',
-    trigger: 'When new memory/note is created',
+    description: 'GPT-4o-mini generates titles (50 chars) and summaries (150 chars) for memories',
+    trigger: 'Event-driven: when photo, voice, text, or location data is created',
     platform: 'server' as const,
-    example: 'Auto-generating title for a voice note',
+    example: '"Dinner at Nopa with Sarah" - voice note about restaurant visit',
   },
   {
     id: 'EntityExtractionService',
-    name: 'People & Places',
+    name: 'Entity Extraction (NER)',
     category: 'memory_companion' as PromptCategoryId,
     icon: '👥',
-    description: 'Extracts people, locations, and things',
-    trigger: 'When processing text content',
+    description: 'Extracts people, places, events, organizations, topics from content',
+    trigger: 'When processing any user-created content for memory triggers',
     platform: 'server' as const,
-    example: 'Finding "John" and "coffee shop" in note',
+    example: 'Extracting "Sarah", "Nopa restaurant", "dinner" from text',
   },
   // Life Forecaster - Pattern predictions & event extraction
   {
