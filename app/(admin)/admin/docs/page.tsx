@@ -24,7 +24,7 @@ const WEB_DOCS: DocSection[] = [
   {
     id: 'web-overview',
     title: 'Overview',
-    icon: '🌐',
+    icon: '🏠',
     items: [
       { id: 'readme', title: 'Documentation Index', path: 'README.md', description: 'Quick links and project overview' },
       { id: 'architecture', title: 'Architecture', path: 'ARCHITECTURE.md', description: 'System architecture and data flow' },
@@ -33,12 +33,12 @@ const WEB_DOCS: DocSection[] = [
   {
     id: 'web-technical',
     title: 'Technical Reference',
-    icon: '⚙️',
+    icon: '📖',
     items: [
-      { id: 'api', title: 'API Reference', path: 'API_REFERENCE.md', description: '51+ API endpoints' },
+      { id: 'api', title: 'API Reference', path: 'API_REFERENCE.md', description: '51+ API endpoints documentation' },
       { id: 'database', title: 'Database Schema', path: 'DATABASE_SCHEMA.md', description: 'Firestore collections & models' },
-      { id: 'services', title: 'Services', path: 'SERVICES.md', description: 'Business logic services' },
-      { id: 'components', title: 'Components', path: 'COMPONENTS.md', description: '60+ UI components' },
+      { id: 'services', title: 'Services', path: 'SERVICES.md', description: '23+ business logic services' },
+      { id: 'components', title: 'Components', path: 'COMPONENTS.md', description: '60+ UI components reference' },
     ],
   },
   {
@@ -47,9 +47,9 @@ const WEB_DOCS: DocSection[] = [
     icon: '🏗️',
     items: [
       { id: 'auth', title: 'Authentication', path: 'infrastructure/AUTHENTICATION.md', description: 'Firebase Auth & middleware' },
-      { id: 'state', title: 'State Management', path: 'infrastructure/STATE_MANAGEMENT.md', description: 'Redux architecture' },
+      { id: 'state', title: 'State Management', path: 'infrastructure/STATE_MANAGEMENT.md', description: 'Redux architecture (8 slices)' },
       { id: 'external', title: 'External Services', path: 'infrastructure/EXTERNAL_SERVICES.md', description: 'OpenAI, Pinecone, Firebase' },
-      { id: 'deployment', title: 'Deployment', path: 'infrastructure/DEPLOYMENT.md', description: 'Vercel deployment' },
+      { id: 'deployment', title: 'Deployment', path: 'infrastructure/DEPLOYMENT.md', description: 'Vercel deployment guide' },
     ],
   },
   {
@@ -57,14 +57,14 @@ const WEB_DOCS: DocSection[] = [
     title: 'Features',
     icon: '✨',
     items: [
-      { id: 'dashboard', title: 'Dashboard', path: 'features/DASHBOARD.md', description: 'Stats and quick input' },
-      { id: 'chat', title: 'Chat & RAG', path: 'features/CHAT_RAG.md', description: 'AI chat interface' },
-      { id: 'insights', title: 'Insights System', path: 'features/INSIGHTS_SYSTEM.md', description: 'AI-generated content & post types' },
-      { id: 'life-keywords', title: 'Life Keywords', path: 'features/LIFE_KEYWORDS.md', description: 'AI keyword generation algorithm' },
-      { id: 'circles', title: 'Circles', path: 'features/CIRCLES.md', description: 'Social circles' },
+      { id: 'admin', title: 'Admin Dashboard', path: 'features/ADMIN.md', description: '15+ admin pages & tools' },
+      { id: 'insights', title: 'Insights System', path: 'features/INSIGHTS_SYSTEM.md', description: '5 AI features, 8 post types' },
+      { id: 'chat', title: 'Chat & RAG', path: 'features/CHAT_RAG.md', description: 'AI chat with context retrieval' },
+      { id: 'life-keywords', title: 'Life Keywords', path: 'features/LIFE_KEYWORDS.md', description: 'AI keyword generation' },
       { id: 'events', title: 'Events', path: 'features/EVENTS.md', description: 'Calendar & reminders' },
+      { id: 'circles', title: 'Circles', path: 'features/CIRCLES.md', description: 'Social circles & sharing' },
+      { id: 'dashboard', title: 'Dashboard', path: 'features/DASHBOARD.md', description: 'Stats and quick input' },
       { id: 'settings', title: 'Settings', path: 'features/SETTINGS.md', description: 'User preferences' },
-      { id: 'admin', title: 'Admin', path: 'features/ADMIN.md', description: 'Admin dashboard' },
     ],
   },
 ];

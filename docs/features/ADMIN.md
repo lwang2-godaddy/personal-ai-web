@@ -1,334 +1,93 @@
-# Admin
+# Admin Dashboard
 
-This document describes the Admin Dashboard and management tools in Personal AI Web.
+The Admin Dashboard provides comprehensive management tools for the SirCharge platform. This document describes all admin features and their implementation.
 
-## Overview
+## Navigation Structure
 
-The Admin section provides:
+The admin sidebar is organized into 5 collapsible groups:
 
-- Dashboard with system overview
-- User management
-- Usage analytics
-- Billing overview
-- Prompt management
-- Migration tools
-- Subscription configuration
+| Group | Pages |
+|-------|-------|
+| **Users & Accounts** | Users, Subscriptions, App Settings |
+| **Analytics** | Usage Analytics, Behavior |
+| **AI Configuration** | AI Models, Prompts, Insights, Notifications, Voice Categories |
+| **Content** | Explore Questions, Pricing |
+| **Operations** | Migrations, Docs |
+
+---
 
 ## Access Control
 
 All admin pages require:
-1. Authentication (`AuthGuard`)
-2. Admin role (`AdminGuard`)
+1. **Authentication** - Valid Firebase ID token
+2. **Admin Role** - User document must have `role: 'admin'`
 
-Admin role is set in the user document:
 ```typescript
+// User document structure
 {
   role: 'admin',          // 'user' | 'admin'
   accountStatus: 'active' // 'active' | 'suspended'
 }
 ```
 
----
-
-## Admin Pages
-
-| Route | Purpose |
-|-------|---------|
-| `/admin` | Dashboard overview |
-| `/admin/users` | User management |
-| `/admin/users/[id]` | User detail |
-| `/admin/usage` | Usage analytics |
-| `/admin/billing` | Billing overview |
-| `/admin/prompts` | Prompt management |
-| `/admin/migrations` | Migration tools |
-| `/admin/subscriptions` | Subscription config |
-| `/admin/explore-questions` | Explore questions |
+**Middleware**: `requireAdmin()` in `lib/middleware/auth.ts`
 
 ---
 
-## Dashboard
+## Admin Pages Reference
+
+### Overview Dashboard
 
 **Route**: `/admin`
 
-**Purpose**: System overview with key metrics
+**Purpose**: System overview with key metrics and quick actions
 
-### Stats Cards
-
+**Stats Cards**:
 | Metric | Description |
 |--------|-------------|
 | Total Users | All registered users |
 | Active Users | Users active in last 30 days |
-| Suspended Users | Accounts suspended |
-| Monthly Cost | Current month API costs |
-| API Calls | Current month total calls |
+| Premium Users | Paid subscription users |
+| API Calls Today | Today's total API calls |
+| Monthly Cost | Current month estimated costs |
 
 **API**: `GET /api/admin/stats`
 
 ---
 
-## User Management
+## Users & Accounts
+
+### Users
 
 **Route**: `/admin/users`
 
-### User List
-
-Paginated table of all users.
-
-**Columns**:
-- Avatar
-- Display Name
-- Email
-- Role (badge)
-- Status (badge)
-- Subscription Tier
-- Last Active
-- Actions (view/edit)
+Paginated list of all users with search and filtering.
 
 **Features**:
 - Search by email/name
-- Pagination (50 per page)
-- Sort by columns
+- Filter by role, status, subscription tier
+- Sort by registration date, last active
+- Bulk actions (suspend, activate)
 
-**API**: `GET /api/admin/users?page=1&limit=50&search=...`
-
-### User Detail
-
-**Route**: `/admin/users/[userId]`
-
-**Displays**:
+**User Detail** (`/admin/users/[userId]`):
 - Profile information
 - Account status controls
-- Subscription tier
-- Custom limits
-- Usage statistics (monthly/daily)
+- Subscription management
+- Usage statistics
 - Activity timeline
 
-**Actions**:
-
-| Action | Description |
-|--------|-------------|
-| Suspend | Disable account |
-| Activate | Re-enable account |
-| Change Tier | Update subscription |
-| Set Limits | Custom quota overrides |
-
 **API**:
+- `GET /api/admin/users`
 - `GET /api/admin/users/[userId]`
 - `PATCH /api/admin/users/[userId]`
 
----
-
-## Usage Analytics
-
-**Route**: `/admin/usage`
-
-### Overview Charts
-
-- API calls over time
-- Cost trends
-- Model breakdown
-- Endpoint breakdown
-
-### Filters
-
-| Filter | Options |
-|--------|---------|
-| Date Range | Start/End date picker |
-| Group By | Day / Month |
-| Service | All / Specific service |
-
-### Top Users
-
-Table of highest usage users:
-- User info
-- Total cost
-- API calls
-- Primary operations
-
-**API**: `GET /api/admin/usage?startDate=...&endDate=...&groupBy=day`
-
----
-
-## Billing Overview
-
-**Route**: `/admin/billing`
-
-### BillingComparisonCard
-
-**Component**: `components/admin/BillingComparisonCard.tsx`
-
-**Features**:
-- Actual vs Estimated costs
-- Variance indicators
-- Provider breakdowns
-- Refresh button
-- Data source badges
-
-### Provider Sections
-
-#### OpenAI Billing
-
-| Metric | Description |
-|--------|-------------|
-| Total Cost | Sum of all OpenAI charges |
-| By Model | GPT-4o, Embeddings, Whisper |
-| By Date | Daily cost breakdown |
-
-**Data Source**: OpenAI Costs API (requires org key)
-
-#### Pinecone Billing
-
-| Metric | Description |
-|--------|-------------|
-| Total Cost | Sum of all Pinecone charges |
-| Read Units | Query operations |
-| Write Units | Upsert operations |
-| Storage GB | Vector storage |
-
-**Data Source**: Pinecone API + usageEvents
-
-#### GCP/Firebase Billing
-
-| Metric | Description |
-|--------|-------------|
-| Total Cost | Firestore + Storage + Functions |
-| Firestore | Read/write operations |
-| Storage | File storage bytes |
-| Functions | Invocations and compute |
-
-**Data Source**: Internal tracking
-
-### Cost Variance
-
-Shows difference between estimated (from tracking) and actual (from APIs):
-
-```typescript
-interface CostVariance {
-  openai: number;         // Actual - Estimated
-  pinecone: number;
-  infrastructure: number;
-  grandTotal: number;
-  openaiPercent: number;  // Variance percentage
-  // ...
-}
-```
-
-**API**: `GET /api/admin/billing?startDate=...&endDate=...&refresh=true`
-
----
-
-## Prompt Management
-
-**Route**: `/admin/prompts`
-
-### Prompt List
-
-Table of prompt configurations:
-- Service name
-- Language
-- Status (draft/published/archived)
-- Version
-- Last updated
-- Actions
-
-### Prompt Editor
-
-Edit individual prompts with:
-- Content editor (multiline)
-- Variable definitions
-- Model settings (temperature, max tokens)
-- Cultural notes
-- Variants (conditional)
-
-### Supported Services
-
-| Service | Description |
-|---------|-------------|
-| rag_engine | RAG system prompt |
-| event_extraction | Event parsing |
-| prompt_expansion | Query expansion |
-| memory_generator | Memory synthesis |
-| sentiment_analysis | Sentiment detection |
-| entity_extraction | Entity recognition |
-| suggestion_engine | Suggestion generation |
-| daily_summary | Daily summaries |
-| life_feed | Life feed posts |
-
-### Version History
-
-View change history:
-- Timestamp
-- Changed by
-- Change notes
-- Previous content
-- Diff view
-
-**API**:
-- `GET /api/admin/prompts`
-- `POST /api/admin/prompts`
-- `GET /api/admin/prompts/[service]`
-- `PATCH /api/admin/prompts/[service]`
-
----
-
-## Migration Tools
-
-**Route**: `/admin/migrations`
-
-### Available Migrations
-
-| Migration | Category | Description |
-|-----------|----------|-------------|
-| createPredefinedCircles | user_data | Create default circles |
-| migrateNotificationPrefs | privacy | Update notification schema |
-| cleanupOrphanedData | cleanup | Remove orphaned records |
-
-### Migration Components
-
-**Files**: `components/admin/migrations/`
-
-| Component | Purpose |
-|-----------|---------|
-| MigrationCard | Migration overview card |
-| MigrationRunHistory | Historical runs table |
-| ActiveMigrationBanner | Running migration status |
-| MigrationStatusBadge | Status indicator |
-| MigrationProgressTracker | Progress visualization |
-| MigrationOptionsForm | Configuration form |
-| ConfirmMigrationModal | Confirmation dialog |
-
-### Running a Migration
-
-1. Select migration from list
-2. Configure options:
-   - Dry run (preview only)
-   - Batch size
-   - Start after user ID (resume)
-3. Confirm (destructive warning if applicable)
-4. Monitor progress
-5. View results
-
-### Migration Status
-
-```typescript
-type MigrationStatus = 'idle' | 'running' | 'completed' | 'failed' | 'cancelled' | 'partial';
-```
-
-**API**:
-- `GET /api/admin/migrations`
-- `POST /api/admin/migrations/[id]/run`
-- `GET /api/admin/migrations/[id]/runs`
-
----
-
-## Subscription Configuration
+### Subscriptions
 
 **Route**: `/admin/subscriptions`
 
-### Tier Configuration
+Configure subscription tiers and quotas.
 
-Configure quotas for each tier:
-
+**Tier Configuration**:
 ```typescript
 interface TierQuotas {
   messagesPerDay: number;        // -1 = unlimited
@@ -339,103 +98,318 @@ interface TierQuotas {
   prioritySupport: boolean;
   advancedAnalytics: boolean;
   dataExport: boolean;
-  offlineMode: boolean;
 }
 ```
 
-### Default Tiers
-
-| Tier | Messages/Day | Photos/Month | Voice Min/Month |
-|------|--------------|--------------|-----------------|
-| Free | 15 | 5 | 5 |
-| Premium | Unlimited | Unlimited | Unlimited |
-| Pro | Unlimited | Unlimited | Unlimited |
-
-### Configuration Options
-
-| Option | Description |
-|--------|-------------|
-| enableDynamicConfig | Use Firestore vs defaults |
-| changeNotes | Audit trail notes |
-
-### Version History
-
-Track configuration changes:
-- Version number
-- Changed by (admin email)
-- Timestamp
-- Change notes
+**Default Tiers**:
+| Tier | Messages/Day | Photos/Month | Voice Min/Month | Price |
+|------|--------------|--------------|-----------------|-------|
+| Free | 15 | 5 | 5 | $0 |
+| Premium | Unlimited | Unlimited | Unlimited | $2.99/mo |
+| Pro | Unlimited | Unlimited | Unlimited | $5.99/mo |
 
 **API**:
 - `GET /api/admin/subscriptions`
 - `PATCH /api/admin/subscriptions`
-- `GET /api/admin/subscriptions/versions`
+
+### App Settings
+
+**Route**: `/admin/app-settings`
+
+Global application settings and feature flags.
+
+**Settings**:
+- Maintenance mode toggle
+- Feature flags
+- Default user preferences
+- Rate limits
 
 ---
 
-## Explore Questions
+## Analytics
+
+### Usage Analytics
+
+**Route**: `/admin/usage`
+
+Comprehensive API usage and cost tracking.
+
+**Charts**:
+- API calls over time (line chart)
+- Cost breakdown by service (pie chart)
+- Model usage distribution
+- Endpoint breakdown
+
+**Filters**:
+| Filter | Options |
+|--------|---------|
+| Date Range | Custom date picker |
+| Group By | Day / Week / Month |
+| Service | All / OpenAI / Pinecone / Firebase |
+
+**Top Users Table**:
+- User info
+- Total API calls
+- Estimated cost
+- Primary operations
+
+**API**: `GET /api/admin/usage?startDate=...&endDate=...&groupBy=day`
+
+### Behavior Analytics
+
+**Route**: `/admin/behavior`
+
+User behavior tracking and engagement metrics.
+
+**Metrics**:
+- Screen view counts
+- Feature adoption rates
+- User journeys
+- Conversion funnels
+- Retention metrics
+
+**API**: `GET /api/admin/behavior`
+
+---
+
+## AI Configuration
+
+### AI Models
+
+**Route**: `/admin/ai-models`
+
+Configure AI model settings and defaults.
+
+**Configuration**:
+| Setting | Description |
+|---------|-------------|
+| Default Chat Model | GPT-4o, GPT-4o-mini |
+| Embedding Model | text-embedding-3-small |
+| Temperature | 0-2 (default: 0.7) |
+| Max Tokens | Response length limit |
+| Rate Limits | Per-user request limits |
+
+### Prompts
+
+**Route**: `/admin/prompts`
+
+Manage AI prompts for all services.
+
+**Services**:
+| Service | Description |
+|---------|-------------|
+| `RAGEngine` | Chat context and response generation |
+| `LifeFeedGenerator` | Life feed post generation |
+| `FunFactGenerator` | Fun fact generation |
+| `SentimentAnalysisService` | Mood detection |
+| `EntityExtractionService` | People/places extraction |
+| `EventExtractionService` | Event detection |
+| `MemoryGeneratorService` | Memory summaries |
+| `SuggestionEngine` | Smart suggestions |
+| `DailySummaryService` | Daily/weekly summaries |
+
+**Prompt Editor Features**:
+- Multiline content editor
+- Variable definitions (Handlebars syntax)
+- Model settings (temperature, max tokens)
+- Language localization
+- Version history with diff view
+
+**API**:
+- `GET /api/admin/prompts`
+- `GET /api/admin/prompts/[service]`
+- `PATCH /api/admin/prompts/[service]`
+
+### Insights
+
+**Route**: `/admin/insights`
+
+Configure the AI-powered Insights system.
+
+**Tabs**:
+
+#### Overview Tab
+- Global Insights enable/disable
+- Statistics (total posts, by type, by category)
+- Quick links to related settings
+
+#### AI Features Tab
+Configure the 5 AI content generators:
+| Feature | Service | Default |
+|---------|---------|---------|
+| Life Feed | `LifeFeedGenerator` | Enabled |
+| Fun Facts | `FunFactGenerator` | Enabled |
+| Mood Compass | `MoodCorrelationService` | Enabled |
+| Memory Companion | `MemoryGeneratorService` | Enabled |
+| Life Forecaster | `PredictionService` | Enabled |
+
+#### Life Feed Tab
+Configure the 8 post types:
+| Post Type | Cooldown | Priority | Description |
+|-----------|----------|----------|-------------|
+| `life_summary` | 1 day | 8 | Daily/weekly summaries |
+| `milestone` | 7 days | 9 | Achievement milestones |
+| `streak_achievement` | 3 days | 7 | Streak achievements |
+| `pattern_prediction` | 1 day | 6 | Future predictions |
+| `reflective_insight` | 3 days | 5 | Behavioral insights |
+| `memory_highlight` | 7 days | 4 | Photo/voice memories |
+| `comparison` | 14 days | 3 | Time period comparisons |
+| `seasonal_reflection` | 30 days | 2 | Seasonal summaries |
+
+**API**:
+- `GET /api/admin/insights/config`
+- `PUT /api/admin/insights/config`
+- `GET /api/admin/insights/ai-features`
+- `PUT /api/admin/insights/ai-features`
+- `GET /api/admin/insights/post-types`
+- `PUT /api/admin/insights/post-types`
+
+### Notifications
+
+**Route**: `/admin/notifications`
+
+Documentation and configuration for push notifications.
+
+**Notification Types** (9 total):
+| Type | Trigger | Description |
+|------|---------|-------------|
+| `fun_fact` | Scheduled | Daily fun facts at user's preferred time |
+| `daily_summary` | Scheduled | Daily activity summaries (8 PM) |
+| `weekly_insights` | Scheduled | Weekly insights (Monday 9 AM) |
+| `achievement` | Firestore | Real-time milestone notifications |
+| `event_reminder` | Scheduled | Upcoming event reminders |
+| `pattern_reminder` | Scheduled | Pattern-based activity reminders |
+| `escalated_reminder` | Scheduled | Follow-up for missed events |
+| `event_conflict` | Real-time | Scheduling conflict alerts |
+| `social` | Real-time | Circle invites and activity |
+
+**Android Channels** (11 total):
+| Channel ID | Description |
+|------------|-------------|
+| `reminders` | Event and task reminders |
+| `important_events` | Urgent notifications |
+| `daily_summaries` | Daily summaries |
+| `insights` | Weekly insights |
+| `fun_facts` | Fun facts |
+| `pattern_reminders` | Behavior-based reminders |
+| `event_reminders` | Calendar reminders |
+| `social` | Circle activity |
+| `location` | Location alerts |
+| `health` | Health notifications |
+| `general` | General notifications |
+
+**Cloud Functions**:
+- `sendDailySummary` - Daily summary sender
+- `sendWeeklyInsights` - Weekly insights sender
+- `sendDailyFunFact` - Hourly fun fact checker
+- `eventNotificationScheduler` - Event reminders
+- `testFunFactNotification` - Testing endpoint
+
+### Voice Categories
+
+**Route**: `/admin/voice-categories`
+
+Configure auto-categorization for voice notes.
+
+**Categories**:
+| Category | Icon | Keywords |
+|----------|------|----------|
+| work | 💼 | meeting, project, deadline |
+| personal | 🏠 | family, home, weekend |
+| ideas | 💡 | idea, thought, concept |
+| todo | ✅ | remember, need to, don't forget |
+| health | 🏃 | workout, exercise, doctor |
+
+---
+
+## Content
+
+### Explore Questions
 
 **Route**: `/admin/explore-questions`
 
-### Question Editor
+Configure suggested questions shown in the mobile app.
 
-**Component**: `components/admin/ExploreQuestionEditor.tsx`
-
-Configure explore questions shown on mobile app.
-
-**Fields**:
-
+**Question Fields**:
 | Field | Description |
 |-------|-------------|
 | Icon | Emoji icon |
-| Label Key | Display label with template vars |
+| Label Key | Display text with template vars |
 | Query Template | RAG query template |
-| Category | Question category |
-| Priority | Sort priority (0-100) |
+| Category | activity / health / location / voice / photo |
+| Priority | Sort order (0-100) |
 | Enabled | Active/inactive |
-| User Data States | When to show |
-| Variables | Template variables |
 | Data Requirements | Required data types |
 
-### Categories
-
-| Category | Description |
-|----------|-------------|
-| activity | Activity-related questions |
-| health | Health metrics questions |
-| location | Location history questions |
-| voice | Voice note questions |
-| photo | Photo memory questions |
-| general | General questions |
-| onboarding | First-time user questions |
-
-### Data States
-
-Questions shown based on user's data:
-
+**Data States**:
 | State | Description |
 |-------|-------------|
-| NO_DATA | User has no data |
-| MINIMAL_DATA | < 10 entries |
-| PARTIAL_DATA | 10-50 entries |
-| RICH_DATA | 50+ entries |
-
-### Language Support
-
-Questions can be localized:
-- English (en)
-- Spanish (es)
-- French (fr)
-- German (de)
-- Japanese (ja)
-- Chinese (zh)
+| `NO_DATA` | User has no data |
+| `MINIMAL_DATA` | < 10 entries |
+| `PARTIAL_DATA` | 10-50 entries |
+| `RICH_DATA` | 50+ entries |
 
 **API**:
 - `GET /api/admin/explore-questions`
 - `POST /api/admin/explore-questions`
 - `PATCH /api/admin/explore-questions/[id]`
-- `POST /api/admin/explore-questions/migrate`
-- `POST /api/admin/explore-questions/copy-to-languages`
+
+### Pricing
+
+**Route**: `/admin/pricing`
+
+Configure public pricing page content.
+
+**Sections**:
+- Tier comparison table
+- Feature lists
+- FAQ items
+- Call-to-action buttons
+
+---
+
+## Operations
+
+### Migrations
+
+**Route**: `/admin/migrations`
+
+Database migration tools for schema updates.
+
+**Features**:
+- Dry run mode (preview changes)
+- Batch processing with configurable size
+- Progress tracking
+- Rollback support
+- Run history
+
+**Migration Status**:
+```typescript
+type MigrationStatus = 'idle' | 'running' | 'completed' | 'failed' | 'cancelled' | 'partial';
+```
+
+**API**:
+- `GET /api/admin/migrations`
+- `POST /api/admin/migrations/[id]/run`
+- `GET /api/admin/migrations/[id]/status`
+
+### Documentation
+
+**Route**: `/admin/docs`
+
+In-app documentation viewer.
+
+**Features**:
+- Tabbed navigation (Web / Mobile)
+- Markdown rendering
+- Syntax highlighting
+- Search functionality
+
+**Documentation Categories**:
+- Overview & Architecture
+- Technical Reference
+- Infrastructure
+- Features
 
 ---
 
@@ -443,41 +417,80 @@ Questions can be localized:
 
 ### Audit Logging
 
-Admin actions are logged:
+Admin actions are logged to Firestore:
 
 ```typescript
-await adminDb.collection('adminLogs').add({
-  adminUid: admin.uid,
-  adminEmail: admin.email,
-  action: 'UPDATE_USER',
-  targetUserId: userId,
-  changes: updates,
-  timestamp: new Date().toISOString(),
-});
+// Collection: adminLogs
+{
+  adminUid: string;
+  adminEmail: string;
+  action: string;        // e.g., 'UPDATE_USER', 'CHANGE_TIER'
+  targetUserId?: string;
+  changes: object;
+  timestamp: string;
+  ip?: string;
+}
 ```
 
-### Rate Limiting
+### Data Access Restrictions
 
-Admin endpoints have rate limits to prevent abuse.
+Admins have limited access to protect user privacy:
+- ✅ Can view aggregated statistics
+- ✅ Can manage account status
+- ✅ Can view subscription info
+- ❌ Cannot read user messages
+- ❌ Cannot view raw health data
+- ❌ Cannot access voice recordings
 
-### Data Access
+---
 
-Admins can view but respect privacy:
-- Cannot read user messages
-- Cannot view raw health data
-- Can view aggregated statistics
+## Components
+
+Admin components are located in `components/admin/`:
+
+| Component | Purpose |
+|-----------|---------|
+| `AdminSidebar` | Navigation sidebar with collapsible groups |
+| `AdminHeader` | Top header with mobile menu toggle |
+| `StatsCard` | Metric display card |
+| `DataTable` | Sortable, filterable table |
+| `BillingComparisonCard` | Cost comparison display |
+| `MigrationCard` | Migration status and controls |
+| `PromptEditor` | AI prompt editing interface |
+
+### Insights Components
+
+Located in `components/admin/insights/`:
+
+| Component | Purpose |
+|-----------|---------|
+| `OverviewTab` | Global settings and stats |
+| `AIFeaturesTab` | AI feature configuration |
+| `LifeFeedTab` | Post type configuration |
+
+### Migration Components
+
+Located in `components/admin/migrations/`:
+
+| Component | Purpose |
+|-----------|---------|
+| `MigrationCard` | Migration overview card |
+| `MigrationRunHistory` | Historical runs table |
+| `ActiveMigrationBanner` | Running migration status |
+| `MigrationProgressTracker` | Progress visualization |
+| `ConfirmMigrationModal` | Confirmation dialog |
 
 ---
 
 ## API Reference
 
-See [API Reference - Admin](../API_REFERENCE.md#admin---dashboard) for complete endpoint documentation.
+For complete endpoint documentation, see [API Reference - Admin](../API_REFERENCE.md#admin).
 
 ---
 
 ## Related Documentation
 
-- [Database Schema - Admin](../DATABASE_SCHEMA.md#admin--configuration)
-- [Services - Billing](../SERVICES.md#billing--usage)
-- [Services - Prompts](../SERVICES.md#promptservice)
-- [Authentication - Admin](../infrastructure/AUTHENTICATION.md#requireadmin)
+- [Insights System](./INSIGHTS_SYSTEM.md) - AI content generation details
+- [Database Schema](../DATABASE_SCHEMA.md) - Firestore collections
+- [Authentication](../infrastructure/AUTHENTICATION.md) - Auth middleware
+- [Services](../SERVICES.md) - Business logic implementation
