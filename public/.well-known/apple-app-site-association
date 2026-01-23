@@ -1,0 +1,18 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "696D6Y2KT4.ai.sircharge.personal",
+        "paths": [
+          "/invite/*"
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": [
+      "696D6Y2KT4.ai.sircharge.personal"
+    ]
+  }
+}

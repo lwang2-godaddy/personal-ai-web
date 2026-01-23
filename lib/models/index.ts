@@ -12,3 +12,4 @@ export * from './ServiceOperations';
 export * from './ExploreQuestion';
 export * from './BehaviorEvent';
 export * from './VoiceCategory';
+export * from './FriendInvite';

@@ -52,6 +52,32 @@ const nextConfig: NextConfig = {
     ],
   },
 
+  // Headers for app link verification files
+  async headers() {
+    return [
+      {
+        // iOS Universal Links - must be served as application/json
+        source: '/.well-known/apple-app-site-association',
+        headers: [
+          {
+            key: 'Content-Type',
+            value: 'application/json',
+          },
+        ],
+      },
+      {
+        // Android App Links
+        source: '/.well-known/assetlinks.json',
+        headers: [
+          {
+            key: 'Content-Type',
+            value: 'application/json',
+          },
+        ],
+      },
+    ];
+  },
+
   // Rewrites for subdomain URL support
   // Mobile app links to docs.sircharge.app/* and support.sircharge.app
   // These rewrites handle those subdomains when DNS is configured
