@@ -8,6 +8,7 @@ import {
   MemoryCompanionConfig,
   LifeForecasterConfig,
 } from '@/lib/models/InsightsFeatureConfig';
+import MoodCompassAnalyticsPanel from './MoodCompassAnalytics';
 
 interface AIFeaturesTabProps {
   onSaving?: (saving: boolean) => void;
@@ -861,6 +862,9 @@ function MoodCompassContent({ config, loading, error, saving, setSaving, onRefre
         </button>
       </div>
 
+      {/* Analytics Panel */}
+      <MoodCompassAnalyticsPanel enabled={config.enabled} />
+
       {/* Analysis Settings */}
       <div>
         <h4 className="text-sm font-medium text-gray-700 mb-3">Analysis Settings</h4>
@@ -1118,6 +1122,20 @@ function MemoryCompanionContent({ config, loading, error, saving, setSaving, onR
               <li><strong>Embeddings:</strong> text-embedding-3-small (1536D) for semantic search</li>
               <li><strong>Pinecone:</strong> Vector similarity for context triggers</li>
             </ul>
+            <div className="mt-2 flex gap-2">
+              <a
+                href="/admin/prompts?service=MemoryGeneratorService"
+                className="inline-flex items-center gap-1 text-xs text-pink-600 hover:text-pink-800 font-medium"
+              >
+                <span>📝</span> Edit Title/Summary Prompt →
+              </a>
+              <a
+                href="/admin/prompts?service=EntityExtractionService"
+                className="inline-flex items-center gap-1 text-xs text-pink-600 hover:text-pink-800 font-medium"
+              >
+                <span>👥</span> Edit Entity Extraction Prompt →
+              </a>
+            </div>
           </div>
 
           <p className="text-xs text-pink-600">
