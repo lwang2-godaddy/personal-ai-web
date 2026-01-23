@@ -750,8 +750,11 @@ export default function OverviewTab({ onSaving }: OverviewTabProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {INSIGHTS_CATEGORIES.map((category) => {
             const meta = CATEGORY_METADATA[category];
-            const categoryConfig = config.categories[category];
-            const count = analytics.postsByCategory[category] || 0;
+            const categoryConfig = config.categories?.[category];
+            const count = analytics.postsByCategory?.[category] || 0;
+
+            // Skip if metadata or config is missing
+            if (!meta) return null;
 
             return (
               <div
@@ -763,7 +766,7 @@ export default function OverviewTab({ onSaving }: OverviewTabProps) {
                   <span className="text-2xl mr-2">{meta.icon}</span>
                   <span className="font-semibold text-gray-900">{meta.displayName}</span>
                 </div>
-                <p className="text-sm text-gray-600 mb-3">{categoryConfig.description}</p>
+                <p className="text-sm text-gray-600 mb-3">{categoryConfig?.description || 'No description'}</p>
                 <div className="flex items-center justify-between">
                   <span className="text-2xl font-bold text-gray-900">{count}</span>
                   <span className="text-sm text-gray-500">posts</span>
