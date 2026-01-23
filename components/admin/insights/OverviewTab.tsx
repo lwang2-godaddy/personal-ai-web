@@ -51,6 +51,12 @@ export default function OverviewTab({ onSaving }: OverviewTabProps) {
   const [homeFeedMaxItems, setHomeFeedMaxItems] = useState(3);
   const [homeFeedRefreshInterval, setHomeFeedRefreshInterval] = useState(4);
 
+  // Editable refresh cooldowns state
+  const [editingRefreshCooldowns, setEditingRefreshCooldowns] = useState(false);
+  const [dataRefreshCooldown, setDataRefreshCooldown] = useState(30);
+  const [generateCooldown, setGenerateCooldown] = useState(60);
+  const [postsRefreshCooldown, setPostsRefreshCooldown] = useState(0);
+
   // Fetch main configuration
   const fetchConfig = useCallback(async () => {
     try {
@@ -64,6 +70,10 @@ export default function OverviewTab({ onSaving }: OverviewTabProps) {
       setHomeFeedEnabled(result.config.homeFeed.enabled);
       setHomeFeedMaxItems(result.config.homeFeed.maxItems);
       setHomeFeedRefreshInterval(result.config.homeFeed.refreshInterval);
+      // Initialize refresh cooldowns (with fallback defaults for older configs)
+      setDataRefreshCooldown(result.config.refreshCooldowns?.dataRefreshCooldownSeconds ?? 30);
+      setGenerateCooldown(result.config.refreshCooldowns?.generateCooldownSeconds ?? 60);
+      setPostsRefreshCooldown(result.config.refreshCooldowns?.postsRefreshCooldownSeconds ?? 0);
     } catch (err: any) {
       console.error('Failed to fetch insights config:', err);
       setError(err.message || 'Failed to load configuration');
@@ -204,6 +214,26 @@ export default function OverviewTab({ onSaving }: OverviewTabProps) {
       setEditingHomeFeed(false);
     } catch (err: any) {
       setError(err.message || 'Failed to save home feed settings');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Save refresh cooldowns config
+  const handleSaveRefreshCooldowns = async () => {
+    try {
+      setSaving(true);
+      await apiPut('/api/admin/insights', {
+        refreshCooldowns: {
+          dataRefreshCooldownSeconds: dataRefreshCooldown,
+          generateCooldownSeconds: generateCooldown,
+          postsRefreshCooldownSeconds: postsRefreshCooldown,
+        },
+      });
+      await fetchConfig();
+      setEditingRefreshCooldowns(false);
+    } catch (err: any) {
+      setError(err.message || 'Failed to save refresh cooldowns');
     } finally {
       setSaving(false);
     }
@@ -733,6 +763,141 @@ export default function OverviewTab({ onSaving }: OverviewTabProps) {
             </div>
           </div>
         )}
+      </div>
+
+      {/* Pull-to-Refresh Cooldowns Configuration */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-lg font-bold text-gray-900">Pull-to-Refresh Cooldowns</h3>
+            <p className="text-sm text-gray-500">
+              Control how often the mobile app can refresh data on pull-to-refresh
+            </p>
+          </div>
+          {!editingRefreshCooldowns && (
+            <button
+              onClick={() => setEditingRefreshCooldowns(true)}
+              className="text-sm text-blue-600 hover:text-blue-700"
+            >
+              Edit
+            </button>
+          )}
+        </div>
+
+        {editingRefreshCooldowns ? (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Data Refresh Cooldown (seconds)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="300"
+                  value={dataRefreshCooldown}
+                  onChange={(e) => setDataRefreshCooldown(Number(e.target.value))}
+                  disabled={saving}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  For Keywords &amp; Fun Facts refresh
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Generate Cooldown (seconds)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="600"
+                  value={generateCooldown}
+                  onChange={(e) => setGenerateCooldown(Number(e.target.value))}
+                  disabled={saving}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  For AI feed generation (expensive)
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Posts Refresh Cooldown (seconds)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="300"
+                  value={postsRefreshCooldown}
+                  onChange={(e) => setPostsRefreshCooldown(Number(e.target.value))}
+                  disabled={saving}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  For Life Feed posts (0 = always)
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={handleSaveRefreshCooldowns}
+                disabled={saving}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+              >
+                {saving ? 'Saving...' : 'Save'}
+              </button>
+              <button
+                onClick={() => {
+                  setDataRefreshCooldown(config.refreshCooldowns?.dataRefreshCooldownSeconds ?? 30);
+                  setGenerateCooldown(config.refreshCooldowns?.generateCooldownSeconds ?? 60);
+                  setPostsRefreshCooldown(config.refreshCooldowns?.postsRefreshCooldownSeconds ?? 0);
+                  setEditingRefreshCooldowns(false);
+                }}
+                className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <p className="text-sm font-medium text-gray-600 mb-1">Data Refresh</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {config.refreshCooldowns?.dataRefreshCooldownSeconds ?? 30}s
+              </p>
+              <p className="text-xs text-gray-500">Keywords &amp; Fun Facts</p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-600 mb-1">Generate Cooldown</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {config.refreshCooldowns?.generateCooldownSeconds ?? 60}s
+              </p>
+              <p className="text-xs text-gray-500">AI Feed Generation</p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-600 mb-1">Posts Refresh</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {config.refreshCooldowns?.postsRefreshCooldownSeconds === 0
+                  ? 'Always'
+                  : `${config.refreshCooldowns?.postsRefreshCooldownSeconds ?? 0}s`}
+              </p>
+              <p className="text-xs text-gray-500">Life Feed Posts</p>
+            </div>
+          </div>
+        )}
+
+        {/* Info box */}
+        <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
+          <div className="flex items-start">
+            <span className="text-blue-600 mr-2">ℹ️</span>
+            <p className="text-sm text-blue-700">
+              These cooldowns prevent excessive API calls when users pull-to-refresh.
+              The mobile app will skip refresh operations if the cooldown hasn&apos;t passed since the last refresh.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Categories - Post Counts by Category */}

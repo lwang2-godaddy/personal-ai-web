@@ -122,6 +122,19 @@ export interface InsightsHomeFeedConfig {
 }
 
 /**
+ * Pull-to-refresh cooldown configuration (admin-configurable)
+ * Controls how often the mobile app can trigger refreshes on pull-to-refresh
+ */
+export interface InsightsRefreshCooldownsConfig {
+  // Cooldown in seconds for refreshing keywords/fun facts data
+  dataRefreshCooldownSeconds: number;
+  // Cooldown in seconds for attempting to generate new feed posts
+  generateCooldownSeconds: number;
+  // Cooldown in seconds for refreshing life feed posts (0 = always refresh)
+  postsRefreshCooldownSeconds: number;
+}
+
+/**
  * Global admin configuration for Insights system
  * Stored in Firestore at config/insightsSettings
  */
@@ -137,6 +150,9 @@ export interface InsightsAdminConfig {
 
   // Home feed configuration
   homeFeed: InsightsHomeFeedConfig;
+
+  // Pull-to-refresh cooldowns (mobile app)
+  refreshCooldowns: InsightsRefreshCooldownsConfig;
 
   // Global rate limits
   maxPostsPerUserPerDay: number;
@@ -334,6 +350,12 @@ export const DEFAULT_INSIGHTS_ADMIN_CONFIG: InsightsAdminConfig = {
     showCategories: ['milestone', 'health', 'activity'],
     refreshInterval: 4,
     cardStyle: 'compact',
+  },
+
+  refreshCooldowns: {
+    dataRefreshCooldownSeconds: 30,      // 30 seconds for keywords/fun facts
+    generateCooldownSeconds: 60,          // 60 seconds for feed generation
+    postsRefreshCooldownSeconds: 0,       // 0 = always refresh posts
   },
 
   maxPostsPerUserPerDay: 10,

@@ -13,6 +13,27 @@ import type { BehaviorEvent, TrackEventsRequest, TrackEventsResponse } from '@/l
 export const dynamic = 'force-dynamic';
 
 /**
+ * Remove undefined and null values from an object (Firestore doesn't accept undefined)
+ */
+function cleanFirestoreData<T extends Record<string, any>>(data: T): Partial<T> {
+  const cleaned: Record<string, any> = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (value !== undefined && value !== null) {
+      // Recursively clean nested objects (but not arrays)
+      if (typeof value === 'object' && !Array.isArray(value)) {
+        const cleanedNested = cleanFirestoreData(value);
+        if (Object.keys(cleanedNested).length > 0) {
+          cleaned[key] = cleanedNested;
+        }
+      } else {
+        cleaned[key] = value;
+      }
+    }
+  }
+  return cleaned as Partial<T>;
+}
+
+/**
  * POST /api/tracking/events
  * Receive batched behavior events from web client
  */
@@ -70,7 +91,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<TrackEven
         createdAt: timestamp,
       };
 
-      batch.set(eventRef, fullEvent);
+      // Clean undefined/null values before writing to Firestore
+      const cleanedEvent = cleanFirestoreData(fullEvent);
+      batch.set(eventRef, cleanedEvent);
     }
 
     // Also update the session's activity counts
@@ -82,19 +105,19 @@ export async function POST(request: NextRequest): Promise<NextResponse<TrackEven
       const screenViewCount = events.filter(e => e.eventType === 'screen_view' && e.action === 'view').length;
       const featureUseCount = events.filter(e => e.eventType === 'feature_use').length;
 
-      // Extract unique screens and features from events
+      // Extract unique screens and features from events (filter out undefined/null)
       const newScreens = events
-        .filter(e => e.eventType === 'screen_view' && e.action === 'view')
+        .filter(e => e.eventType === 'screen_view' && e.action === 'view' && e.target)
         .map(e => e.target);
       const newFeatures = events
-        .filter(e => e.eventType === 'feature_use')
+        .filter(e => e.eventType === 'feature_use' && e.target)
         .map(e => e.target);
 
-      const existingScreens: string[] = sessionData?.screensVisited || [];
-      const existingFeatures: string[] = sessionData?.featuresUsed || [];
+      const existingScreens: string[] = (sessionData?.screensVisited || []).filter(Boolean);
+      const existingFeatures: string[] = (sessionData?.featuresUsed || []).filter(Boolean);
 
-      const uniqueScreens = [...new Set([...existingScreens, ...newScreens])];
-      const uniqueFeatures = [...new Set([...existingFeatures, ...newFeatures])];
+      const uniqueScreens = [...new Set([...existingScreens, ...newScreens])].filter(Boolean);
+      const uniqueFeatures = [...new Set([...existingFeatures, ...newFeatures])].filter(Boolean);
 
       batch.update(sessionRef, {
         screenViewCount: (sessionData?.screenViewCount || 0) + screenViewCount,
@@ -116,8 +139,14 @@ export async function POST(request: NextRequest): Promise<NextResponse<TrackEven
     });
   } catch (error: any) {
     console.error('[Tracking API] Error tracking events:', error);
+    console.error('[Tracking API] Error stack:', error.stack);
+    console.error('[Tracking API] Error code:', error.code);
     return NextResponse.json(
-      { error: 'Failed to track events' },
+      {
+        error: 'Failed to track events',
+        message: error.message || 'Unknown error',
+        code: error.code || 'UNKNOWN',
+      },
       { status: 500 }
     );
   }

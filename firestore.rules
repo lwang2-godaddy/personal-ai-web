@@ -390,6 +390,51 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // BEHAVIOR TRACKING: Behavior Events collection
+    match /behaviorEvents/{eventId} {
+      // Users can read their own events, admins can read all
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || isAdmin()
+      );
+
+      // Only server (API routes with Admin SDK) can write behavior events
+      // This prevents tampering with analytics data
+      allow write: if false;
+    }
+
+    // BEHAVIOR TRACKING: Behavior Sessions collection
+    match /behaviorSessions/{sessionId} {
+      // Users can read their own sessions, admins can read all
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || isAdmin()
+      );
+
+      // Only server (API routes with Admin SDK) can write behavior sessions
+      allow write: if false;
+    }
+
+    // BEHAVIOR TRACKING: Daily Stats collection
+    match /behaviorDaily/{docId} {
+      // Users can read their own daily stats, admins can read all
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || isAdmin()
+      );
+
+      // Only server can write
+      allow write: if false;
+    }
+
+    // BEHAVIOR TRACKING: Monthly Stats collection
+    match /behaviorMonthly/{docId} {
+      // Users can read their own monthly stats, admins can read all
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || isAdmin()
+      );
+
+      // Only server can write
+      allow write: if false;
+    }
+
     // Deny all other requests by default
     match /{document=**} {
       allow read, write: if false;

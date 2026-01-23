@@ -6,7 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useAppSelector } from '@/lib/store/hooks';
 import { FriendInvitePreview, AcceptFriendInviteResponse } from '@/lib/models/FriendInvite';
-import apiClient from '@/lib/api/client';
+import { apiPost } from '@/lib/api/client';
 
 export default function InvitePage() {
   const params = useParams();
@@ -62,7 +62,7 @@ export default function InvitePage() {
       setAccepting(true);
       setAcceptError(null);
 
-      const response: AcceptFriendInviteResponse = await apiClient.post(
+      const response: AcceptFriendInviteResponse = await apiPost(
         `/api/invites/${token}/accept`,
         {}
       );

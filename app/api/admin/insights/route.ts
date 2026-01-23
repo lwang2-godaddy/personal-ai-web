@@ -49,6 +49,7 @@ export async function GET(request: NextRequest) {
  * - Update category: { category: string, updates: Partial<InsightsAdminCategoryConfig> }
  * - Update home feed: { homeFeed: Partial<InsightsHomeFeedConfig> }
  * - Update rate limits: { maxPostsPerUserPerDay: number, globalCooldownHours: number }
+ * - Update refresh cooldowns: { refreshCooldowns: Partial<InsightsRefreshCooldownsConfig> }
  * - Reset to defaults: { reset: true }
  */
 export async function PUT(request: NextRequest) {
@@ -107,6 +108,13 @@ export async function PUT(request: NextRequest) {
       );
       const updatedConfig = await service.getConfig();
       return NextResponse.json({ success: true, config: updatedConfig });
+    }
+
+    if (body.refreshCooldowns) {
+      // Update pull-to-refresh cooldowns
+      await service.updateRefreshCooldowns(body.refreshCooldowns, adminId);
+      const config = await service.getConfig();
+      return NextResponse.json({ success: true, config });
     }
 
     return NextResponse.json(

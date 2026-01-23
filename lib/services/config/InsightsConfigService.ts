@@ -10,6 +10,7 @@ import {
   InsightsCategory,
   InsightsAdminCategoryConfig,
   InsightsHomeFeedConfig,
+  InsightsRefreshCooldownsConfig,
   DEFAULT_INSIGHTS_ADMIN_CONFIG,
 } from '@/lib/models/InsightsConfig';
 
@@ -143,6 +144,22 @@ class InsightsConfigService {
     updatedBy: string = 'admin'
   ): Promise<void> {
     await this.updateConfig({ maxPostsPerUserPerDay, globalCooldownHours }, updatedBy);
+  }
+
+  /**
+   * Update pull-to-refresh cooldowns configuration
+   */
+  async updateRefreshCooldowns(
+    updates: Partial<InsightsRefreshCooldownsConfig>,
+    updatedBy: string = 'admin'
+  ): Promise<void> {
+    const config = await this.getConfig();
+    const updatedRefreshCooldowns = {
+      ...config.refreshCooldowns,
+      ...updates,
+    };
+
+    await this.updateConfig({ refreshCooldowns: updatedRefreshCooldowns }, updatedBy);
   }
 
   /**

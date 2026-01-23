@@ -65,8 +65,14 @@ export async function POST(request: NextRequest): Promise<NextResponse<StartSess
     });
   } catch (error: any) {
     console.error('[Session API] Error starting session:', error);
+    console.error('[Session API] Error stack:', error.stack);
+    console.error('[Session API] Error code:', error.code);
     return NextResponse.json(
-      { error: 'Failed to start session' },
+      {
+        error: 'Failed to start session',
+        message: error.message || 'Unknown error',
+        code: error.code || 'UNKNOWN',
+      },
       { status: 500 }
     );
   }
