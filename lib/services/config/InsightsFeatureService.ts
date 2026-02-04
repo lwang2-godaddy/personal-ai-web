@@ -19,6 +19,8 @@ import {
   MemoryCompanionConfig,
   LifeForecasterConfig,
   LifeKeywordsConfig,
+  DailyInsightConfig,
+  ThisDayConfig,
   PostTypeAnalytics,
   DEFAULT_POST_TYPES_CONFIG,
   DEFAULT_FUN_FACTS_CONFIG,
@@ -26,6 +28,8 @@ import {
   DEFAULT_MEMORY_COMPANION_CONFIG,
   DEFAULT_LIFE_FORECASTER_CONFIG,
   DEFAULT_LIFE_KEYWORDS_CONFIG,
+  DEFAULT_DAILY_INSIGHT_CONFIG,
+  DEFAULT_THIS_DAY_CONFIG,
   INSIGHTS_POST_TYPES,
 } from '@/lib/models/InsightsFeatureConfig';
 
@@ -38,6 +42,8 @@ const DOC_MOOD_COMPASS = 'moodCompassSettings';
 const DOC_MEMORY_COMPANION = 'memoryCompanionSettings';
 const DOC_LIFE_FORECASTER = 'lifeForecasterSettings';
 const DOC_LIFE_KEYWORDS = 'lifeKeywordsSettings';
+const DOC_DAILY_INSIGHT = 'dailyInsightSettings';
+const DOC_THIS_DAY = 'thisDaySettings';
 
 /**
  * Get the admin Firestore instance
@@ -559,6 +565,116 @@ class InsightsFeatureService {
   }
 
   // ==========================================================================
+  // Daily Insight Configuration
+  // ==========================================================================
+
+  /**
+   * Get the current Daily Insight configuration
+   */
+  async getDailyInsightConfig(): Promise<DailyInsightConfig> {
+    const db = getFirestore();
+    const docRef = db.collection(CONFIG_COLLECTION).doc(DOC_DAILY_INSIGHT);
+    const doc = await docRef.get();
+
+    if (!doc.exists) {
+      await this.saveDailyInsightConfig(DEFAULT_DAILY_INSIGHT_CONFIG);
+      return DEFAULT_DAILY_INSIGHT_CONFIG;
+    }
+
+    return doc.data() as DailyInsightConfig;
+  }
+
+  /**
+   * Save the entire Daily Insight configuration
+   */
+  async saveDailyInsightConfig(config: DailyInsightConfig, updatedBy: string = 'admin'): Promise<void> {
+    const db = getFirestore();
+    const docRef = db.collection(CONFIG_COLLECTION).doc(DOC_DAILY_INSIGHT);
+
+    const updatedConfig: DailyInsightConfig = {
+      ...config,
+      lastUpdatedAt: new Date().toISOString(),
+    };
+
+    await docRef.set(updatedConfig);
+  }
+
+  /**
+   * Update Daily Insight configuration
+   */
+  async updateDailyInsightConfig(updates: Partial<DailyInsightConfig>, updatedBy: string = 'admin'): Promise<void> {
+    const db = getFirestore();
+    const docRef = db.collection(CONFIG_COLLECTION).doc(DOC_DAILY_INSIGHT);
+
+    await docRef.update({
+      ...updates,
+      lastUpdatedAt: new Date().toISOString(),
+    });
+  }
+
+  /**
+   * Reset Daily Insight to defaults
+   */
+  async resetDailyInsightToDefaults(updatedBy: string = 'admin'): Promise<void> {
+    await this.saveDailyInsightConfig(DEFAULT_DAILY_INSIGHT_CONFIG, updatedBy);
+  }
+
+  // ==========================================================================
+  // This Day Configuration
+  // ==========================================================================
+
+  /**
+   * Get the current This Day configuration
+   */
+  async getThisDayConfig(): Promise<ThisDayConfig> {
+    const db = getFirestore();
+    const docRef = db.collection(CONFIG_COLLECTION).doc(DOC_THIS_DAY);
+    const doc = await docRef.get();
+
+    if (!doc.exists) {
+      await this.saveThisDayConfig(DEFAULT_THIS_DAY_CONFIG);
+      return DEFAULT_THIS_DAY_CONFIG;
+    }
+
+    return doc.data() as ThisDayConfig;
+  }
+
+  /**
+   * Save the entire This Day configuration
+   */
+  async saveThisDayConfig(config: ThisDayConfig, updatedBy: string = 'admin'): Promise<void> {
+    const db = getFirestore();
+    const docRef = db.collection(CONFIG_COLLECTION).doc(DOC_THIS_DAY);
+
+    const updatedConfig: ThisDayConfig = {
+      ...config,
+      lastUpdatedAt: new Date().toISOString(),
+    };
+
+    await docRef.set(updatedConfig);
+  }
+
+  /**
+   * Update This Day configuration
+   */
+  async updateThisDayConfig(updates: Partial<ThisDayConfig>, updatedBy: string = 'admin'): Promise<void> {
+    const db = getFirestore();
+    const docRef = db.collection(CONFIG_COLLECTION).doc(DOC_THIS_DAY);
+
+    await docRef.update({
+      ...updates,
+      lastUpdatedAt: new Date().toISOString(),
+    });
+  }
+
+  /**
+   * Reset This Day to defaults
+   */
+  async resetThisDayToDefaults(updatedBy: string = 'admin'): Promise<void> {
+    await this.saveThisDayConfig(DEFAULT_THIS_DAY_CONFIG, updatedBy);
+  }
+
+  // ==========================================================================
   // Unified Methods
   // ==========================================================================
 
@@ -572,14 +688,18 @@ class InsightsFeatureService {
     memoryCompanion: MemoryCompanionConfig;
     lifeForecaster: LifeForecasterConfig;
     lifeKeywords: LifeKeywordsConfig;
+    dailyInsight: DailyInsightConfig;
+    thisDay: ThisDayConfig;
   }> {
-    const [postTypes, funFacts, moodCompass, memoryCompanion, lifeForecaster, lifeKeywords] = await Promise.all([
+    const [postTypes, funFacts, moodCompass, memoryCompanion, lifeForecaster, lifeKeywords, dailyInsight, thisDay] = await Promise.all([
       this.getPostTypesConfig(),
       this.getFunFactsConfig(),
       this.getMoodCompassConfig(),
       this.getMemoryCompanionConfig(),
       this.getLifeForecasterConfig(),
       this.getLifeKeywordsConfig(),
+      this.getDailyInsightConfig(),
+      this.getThisDayConfig(),
     ]);
 
     return {
@@ -589,6 +709,8 @@ class InsightsFeatureService {
       memoryCompanion,
       lifeForecaster,
       lifeKeywords,
+      dailyInsight,
+      thisDay,
     };
   }
 
@@ -603,6 +725,8 @@ class InsightsFeatureService {
       this.resetMemoryCompanionToDefaults(updatedBy),
       this.resetLifeForecasterToDefaults(updatedBy),
       this.resetLifeKeywordsToDefaults(updatedBy),
+      this.resetDailyInsightToDefaults(updatedBy),
+      this.resetThisDayToDefaults(updatedBy),
     ]);
   }
 }

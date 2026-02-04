@@ -865,3 +865,101 @@ export const DEFAULT_SCHEDULER_CONFIG: InsightsSchedulerConfig = {
   timezone: 'UTC',
   cronExpression: '0 8,14,20 * * *',
 };
+
+// ============================================================================
+// Daily Insight Configuration
+// ============================================================================
+
+/**
+ * Daily Insight feature configuration
+ * AI-generated daily summary at the top of Insights tab
+ * Stored in Firestore at config/dailyInsightSettings
+ */
+export interface DailyInsightConfig {
+  version: string;
+  lastUpdatedAt: string;
+  lastUpdatedBy: string;
+
+  // Global toggle
+  enabled: boolean;
+
+  // Cache settings
+  cacheTTLMinutes: number;     // Default: 60 (1 hour)
+
+  // Generation settings
+  maxTokens: number;           // Default: 200
+  temperature: number;         // Default: 0.7
+
+  // Trigger settings
+  generateOnAppOpen: boolean;  // Default: true
+  generateOnPullRefresh: boolean; // Default: true
+}
+
+/**
+ * Default Daily Insight configuration
+ */
+export const DEFAULT_DAILY_INSIGHT_CONFIG: DailyInsightConfig = {
+  version: '1.0.0',
+  lastUpdatedAt: new Date().toISOString(),
+  lastUpdatedBy: 'system',
+
+  enabled: true,
+
+  cacheTTLMinutes: 60,
+
+  maxTokens: 200,
+  temperature: 0.7,
+
+  generateOnAppOpen: true,
+  generateOnPullRefresh: true,
+};
+
+// ============================================================================
+// This Day Memories Configuration
+// ============================================================================
+
+/**
+ * This Day Memories feature configuration
+ * AI-generated nostalgic reflections from previous years
+ * Stored in Firestore at config/thisDaySettings
+ */
+export interface ThisDayConfig {
+  version: string;
+  lastUpdatedAt: string;
+  lastUpdatedBy: string;
+
+  // Global toggle
+  enabled: boolean;
+
+  // Cache settings
+  cacheTTLHours: number;       // Default: 24
+
+  // Generation settings
+  yearsBack: number[];         // Default: [1, 2, 3]
+  maxTokens: number;           // Default: 150
+  temperature: number;         // Default: 0.8
+
+  // Display settings
+  showEmptyYears: boolean;     // Show empty state for years with no data
+  showComparisonInsight: boolean; // Show comparison insight between years
+}
+
+/**
+ * Default This Day configuration
+ */
+export const DEFAULT_THIS_DAY_CONFIG: ThisDayConfig = {
+  version: '1.0.0',
+  lastUpdatedAt: new Date().toISOString(),
+  lastUpdatedBy: 'system',
+
+  enabled: true,
+
+  cacheTTLHours: 24,
+
+  yearsBack: [1, 2, 3],
+  maxTokens: 150,
+  temperature: 0.8,
+
+  showEmptyYears: true,
+  showComparisonInsight: true,
+};

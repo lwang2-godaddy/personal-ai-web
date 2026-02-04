@@ -247,7 +247,7 @@ export default function OverviewTab({ onSaving }: OverviewTabProps) {
   // Count active features
   const countActiveFeatures = () => {
     // This is a simple count - in reality you'd check each feature's enabled state
-    return 4; // Fun Facts, Mood Compass, Memory Companion, Life Forecaster
+    return 6; // Fun Facts, Mood Compass, Memory Companion, Life Forecaster, Daily Insight, This Day
   };
 
   if (loading) {
@@ -309,7 +309,7 @@ export default function OverviewTab({ onSaving }: OverviewTabProps) {
         </div>
         <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-orange-500">
           <p className="text-sm font-medium text-gray-600">Active Features</p>
-          <p className="text-3xl font-bold text-gray-900 mt-2">{countActiveFeatures()}/4</p>
+          <p className="text-3xl font-bold text-gray-900 mt-2">{countActiveFeatures()}/6</p>
         </div>
       </div>
 
@@ -416,7 +416,7 @@ export default function OverviewTab({ onSaving }: OverviewTabProps) {
         {/* AI Feature Individual Schedules */}
         <div className="border-t pt-4">
           <h4 className="font-semibold text-gray-900 mb-3">AI Feature Schedules</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             <div className="p-3 bg-gray-50 rounded-lg">
               <div className="flex items-center mb-1">
                 <span className="mr-2">🧭</span>
@@ -448,6 +448,22 @@ export default function OverviewTab({ onSaving }: OverviewTabProps) {
               </div>
               <p className="text-xs text-gray-500">Every 60 minutes</p>
               <p className="text-xs text-orange-600 mt-1">Output: push notifications</p>
+            </div>
+            <div className="p-3 bg-gray-50 rounded-lg">
+              <div className="flex items-center mb-1">
+                <span className="mr-2">✨</span>
+                <span className="font-medium text-gray-800">Daily Insight</span>
+              </div>
+              <p className="text-xs text-gray-500">On app open (1h cache)</p>
+              <p className="text-xs text-blue-600 mt-1">Output: Home card</p>
+            </div>
+            <div className="p-3 bg-gray-50 rounded-lg">
+              <div className="flex items-center mb-1">
+                <span className="mr-2">🕰️</span>
+                <span className="font-medium text-gray-800">This Day</span>
+              </div>
+              <p className="text-xs text-gray-500">On app open (24h cache)</p>
+              <p className="text-xs text-blue-600 mt-1">Output: Home carousel</p>
             </div>
           </div>
         </div>

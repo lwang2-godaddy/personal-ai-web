@@ -7,6 +7,8 @@ import {
   MoodCompassConfig,
   MemoryCompanionConfig,
   LifeForecasterConfig,
+  DailyInsightConfig,
+  ThisDayConfig,
 } from '@/lib/models/InsightsFeatureConfig';
 import MoodCompassAnalyticsPanel from './MoodCompassAnalytics';
 
@@ -14,7 +16,7 @@ interface AIFeaturesTabProps {
   onSaving?: (saving: boolean) => void;
 }
 
-type ExpandedSection = 'fun-facts' | 'mood-compass' | 'memory-companion' | 'life-forecaster' | null;
+type ExpandedSection = 'fun-facts' | 'mood-compass' | 'memory-companion' | 'life-forecaster' | 'daily-insight' | 'this-day' | null;
 
 /**
  * AI Features Tab - Configure 4 AI analysis features in accordion sections
@@ -43,6 +45,16 @@ export default function AIFeaturesTab({ onSaving }: AIFeaturesTabProps) {
   const [lifeForecasterConfig, setLifeForecasterConfig] = useState<LifeForecasterConfig | null>(null);
   const [lifeForecasterLoading, setLifeForecasterLoading] = useState(true);
   const [lifeForecasterError, setLifeForecasterError] = useState<string | null>(null);
+
+  // Daily Insight State
+  const [dailyInsightConfig, setDailyInsightConfig] = useState<DailyInsightConfig | null>(null);
+  const [dailyInsightLoading, setDailyInsightLoading] = useState(true);
+  const [dailyInsightError, setDailyInsightError] = useState<string | null>(null);
+
+  // This Day State
+  const [thisDayConfig, setThisDayConfig] = useState<ThisDayConfig | null>(null);
+  const [thisDayLoading, setThisDayLoading] = useState(true);
+  const [thisDayError, setThisDayError] = useState<string | null>(null);
 
   // Fetch all configurations
   const fetchFunFacts = useCallback(async () => {
@@ -97,12 +109,40 @@ export default function AIFeaturesTab({ onSaving }: AIFeaturesTabProps) {
     }
   }, []);
 
+  const fetchDailyInsight = useCallback(async () => {
+    try {
+      setDailyInsightLoading(true);
+      setDailyInsightError(null);
+      const result = await apiGet<{ config: DailyInsightConfig }>('/api/admin/insights/daily-insight');
+      setDailyInsightConfig(result.config);
+    } catch (err: any) {
+      setDailyInsightError(err.message || 'Failed to load');
+    } finally {
+      setDailyInsightLoading(false);
+    }
+  }, []);
+
+  const fetchThisDay = useCallback(async () => {
+    try {
+      setThisDayLoading(true);
+      setThisDayError(null);
+      const result = await apiGet<{ config: ThisDayConfig }>('/api/admin/insights/this-day');
+      setThisDayConfig(result.config);
+    } catch (err: any) {
+      setThisDayError(err.message || 'Failed to load');
+    } finally {
+      setThisDayLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchFunFacts();
     fetchMoodCompass();
     fetchMemoryCompanion();
     fetchLifeForecaster();
-  }, [fetchFunFacts, fetchMoodCompass, fetchMemoryCompanion, fetchLifeForecaster]);
+    fetchDailyInsight();
+    fetchThisDay();
+  }, [fetchFunFacts, fetchMoodCompass, fetchMemoryCompanion, fetchLifeForecaster, fetchDailyInsight, fetchThisDay]);
 
   useEffect(() => {
     onSaving?.(saving);
@@ -119,6 +159,8 @@ export default function AIFeaturesTab({ onSaving }: AIFeaturesTabProps) {
     if (moodCompassConfig?.enabled) count++;
     if (memoryCompanionConfig?.enabled) count++;
     if (lifeForecasterConfig?.enabled) count++;
+    if (dailyInsightConfig?.enabled) count++;
+    if (thisDayConfig?.enabled) count++;
     return count;
   };
 
@@ -129,11 +171,11 @@ export default function AIFeaturesTab({ onSaving }: AIFeaturesTabProps) {
         <div>
           <h2 className="text-xl font-bold text-gray-900">AI Features Configuration</h2>
           <p className="text-sm text-gray-600">
-            Configure 4 AI analysis features for intelligent insights
+            Configure 6 AI analysis features for intelligent insights
           </p>
         </div>
         <div className="bg-blue-100 text-blue-800 px-4 py-2 rounded-lg">
-          <span className="font-semibold">{countEnabled()}/4</span> features enabled
+          <span className="font-semibold">{countEnabled()}/6</span> features enabled
         </div>
       </div>
 
@@ -182,11 +224,23 @@ export default function AIFeaturesTab({ onSaving }: AIFeaturesTabProps) {
                 <td className="py-2 pr-4"><code className="bg-blue-100 px-1 rounded">pattern_prediction</code></td>
                 <td className="py-2">Template + stats</td>
               </tr>
-              <tr>
+              <tr className="border-b border-blue-100">
                 <td className="py-2 pr-4">🔔 Proactive Suggestions</td>
                 <td className="py-2 pr-4 font-mono text-xs">Every 60 min</td>
                 <td className="py-2 pr-4"><span className="text-orange-600">Push notifications</span></td>
                 <td className="py-2">Life Forecaster</td>
+              </tr>
+              <tr className="border-b border-blue-100">
+                <td className="py-2 pr-4">✨ Daily Insight</td>
+                <td className="py-2 pr-4 font-mono text-xs">On app open (1h cache)</td>
+                <td className="py-2 pr-4"><span className="text-gray-500 italic">Home card</span></td>
+                <td className="py-2 text-green-700 font-medium">GPT-4o-mini</td>
+              </tr>
+              <tr>
+                <td className="py-2 pr-4">🕰️ This Day in History</td>
+                <td className="py-2 pr-4 font-mono text-xs">On app open (24h cache)</td>
+                <td className="py-2 pr-4"><span className="text-gray-500 italic">Home carousel</span></td>
+                <td className="py-2 text-green-700 font-medium">GPT-4o-mini</td>
               </tr>
             </tbody>
           </table>
@@ -303,6 +357,48 @@ export default function AIFeaturesTab({ onSaving }: AIFeaturesTabProps) {
           onRefresh={fetchLifeForecaster}
         />
       </AccordionSection>
+
+      {/* Daily Insight Section */}
+      <AccordionSection
+        id="daily-insight"
+        title="Daily Insight"
+        icon="✨"
+        description="AI-generated daily summary • 1-hour cache • On app open"
+        enabled={dailyInsightConfig?.enabled}
+        expanded={expandedSection === 'daily-insight'}
+        onToggle={() => toggleSection('daily-insight')}
+        color="blue"
+      >
+        <DailyInsightContent
+          config={dailyInsightConfig}
+          loading={dailyInsightLoading}
+          error={dailyInsightError}
+          saving={saving}
+          setSaving={setSaving}
+          onRefresh={fetchDailyInsight}
+        />
+      </AccordionSection>
+
+      {/* This Day in History Section */}
+      <AccordionSection
+        id="this-day"
+        title="This Day in History"
+        icon="🕰️"
+        description="AI memories from past years • 24-hour cache • Daily"
+        enabled={thisDayConfig?.enabled}
+        expanded={expandedSection === 'this-day'}
+        onToggle={() => toggleSection('this-day')}
+        color="indigo"
+      >
+        <ThisDayContent
+          config={thisDayConfig}
+          loading={thisDayLoading}
+          error={thisDayError}
+          saving={saving}
+          setSaving={setSaving}
+          onRefresh={fetchThisDay}
+        />
+      </AccordionSection>
     </div>
   );
 }
@@ -316,7 +412,7 @@ interface AccordionSectionProps {
   enabled?: boolean;
   expanded: boolean;
   onToggle: () => void;
-  color: 'green' | 'purple' | 'pink' | 'indigo';
+  color: 'green' | 'purple' | 'pink' | 'indigo' | 'blue';
   children: React.ReactNode;
 }
 
@@ -326,6 +422,7 @@ function AccordionSection({ title, icon, description, enabled, expanded, onToggl
     purple: 'border-purple-200 bg-purple-50',
     pink: 'border-pink-200 bg-pink-50',
     indigo: 'border-indigo-200 bg-indigo-50',
+    blue: 'border-blue-200 bg-blue-50',
   };
 
   const enabledBgClass = enabled ? colorClasses[color] : 'border-gray-200 bg-gray-50';
@@ -860,6 +957,155 @@ function MoodCompassContent({ config, loading, error, saving, setSaving, onRefre
         <button onClick={handleReset} disabled={saving} className="text-sm text-gray-500 hover:text-gray-700">
           Reset to Defaults
         </button>
+      </div>
+
+      {/* How It Works - Detailed Explanation */}
+      <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+        <h4 className="font-semibold text-purple-900 mb-3">💡 How Mood Compass Works</h4>
+        <div className="text-sm text-purple-800 space-y-4">
+          {/* Overview */}
+          <div className="bg-white/60 rounded p-3">
+            <p className="font-semibold text-purple-900 mb-2">🧭 Overview</p>
+            <p className="text-xs text-purple-700 mb-2">
+              Mood Compass analyzes user entries to detect emotional patterns and correlations with activities, sleep, and other factors.
+              It runs <strong>daily at 2 AM UTC</strong> via the <code className="bg-purple-100 px-1 rounded">generateMoodPatterns</code> scheduled function.
+            </p>
+          </div>
+
+          {/* Step 1: Mood Entry Creation */}
+          <div className="bg-white/60 rounded p-3">
+            <p className="font-semibold text-purple-900 mb-2">📝 Step 1: Mood Entry Creation</p>
+            <ol className="text-xs space-y-1 ml-4 list-decimal">
+              <li>User creates content (text note, voice note, photo caption)</li>
+              <li><strong>SentimentAnalysisService</strong> analyzes text via GPT</li>
+              <li>Extracts: <code className="bg-purple-100 px-1 rounded">primaryEmotion</code> (joy, sadness, etc.), <code className="bg-purple-100 px-1 rounded">sentimentScore</code> (-1 to +1), <code className="bg-purple-100 px-1 rounded">intensity</code> (1-5)</li>
+              <li>Creates <code className="bg-purple-100 px-1 rounded">moodEntry</code> document linked to source content</li>
+              <li>Also supports <strong>manual mood logging</strong> via mobile app</li>
+            </ol>
+            <a
+              href="/admin/prompts?service=SentimentAnalysisService"
+              className="inline-flex items-center gap-1 mt-2 text-xs text-purple-600 hover:text-purple-800 font-medium"
+            >
+              <span>📝</span> Edit Sentiment Analysis Prompt →
+            </a>
+          </div>
+
+          {/* Step 2: Correlation Calculation */}
+          <div className="bg-white/60 rounded p-3">
+            <p className="font-semibold text-purple-900 mb-2">🔗 Step 2: Correlation Calculation</p>
+            <p className="text-xs text-purple-700 mb-2">
+              The system correlates mood scores with various factors to find patterns:
+            </p>
+            <ul className="text-xs space-y-1 ml-4 list-disc">
+              <li><strong>Sleep:</strong> Compares mood after different sleep durations (e.g., &quot;+23% mood after 7+ hours sleep&quot;)</li>
+              <li><strong>Exercise/Workouts:</strong> Mood change after workout sessions</li>
+              <li><strong>Activities:</strong> Location-tagged activities like badminton, gym, restaurant visits</li>
+              <li><strong>Steps:</strong> Daily step count impact on mood</li>
+              <li><strong>Weather:</strong> Weather conditions at time of entry (if enabled)</li>
+              <li><strong>Social Activity:</strong> Social interaction patterns</li>
+            </ul>
+            <p className="text-xs text-purple-600 mt-2">
+              <strong>Formula:</strong> <code className="bg-purple-100 px-1 rounded">avgMoodDelta = avgMoodAfterFactor - baselineMood</code>
+            </p>
+            <p className="text-xs text-purple-600">
+              <strong>Strength:</strong> Calculated using Pearson correlation coefficient
+            </p>
+            <p className="text-xs text-purple-600">
+              <strong>Confidence:</strong> Based on sample size (more data points = higher confidence)
+            </p>
+          </div>
+
+          {/* Step 3: Pattern Detection */}
+          <div className="bg-white/60 rounded p-3">
+            <p className="font-semibold text-purple-900 mb-2">📊 Step 3: Pattern Detection</p>
+            <p className="text-xs text-purple-700 mb-2">
+              Analyzes mood trends over time to detect recurring patterns:
+            </p>
+            <ul className="text-xs space-y-1 ml-4 list-disc">
+              <li><strong>Weekly patterns:</strong> &quot;Your mood tends to dip on Mondays&quot;</li>
+              <li><strong>Daily patterns:</strong> &quot;You feel best in the morning, lowest at 3 PM&quot;</li>
+              <li><strong>Activity patterns:</strong> &quot;Badminton consistently boosts your mood&quot;</li>
+              <li><strong>Health patterns:</strong> &quot;Your mood improves with 8+ hours of sleep&quot;</li>
+              <li><strong>Location patterns:</strong> &quot;You feel happier when you visit the park&quot;</li>
+            </ul>
+            <p className="text-xs text-purple-600 mt-2">
+              Patterns include <strong>actionable insights</strong> like &quot;Try scheduling badminton on Mondays to counter the Monday blues&quot;
+            </p>
+          </div>
+
+          {/* Data Collections */}
+          <div className="bg-white/60 rounded p-3">
+            <p className="font-semibold text-purple-900 mb-2">💾 Firestore Collections</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs">
+              <div className="bg-purple-100/50 p-2 rounded">
+                <code className="font-mono">moodEntries</code>
+                <p className="text-purple-600 mt-1">Individual mood data points</p>
+              </div>
+              <div className="bg-purple-100/50 p-2 rounded">
+                <code className="font-mono">moodCorrelations</code>
+                <p className="text-purple-600 mt-1">Factor-mood relationships</p>
+              </div>
+              <div className="bg-purple-100/50 p-2 rounded">
+                <code className="font-mono">moodPatterns</code>
+                <p className="text-purple-600 mt-1">Detected patterns &amp; insights</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile App Display */}
+          <div className="bg-white/60 rounded p-3">
+            <p className="font-semibold text-purple-900 mb-2">📱 Mobile App Display</p>
+            <ul className="text-xs space-y-1 ml-4 list-disc">
+              <li><strong>Home Screen Widget:</strong> Shows current mood + 7-day trend</li>
+              <li><strong>Mood Screen:</strong> Full dashboard with trend chart, correlations, patterns</li>
+              <li><strong>Manual Check-in:</strong> Emotion grid + intensity slider + optional note</li>
+              <li><strong>Localized:</strong> Supports 6 languages (EN, ES, FR, DE, JA, ZH)</li>
+            </ul>
+          </div>
+
+          {/* Cloud Function Info */}
+          <div className="bg-white/60 rounded p-3">
+            <p className="font-semibold text-purple-900 mb-2">⚡ Scheduled Function</p>
+            <p className="text-xs text-purple-700 mb-2">
+              <code className="bg-purple-100 px-1 rounded">generateMoodPatterns</code> runs daily at <strong>2 AM UTC</strong>
+            </p>
+            <ul className="text-xs space-y-1 ml-4 list-disc">
+              <li>Processes all users with mood data in lookback period</li>
+              <li>Calculates correlations for enabled factors</li>
+              <li>Detects patterns meeting minimum confidence threshold</li>
+              <li>Updates <code className="bg-purple-100 px-1 rounded">moodCorrelations</code> and <code className="bg-purple-100 px-1 rounded">moodPatterns</code> collections</li>
+              <li>Patterns expire after their <code className="bg-purple-100 px-1 rounded">expiresAt</code> timestamp</li>
+            </ul>
+            <code className="text-xs bg-gray-800 text-green-400 p-2 rounded block mt-2 overflow-x-auto">
+              PersonalAIApp/firebase/functions/src/scheduled/generateMoodPatterns.ts
+            </code>
+          </div>
+
+          {/* Related Prompts */}
+          <div className="bg-white/60 rounded p-3">
+            <p className="font-semibold text-purple-900 mb-2">🔧 Related AI Prompts</p>
+            <div className="flex flex-wrap gap-2 mt-2">
+              <a
+                href="/admin/prompts?service=SentimentAnalysisService"
+                className="inline-flex items-center gap-1 text-xs bg-purple-100 text-purple-700 hover:bg-purple-200 px-2 py-1 rounded font-medium"
+              >
+                <span>😊</span> Sentiment Analysis
+              </a>
+              <a
+                href="/admin/prompts?service=EntityExtractionService"
+                className="inline-flex items-center gap-1 text-xs bg-purple-100 text-purple-700 hover:bg-purple-200 px-2 py-1 rounded font-medium"
+              >
+                <span>🏷️</span> Entity Extraction
+              </a>
+              <a
+                href="/admin/prompts?service=DailySummaryService"
+                className="inline-flex items-center gap-1 text-xs bg-purple-100 text-purple-700 hover:bg-purple-200 px-2 py-1 rounded font-medium"
+              >
+                <span>📅</span> Daily Summary
+              </a>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Analytics Panel */}
@@ -1588,6 +1834,454 @@ function LifeForecasterContent({ config, loading, error, saving, setSaving, onRe
 }
 
 // ============================================================================
+// DAILY INSIGHT CONTENT
+// ============================================================================
+interface DailyInsightContentProps {
+  config: DailyInsightConfig | null;
+  loading: boolean;
+  error: string | null;
+  saving: boolean;
+  setSaving: (saving: boolean) => void;
+  onRefresh: () => void;
+}
+
+function DailyInsightContent({ config, loading, error, saving, setSaving, onRefresh }: DailyInsightContentProps) {
+  if (loading) return <LoadingSpinner />;
+  if (error) return <ErrorMessage error={error} onRetry={onRefresh} />;
+  if (!config) return null;
+
+  const handleToggleEnabled = async () => {
+    try {
+      setSaving(true);
+      await apiPut('/api/admin/insights/daily-insight', { enabled: !config.enabled });
+      await onRefresh();
+    } catch (err: any) {
+      console.error(err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleUpdateSettings = async (updates: Partial<DailyInsightConfig>) => {
+    try {
+      setSaving(true);
+      await apiPut('/api/admin/insights/daily-insight', { updates });
+      await onRefresh();
+    } catch (err: any) {
+      console.error(err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleReset = async () => {
+    if (!confirm('Reset Daily Insight settings to defaults?')) return;
+    try {
+      setSaving(true);
+      await apiPut('/api/admin/insights/daily-insight', { reset: true });
+      await onRefresh();
+    } catch (err: any) {
+      console.error(err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* How It Works */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <h4 className="font-semibold text-blue-900 mb-3">💡 How Daily Insight Works</h4>
+        <div className="text-sm text-blue-800 space-y-4">
+          <div className="bg-white/60 rounded p-3">
+            <p className="font-semibold text-blue-900 mb-2">✨ Overview</p>
+            <p className="text-xs text-blue-700 mb-2">
+              Daily Insight generates a personalized AI narrative about the user&apos;s day. It displays as a card at the top of the Home/Insights tab.
+            </p>
+            <ul className="text-xs space-y-1 ml-4 list-disc">
+              <li><strong>Trigger:</strong> On app open (with 1-hour cache)</li>
+              <li><strong>Model:</strong> GPT-4o-mini</li>
+              <li><strong>Output:</strong> 2-3 sentence summary + mood indicator + metrics</li>
+              <li><strong>Cache:</strong> Stored in <code className="bg-blue-100 px-1 rounded">dailyInsights</code> collection</li>
+            </ul>
+          </div>
+
+          <div className="bg-white/60 rounded p-3">
+            <p className="font-semibold text-blue-900 mb-2">🎨 Mood-Based Styling</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-green-500"></span>
+                <span>Active (green)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-blue-500"></span>
+                <span>Calm (blue)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-orange-500"></span>
+                <span>Busy (orange)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-purple-500"></span>
+                <span>Rest (purple)</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white/60 rounded p-3">
+            <p className="font-semibold text-blue-900 mb-2">📊 Data Sources</p>
+            <ul className="text-xs space-y-1 ml-4 list-disc">
+              <li>Steps from HealthKit/Google Fit</li>
+              <li>Active calories burned</li>
+              <li>Workout count and types</li>
+              <li>Location visits count</li>
+              <li>Yesterday&apos;s steps for comparison</li>
+            </ul>
+          </div>
+
+          <a
+            href="/admin/prompts?service=DailyInsightService"
+            className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-medium"
+          >
+            <span>📝</span> Edit Daily Insight Prompts →
+          </a>
+        </div>
+      </div>
+
+      {/* Controls */}
+      <div className="flex items-center justify-between">
+        <button
+          onClick={handleToggleEnabled}
+          disabled={saving}
+          className={`px-4 py-2 rounded-md transition-colors disabled:opacity-50 ${
+            config.enabled ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-green-600 text-white hover:bg-green-700'
+          }`}
+        >
+          {config.enabled ? 'Disable' : 'Enable'} Daily Insight
+        </button>
+        <button onClick={handleReset} disabled={saving} className="text-sm text-gray-500 hover:text-gray-700">
+          Reset to Defaults
+        </button>
+      </div>
+
+      {/* Cache Settings */}
+      <div>
+        <h4 className="text-sm font-medium text-gray-700 mb-3">Cache Settings</h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">Cache TTL (minutes)</label>
+            <input
+              type="number"
+              min="15"
+              max="240"
+              value={config.cacheTTLMinutes}
+              onChange={(e) => handleUpdateSettings({ cacheTTLMinutes: Number(e.target.value) })}
+              disabled={saving}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+            />
+            <p className="text-xs text-gray-400 mt-1">How long before regenerating insight</p>
+          </div>
+        </div>
+      </div>
+
+      {/* AI Settings */}
+      <div>
+        <h4 className="text-sm font-medium text-gray-700 mb-3">AI Generation Settings</h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">Max Tokens</label>
+            <input
+              type="number"
+              min="100"
+              max="500"
+              value={config.maxTokens}
+              onChange={(e) => handleUpdateSettings({ maxTokens: Number(e.target.value) })}
+              disabled={saving}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">Temperature (0-1)</label>
+            <input
+              type="number"
+              min="0"
+              max="1"
+              step="0.1"
+              value={config.temperature}
+              onChange={(e) => handleUpdateSettings({ temperature: Number(e.target.value) })}
+              disabled={saving}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Trigger Settings */}
+      <div>
+        <h4 className="text-sm font-medium text-gray-700 mb-3">Trigger Settings</h4>
+        <div className="space-y-2">
+          <label className="flex items-center">
+            <input
+              type="checkbox"
+              checked={config.generateOnAppOpen}
+              onChange={(e) => handleUpdateSettings({ generateOnAppOpen: e.target.checked })}
+              disabled={saving}
+              className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500 disabled:opacity-50"
+            />
+            <span className="ml-2 text-sm text-gray-700">Generate on app open</span>
+          </label>
+          <label className="flex items-center">
+            <input
+              type="checkbox"
+              checked={config.generateOnPullRefresh}
+              onChange={(e) => handleUpdateSettings({ generateOnPullRefresh: e.target.checked })}
+              disabled={saving}
+              className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500 disabled:opacity-50"
+            />
+            <span className="ml-2 text-sm text-gray-700">Regenerate on pull-to-refresh</span>
+          </label>
+        </div>
+      </div>
+
+      <VersionInfo version={config.version} lastUpdatedAt={config.lastUpdatedAt} />
+    </div>
+  );
+}
+
+// ============================================================================
+// THIS DAY CONTENT
+// ============================================================================
+interface ThisDayContentProps {
+  config: ThisDayConfig | null;
+  loading: boolean;
+  error: string | null;
+  saving: boolean;
+  setSaving: (saving: boolean) => void;
+  onRefresh: () => void;
+}
+
+function ThisDayContent({ config, loading, error, saving, setSaving, onRefresh }: ThisDayContentProps) {
+  if (loading) return <LoadingSpinner />;
+  if (error) return <ErrorMessage error={error} onRetry={onRefresh} />;
+  if (!config) return null;
+
+  const handleToggleEnabled = async () => {
+    try {
+      setSaving(true);
+      await apiPut('/api/admin/insights/this-day', { enabled: !config.enabled });
+      await onRefresh();
+    } catch (err: any) {
+      console.error(err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleUpdateSettings = async (updates: Partial<ThisDayConfig>) => {
+    try {
+      setSaving(true);
+      await apiPut('/api/admin/insights/this-day', { updates });
+      await onRefresh();
+    } catch (err: any) {
+      console.error(err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleReset = async () => {
+    if (!confirm('Reset This Day in History settings to defaults?')) return;
+    try {
+      setSaving(true);
+      await apiPut('/api/admin/insights/this-day', { reset: true });
+      await onRefresh();
+    } catch (err: any) {
+      console.error(err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* How It Works */}
+      <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+        <h4 className="font-semibold text-indigo-900 mb-3">💡 How This Day in History Works</h4>
+        <div className="text-sm text-indigo-800 space-y-4">
+          <div className="bg-white/60 rounded p-3">
+            <p className="font-semibold text-indigo-900 mb-2">🕰️ Overview</p>
+            <p className="text-xs text-indigo-700 mb-2">
+              This Day in History generates nostalgic AI narratives about memories from the same date in previous years.
+              It displays as a horizontal carousel on the Home/Insights tab.
+            </p>
+            <ul className="text-xs space-y-1 ml-4 list-disc">
+              <li><strong>Trigger:</strong> On app open (with 24-hour cache)</li>
+              <li><strong>Model:</strong> GPT-4o-mini</li>
+              <li><strong>Output:</strong> 2-sentence reflection per year + metrics</li>
+              <li><strong>Cache:</strong> Stored in <code className="bg-indigo-100 px-1 rounded">thisDayMemories</code> collection</li>
+            </ul>
+          </div>
+
+          <div className="bg-white/60 rounded p-3">
+            <p className="font-semibold text-indigo-900 mb-2">📅 Years Covered</p>
+            <p className="text-xs text-indigo-700 mb-2">
+              By default, the feature looks back 1, 2, and 3 years. Each year with data gets its own card in the carousel.
+            </p>
+            <div className="flex gap-2 mt-2">
+              {config.yearsBack.map((year) => (
+                <span key={year} className="px-2 py-1 bg-indigo-100 text-indigo-700 text-xs rounded">
+                  {year} year{year > 1 ? 's' : ''} ago
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-white/60 rounded p-3">
+            <p className="font-semibold text-indigo-900 mb-2">📊 Data Sources</p>
+            <ul className="text-xs space-y-1 ml-4 list-disc">
+              <li>Location visits and addresses</li>
+              <li>Steps from that day</li>
+              <li>Activities performed</li>
+              <li>Photo count (future: thumbnail support)</li>
+              <li>Workout details</li>
+            </ul>
+          </div>
+
+          <a
+            href="/admin/prompts?service=ThisDayService"
+            className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+          >
+            <span>📝</span> Edit This Day Prompts →
+          </a>
+        </div>
+      </div>
+
+      {/* Controls */}
+      <div className="flex items-center justify-between">
+        <button
+          onClick={handleToggleEnabled}
+          disabled={saving}
+          className={`px-4 py-2 rounded-md transition-colors disabled:opacity-50 ${
+            config.enabled ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-green-600 text-white hover:bg-green-700'
+          }`}
+        >
+          {config.enabled ? 'Disable' : 'Enable'} This Day in History
+        </button>
+        <button onClick={handleReset} disabled={saving} className="text-sm text-gray-500 hover:text-gray-700">
+          Reset to Defaults
+        </button>
+      </div>
+
+      {/* Cache Settings */}
+      <div>
+        <h4 className="text-sm font-medium text-gray-700 mb-3">Cache Settings</h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">Cache TTL (hours)</label>
+            <input
+              type="number"
+              min="1"
+              max="72"
+              value={config.cacheTTLHours}
+              onChange={(e) => handleUpdateSettings({ cacheTTLHours: Number(e.target.value) })}
+              disabled={saving}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+            />
+            <p className="text-xs text-gray-400 mt-1">How long before regenerating memories</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Years Back Configuration */}
+      <div>
+        <h4 className="text-sm font-medium text-gray-700 mb-3">Years to Look Back</h4>
+        <p className="text-xs text-gray-500 mb-3">Select which years to include in the memories carousel</p>
+        <div className="flex gap-3">
+          {[1, 2, 3, 4, 5].map((year) => (
+            <label key={year} className="flex items-center">
+              <input
+                type="checkbox"
+                checked={config.yearsBack.includes(year)}
+                onChange={(e) => {
+                  const newYearsBack = e.target.checked
+                    ? [...config.yearsBack, year].sort((a, b) => a - b)
+                    : config.yearsBack.filter((y) => y !== year);
+                  handleUpdateSettings({ yearsBack: newYearsBack });
+                }}
+                disabled={saving}
+                className="h-4 w-4 text-indigo-600 rounded focus:ring-indigo-500 disabled:opacity-50"
+              />
+              <span className="ml-2 text-sm text-gray-700">{year}y</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      {/* AI Settings */}
+      <div>
+        <h4 className="text-sm font-medium text-gray-700 mb-3">AI Generation Settings</h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">Max Tokens</label>
+            <input
+              type="number"
+              min="50"
+              max="300"
+              value={config.maxTokens}
+              onChange={(e) => handleUpdateSettings({ maxTokens: Number(e.target.value) })}
+              disabled={saving}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">Temperature (0-1)</label>
+            <input
+              type="number"
+              min="0"
+              max="1"
+              step="0.1"
+              value={config.temperature}
+              onChange={(e) => handleUpdateSettings({ temperature: Number(e.target.value) })}
+              disabled={saving}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Display Settings */}
+      <div>
+        <h4 className="text-sm font-medium text-gray-700 mb-3">Display Settings</h4>
+        <div className="space-y-2">
+          <label className="flex items-center">
+            <input
+              type="checkbox"
+              checked={config.showEmptyYears}
+              onChange={(e) => handleUpdateSettings({ showEmptyYears: e.target.checked })}
+              disabled={saving}
+              className="h-4 w-4 text-indigo-600 rounded focus:ring-indigo-500 disabled:opacity-50"
+            />
+            <span className="ml-2 text-sm text-gray-700">Show empty years in carousel</span>
+          </label>
+          <label className="flex items-center">
+            <input
+              type="checkbox"
+              checked={config.showComparisonInsight}
+              onChange={(e) => handleUpdateSettings({ showComparisonInsight: e.target.checked })}
+              disabled={saving}
+              className="h-4 w-4 text-indigo-600 rounded focus:ring-indigo-500 disabled:opacity-50"
+            />
+            <span className="ml-2 text-sm text-gray-700">Show comparison insights (e.g., &quot;You were more active last year!&quot;)</span>
+          </label>
+        </div>
+      </div>
+
+      <VersionInfo version={config.version} lastUpdatedAt={config.lastUpdatedAt} />
+    </div>
+  );
+}
+
+// ============================================================================
 // SHARED COMPONENTS
 // ============================================================================
 
@@ -1617,7 +2311,7 @@ interface ToggleCardProps {
   enabled: boolean;
   onToggle: () => void;
   saving: boolean;
-  color: 'green' | 'purple' | 'pink' | 'indigo';
+  color: 'green' | 'purple' | 'pink' | 'indigo' | 'blue';
 }
 
 function ToggleCard({ icon, title, description, enabled, onToggle, saving, color }: ToggleCardProps) {
@@ -1626,6 +2320,7 @@ function ToggleCard({ icon, title, description, enabled, onToggle, saving, color
     purple: { bg: 'bg-purple-50', border: 'border-purple-200', toggle: 'bg-purple-500' },
     pink: { bg: 'bg-pink-50', border: 'border-pink-200', toggle: 'bg-pink-500' },
     indigo: { bg: 'bg-indigo-50', border: 'border-indigo-200', toggle: 'bg-indigo-500' },
+    blue: { bg: 'bg-blue-50', border: 'border-blue-200', toggle: 'bg-blue-500' },
   };
 
   const classes = colorClasses[color];
@@ -1650,7 +2345,7 @@ interface ToggleSwitchProps {
   enabled: boolean;
   onToggle: () => void;
   saving: boolean;
-  color: 'green' | 'purple' | 'pink' | 'indigo';
+  color: 'green' | 'purple' | 'pink' | 'indigo' | 'blue';
 }
 
 function ToggleSwitch({ enabled, onToggle, saving, color }: ToggleSwitchProps) {
@@ -1659,6 +2354,7 @@ function ToggleSwitch({ enabled, onToggle, saving, color }: ToggleSwitchProps) {
     purple: 'bg-purple-500',
     pink: 'bg-pink-500',
     indigo: 'bg-indigo-500',
+    blue: 'bg-blue-500',
   };
 
   return (
