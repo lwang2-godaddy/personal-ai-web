@@ -46,6 +46,7 @@ const FILE_TO_SERVICE: Record<string, string> = {
   'rag.yaml': 'RAGEngine',
   'dailySummary.yaml': 'DailySummaryService',
   'lifeKeywords.yaml': 'KeywordGenerator',
+  'carouselInsights.yaml': 'CarouselInsights',
 };
 
 interface YamlPromptConfig {
