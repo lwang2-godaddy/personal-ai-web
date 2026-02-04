@@ -387,7 +387,7 @@ export default function Home() {
                 </Link>
               </li>
               <li>
-                <a href="mailto:support@sircharge.app" className="text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 flex items-center">
+                <a href="mailto:support@sircharge.ai" className="text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 flex items-center">
                   <span className="mr-2">📧</span> Contact Us
                 </a>
               </li>

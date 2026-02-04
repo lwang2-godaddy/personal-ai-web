@@ -319,7 +319,7 @@ export default function LicensesPage() {
 
           <h2 id="reporting">Reporting License Issues</h2>
           <p>
-            If you believe we have inadvertently included a package without proper attribution, or if you have concerns about license compliance, please contact us at <a href="mailto:legal@sircharge.app">legal@sircharge.app</a>.
+            If you believe we have inadvertently included a package without proper attribution, or if you have concerns about license compliance, please contact us at <a href="mailto:legal@sircharge.ai">legal@sircharge.ai</a>.
           </p>
 
           <h2 id="related">Related Pages</h2>

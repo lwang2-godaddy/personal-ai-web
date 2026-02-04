@@ -147,9 +147,9 @@ export default function AboutPage() {
 
             <h2 id="contact">Contact</h2>
             <ul>
-              <li><strong>General:</strong> <a href="mailto:hello@sircharge.app">hello@sircharge.app</a></li>
-              <li><strong>Support:</strong> <a href="mailto:support@sircharge.app">support@sircharge.app</a></li>
-              <li><strong>Privacy:</strong> <a href="mailto:privacy@sircharge.app">privacy@sircharge.app</a></li>
+              <li><strong>General:</strong> <a href="mailto:hello@sircharge.ai">hello@sircharge.ai</a></li>
+              <li><strong>Support:</strong> <a href="mailto:support@sircharge.ai">support@sircharge.ai</a></li>
+              <li><strong>Privacy:</strong> <a href="mailto:privacy@sircharge.ai">privacy@sircharge.ai</a></li>
             </ul>
           </div>
 

@@ -42,10 +42,10 @@ export default function SupportPage() {
                 Send us an email and we&apos;ll get back to you within 24-48 hours.
               </p>
               <a
-                href="mailto:support@sircharge.app"
+                href="mailto:support@sircharge.ai"
                 className="inline-flex items-center text-blue-600 dark:text-blue-400 font-medium hover:underline"
               >
-                support@sircharge.app
+                support@sircharge.ai
                 <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                 </svg>
@@ -108,7 +108,7 @@ export default function SupportPage() {
                 </p>
               </div>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-4">
-                Send bug reports to: <a href="mailto:bugs@sircharge.app" className="text-blue-600 dark:text-blue-400">bugs@sircharge.app</a>
+                Send bug reports to: <a href="mailto:bugs@sircharge.ai" className="text-blue-600 dark:text-blue-400">bugs@sircharge.ai</a>
               </p>
             </div>
 
@@ -133,7 +133,7 @@ export default function SupportPage() {
                 </p>
               </div>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-4">
-                Send feature requests to: <a href="mailto:features@sircharge.app" className="text-blue-600 dark:text-blue-400">features@sircharge.app</a>
+                Send feature requests to: <a href="mailto:features@sircharge.ai" className="text-blue-600 dark:text-blue-400">features@sircharge.ai</a>
               </p>
             </div>
 
@@ -171,7 +171,7 @@ export default function SupportPage() {
               If you&apos;ve discovered a security vulnerability, please report it responsibly:
             </p>
             <ul>
-              <li>Email: <a href="mailto:security@sircharge.app">security@sircharge.app</a></li>
+              <li>Email: <a href="mailto:security@sircharge.ai">security@sircharge.ai</a></li>
               <li>Please do not disclose the vulnerability publicly until we&apos;ve had a chance to address it</li>
               <li>Include detailed steps to reproduce the issue</li>
               <li>We appreciate responsible disclosure and will acknowledge your contribution</li>
