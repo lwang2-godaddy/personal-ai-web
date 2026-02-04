@@ -1341,6 +1341,75 @@ This web app has a **completely different architecture** than the React Native m
 
 **Important:** Don't assume patterns from mobile app work in web app. Always check this CLAUDE.md first.
 
+## Prompt Management Architecture
+
+**IMPORTANT:** This section explains how AI prompts are managed across the system.
+
+### Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  PROMPT SOURCES (Priority Order)                                     │
+├─────────────────────────────────────────────────────────────────────┤
+│  1. Firestore (PRIMARY) - Edit via admin portal                      │
+│  2. YAML Files (FALLBACK) - Frozen, do not modify                   │
+│  3. Web Re-sync Button (DEPRECATED) - Uses hardcoded prompts        │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Key Points
+
+1. **Firestore is the source of truth**
+   - All prompt edits should happen via the admin portal: `/admin/prompts`
+   - Cloud Functions read from Firestore first, then fall back to YAML
+
+2. **YAML files are frozen fallbacks**
+   - Located in: `PersonalAIApp/firebase/functions/src/config/prompts/locales/`
+   - Do NOT modify these for new prompt changes
+   - Only used if Firestore document doesn't exist
+
+3. **Web "Re-sync" button is deprecated**
+   - Located at: `app/api/admin/prompts/migrate/route.ts`
+   - Uses hardcoded prompts in `getMobileServicePrompts()` function
+   - **DO NOT use for new prompt changes** - hardcoded prompts are not maintained
+   - Kept for backwards compatibility only
+
+4. **CLI script for YAML migration**
+   - Use when YAML files must be migrated to Firestore (rare)
+   - Located: `PersonalAIApp/firebase/functions/scripts/migrate-prompts.ts`
+   - Command: `npx tsx scripts/migrate-prompts.ts --overwrite`
+
+### Claude Code Guidance
+
+**When asked to change AI prompts:**
+
+❌ **DO NOT:**
+- Modify YAML files in `firebase/functions/src/config/prompts/`
+- Update hardcoded prompts in `app/api/admin/prompts/migrate/route.ts`
+- Tell users to use the web "Re-sync" button for new changes
+
+✅ **DO:**
+- Provide Firestore insert scripts for the admin to run
+- Direct users to the admin portal for manual edits
+- If YAML must change, also update the CLI migration script
+
+**Example Firestore insert script:**
+```typescript
+// Run via Firebase Admin SDK or Cloud Shell
+const db = admin.firestore();
+await db.collection('prompts').doc('en_ServiceName').update({
+  'prompts.new_prompt_id': {
+    id: 'new-prompt-id',
+    service: 'ServiceName',
+    type: 'system',
+    content: 'Your new prompt content...',
+    metadata: { model: 'gpt-4o-mini', temperature: 0.7 }
+  },
+  updatedAt: new Date().toISOString(),
+  updatedBy: 'claude-code'
+});
+```
+
 ## Version History
 
 - **v0.2.0** (Dec 27, 2025) - Temporal Reasoning Feature

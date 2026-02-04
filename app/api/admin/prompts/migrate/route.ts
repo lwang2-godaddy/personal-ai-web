@@ -7,6 +7,21 @@ import { PROMPT_SERVICES, SUPPORTED_LANGUAGES } from '@/lib/models/Prompt';
  * POST /api/admin/prompts/migrate
  * Import prompt configurations from YAML content or trigger Cloud Function migration
  *
+ * ⚠️ DEPRECATION NOTICE (January 2025):
+ * This endpoint uses HARDCODED prompts in getMobileServicePrompts() below.
+ * These hardcoded prompts are NOT actively maintained and should NOT be used
+ * for new prompt changes.
+ *
+ * ARCHITECTURE:
+ * - Firestore = PRIMARY source (edit via admin portal /admin/prompts)
+ * - YAML files = FALLBACK only (frozen, Cloud Functions fall back to YAML if Firestore missing)
+ * - This endpoint = DEPRECATED for new changes (uses stale hardcoded prompts)
+ *
+ * FOR NEW PROMPT CHANGES:
+ * 1. Use the admin portal: /admin/prompts
+ * 2. Or provide Firestore insert scripts
+ * 3. If YAML must change, use CLI: `npx tsx scripts/migrate-prompts.ts --overwrite`
+ *
  * This endpoint can work in two modes:
  * 1. With configs: Accepts pre-parsed prompts and imports them into Firestore
  * 2. Without configs: Calls the Cloud Function to migrate YAML files to Firestore
@@ -231,6 +246,16 @@ async function callCloudFunctionMigration(
 
 /**
  * Get prompt configurations for mobile/server services
+ *
+ * ⚠️ DEPRECATED: These hardcoded prompts are NOT actively maintained.
+ * They exist for backwards compatibility with the "Re-sync" button.
+ *
+ * For new prompt changes:
+ * - Use the admin portal (/admin/prompts) to edit Firestore directly
+ * - Or use the CLI script: `npx tsx scripts/migrate-prompts.ts --overwrite`
+ *
+ * Firestore is the PRIMARY source of truth. YAML files are FROZEN fallbacks.
+ * These hardcoded prompts may be OUT OF SYNC with both Firestore and YAML.
  */
 function getMobileServicePrompts(language: string) {
   // OpenAIService prompts
@@ -1023,6 +1048,22 @@ Generate a keyword that captures how things have changed:
   const translations = carouselTranslations[language] || carouselTranslations['en'];
 
   const carouselInsightsPrompts = {
+    system: {
+      id: 'carousel-insights-system',
+      service: 'CarouselInsights',
+      type: 'system' as const,
+      description: 'System prompt for generating personalized insights',
+      content: `You are a friendly personal data analyst. Generate engaging, personalized insights from user data.
+
+Guidelines:
+- Be specific with numbers and data when available
+- Use second person ("you") to address the user
+- Be encouraging and positive
+- Keep responses to ONE sentence only
+- Start with an emoji that matches the insight
+- Never make the user feel bad about their data`,
+      metadata: { model: 'gpt-4o-mini', temperature: 0.7, maxTokens: 100 },
+    },
     insight_patterns: {
       id: 'carousel-insight-patterns',
       service: 'CarouselInsights',
@@ -1058,6 +1099,6 @@ Generate a keyword that captures how things have changed:
     { service: 'QueryRAGServer', version: '1.0.0', prompts: queryRAGServerPrompts },
     { service: 'LifeFeedGenerator', version: '1.0.0', prompts: lifeFeedGeneratorPrompts },
     { service: 'KeywordGenerator', version: '1.0.0', prompts: keywordGeneratorPrompts },
-    { service: 'CarouselInsights', version: '1.0.0', prompts: carouselInsightsPrompts },
+    { service: 'CarouselInsights', version: '1.1.0', prompts: carouselInsightsPrompts },
   ];
 }
