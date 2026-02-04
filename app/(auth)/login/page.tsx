@@ -56,9 +56,9 @@ export default function LoginPage() {
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
             <img
-              src="/icon-192x192.svg"
+              src="/app-icon.png"
               alt="SirCharge"
-              className="h-16 w-16"
+              className="h-16 w-16 rounded-xl"
             />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">

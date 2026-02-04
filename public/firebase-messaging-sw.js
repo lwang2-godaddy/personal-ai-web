@@ -27,7 +27,7 @@ messaging.onBackgroundMessage((payload) => {
   const notificationTitle = payload.notification?.title || 'Personal AI Reminder';
   const notificationOptions = {
     body: payload.notification?.body || '',
-    icon: '/icon-192x192.png', // Add your app icon
+    icon: '/app-icon.png', // App icon from mobile app
     badge: '/badge-72x72.png', // Add your badge icon
     tag: payload.data?.eventId || 'default',
     data: payload.data,

@@ -45,9 +45,9 @@ export default function DashboardLayout({
                 {/* Logo */}
                 <Link href="/dashboard" className="flex-shrink-0 flex items-center gap-2">
                   <img
-                    src="/icon-192x192.svg"
+                    src="/app-icon.png"
                     alt="SirCharge"
-                    className="h-8 w-8"
+                    className="h-8 w-8 rounded-lg"
                   />
                   <h1 className="text-xl font-bold text-gray-900 dark:text-white">
                     SirCharge

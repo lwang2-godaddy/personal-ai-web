@@ -167,7 +167,7 @@ export class NotificationService {
           payload.notification.title || 'Personal AI Reminder',
           {
             body: payload.notification.body || '',
-            icon: '/icon-192x192.png',
+            icon: '/app-icon.png',
             badge: '/badge-72x72.png',
             tag: payload.data?.eventId || 'default',
             data: payload.data,
@@ -231,7 +231,7 @@ export class NotificationService {
 
     await this.showNotification('Test Notification', {
       body: 'This is a test notification from Personal AI',
-      icon: '/icon-192x192.png',
+      icon: '/app-icon.png',
       tag: 'test',
     });
   }
