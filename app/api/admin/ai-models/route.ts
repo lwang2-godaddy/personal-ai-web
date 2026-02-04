@@ -42,9 +42,26 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const config = configDoc.data() as AIModelsConfig;
+    const storedConfig = configDoc.data() as AIModelsConfig;
+
+    // Merge with defaults to fill in any missing services
+    // This handles cases where new services were added to SERVICE_METADATA
+    // after the Firestore config was initialized
+    const defaultConfig = getDefaultAIModelsConfig();
+    const mergedConfig: AIModelsConfig = {
+      ...storedConfig,
+      services: {
+        ...defaultConfig.services, // Start with defaults
+        ...storedConfig.services,  // Override with stored values
+      },
+      availableModels: {
+        ...defaultConfig.availableModels, // Start with defaults
+        ...storedConfig.availableModels,  // Override with stored values
+      },
+    };
+
     return NextResponse.json({
-      config,
+      config: mergedConfig,
       isDefault: false,
     });
   } catch (error: unknown) {
