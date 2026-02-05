@@ -239,6 +239,16 @@ export const PROMPT_SERVICES = [
     platform: 'mobile' as const,
     example: 'Generating "You walked 20% more this week than last!"',
   },
+  {
+    id: 'ThisDayService',
+    name: 'On This Day',
+    category: 'fun_facts' as PromptCategoryId,
+    icon: '📅',
+    description: 'Shows memories from this day in previous years',
+    trigger: 'Daily, when user has historical data',
+    platform: 'mobile' as const,
+    example: 'Showing "1 year ago: You played badminton at SF Club"',
+  },
   // Mood Compass - Mood detection & sentiment analysis
   {
     id: 'SentimentAnalysisService',
