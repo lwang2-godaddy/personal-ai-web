@@ -11,7 +11,7 @@
  *   - Or GOOGLE_APPLICATION_CREDENTIALS environment variable set
  *
  * Supported languages: en, es, fr, de, it, pt, zh, ja, ko
- * Services: CarouselInsights, OpenAIService, DailySummaryService, RAGEngine, ThisDayService
+ * Services: CarouselInsights, OpenAIService, DailySummaryService, DailyInsightService, RAGEngine, ThisDayService
  */
 
 import * as path from 'path';
@@ -1080,6 +1080,39 @@ function buildThisDayDoc(lang: string, t: Translations) {
   };
 }
 
+function buildDailyInsightDoc(lang: string, t: Translations) {
+  return {
+    language: lang,
+    service: 'DailyInsightService',
+    version: '1.0.0',
+    status: 'published',
+    enabled: true,
+    prompts: {
+      system: {
+        id: 'daily-insight-system',
+        service: 'DailyInsightService',
+        type: 'system',
+        content: t.daily_insight_system,
+        metadata: { model: 'gpt-4o-mini', temperature: 0.7, maxTokens: 200 },
+      },
+      daily_insight: {
+        id: 'daily-insight-user',
+        service: 'DailyInsightService',
+        type: 'user',
+        content: t.daily_insight_prompt,
+        metadata: { model: 'gpt-4o-mini', temperature: 0.7, maxTokens: 200 },
+      },
+      daily_insight_rest: {
+        id: 'daily-insight-rest',
+        service: 'DailyInsightService',
+        type: 'user',
+        content: t.daily_insight_rest,
+        metadata: { model: 'gpt-4o-mini', temperature: 0.7, maxTokens: 150 },
+      },
+    },
+  };
+}
+
 // =============================================================================
 // Main Migration Function
 // =============================================================================
@@ -1090,7 +1123,7 @@ async function migrateAllPrompts() {
   console.log('='.repeat(60));
   console.log('\nThis will add/update prompts for all languages and services.');
   console.log('Languages: en, es, fr, de, it, pt, zh, ja, ko');
-  console.log('Services: CarouselInsights, OpenAIService, DailySummaryService, RAGEngine, ThisDayService\n');
+  console.log('Services: CarouselInsights, OpenAIService, DailySummaryService, DailyInsightService, RAGEngine, ThisDayService\n');
 
   // Initialize Firebase
   const db = initializeFirebase();
@@ -1100,6 +1133,7 @@ async function migrateAllPrompts() {
     { name: 'CarouselInsights', builder: buildCarouselInsightsDoc },
     { name: 'OpenAIService', builder: buildOpenAIServiceDoc },
     { name: 'DailySummaryService', builder: buildDailySummaryDoc },
+    { name: 'DailyInsightService', builder: buildDailyInsightDoc },
     { name: 'RAGEngine', builder: buildRAGEngineDoc },
     { name: 'ThisDayService', builder: buildThisDayDoc },
   ];
