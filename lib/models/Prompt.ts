@@ -109,6 +109,7 @@ export const SERVICE_FILE_MAP: Record<string, string> = {
   LifeFeedGenerator: 'lifeFeed.yaml',
   DailySummaryService: 'dailySummary.yaml',
   KeywordGenerator: 'lifeKeywords.yaml',
+  LifeConnectionsService: 'lifeConnections.yaml',
   // Mobile app / Server services
   OpenAIService: 'chat.yaml',
   RAGEngine: 'rag.yaml',
@@ -291,6 +292,16 @@ export const PROMPT_SERVICES = [
     trigger: 'When processing text content',
     platform: 'server' as const,
     example: 'Finding "meeting tomorrow at 3pm"',
+  },
+  {
+    id: 'LifeConnectionsService',
+    name: 'Life Connections',
+    category: 'life_forecaster' as PromptCategoryId,
+    icon: '🔗',
+    description: 'Cross-domain correlation insights and AI explanations',
+    trigger: 'Periodically or on-demand when analyzing user data patterns',
+    platform: 'server' as const,
+    example: 'Discovering "You sleep 23% better on days when you play badminton"',
   },
 ] as const;
 

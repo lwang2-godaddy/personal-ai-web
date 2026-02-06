@@ -33,13 +33,25 @@ interface FirestorePromptConfigRaw {
 
 /**
  * Convert Firestore Timestamp to ISO string
+ * Handles both Timestamps and already-serialized strings
  */
+function toISOString(value: Timestamp | string | undefined | null): string | undefined {
+  if (!value) return undefined;
+  // If it's already a string, return as-is
+  if (typeof value === 'string') return value;
+  // If it has toDate method (Firestore Timestamp), convert it
+  if (typeof value === 'object' && typeof (value as any).toDate === 'function') {
+    return (value as any).toDate().toISOString();
+  }
+  return undefined;
+}
+
 function serializeConfig(raw: FirestorePromptConfigRaw): FirestorePromptConfig {
   return {
     ...raw,
-    lastUpdated: raw.lastUpdated.toDate().toISOString(),
-    createdAt: raw.createdAt.toDate().toISOString(),
-    publishedAt: raw.publishedAt?.toDate().toISOString(),
+    lastUpdated: toISOString(raw.lastUpdated) || new Date().toISOString(),
+    createdAt: toISOString(raw.createdAt) || new Date().toISOString(),
+    publishedAt: toISOString(raw.publishedAt),
   };
 }
 
@@ -352,7 +364,7 @@ export class PromptService {
       const data = doc.data();
       return {
         ...data,
-        changedAt: data.changedAt.toDate().toISOString(),
+        changedAt: toISOString(data.changedAt) || new Date().toISOString(),
       } as PromptVersion;
     });
   }
