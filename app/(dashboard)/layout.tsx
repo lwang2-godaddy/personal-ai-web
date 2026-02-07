@@ -1,10 +1,11 @@
 'use client';
 
 import { AuthGuard } from '@/components/auth/AuthGuard';
+import { WebAccessGuard } from '@/components/auth/WebAccessGuard';
 // import { LanguageSwitcher } from '@/components/LanguageSwitcher'; // Temporarily disabled - requires i18n middleware
 import { useAppDispatch, useAppSelector } from '@/lib/store/hooks';
 import { signOutThunk } from '@/lib/store/slices/authSlice';
-import { FloatingActionButton, ToastContainer } from '@/components/common';
+import { FloatingActionButton, ToastContainer, TierBadge } from '@/components/common';
 import QuickCreateModal from '@/components/create/QuickCreateModal';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -36,6 +37,7 @@ export default function DashboardLayout({
 
   return (
     <AuthGuard>
+      <WebAccessGuard>
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
         {/* Navigation */}
         <nav className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
@@ -52,6 +54,7 @@ export default function DashboardLayout({
                   <h1 className="text-xl font-bold text-gray-900 dark:text-white">
                     SirCharge
                   </h1>
+                  <TierBadge tier={user?.subscription?.tier} />
                 </Link>
 
                 {/* Navigation Links */}
@@ -106,6 +109,7 @@ export default function DashboardLayout({
         {/* Toast Notifications */}
         <ToastContainer />
       </div>
+      </WebAccessGuard>
     </AuthGuard>
   );
 }
