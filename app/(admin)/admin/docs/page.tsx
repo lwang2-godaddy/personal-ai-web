@@ -128,6 +128,14 @@ const MOBILE_DOCS: DocSection[] = [
       { id: 'mobile-life-feed-types', title: 'Adding Life Feed Post Types', path: 'mobile/ADDING_LIFE_FEED_POST_TYPES.md', description: 'Checklist for new post types' },
     ],
   },
+  {
+    id: 'mobile-algorithms',
+    title: 'Proprietary Algorithms',
+    icon: '🔬',
+    items: [
+      { id: 'temporal-disambiguation', title: 'Temporal Reference Disambiguation', path: 'mobile/algorithms/TEMPORAL_REFERENCE_DISAMBIGUATION.md', description: 'Patent-ready: resolving "today/yesterday" in content' },
+    ],
+  },
 ];
 
 export default function DocsPage() {
