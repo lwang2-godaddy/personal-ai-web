@@ -33,7 +33,7 @@ interface User {
     status?: string;
     source?: string;
     quotaOverrides?: {
-      messagesPerDay?: number;
+      messagesPerMonth?: number;
       photosPerMonth?: number;
       voiceMinutesPerMonth?: number;
     };
@@ -56,7 +56,7 @@ interface SubscriptionDetails {
     status: string;
     source?: string;
     quotaOverrides?: {
-      messagesPerDay?: number;
+      messagesPerMonth?: number;
       photosPerMonth?: number;
       voiceMinutesPerMonth?: number;
     };
@@ -68,12 +68,12 @@ interface SubscriptionDetails {
     voiceMinutesThisMonth: number;
   };
   tierDefaults: {
-    messagesPerDay: number;
+    messagesPerMonth: number;
     photosPerMonth: number;
     voiceMinutesPerMonth: number;
   };
   effectiveLimits: {
-    messagesPerDay: number;
+    messagesPerMonth: number;
     photosPerMonth: number;
     voiceMinutesPerMonth: number;
   };
@@ -129,7 +129,8 @@ const OPERATION_LABELS: Record<string, string> = {
 /**
  * Format quota value for display
  */
-function formatQuotaValue(value: number): string {
+function formatQuotaValue(value: number | undefined): string {
+  if (value === undefined || value === null) return 'N/A';
   return value === -1 ? 'Unlimited' : value.toString();
 }
 
@@ -209,7 +210,7 @@ export default function AdminUserDetailPage() {
 
       // Initialize override form states
       const overrides = data.subscription.quotaOverrides;
-      setMessagesOverride(overrides?.messagesPerDay?.toString() || '');
+      setMessagesOverride(overrides?.messagesPerMonth?.toString() || '');
       setPhotosOverride(overrides?.photosPerMonth?.toString() || '');
       setVoiceOverride(overrides?.voiceMinutesPerMonth?.toString() || '');
     } catch (err: any) {
@@ -284,7 +285,7 @@ export default function AdminUserDetailPage() {
       if (messagesOverride !== '') {
         const value = parseInt(messagesOverride, 10);
         if (!isNaN(value) && value >= -1) {
-          quotaOverrides.messagesPerDay = value;
+          quotaOverrides.messagesPerMonth = value;
         }
       }
       if (photosOverride !== '') {
@@ -556,27 +557,27 @@ export default function AdminUserDetailPage() {
             <h3 className="text-lg font-semibold text-gray-900 mb-3">Current Usage</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-blue-50 rounded-lg p-4">
-                <p className="text-sm text-blue-600 font-medium">Messages Today</p>
+                <p className="text-sm text-blue-600 font-medium">Messages This Month</p>
                 <p className="text-2xl font-bold text-blue-900">
-                  {subscriptionDetails.usage.messagesToday} / {formatQuotaValue(subscriptionDetails.effectiveLimits.messagesPerDay)}
+                  {subscriptionDetails.usage.messagesThisMonth ?? 0} / {formatQuotaValue(subscriptionDetails.effectiveLimits.messagesPerMonth)}
                 </p>
                 <p className="text-xs text-blue-500 mt-1">
-                  Tier default: {formatQuotaValue(subscriptionDetails.tierDefaults.messagesPerDay)}
+                  Tier default: {formatQuotaValue(subscriptionDetails.tierDefaults.messagesPerMonth)}
                 </p>
               </div>
               <div className="bg-green-50 rounded-lg p-4">
-                <p className="text-sm text-green-600 font-medium">Photos</p>
+                <p className="text-sm text-green-600 font-medium">Photos This Month</p>
                 <p className="text-2xl font-bold text-green-900">
-                  {subscriptionDetails.usage.photosThisMonth} / {formatQuotaValue(subscriptionDetails.effectiveLimits.photosPerMonth)}
+                  {subscriptionDetails.usage.photosThisMonth ?? 0} / {formatQuotaValue(subscriptionDetails.effectiveLimits.photosPerMonth)}
                 </p>
                 <p className="text-xs text-green-500 mt-1">
                   Tier default: {formatQuotaValue(subscriptionDetails.tierDefaults.photosPerMonth)}
                 </p>
               </div>
               <div className="bg-purple-50 rounded-lg p-4">
-                <p className="text-sm text-purple-600 font-medium">Voice Minutes</p>
+                <p className="text-sm text-purple-600 font-medium">Voice Minutes This Month</p>
                 <p className="text-2xl font-bold text-purple-900">
-                  {subscriptionDetails.usage.voiceMinutesThisMonth} / {formatQuotaValue(subscriptionDetails.effectiveLimits.voiceMinutesPerMonth)}
+                  {Math.round(subscriptionDetails.usage.voiceMinutesThisMonth ?? 0)} / {formatQuotaValue(subscriptionDetails.effectiveLimits.voiceMinutesPerMonth)}
                 </p>
                 <p className="text-xs text-purple-500 mt-1">
                   Tier default: {formatQuotaValue(subscriptionDetails.tierDefaults.voiceMinutesPerMonth)}
@@ -601,7 +602,7 @@ export default function AdminUserDetailPage() {
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Messages/Day</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Messages/Month</label>
               <input
                 type="number"
                 value={messagesOverride}
