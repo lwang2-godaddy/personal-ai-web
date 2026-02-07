@@ -468,6 +468,33 @@ export default function AdminAppSettingsPage() {
               isEditing={isEditing}
             />
           </SettingsSection>
+
+          {/* Explore Chat Configuration Section */}
+          <SettingsSection title="Explore Chat (AI Search)" icon="💬">
+            <p className="text-sm text-gray-600 mb-4 -mt-2">
+              Configure how the AI assistant searches your personal data when answering questions in the Explore tab.
+            </p>
+            <SettingsNumberField
+              label="Minimum Relevance Score"
+              description="Only include search results above this relevance threshold (0.0-1.0). Higher values = more relevant but fewer results. Lower values = more results but may include less relevant data. Recommended: 0.5-0.7"
+              value={editedSettings.ragMinScore ?? 0.5}
+              onChange={(v) => updateSetting('ragMinScore', v)}
+              isEditing={isEditing}
+              min={0}
+              max={1}
+              step={0.05}
+            />
+            <SettingsNumberField
+              label="Max Search Results"
+              description="Maximum number of data points to retrieve when searching. More results = better context for complex questions but higher API costs. Recommended: 10-20"
+              value={editedSettings.ragTopK ?? 10}
+              onChange={(v) => updateSetting('ragTopK', v)}
+              isEditing={isEditing}
+              min={1}
+              max={100}
+              step={1}
+            />
+          </SettingsSection>
         </>
       )}
     </div>
@@ -603,6 +630,68 @@ function SettingsToggle({
             >
               {enabled ? 'Enabled' : 'Disabled'}
             </span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Settings Number Field Component
+interface SettingsNumberFieldProps {
+  label: string;
+  description: string;
+  value: number;
+  onChange: (value: number) => void;
+  isEditing: boolean;
+  min?: number;
+  max?: number;
+  step?: number;
+}
+
+function SettingsNumberField({
+  label,
+  description,
+  value,
+  onChange,
+  isEditing,
+  min = 0,
+  max = 100,
+  step = 1,
+}: SettingsNumberFieldProps) {
+  return (
+    <div className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div className="flex-1">
+          <label className="block text-sm font-medium text-gray-700">{label}</label>
+          <p className="text-xs text-gray-500 mt-0.5">{description}</p>
+        </div>
+        <div className="sm:w-1/2">
+          {isEditing ? (
+            <div className="flex items-center gap-3">
+              <input
+                type="range"
+                min={min}
+                max={max}
+                step={step}
+                value={value}
+                onChange={(e) => onChange(parseFloat(e.target.value))}
+                className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-red-600"
+              />
+              <input
+                type="number"
+                min={min}
+                max={max}
+                step={step}
+                value={value}
+                onChange={(e) => onChange(parseFloat(e.target.value) || min)}
+                className="w-20 px-2 py-1 border border-gray-300 rounded-md text-sm text-center"
+              />
+            </div>
+          ) : (
+            <p className="text-sm text-gray-900 text-right">
+              {value}
+            </p>
           )}
         </div>
       </div>

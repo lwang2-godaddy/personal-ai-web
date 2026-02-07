@@ -36,6 +36,10 @@ export interface AppSettings {
 
   // AI Features
   enableLearnedVocabulary?: boolean; // Enable/disable learned vocabulary in transcription cleanup
+
+  // RAG Configuration
+  ragMinScore?: number; // Minimum similarity score threshold for RAG queries (0.0-1.0, default 0.5)
+  ragTopK?: number; // Number of results to retrieve from Pinecone (default 10)
 }
 
 /**
@@ -92,6 +96,10 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
 
   // AI Features
   enableLearnedVocabulary: true, // Enabled by default
+
+  // RAG Configuration
+  ragMinScore: 0.5, // 50% minimum similarity threshold
+  ragTopK: 10, // Retrieve top 10 results from Pinecone
 };
 
 /**
@@ -178,6 +186,20 @@ export function validateAppSettings(settings: Partial<AppSettings>): {
     (settings.copyrightYear < 2000 || settings.copyrightYear > 2100)
   ) {
     errors.push('Copyright year must be between 2000 and 2100');
+  }
+
+  // Validate RAG configuration
+  if (
+    settings.ragMinScore !== undefined &&
+    (settings.ragMinScore < 0 || settings.ragMinScore > 1)
+  ) {
+    errors.push('RAG minimum score must be between 0 and 1');
+  }
+  if (
+    settings.ragTopK !== undefined &&
+    (settings.ragTopK < 1 || settings.ragTopK > 100)
+  ) {
+    errors.push('RAG topK must be between 1 and 100');
   }
 
   return {

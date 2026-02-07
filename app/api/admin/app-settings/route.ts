@@ -264,5 +264,13 @@ function mergeSettings(
     merged.copyrightYear = updates.copyrightYear;
   }
 
+  // RAG Configuration
+  if (typeof updates.ragMinScore === 'number') {
+    merged.ragMinScore = updates.ragMinScore;
+  }
+  if (typeof updates.ragTopK === 'number') {
+    merged.ragTopK = updates.ragTopK;
+  }
+
   return merged;
 }
