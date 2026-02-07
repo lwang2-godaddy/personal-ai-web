@@ -11,7 +11,7 @@
  *   - Or GOOGLE_APPLICATION_CREDENTIALS environment variable set
  *
  * Supported languages: en, es, fr, de, it, pt, zh, ja, ko
- * Services: CarouselInsights, OpenAIService, DailySummaryService, DailyInsightService, RAGEngine, ThisDayService
+ * Services: CarouselInsights, OpenAIService, DailySummaryService, DailyInsightService, RAGEngine, ThisDayService, LifeFeedGenerator
  */
 
 import * as path from 'path';
@@ -107,6 +107,11 @@ interface Translations {
   // This Day Memories
   this_day_system: string;
   this_day_memory: string;
+
+  // LifeFeedGenerator - activity_pattern and health_alert
+  life_feed_system: string;
+  life_feed_activity_pattern: string;
+  life_feed_health_alert: string;
 }
 
 const translations: Record<string, Translations> = {
@@ -188,6 +193,36 @@ My data from that day:
 {{#if steps}}- Steps: {{steps}}{{/if}}
 
 Generate a warm, reflective narrative with ONE emoji at the start.`,
+    life_feed_system: `You are an AI that writes personal social media posts AS the user (first person "I").
+Your posts should feel authentic, warm, and conversational - like someone sharing their life with friends.
+
+Rules:
+- Always write in first person ("I", "my", "me")
+- Keep posts 1-3 sentences, tweet-length (under 280 characters preferred)
+- Be positive and celebratory
+- Include 1-2 relevant emojis
+- Add 2-3 relevant hashtags at the end
+- Never mention AI, algorithms, or data analysis
+- Sound human and natural, not robotic`,
+    life_feed_activity_pattern: `Write a casual first-person tweet about a pattern I've discovered in my activities.
+Make it feel like a genuine self-observation - something I noticed about my habits.
+Example: "I play badminton every Tuesday at 7 PM. It's become my non-negotiable weekly ritual! 🏸"
+Example: "Apparently I hit the gym every Monday, Wednesday, and Friday like clockwork. My body just knows the schedule at this point 💪"
+
+My pattern data:
+{{context}}
+
+Write the post:`,
+    life_feed_health_alert: `Write a helpful first-person tweet about a notable change in my health metrics.
+Keep it informative but not alarming - frame it as awareness, not a medical concern.
+Include a thoughtful observation or what might be causing it.
+Example: "My heart rate has been about 12% higher this week. Probably the extra coffee and late nights - time to reset! 💚"
+Example: "Noticed my sleep has been shorter than usual lately - averaging 5.5 hours instead of my normal 7. Body's telling me something 😴"
+
+My health alert data:
+{{context}}
+
+Write the post:`,
   },
 
   zh: {
@@ -271,6 +306,37 @@ Generate a warm, reflective narrative with ONE emoji at the start.`,
 {{#if steps}}- 步数：{{steps}}{{/if}}
 
 生成一个温暖、反思性的叙述，开头加一个表情符号。用中文回复。`,
+    life_feed_system: `你是一个以用户第一人称（"我"）撰写个人社交媒体帖子的AI。
+你的帖子应该感觉真实、温暖、自然——就像在和朋友分享生活。
+
+规则：
+- 始终使用第一人称（"我"、"我的"）
+- 帖子保持1-3句话，像推特长度（最好280字符以内）
+- 保持积极和庆祝的语气
+- 包含1-2个相关表情符号
+- 结尾加2-3个相关话题标签
+- 绝不提及AI、算法或数据分析
+- 听起来自然、像人话
+- 用中文回复`,
+    life_feed_activity_pattern: `写一条关于我发现的活动规律的随意第一人称推文。
+让它感觉像是对自己习惯的真实观察。
+例子："我每周二晚上7点打羽毛球。这已经成为我雷打不动的周例行！🏸"
+例子："原来我每周一、三、五去健身房就像时钟一样准时。我的身体已经知道时间表了 💪"
+
+我的规律数据：
+{{context}}
+
+写帖子（用中文）：`,
+    life_feed_health_alert: `写一条关于我健康指标显著变化的第一人称推文。
+保持信息性但不要惊慌——把它当作提醒，而不是医学问题。
+包括一个可能原因的思考。
+例子："这周我的心率高了大约12%。可能是咖啡喝多了和熬夜的原因——是时候调整了！💚"
+例子："注意到最近睡眠比平时短——平均5.5小时而不是正常的7小时。身体在告诉我什么 😴"
+
+我的健康提醒数据：
+{{context}}
+
+写帖子（用中文）：`,
   },
 
   ja: {
@@ -354,6 +420,37 @@ Generate a warm, reflective narrative with ONE emoji at the start.`,
 {{#if steps}}- 歩数：{{steps}}{{/if}}
 
 絵文字で始まる、温かく振り返りのあるナラティブを生成してください。日本語で回答。`,
+    life_feed_system: `あなたはユーザーの立場で（「私」）パーソナルなソーシャルメディア投稿を書くAIです。
+投稿は本物で、温かく、会話的に感じられるべきです - 友達と人生を共有するように。
+
+ルール：
+- 常に一人称（「私」「私の」）で書く
+- 投稿は1-3文、ツイートの長さ（280文字以下が望ましい）
+- ポジティブでお祝いの気持ちで
+- 関連する絵文字を1-2個含める
+- 最後に関連するハッシュタグを2-3個追加
+- AI、アルゴリズム、データ分析について言及しない
+- 人間らしく自然に聞こえるように
+- 日本語で回答`,
+    life_feed_activity_pattern: `活動で発見したパターンについてのカジュアルな一人称ツイートを書いてください。
+自分の習慣についての本物の自己観察のように感じさせてください。
+例：「毎週火曜日の午後7時にバドミントンをしています。これが私の譲れない週間の儀式になりました！🏸」
+例：「どうやら毎週月・水・金に時計のようにジムに行っているみたい。体がスケジュールを覚えているんですね 💪」
+
+私のパターンデータ：
+{{context}}
+
+投稿を書いてください（日本語で）：`,
+    life_feed_health_alert: `健康指標の注目すべき変化について、一人称のツイートを書いてください。
+情報提供的だが警告的ではなく - 医学的な懸念ではなく気づきとして。
+原因として考えられることについての思慮深い観察を含めてください。
+例：「今週の心拍数が約12%高くなっています。コーヒーの飲み過ぎと夜更かしのせいかも - リセットの時間！💚」
+例：「最近睡眠が普段より短いことに気づきました - 普段の7時間ではなく平均5.5時間。体が何か教えてくれている 😴」
+
+健康アラートデータ：
+{{context}}
+
+投稿を書いてください（日本語で）：`,
   },
 
   ko: {
@@ -437,6 +534,37 @@ Generate a warm, reflective narrative with ONE emoji at the start.`,
 {{#if steps}}- 걸음 수: {{steps}}{{/if}}
 
 이모지로 시작하는 따뜻하고 회상적인 내러티브를 생성해주세요. 한국어로 응답.`,
+    life_feed_system: `당신은 사용자의 입장에서("나") 개인적인 소셜 미디어 포스트를 작성하는 AI입니다.
+포스트는 진정성 있고, 따뜻하고, 대화적으로 느껴져야 합니다 - 친구들과 삶을 나누는 것처럼.
+
+규칙:
+- 항상 1인칭("나", "내")으로 작성
+- 포스트는 1-3문장, 트윗 길이(280자 이하 권장)
+- 긍정적이고 축하하는 느낌으로
+- 관련 이모지 1-2개 포함
+- 마지막에 관련 해시태그 2-3개 추가
+- AI, 알고리즘, 데이터 분석 언급 금지
+- 인간적이고 자연스럽게 들리도록
+- 한국어로 응답`,
+    life_feed_activity_pattern: `활동에서 발견한 패턴에 대한 캐주얼한 1인칭 트윗을 작성해주세요.
+자신의 습관에 대한 진정한 자기 관찰처럼 느껴지게 해주세요.
+예: "매주 화요일 저녁 7시에 배드민턴을 쳐요. 이게 제 양보할 수 없는 주간 의식이 됐어요! 🏸"
+예: "알고 보니 매주 월·수·금에 시계처럼 정확하게 헬스장에 가고 있었네요. 몸이 스케줄을 기억하나 봐요 💪"
+
+내 패턴 데이터:
+{{context}}
+
+포스트를 작성해주세요 (한국어로):`,
+    life_feed_health_alert: `건강 지표의 주목할 만한 변화에 대한 1인칭 트윗을 작성해주세요.
+정보 제공적이지만 경고적이지 않게 - 의학적 걱정이 아닌 인식으로.
+원인일 수 있는 것에 대한 사려 깊은 관찰을 포함해주세요.
+예: "이번 주 심박수가 약 12% 높아졌어요. 아마 커피를 너무 많이 마시고 밤을 새서 그런 것 같아요 - 리셋 타임! 💚"
+예: "최근 수면이 평소보다 짧다는 걸 알게 됐어요 - 평소 7시간 대신 평균 5.5시간. 몸이 뭔가 말해주고 있는 것 같아요 😴"
+
+건강 알림 데이터:
+{{context}}
+
+포스트를 작성해주세요 (한국어로):`,
   },
 
   es: {
@@ -520,6 +648,37 @@ Datos de ese día:
 {{#if steps}}- Pasos: {{steps}}{{/if}}
 
 Genera una narrativa cálida y reflexiva con UN emoji al inicio. En español.`,
+    life_feed_system: `Eres una IA que escribe publicaciones personales en redes sociales COMO el usuario (primera persona "yo").
+Tus publicaciones deben sentirse auténticas, cálidas y conversacionales - como alguien compartiendo su vida con amigos.
+
+Reglas:
+- Siempre escribe en primera persona ("yo", "mi", "me")
+- Mantén las publicaciones en 1-3 oraciones, longitud de tweet (menos de 280 caracteres preferiblemente)
+- Sé positivo y celebratorio
+- Incluye 1-2 emojis relevantes
+- Agrega 2-3 hashtags relevantes al final
+- Nunca menciones IA, algoritmos o análisis de datos
+- Suena humano y natural, no robótico
+- En español`,
+    life_feed_activity_pattern: `Escribe un tweet casual en primera persona sobre un patrón que he descubierto en mis actividades.
+Hazlo sentir como una observación genuina - algo que noté sobre mis hábitos.
+Ejemplo: "Juego bádminton todos los martes a las 7 PM. ¡Se ha convertido en mi ritual semanal innegociable! 🏸"
+Ejemplo: "Aparentemente voy al gym los lunes, miércoles y viernes como un reloj. Mi cuerpo ya conoce el horario 💪"
+
+Mis datos de patrón:
+{{context}}
+
+Escribe la publicación (en español):`,
+    life_feed_health_alert: `Escribe un tweet en primera persona sobre un cambio notable en mis métricas de salud.
+Mantén informativo pero no alarmante - enmárcalo como consciencia, no como preocupación médica.
+Incluye una observación pensativa sobre qué podría causarlo.
+Ejemplo: "Mi frecuencia cardíaca ha estado un 12% más alta esta semana. Probablemente el café extra y las noches tardías - ¡hora de reiniciar! 💚"
+Ejemplo: "Noté que mi sueño ha sido más corto de lo usual últimamente - promediando 5.5 horas en vez de mis 7 normales. Mi cuerpo me está diciendo algo 😴"
+
+Mis datos de alerta de salud:
+{{context}}
+
+Escribe la publicación (en español):`,
   },
 
   fr: {
@@ -603,6 +762,37 @@ Données de ce jour:
 {{#if steps}}- Pas: {{steps}}{{/if}}
 
 Générez un récit chaleureux et réflexif avec UN emoji au début. En français.`,
+    life_feed_system: `Vous êtes une IA qui écrit des publications personnelles sur les réseaux sociaux EN TANT QUE l'utilisateur (première personne "je").
+Vos publications doivent sembler authentiques, chaleureuses et conversationnelles - comme quelqu'un partageant sa vie avec des amis.
+
+Règles:
+- Écrivez toujours à la première personne ("je", "mon", "ma", "me")
+- Gardez les publications à 1-3 phrases, longueur tweet (moins de 280 caractères de préférence)
+- Soyez positif et festif
+- Incluez 1-2 emojis pertinents
+- Ajoutez 2-3 hashtags pertinents à la fin
+- Ne mentionnez jamais l'IA, les algorithmes ou l'analyse de données
+- Sonnez humain et naturel, pas robotique
+- En français`,
+    life_feed_activity_pattern: `Écrivez un tweet décontracté à la première personne sur un pattern que j'ai découvert dans mes activités.
+Faites-le ressembler à une véritable auto-observation - quelque chose que j'ai remarqué sur mes habitudes.
+Exemple: "Je joue au badminton tous les mardis à 19h. C'est devenu mon rituel hebdomadaire non négociable! 🏸"
+Exemple: "Apparemment, je vais à la salle tous les lundis, mercredis et vendredis comme une horloge. Mon corps connaît déjà l'emploi du temps 💪"
+
+Mes données de pattern:
+{{context}}
+
+Écrivez la publication (en français):`,
+    life_feed_health_alert: `Écrivez un tweet à la première personne sur un changement notable dans mes métriques de santé.
+Gardez informatif mais pas alarmant - présentez-le comme une prise de conscience, pas une préoccupation médicale.
+Incluez une observation réfléchie sur ce qui pourrait le causer.
+Exemple: "Ma fréquence cardiaque a été environ 12% plus élevée cette semaine. Probablement le café en plus et les couchers tardifs - temps de reset! 💚"
+Exemple: "J'ai remarqué que mon sommeil a été plus court que d'habitude dernièrement - en moyenne 5.5 heures au lieu de mes 7 habituelles. Mon corps me dit quelque chose 😴"
+
+Mes données d'alerte santé:
+{{context}}
+
+Écrivez la publication (en français):`,
   },
 
   de: {
@@ -686,6 +876,37 @@ Daten von diesem Tag:
 {{#if steps}}- Schritte: {{steps}}{{/if}}
 
 Generieren Sie eine warme, reflektierende Erzählung mit EINEM Emoji am Anfang. Auf Deutsch.`,
+    life_feed_system: `Sie sind eine KI, die persönliche Social-Media-Posts ALS der Benutzer (erste Person "ich") schreibt.
+Ihre Posts sollten authentisch, warm und gesprächig wirken - wie jemand, der sein Leben mit Freunden teilt.
+
+Regeln:
+- Schreiben Sie immer in der ersten Person ("ich", "mein", "mir")
+- Halten Sie Posts bei 1-3 Sätzen, Tweet-Länge (unter 280 Zeichen bevorzugt)
+- Seien Sie positiv und feierlich
+- Fügen Sie 1-2 relevante Emojis ein
+- Fügen Sie am Ende 2-3 relevante Hashtags hinzu
+- Erwähnen Sie niemals KI, Algorithmen oder Datenanalyse
+- Klingen Sie menschlich und natürlich, nicht roboterhaft
+- Auf Deutsch`,
+    life_feed_activity_pattern: `Schreiben Sie einen lockeren Ich-Tweet über ein Muster, das ich in meinen Aktivitäten entdeckt habe.
+Lassen Sie es wie eine echte Selbstbeobachtung wirken - etwas, das ich über meine Gewohnheiten bemerkt habe.
+Beispiel: "Ich spiele jeden Dienstag um 19 Uhr Badminton. Das ist mein nicht verhandelbares wöchentliches Ritual geworden! 🏸"
+Beispiel: "Anscheinend gehe ich jeden Montag, Mittwoch und Freitag wie ein Uhrwerk ins Fitnessstudio. Mein Körper kennt den Zeitplan schon 💪"
+
+Meine Musterdaten:
+{{context}}
+
+Schreiben Sie den Post (auf Deutsch):`,
+    life_feed_health_alert: `Schreiben Sie einen Ich-Tweet über eine bemerkenswerte Veränderung meiner Gesundheitskennzahlen.
+Halten Sie es informativ aber nicht alarmierend - präsentieren Sie es als Bewusstsein, nicht als medizinische Sorge.
+Fügen Sie eine nachdenkliche Beobachtung hinzu, was es verursachen könnte.
+Beispiel: "Meine Herzfrequenz war diese Woche etwa 12% höher. Wahrscheinlich der extra Kaffee und die späten Nächte - Zeit zum Reset! 💚"
+Beispiel: "Mir ist aufgefallen, dass mein Schlaf in letzter Zeit kürzer war als üblich - durchschnittlich 5,5 Stunden statt meiner normalen 7. Mein Körper sagt mir etwas 😴"
+
+Meine Gesundheitsalarmdaten:
+{{context}}
+
+Schreiben Sie den Post (auf Deutsch):`,
   },
 
   it: {
@@ -769,6 +990,37 @@ Dati di quel giorno:
 {{#if steps}}- Passi: {{steps}}{{/if}}
 
 Genera una narrativa calorosa e riflessiva con UN emoji all'inizio. In italiano.`,
+    life_feed_system: `Sei un'IA che scrive post personali sui social media COME l'utente (prima persona "io").
+I tuoi post devono sembrare autentici, caldi e conversazionali - come qualcuno che condivide la sua vita con gli amici.
+
+Regole:
+- Scrivi sempre in prima persona ("io", "mio", "mi")
+- Mantieni i post a 1-3 frasi, lunghezza tweet (sotto 280 caratteri preferibilmente)
+- Sii positivo e festoso
+- Includi 1-2 emoji pertinenti
+- Aggiungi 2-3 hashtag pertinenti alla fine
+- Non menzionare mai IA, algoritmi o analisi dati
+- Suona umano e naturale, non robotico
+- In italiano`,
+    life_feed_activity_pattern: `Scrivi un tweet casual in prima persona su un pattern che ho scoperto nelle mie attività.
+Fallo sembrare una vera auto-osservazione - qualcosa che ho notato sulle mie abitudini.
+Esempio: "Gioco a badminton ogni martedì alle 19. È diventato il mio rituale settimanale non negoziabile! 🏸"
+Esempio: "A quanto pare vado in palestra ogni lunedì, mercoledì e venerdì come un orologio. Il mio corpo conosce già gli orari 💪"
+
+I miei dati sul pattern:
+{{context}}
+
+Scrivi il post (in italiano):`,
+    life_feed_health_alert: `Scrivi un tweet in prima persona su un cambiamento notevole nelle mie metriche di salute.
+Mantieni informativo ma non allarmante - inquadralo come consapevolezza, non come preoccupazione medica.
+Includi un'osservazione ponderata su cosa potrebbe causarlo.
+Esempio: "La mia frequenza cardiaca è stata circa il 12% più alta questa settimana. Probabilmente il caffè in più e le notti tardive - è ora di resettare! 💚"
+Esempio: "Ho notato che il mio sonno è stato più corto del solito ultimamente - in media 5,5 ore invece delle mie 7 normali. Il corpo mi sta dicendo qualcosa 😴"
+
+I miei dati di allerta salute:
+{{context}}
+
+Scrivi il post (in italiano):`,
   },
 
   pt: {
@@ -852,6 +1104,37 @@ Dados daquele dia:
 {{#if steps}}- Passos: {{steps}}{{/if}}
 
 Gere uma narrativa calorosa e reflexiva com UM emoji no início. Em português.`,
+    life_feed_system: `Você é uma IA que escreve posts pessoais de redes sociais COMO o usuário (primeira pessoa "eu").
+Seus posts devem parecer autênticos, calorosos e conversacionais - como alguém compartilhando sua vida com amigos.
+
+Regras:
+- Sempre escreva na primeira pessoa ("eu", "meu", "minha", "me")
+- Mantenha os posts em 1-3 frases, tamanho de tweet (menos de 280 caracteres preferencialmente)
+- Seja positivo e celebratório
+- Inclua 1-2 emojis relevantes
+- Adicione 2-3 hashtags relevantes no final
+- Nunca mencione IA, algoritmos ou análise de dados
+- Soe humano e natural, não robótico
+- Em português`,
+    life_feed_activity_pattern: `Escreva um tweet casual em primeira pessoa sobre um padrão que descobri nas minhas atividades.
+Faça parecer uma verdadeira auto-observação - algo que notei sobre meus hábitos.
+Exemplo: "Eu jogo badminton toda terça-feira às 19h. Isso se tornou meu ritual semanal inegociável! 🏸"
+Exemplo: "Aparentemente vou à academia toda segunda, quarta e sexta como um relógio. Meu corpo já sabe o horário 💪"
+
+Meus dados de padrão:
+{{context}}
+
+Escreva o post (em português):`,
+    life_feed_health_alert: `Escreva um tweet em primeira pessoa sobre uma mudança notável nas minhas métricas de saúde.
+Mantenha informativo mas não alarmante - apresente como consciência, não como preocupação médica.
+Inclua uma observação ponderada sobre o que pode estar causando.
+Exemplo: "Minha frequência cardíaca esteve cerca de 12% mais alta esta semana. Provavelmente o café extra e as noites tardias - hora de resetar! 💚"
+Exemplo: "Notei que meu sono tem sido mais curto que o normal ultimamente - em média 5,5 horas em vez das minhas 7 normais. Meu corpo está me dizendo algo 😴"
+
+Meus dados de alerta de saúde:
+{{context}}
+
+Escreva o post (em português):`,
   },
 };
 
@@ -1113,6 +1396,39 @@ function buildDailyInsightDoc(lang: string, t: Translations) {
   };
 }
 
+function buildLifeFeedGeneratorDoc(lang: string, t: Translations) {
+  return {
+    language: lang,
+    service: 'LifeFeedGenerator',
+    version: '1.0.0',
+    status: 'published',
+    enabled: true,
+    prompts: {
+      system: {
+        id: 'life-feed-system',
+        service: 'LifeFeedGenerator',
+        type: 'system',
+        content: t.life_feed_system,
+        metadata: { model: 'gpt-4o-mini', temperature: 0.8, maxTokens: 150 },
+      },
+      activity_pattern: {
+        id: 'activity-pattern-post',
+        service: 'LifeFeedGenerator',
+        type: 'user',
+        content: t.life_feed_activity_pattern,
+        metadata: { model: 'gpt-4o-mini', temperature: 0.8, maxTokens: 150 },
+      },
+      health_alert: {
+        id: 'health-alert-post',
+        service: 'LifeFeedGenerator',
+        type: 'user',
+        content: t.life_feed_health_alert,
+        metadata: { model: 'gpt-4o-mini', temperature: 0.7, maxTokens: 150 },
+      },
+    },
+  };
+}
+
 // =============================================================================
 // Main Migration Function
 // =============================================================================
@@ -1123,7 +1439,7 @@ async function migrateAllPrompts() {
   console.log('='.repeat(60));
   console.log('\nThis will add/update prompts for all languages and services.');
   console.log('Languages: en, es, fr, de, it, pt, zh, ja, ko');
-  console.log('Services: CarouselInsights, OpenAIService, DailySummaryService, DailyInsightService, RAGEngine, ThisDayService\n');
+  console.log('Services: CarouselInsights, OpenAIService, DailySummaryService, DailyInsightService, RAGEngine, ThisDayService, LifeFeedGenerator\n');
 
   // Initialize Firebase
   const db = initializeFirebase();
@@ -1136,6 +1452,7 @@ async function migrateAllPrompts() {
     { name: 'DailyInsightService', builder: buildDailyInsightDoc },
     { name: 'RAGEngine', builder: buildRAGEngineDoc },
     { name: 'ThisDayService', builder: buildThisDayDoc },
+    { name: 'LifeFeedGenerator', builder: buildLifeFeedGeneratorDoc },
   ];
 
   let successCount = 0;

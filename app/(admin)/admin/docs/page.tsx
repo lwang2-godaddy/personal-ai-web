@@ -120,6 +120,14 @@ const MOBILE_DOCS: DocSection[] = [
       { id: 'mobile-firebase', title: 'Firebase Functions', path: 'mobile/FIREBASE_FUNCTIONS.md', description: 'Cloud Functions' },
     ],
   },
+  {
+    id: 'mobile-guides',
+    title: 'Developer Guides',
+    icon: '📝',
+    items: [
+      { id: 'mobile-life-feed-types', title: 'Adding Life Feed Post Types', path: 'mobile/ADDING_LIFE_FEED_POST_TYPES.md', description: 'Checklist for new post types' },
+    ],
+  },
 ];
 
 export default function DocsPage() {
