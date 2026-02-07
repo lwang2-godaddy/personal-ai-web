@@ -308,6 +308,70 @@ export const PROMPT_SERVICES = [
 export type ServiceId = typeof PROMPT_SERVICES[number]['id'];
 
 /**
+ * LifeFeedGenerator prompt-to-post-type mapping
+ * Used in admin portal to show which post type each prompt generates
+ *
+ * Post types with multiple prompts randomly select one variant when generating
+ * This provides variety in the feed (e.g., life_summary can be detailed or minimal)
+ */
+export const LIFE_FEED_PROMPT_POST_TYPES: Record<string, { postType: string; isVariant: boolean; description: string }> = {
+  // System prompt (used by all post types)
+  system: { postType: 'all', isVariant: false, description: 'System instruction for all post types' },
+
+  // life_summary variants (1-day cooldown)
+  life_summary: { postType: 'life_summary', isVariant: false, description: 'Weekly/daily summary - default' },
+  life_summary_detailed: { postType: 'life_summary', isVariant: true, description: 'Weekly/daily summary - with specific stats' },
+  life_summary_minimal: { postType: 'life_summary', isVariant: true, description: 'Weekly/daily summary - punchy one-liner' },
+
+  // milestone (7-day cooldown)
+  milestone: { postType: 'milestone', isVariant: false, description: 'Achievement celebration' },
+
+  // pattern_prediction variants (1-day cooldown)
+  pattern_prediction: { postType: 'pattern_prediction', isVariant: false, description: 'Activity prediction - default' },
+  pattern_prediction_curious: { postType: 'pattern_prediction', isVariant: true, description: 'Activity prediction - questioning tone' },
+  pattern_prediction_playful: { postType: 'pattern_prediction', isVariant: true, description: 'Activity prediction - humorous tone' },
+
+  // reflective_insight variants (3-day cooldown)
+  reflective_insight: { postType: 'reflective_insight', isVariant: false, description: 'Behavioral insight - default' },
+  reflective_insight_mood: { postType: 'reflective_insight', isVariant: true, description: 'Behavioral insight - mood focused' },
+  reflective_insight_discovery: { postType: 'reflective_insight', isVariant: true, description: 'Behavioral insight - aha moment' },
+
+  // memory_highlight variants (7-day cooldown)
+  memory_highlight: { postType: 'memory_highlight', isVariant: false, description: 'Memory celebration - default' },
+  memory_highlight_celebration: { postType: 'memory_highlight', isVariant: true, description: 'Memory celebration - enthusiastic' },
+  memory_highlight_story: { postType: 'memory_highlight', isVariant: true, description: 'Memory celebration - narrative style' },
+
+  // streak_achievement (3-day cooldown)
+  streak_achievement: { postType: 'streak_achievement', isVariant: false, description: 'Streak/habit celebration' },
+
+  // comparison (14-day cooldown)
+  comparison: { postType: 'comparison', isVariant: false, description: 'Time period comparison' },
+
+  // seasonal_reflection variants (30-day cooldown)
+  seasonal_reflection: { postType: 'seasonal_reflection', isVariant: false, description: 'Seasonal summary - default' },
+  seasonal_reflection_growth: { postType: 'seasonal_reflection', isVariant: true, description: 'Seasonal summary - growth focused' },
+  seasonal_reflection_gratitude: { postType: 'seasonal_reflection', isVariant: true, description: 'Seasonal summary - gratitude focused' },
+
+  // activity_pattern (7-day cooldown)
+  activity_pattern: { postType: 'activity_pattern', isVariant: false, description: 'Discovered activity pattern' },
+
+  // health_alert (1-day cooldown)
+  health_alert: { postType: 'health_alert', isVariant: false, description: 'Health metric awareness' },
+
+  // category_insight variants (3-day cooldown)
+  category_insight: { postType: 'category_insight', isVariant: false, description: 'Category distribution - default' },
+  category_trend: { postType: 'category_insight', isVariant: true, description: 'Category distribution - trend focused' },
+  category_correlation: { postType: 'category_insight', isVariant: true, description: 'Category distribution - correlation focused' },
+};
+
+/**
+ * Get the post type for a LifeFeedGenerator prompt ID
+ */
+export function getLifeFeedPromptPostType(promptId: string): { postType: string; isVariant: boolean; description: string } | null {
+  return LIFE_FEED_PROMPT_POST_TYPES[promptId] || null;
+}
+
+/**
  * API request/response types
  */
 export interface ListPromptsRequest {

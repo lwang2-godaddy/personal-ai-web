@@ -17,6 +17,7 @@ import {
   PROMPT_SERVICES,
   SUPPORTED_LANGUAGES,
   PromptVariable,
+  getLifeFeedPromptPostType,
 } from '@/lib/models/Prompt';
 import {
   PROMPT_TEMPLATES,
@@ -473,7 +474,11 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
                 </button>
               </div>
               <div className="divide-y divide-gray-100">
-                {Object.entries(config.prompts).map(([promptId, prompt]) => (
+                {Object.entries(config.prompts).map(([promptId, prompt]) => {
+                  // Get post type info for LifeFeedGenerator prompts
+                  const postTypeInfo = service === 'LifeFeedGenerator' ? getLifeFeedPromptPostType(promptId) : null;
+
+                  return (
                   <div
                     key={promptId}
                     className={`group relative hover:bg-gray-50 transition-colors ${
@@ -488,6 +493,23 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
                       <div className="text-xs text-gray-500 mt-1">
                         {prompt.type} • {prompt.metadata?.model || 'default'}
                       </div>
+                      {/* Show post type badge for LifeFeedGenerator */}
+                      {postTypeInfo && (
+                        <div className="flex items-center gap-1.5 mt-1.5">
+                          <span className={`px-1.5 py-0.5 text-xs rounded ${
+                            postTypeInfo.postType === 'all'
+                              ? 'bg-purple-100 text-purple-700'
+                              : postTypeInfo.isVariant
+                              ? 'bg-amber-100 text-amber-700'
+                              : 'bg-green-100 text-green-700'
+                          }`}>
+                            {postTypeInfo.postType === 'all' ? '🎯 system' : `📝 ${postTypeInfo.postType}`}
+                          </span>
+                          {postTypeInfo.isVariant && (
+                            <span className="text-xs text-amber-600">variant</span>
+                          )}
+                        </div>
+                      )}
                     </button>
                     {/* Action buttons */}
                     <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -517,7 +539,8 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
                       </button>
                     </div>
                   </div>
-                ))}
+                );
+                })}
               </div>
             </div>
 

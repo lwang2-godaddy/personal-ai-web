@@ -25,7 +25,10 @@ export type InsightsPostType =
   | 'memory_highlight'
   | 'streak_achievement'
   | 'comparison'
-  | 'seasonal_reflection';
+  | 'seasonal_reflection'
+  | 'activity_pattern'
+  | 'health_alert'
+  | 'category_insight';
 
 /**
  * All available post types
@@ -39,6 +42,9 @@ export const INSIGHTS_POST_TYPES: InsightsPostType[] = [
   'streak_achievement',
   'comparison',
   'seasonal_reflection',
+  'activity_pattern',
+  'health_alert',
+  'category_insight',
 ];
 
 /**
@@ -142,6 +148,38 @@ export const POST_TYPE_METADATA: Record<InsightsPostType, PostTypeMetadata> = {
       { id: 'seasonal_reflection_gratitude', name: 'seasonal_reflection_gratitude', description: 'Gratitude-focused seasonal experiences' },
     ],
     requirements: 'Requires activities >= 2 OR patterns >= 2 OR events >= 1',
+  },
+  activity_pattern: {
+    icon: '🔄',
+    color: '#673AB7',
+    displayName: 'Pattern',
+    description: 'Activity patterns discovered',
+    prompts: [
+      { id: 'activity_pattern', name: 'activity_pattern', description: 'Casual observation about discovered activity patterns' },
+    ],
+    requirements: 'Requires detected activity patterns (recurring schedules)',
+  },
+  health_alert: {
+    icon: '❤️',
+    color: '#F44336',
+    displayName: 'Health Alert',
+    description: 'Health metric notifications',
+    prompts: [
+      { id: 'health_alert', name: 'health_alert', description: 'Notable changes in health metrics' },
+    ],
+    requirements: 'Requires significant health metric changes (heart rate, sleep variance)',
+  },
+  category_insight: {
+    icon: '📊',
+    color: '#4CAF50',
+    displayName: 'Category',
+    description: 'Category-based insights',
+    prompts: [
+      { id: 'category_insight', name: 'category_insight', description: 'Distribution insights about life categories' },
+      { id: 'category_trend', name: 'category_trend', description: 'Trends in category changes over time' },
+      { id: 'category_correlation', name: 'category_correlation', description: 'Correlations between different life categories' },
+    ],
+    requirements: 'Requires sufficient categorized posts for analysis',
   },
 };
 
@@ -485,6 +523,39 @@ export const DEFAULT_POST_TYPES_CONFIG: InsightsPostTypesConfig = {
       defaultCategory: 'general',
       minConfidence: 0.6,
       maxPerDay: 1,
+    },
+    activity_pattern: {
+      enabled: true,
+      displayName: 'Pattern',
+      icon: '🔄',
+      description: 'Activity patterns discovered',
+      cooldownDays: 3,
+      priority: 6,
+      defaultCategory: 'activity',
+      minConfidence: 0.7,
+      maxPerDay: 2,
+    },
+    health_alert: {
+      enabled: true,
+      displayName: 'Health Alert',
+      icon: '❤️',
+      description: 'Health metric notifications',
+      cooldownDays: 7,
+      priority: 8,
+      defaultCategory: 'health',
+      minConfidence: 0.8,
+      maxPerDay: 1,
+    },
+    category_insight: {
+      enabled: true,
+      displayName: 'Category',
+      icon: '📊',
+      description: 'Category-based insights',
+      cooldownDays: 3,
+      priority: 5,
+      defaultCategory: 'general',
+      minConfidence: 0.7,
+      maxPerDay: 2,
     },
   },
 };

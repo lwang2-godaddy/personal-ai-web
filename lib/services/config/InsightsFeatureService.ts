@@ -85,7 +85,19 @@ class InsightsFeatureService {
       return DEFAULT_POST_TYPES_CONFIG;
     }
 
-    return doc.data() as InsightsPostTypesConfig;
+    const storedConfig = doc.data() as InsightsPostTypesConfig;
+
+    // Merge stored config with defaults to include any new post types
+    // that were added to DEFAULT_POST_TYPES_CONFIG after the Firestore doc was created
+    const mergedPostTypes = {
+      ...DEFAULT_POST_TYPES_CONFIG.postTypes,
+      ...storedConfig.postTypes,
+    };
+
+    return {
+      ...storedConfig,
+      postTypes: mergedPostTypes,
+    };
   }
 
   /**
