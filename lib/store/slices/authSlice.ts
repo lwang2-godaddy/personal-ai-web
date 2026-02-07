@@ -123,6 +123,14 @@ export const signOutThunk = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       await firebaseSignOut();
+
+      // Clear localStorage caches on sign out
+      if (typeof window !== 'undefined') {
+        // Clear subscription config cache
+        localStorage.removeItem('subscription_config_cache');
+        // Clear redux persist (will be done by reducer, but also clear here for safety)
+        localStorage.removeItem('persist:root');
+      }
     } catch (error: any) {
       return rejectWithValue(error.message || 'Failed to sign out');
     }
@@ -143,6 +151,25 @@ export const updateUserPreferencesThunk = createAsyncThunk(
       return preferences;
     } catch (error: any) {
       return rejectWithValue(error.message || 'Failed to update preferences');
+    }
+  }
+);
+
+/**
+ * Refresh user data from Firestore
+ * Used to sync subscription changes made by admin
+ */
+export const refreshUserDataThunk = createAsyncThunk(
+  'auth/refreshUserData',
+  async (userId: string, { rejectWithValue }) => {
+    try {
+      const userData = await firestoreService.getUserData(userId);
+      if (!userData) {
+        throw new Error('User data not found');
+      }
+      return userData as User;
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to refresh user data');
     }
   }
 );
@@ -220,6 +247,11 @@ const authSlice = createSlice({
           ...action.payload,
         };
       }
+    });
+
+    // Refresh user data
+    builder.addCase(refreshUserDataThunk.fulfilled, (state, action) => {
+      state.user = action.payload;
     });
   },
 });
