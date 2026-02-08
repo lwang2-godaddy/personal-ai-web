@@ -3,8 +3,8 @@
 ---
 **Created By:** Claude Code
 **Created Date:** December 26, 2025
-**Last Updated:** December 26, 2025
-**Last Updated By:** Claude Sonnet 4.5
+**Last Updated:** February 7, 2026
+**Last Updated By:** Claude Opus 4.5
 **Purpose:** Main guide for Claude Code (claude.ai/code) when working with code in this repository
 **Related Docs:** `README.md`, `package.json`, `.env.example`
 ---
@@ -306,16 +306,74 @@ firebase deploy
 
 **IMPORTANT:** All test scripts, migration scripts, and admin scripts should be in `personal-ai-web/scripts/`. This is the single source for operational scripts across both repositories.
 
-**Available scripts:**
+```
+scripts/
+├── diagnostics/                    # Debugging and health check tools
+│   ├── check-firestore.ts          # Check Firestore collections/documents
+│   ├── check-voice-ingestion.ts    # Debug voice note processing
+│   └── check-functions-deployed.ts # Verify Cloud Functions deployment
+├── integration-tests/              # Automated tests
+│   ├── run-all.ts                  # Test runner
+│   ├── lib/                        # Shared test utilities
+│   └── tests/                      # Individual test files
+│       ├── event-date-extraction.test.ts
+│       ├── temporal-parser-deployed.test.ts
+│       └── temporal-rag-query.test.ts
+└── migrations/                     # Data migration scripts
+    ├── migrate-all-prompts-i18n.ts # Source of truth for AI prompts (9 languages)
+    ├── migrate-users.ts            # User migration
+    └── backfill-pinecone-timestamps.ts
+```
+
+#### Diagnostic Scripts
+
 ```bash
-# Regression tests
+# Check if a Firestore document exists
+npm run check:firestore -- doc promptConfigs/en/services/ChatSuggestions
+
+# List all prompt services in Firestore
+npm run check:firestore -- prompt-services
+
+# Check prompts for a specific service across all languages
+npm run check:firestore -- prompts ChatSuggestions
+
+# List documents in a collection
+npm run check:firestore -- collection users --limit 10
+
+# Count documents
+npm run check:firestore -- count textNotes
+
+# Full help
+npm run check:firestore -- --help
+```
+
+#### Integration Tests
+
+```bash
+# Run all integration tests
+npm run test
+
+# Run specific test
 npm run test:event-date           # Test event date extraction for temporal queries
+```
 
-# Migration scripts
-npm run migrate:users             # Migrate users between Firebase projects
-npm run migrate:prompts           # Migrate AI prompts to Firestore
+#### Migration Scripts
 
-# Admin scripts
+```bash
+# AI Prompts Migration (Source of Truth)
+# This is the PRIMARY way to add/update prompts - includes all 9 languages
+npx tsx scripts/migrations/migrate-all-prompts-i18n.ts
+
+# User migration
+npm run migrate:users
+
+# Legacy prompt migration (deprecated - use migrate-all-prompts-i18n.ts instead)
+npm run migrate:prompts
+```
+
+#### Admin Scripts
+
+```bash
 npm run set-admin -- --uid=<uid>  # Set admin role for a user
 npm run init-subscription-config  # Initialize subscription config
 ```
@@ -505,14 +563,20 @@ personal-ai-web/
 ├── public/                      # Static assets
 ├── scripts/                     # ALL scripts (tests, migrations, admin)
 │   ├── generate-version.js      # Build-time version extraction
-│   ├── migrate-users.ts         # User migration script
-│   ├── migrate-prompts.ts       # Prompt migration to Firestore
 │   ├── set-admin.ts             # Admin role assignment
 │   ├── init-subscription-config.ts # Subscription config init
-│   ├── test-event-date-extraction.ts # Regression test: temporal queries
-│   └── integration-tests/       # Integration/regression tests
-│       ├── README.md            # Test documentation
-│       └── test-event-date-extraction.ts
+│   ├── diagnostics/             # Debugging and health check tools
+│   │   ├── check-firestore.ts   # Check Firestore collections/documents
+│   │   ├── check-voice-ingestion.ts # Debug voice note processing
+│   │   └── check-functions-deployed.ts # Verify Cloud Functions
+│   ├── integration-tests/       # Automated tests
+│   │   ├── run-all.ts           # Test runner
+│   │   ├── lib/                 # Shared test utilities
+│   │   └── tests/               # Individual test files
+│   └── migrations/              # Data migration scripts
+│       ├── migrate-all-prompts-i18n.ts # Source of truth for prompts (9 langs)
+│       ├── migrate-users.ts     # User migration
+│       └── backfill-pinecone-timestamps.ts
 ├── firebase.json                # Firebase configuration
 ├── firestore.rules              # Firestore security rules
 ├── firestore.indexes.json       # Firestore indexes
@@ -1368,33 +1432,61 @@ This web app has a **completely different architecture** than the React Native m
 ┌─────────────────────────────────────────────────────────────────────┐
 │  PROMPT SOURCES (Priority Order)                                     │
 ├─────────────────────────────────────────────────────────────────────┤
-│  1. Firestore (PRIMARY) - Edit via admin portal                      │
-│  2. YAML Files (FALLBACK) - Frozen, do not modify                   │
-│  3. Web Re-sync Button (DEPRECATED) - Uses hardcoded prompts        │
+│  1. Migration Script (SOURCE OF TRUTH)                               │
+│     └─ scripts/migrations/migrate-all-prompts-i18n.ts               │
+│     └─ Contains all prompts in 9 languages                          │
+│                                                                      │
+│  2. Firestore (RUNTIME)                                              │
+│     └─ promptConfigs/{lang}/services/{service}                      │
+│     └─ Edit via admin portal: /admin/prompts                        │
+│                                                                      │
+│  3. YAML Files (DEPRECATED FALLBACK)                                 │
+│     └─ PersonalAIApp/firebase/functions/src/config/prompts/locales/ │
+│     └─ Frozen - do not modify                                       │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Key Points
 
-1. **Firestore is the source of truth**
-   - All prompt edits should happen via the admin portal: `/admin/prompts`
-   - Cloud Functions read from Firestore first, then fall back to YAML
+1. **Migration script is the source of truth**
+   - Located: `scripts/migrations/migrate-all-prompts-i18n.ts`
+   - Contains all prompts with translations for 9 languages (en, zh, ja, ko, es, fr, de, it, pt)
+   - Run to create/update Firestore: `npx tsx scripts/migrations/migrate-all-prompts-i18n.ts`
 
-2. **YAML files are frozen fallbacks**
+2. **Firestore stores runtime prompts**
+   - Path: `promptConfigs/{language}/services/{serviceName}`
+   - Admin portal at `/admin/prompts` for viewing and minor edits
+   - Cloud Functions read from Firestore first
+
+3. **YAML files are deprecated fallbacks**
    - Located in: `PersonalAIApp/firebase/functions/src/config/prompts/locales/`
    - Do NOT modify these for new prompt changes
    - Only used if Firestore document doesn't exist
 
-3. **Web "Re-sync" button is deprecated**
-   - Located at: `app/api/admin/prompts/migrate/route.ts`
-   - Uses hardcoded prompts in `getMobileServicePrompts()` function
-   - **DO NOT use for new prompt changes** - hardcoded prompts are not maintained
-   - Kept for backwards compatibility only
+4. **Web "Re-sync" button is deprecated**
+   - Uses old hardcoded prompts - DO NOT use for new changes
 
-4. **CLI script for YAML migration**
-   - Use when YAML files must be migrated to Firestore (rare)
-   - Located: `PersonalAIApp/firebase/functions/scripts/migrate-prompts.ts`
-   - Command: `npx tsx scripts/migrate-prompts.ts --overwrite`
+### Adding New Prompts or Services
+
+1. **Edit the migration script** (`scripts/migrations/migrate-all-prompts-i18n.ts`):
+   - Add translations to the `translations` object for all 9 languages
+   - Add/update the builder function for your service
+   - Register in the `services` array if new service
+
+2. **Register in Prompt.ts** (if new service):
+   - Add to `SERVICE_FILE_MAP`
+   - Add to `PROMPT_SERVICES` array with category, icon, description
+
+3. **Run migration**:
+   ```bash
+   cd personal-ai-web
+   npx tsx scripts/migrations/migrate-all-prompts-i18n.ts
+   ```
+
+4. **Verify**:
+   ```bash
+   npm run check:firestore -- prompts YourServiceName
+   ```
 
 ### Claude Code Guidance
 
@@ -1406,28 +1498,20 @@ This web app has a **completely different architecture** than the React Native m
 - Tell users to use the web "Re-sync" button for new changes
 
 ✅ **DO:**
-- Provide Firestore insert scripts for the admin to run
-- Direct users to the admin portal for manual edits
-- If YAML must change, also update the CLI migration script
-
-**Example Firestore insert script:**
-```typescript
-// Run via Firebase Admin SDK or Cloud Shell
-const db = admin.firestore();
-await db.collection('prompts').doc('en_ServiceName').update({
-  'prompts.new_prompt_id': {
-    id: 'new-prompt-id',
-    service: 'ServiceName',
-    type: 'system',
-    content: 'Your new prompt content...',
-    metadata: { model: 'gpt-4o-mini', temperature: 0.7 }
-  },
-  updatedAt: new Date().toISOString(),
-  updatedBy: 'claude-code'
-});
-```
+- Update the migration script: `scripts/migrations/migrate-all-prompts-i18n.ts`
+- Add translations for all 9 languages
+- Run the migration script to update Firestore
+- Register new services in `lib/models/Prompt.ts`
 
 ## Version History
+
+- **v0.3.0** (Feb 7, 2026) - Scripts & Prompt Management Overhaul
+  - Reorganized scripts into `diagnostics/`, `integration-tests/`, and `migrations/`
+  - Added `check-firestore.ts` diagnostic script for debugging Firestore
+  - Added ChatSuggestions service with 28 prompts in 9 languages
+  - Updated prompt management: migration script is now source of truth
+  - Deprecated YAML files and Re-sync button for prompt changes
+  - Comprehensive scripts documentation in CLAUDE.md
 
 - **v0.2.0** (Dec 27, 2025) - Temporal Reasoning Feature
   - Added intelligent temporal query detection (yesterday, last week, etc.)
