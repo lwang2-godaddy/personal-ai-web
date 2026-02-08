@@ -544,9 +544,13 @@ async function testRAGQueryWithTemporalFilter(
       `URL: ${queryRAGUrl}`,
     ]);
 
+    const { idToken } = globalThis.testContext;
     const response = await fetch(queryRAGUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${idToken}`,
+      },
       body: JSON.stringify({
         data: {
           query: '昨天我做了什么饭',

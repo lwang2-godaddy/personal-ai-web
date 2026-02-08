@@ -325,7 +325,7 @@ npm run init-subscription-config  # Initialize subscription config
 - Web project has admin dashboard integration
 - Easier to maintain in one location
 
-**See also:** `scripts/REGRESSION_TESTS.md` for test documentation
+**See also:** `scripts/integration-tests/README.md` for test documentation
 
 ### Vercel Deployment
 
@@ -510,7 +510,9 @@ personal-ai-web/
 │   ├── set-admin.ts             # Admin role assignment
 │   ├── init-subscription-config.ts # Subscription config init
 │   ├── test-event-date-extraction.ts # Regression test: temporal queries
-│   └── REGRESSION_TESTS.md      # Test documentation
+│   └── integration-tests/       # Integration/regression tests
+│       ├── README.md            # Test documentation
+│       └── test-event-date-extraction.ts
 ├── firebase.json                # Firebase configuration
 ├── firestore.rules              # Firestore security rules
 ├── firestore.indexes.json       # Firestore indexes

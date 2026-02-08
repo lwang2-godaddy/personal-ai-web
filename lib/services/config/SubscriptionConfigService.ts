@@ -14,7 +14,10 @@ import {
   SubscriptionTierConfig,
   TierQuotas,
   QuotaOverrides,
-  DEFAULT_FREE_QUOTAS,
+  SubscriptionTierKey,
+  LegacyTierKey,
+  normalizeTier,
+  DEFAULT_BASIC_QUOTAS,
   DEFAULT_PREMIUM_QUOTAS,
   DEFAULT_PRO_QUOTAS,
 } from '@/lib/models/Subscription';
@@ -78,7 +81,7 @@ function getHardcodedDefaults(): SubscriptionTierConfig {
     updatedBy: 'system',
     enableDynamicConfig: false,
     tiers: {
-      free: DEFAULT_FREE_QUOTAS,
+      basic: DEFAULT_BASIC_QUOTAS,
       premium: DEFAULT_PREMIUM_QUOTAS,
       pro: DEFAULT_PRO_QUOTAS,
     },
@@ -251,19 +254,22 @@ export class SubscriptionConfigService {
   /**
    * Get quotas for a specific tier
    */
-  getTierQuotas(tier: 'free' | 'premium' | 'pro'): TierQuotas {
+  getTierQuotas(tier: SubscriptionTierKey | LegacyTierKey): TierQuotas {
     const config = this.cachedConfig || getHardcodedDefaults();
-    return config.tiers[tier];
+    const normalizedTier = normalizeTier(tier);
+    return config.tiers[normalizedTier];
   }
 
   /**
    * Get effective limit for a user, considering per-user overrides
    */
   getEffectiveLimit(
-    tier: 'free' | 'premium' | 'pro',
-    limitType: 'messagesPerDay' | 'photosPerMonth' | 'voiceMinutesPerMonth',
+    tier: SubscriptionTierKey | LegacyTierKey,
+    limitType: 'messagesPerMonth' | 'photosPerMonth' | 'voiceMinutesPerMonth',
     userOverrides?: QuotaOverrides
   ): number {
+    const normalizedTier = normalizeTier(tier);
+
     // 1. Check per-user override first (highest priority)
     if (userOverrides && userOverrides[limitType] !== undefined) {
       return userOverrides[limitType]!;
@@ -271,13 +277,13 @@ export class SubscriptionConfigService {
 
     // 2. Check dynamic config
     const config = this.cachedConfig;
-    if (config?.enableDynamicConfig && config.tiers[tier]) {
-      return config.tiers[tier][limitType];
+    if (config?.enableDynamicConfig && config.tiers[normalizedTier]) {
+      return config.tiers[normalizedTier][limitType];
     }
 
     // 3. Fallback to hardcoded defaults
     const defaults = getHardcodedDefaults();
-    return defaults.tiers[tier][limitType];
+    return defaults.tiers[normalizedTier][limitType];
   }
 
   /**

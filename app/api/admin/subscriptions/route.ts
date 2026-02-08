@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
  * Update subscription tier configuration
  *
  * Body:
- * - tiers?: { free?, premium?, pro? } - Partial tier updates
+ * - tiers?: { basic?, premium?, pro? } - Partial tier updates
  * - enableDynamicConfig?: boolean - Kill switch
  * - changeNotes?: string - Description of changes
  *
@@ -169,10 +169,10 @@ export async function PATCH(request: NextRequest) {
 
     // Update tiers if provided
     if (tiers) {
-      if (tiers.free) {
-        updatedConfig.tiers.free = validateAndMergeTierQuotas(
-          currentConfig.tiers.free,
-          tiers.free
+      if (tiers.basic) {
+        updatedConfig.tiers.basic = validateAndMergeTierQuotas(
+          currentConfig.tiers.basic,
+          tiers.basic
         );
       }
       if (tiers.premium) {
@@ -227,11 +227,11 @@ function validateAndMergeTierQuotas(
   const merged = { ...current };
 
   // Validate and apply numeric quotas
-  if (typeof updates.messagesPerDay === 'number') {
-    if (updates.messagesPerDay < -1) {
-      throw new Error('messagesPerDay must be -1 (unlimited) or >= 0');
+  if (typeof updates.messagesPerMonth === 'number') {
+    if (updates.messagesPerMonth < -1) {
+      throw new Error('messagesPerMonth must be -1 (unlimited) or >= 0');
     }
-    merged.messagesPerDay = updates.messagesPerDay;
+    merged.messagesPerMonth = updates.messagesPerMonth;
   }
 
   if (typeof updates.photosPerMonth === 'number') {
@@ -248,6 +248,13 @@ function validateAndMergeTierQuotas(
     merged.voiceMinutesPerMonth = updates.voiceMinutesPerMonth;
   }
 
+  if (typeof updates.maxVoiceRecordingSeconds === 'number') {
+    if (updates.maxVoiceRecordingSeconds < 1) {
+      throw new Error('maxVoiceRecordingSeconds must be >= 1');
+    }
+    merged.maxVoiceRecordingSeconds = updates.maxVoiceRecordingSeconds;
+  }
+
   if (typeof updates.customActivityTypes === 'number') {
     if (updates.customActivityTypes < -1) {
       throw new Error('customActivityTypes must be -1 (unlimited) or >= 0');
@@ -256,24 +263,34 @@ function validateAndMergeTierQuotas(
   }
 
   // Validate and apply boolean features
-  if (typeof updates.insightsEnabled === 'boolean') {
-    merged.insightsEnabled = updates.insightsEnabled;
-  }
-
-  if (typeof updates.prioritySupport === 'boolean') {
-    merged.prioritySupport = updates.prioritySupport;
-  }
-
-  if (typeof updates.advancedAnalytics === 'boolean') {
-    merged.advancedAnalytics = updates.advancedAnalytics;
-  }
-
-  if (typeof updates.dataExport === 'boolean') {
-    merged.dataExport = updates.dataExport;
-  }
-
   if (typeof updates.offlineMode === 'boolean') {
     merged.offlineMode = updates.offlineMode;
+  }
+
+  if (typeof updates.webAccess === 'boolean') {
+    merged.webAccess = updates.webAccess;
+  }
+
+  // Validate and apply API cost limits (optional)
+  if (typeof updates.maxTokensPerDay === 'number') {
+    if (updates.maxTokensPerDay < -1) {
+      throw new Error('maxTokensPerDay must be -1 (unlimited) or >= 0');
+    }
+    merged.maxTokensPerDay = updates.maxTokensPerDay;
+  }
+
+  if (typeof updates.maxApiCallsPerDay === 'number') {
+    if (updates.maxApiCallsPerDay < -1) {
+      throw new Error('maxApiCallsPerDay must be -1 (unlimited) or >= 0');
+    }
+    merged.maxApiCallsPerDay = updates.maxApiCallsPerDay;
+  }
+
+  if (typeof updates.maxCostPerMonth === 'number') {
+    if (updates.maxCostPerMonth < -1) {
+      throw new Error('maxCostPerMonth must be -1 (unlimited) or >= 0');
+    }
+    merged.maxCostPerMonth = updates.maxCostPerMonth;
   }
 
   return merged;

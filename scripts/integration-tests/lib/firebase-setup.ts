@@ -88,3 +88,38 @@ export function getProjectId(): string {
 export function getRegion(): string {
   return process.env.FIREBASE_REGION || 'us-central1';
 }
+
+/**
+ * Generate an ID token for the test user.
+ * Uses Firebase Admin to create a custom token, then exchanges it for an ID token.
+ */
+export async function getTestUserIdToken(uid: string): Promise<string> {
+  // Create a custom token using Admin SDK
+  const customToken = await admin.auth().createCustomToken(uid);
+
+  // Exchange custom token for ID token using Firebase Auth REST API
+  const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+  if (!apiKey) {
+    throw new Error('NEXT_PUBLIC_FIREBASE_API_KEY is required for ID token generation');
+  }
+
+  const response = await fetch(
+    `https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        token: customToken,
+        returnSecureToken: true,
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Failed to exchange custom token for ID token: ${error}`);
+  }
+
+  const data = await response.json();
+  return data.idToken;
+}

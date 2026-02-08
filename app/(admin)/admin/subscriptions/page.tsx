@@ -6,12 +6,14 @@ import {
   SubscriptionTierConfig,
   SubscriptionConfigVersion,
   TierQuotas,
+  SubscriptionTierKey,
   formatQuotaValue,
 } from '@/lib/models/Subscription';
 import { useTrackPage } from '@/lib/hooks/useTrackPage';
 import { TRACKED_SCREENS } from '@/lib/models/BehaviorEvent';
 
-type TierName = 'free' | 'premium' | 'pro';
+// Use the same tier key type as the model
+type TierName = SubscriptionTierKey; // 'basic' | 'premium' | 'pro'
 
 interface EditingTier {
   name: TierName;
@@ -282,7 +284,7 @@ export default function AdminSubscriptionsPage() {
       {/* Tier Cards */}
       {config && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {(['free', 'premium', 'pro'] as TierName[]).map((tierName) => (
+          {(['basic', 'premium', 'pro'] as TierName[]).map((tierName) => (
             <TierCard
               key={tierName}
               tierName={tierName}
@@ -410,13 +412,13 @@ function TierCard({
   const displayQuotas = editingQuotas || quotas;
 
   const tierColors: Record<TierName, string> = {
-    free: 'border-gray-400',
+    basic: 'border-gray-400',
     premium: 'border-blue-500',
     pro: 'border-purple-500',
   };
 
   const tierLabels: Record<TierName, string> = {
-    free: 'FREE',
+    basic: 'BASIC (FREE)',
     premium: 'PREMIUM',
     pro: 'PRO',
   };
@@ -454,10 +456,10 @@ function TierCard({
       {/* Quotas */}
       <div className="space-y-3">
         <QuotaRow
-          label="Messages/Day"
-          value={displayQuotas.messagesPerDay}
+          label="Messages/Month"
+          value={displayQuotas.messagesPerMonth}
           isEditing={isEditing}
-          onChange={(v) => onUpdateQuota('messagesPerDay', v)}
+          onChange={(v) => onUpdateQuota('messagesPerMonth', v)}
         />
         <QuotaRow
           label="Photos/Month"
@@ -470,6 +472,36 @@ function TierCard({
           value={displayQuotas.voiceMinutesPerMonth}
           isEditing={isEditing}
           onChange={(v) => onUpdateQuota('voiceMinutesPerMonth', v)}
+        />
+        <QuotaRow
+          label="Max Recording (sec)"
+          value={displayQuotas.maxVoiceRecordingSeconds}
+          isEditing={isEditing}
+          onChange={(v) => onUpdateQuota('maxVoiceRecordingSeconds', v)}
+          step={30}
+        />
+        <QuotaRow
+          label="Custom Activities"
+          value={displayQuotas.customActivityTypes}
+          isEditing={isEditing}
+          onChange={(v) => onUpdateQuota('customActivityTypes', v)}
+        />
+
+        <hr className="my-3" />
+
+        {/* Features */}
+        <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Features</div>
+        <FeatureRow
+          label="Web Access"
+          enabled={displayQuotas.webAccess}
+          isEditing={isEditing}
+          onChange={(v) => onUpdateQuota('webAccess', v)}
+        />
+        <FeatureRow
+          label="Offline Mode"
+          enabled={displayQuotas.offlineMode}
+          isEditing={isEditing}
+          onChange={(v) => onUpdateQuota('offlineMode', v)}
         />
 
         <hr className="my-3" />
@@ -496,33 +528,6 @@ function TierCard({
           value={displayQuotas.maxCostPerMonth ?? 5.0}
           isEditing={isEditing}
           onChange={(v) => onUpdateQuota('maxCostPerMonth', v)}
-        />
-
-        <hr className="my-3" />
-
-        <FeatureRow
-          label="Insights"
-          enabled={displayQuotas.insightsEnabled}
-          isEditing={isEditing}
-          onChange={(v) => onUpdateQuota('insightsEnabled', v)}
-        />
-        <FeatureRow
-          label="Analytics"
-          enabled={displayQuotas.advancedAnalytics}
-          isEditing={isEditing}
-          onChange={(v) => onUpdateQuota('advancedAnalytics', v)}
-        />
-        <FeatureRow
-          label="Data Export"
-          enabled={displayQuotas.dataExport}
-          isEditing={isEditing}
-          onChange={(v) => onUpdateQuota('dataExport', v)}
-        />
-        <FeatureRow
-          label="Priority Support"
-          enabled={displayQuotas.prioritySupport}
-          isEditing={isEditing}
-          onChange={(v) => onUpdateQuota('prioritySupport', v)}
         />
       </div>
 

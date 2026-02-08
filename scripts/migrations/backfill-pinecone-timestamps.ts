@@ -27,7 +27,7 @@ import * as dotenv from 'dotenv';
 import * as path from 'path';
 
 // Load environment variables
-dotenv.config({ path: path.join(__dirname, '../.env.local') });
+dotenv.config({ path: path.join(__dirname, '../../.env.local') });
 
 // Also try loading from firebase functions .env
 dotenv.config({ path: path.join(__dirname, '../../PersonalAIApp/firebase/functions/.env') });
@@ -44,14 +44,14 @@ const db = admin.firestore();
 
 // Initialize Pinecone
 const pinecone = new Pinecone({
-  apiKey: process.env.PINECONE_KEY || process.env.NEXT_PUBLIC_PINECONE_API_KEY || '',
+  apiKey: process.env.PINECONE_API_KEY || process.env.PINECONE_KEY || process.env.NEXT_PUBLIC_PINECONE_API_KEY || '',
 });
 
 const indexName = process.env.PINECONE_INDEX || process.env.NEXT_PUBLIC_PINECONE_INDEX || 'personal-ai-data';
 
 // Initialize OpenAI
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_KEY || process.env.NEXT_PUBLIC_OPENAI_API_KEY || '',
+  apiKey: process.env.OPENAI_API_KEY || process.env.OPENAI_KEY || process.env.NEXT_PUBLIC_OPENAI_API_KEY || '',
 });
 
 // Parse command line arguments
@@ -322,6 +322,7 @@ async function processVoiceNotes(index: any): Promise<void> {
         const embedding = await generateEmbedding(text);
 
         // Update Pinecone
+        // eventTimestampMs is used for temporal queries (e.g., "what did I do yesterday")
         await index.upsert([{
           id: `voice_${doc.id}`,
           values: embedding,
@@ -333,6 +334,7 @@ async function processVoiceNotes(index: any): Promise<void> {
             audioUrl: data.audioUrl,
             text: text,
             timestampMs,
+            eventTimestampMs: timestampMs, // For temporal queries - same as createdAt for now
           },
         }]);
 
@@ -405,6 +407,7 @@ async function processLocationData(index: any): Promise<void> {
             timestamp: data.timestamp?.toDate?.()?.toISOString() || data.timestamp,
             text: text,
             timestampMs,
+            eventTimestampMs: timestampMs, // For temporal queries
           },
         }]);
 
@@ -476,6 +479,7 @@ async function processHealthData(index: any): Promise<void> {
             source: data.source,
             text: text,
             timestampMs,
+            eventTimestampMs: timestampMs, // For temporal queries
           },
         }]);
 
@@ -541,6 +545,7 @@ async function processTextNotes(index: any): Promise<void> {
         const embedding = await generateEmbedding(text);
 
         // Update Pinecone
+        // eventTimestampMs is used for temporal queries (e.g., "what did I do yesterday")
         await index.upsert([{
           id: `text_${doc.id}`,
           values: embedding,
@@ -552,6 +557,7 @@ async function processTextNotes(index: any): Promise<void> {
             createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
             text: text,
             timestampMs,
+            eventTimestampMs: timestampMs, // For temporal queries - same as createdAt for now
           },
         }]);
 
@@ -623,6 +629,7 @@ async function processEvents(index: any): Promise<void> {
             participants: data.participants || [],
             text: text,
             timestampMs,
+            eventTimestampMs: timestampMs, // For temporal queries
           },
         }]);
 
@@ -654,13 +661,13 @@ async function main(): Promise<void> {
   console.log('');
 
   // Verify credentials
-  if (!process.env.PINECONE_KEY && !process.env.NEXT_PUBLIC_PINECONE_API_KEY) {
-    console.error('❌ PINECONE_KEY not found in environment');
+  if (!process.env.PINECONE_API_KEY && !process.env.PINECONE_KEY && !process.env.NEXT_PUBLIC_PINECONE_API_KEY) {
+    console.error('❌ PINECONE_API_KEY not found in environment');
     process.exit(1);
   }
 
-  if (!process.env.OPENAI_KEY && !process.env.NEXT_PUBLIC_OPENAI_API_KEY) {
-    console.error('❌ OPENAI_KEY not found in environment');
+  if (!process.env.OPENAI_API_KEY && !process.env.OPENAI_KEY && !process.env.NEXT_PUBLIC_OPENAI_API_KEY) {
+    console.error('❌ OPENAI_API_KEY not found in environment');
     process.exit(1);
   }
 

@@ -6,16 +6,18 @@ import { useSearchParams } from 'next/navigation';
 import {
   OverviewTab,
   LifeFeedTab,
+  CategoriesTab,
   LifeKeywordsTab,
   AIFeaturesTab,
 } from '@/components/admin/insights';
 
-// Tab definitions - reorganized from 8 tabs to 4 tabs
-type TabId = 'overview' | 'life-feed' | 'life-keywords' | 'ai-features';
+// Tab definitions - reorganized to include Categories
+type TabId = 'overview' | 'life-feed' | 'categories' | 'life-keywords' | 'ai-features';
 
 const TABS: { id: TabId; label: string; icon: string; description: string }[] = [
   { id: 'overview', label: 'Overview', icon: '📊', description: 'Dashboard & settings' },
-  { id: 'life-feed', label: 'Life Feed', icon: '📰', description: '8 post types' },
+  { id: 'life-feed', label: 'Life Feed', icon: '📰', description: '10 post types' },
+  { id: 'categories', label: 'Categories', icon: '📁', description: '12 unified categories' },
   { id: 'life-keywords', label: 'Life Keywords', icon: '🔑', description: 'Themes & patterns' },
   { id: 'ai-features', label: 'AI Features', icon: '🤖', description: '4 analysis features' },
 ];
@@ -49,6 +51,8 @@ export default function AdminInsightsPage() {
         return <OverviewTab onSaving={setSaving} />;
       case 'life-feed':
         return <LifeFeedTab onSaving={setSaving} />;
+      case 'categories':
+        return <CategoriesTab onSaving={setSaving} />;
       case 'life-keywords':
         return <LifeKeywordsTab onSaving={setSaving} />;
       case 'ai-features':

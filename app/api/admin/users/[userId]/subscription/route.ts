@@ -6,7 +6,10 @@ import {
   UserSubscription,
   SubscriptionTierConfig,
   TierQuotas,
-  DEFAULT_FREE_QUOTAS,
+  SubscriptionTierKey,
+  LegacyTierKey,
+  normalizeTier,
+  DEFAULT_BASIC_QUOTAS,
   DEFAULT_PREMIUM_QUOTAS,
   DEFAULT_PRO_QUOTAS,
 } from '@/lib/models/Subscription';
@@ -41,19 +44,19 @@ export async function GET(
 
     // Get tier config to calculate effective limits
     const tierConfig = await getTierConfig(db);
-    const tier = subscription?.tier || 'free';
+    const tier = normalizeTier(subscription?.tier as LegacyTierKey);
     const tierQuotas = tierConfig?.tiers[tier] || getDefaultQuotas(tier);
 
     // Calculate effective limits (override > tier default)
     const effectiveLimits = {
-      messagesPerDay: subscription?.quotaOverrides?.messagesPerDay ?? tierQuotas.messagesPerDay,
+      messagesPerMonth: subscription?.quotaOverrides?.messagesPerMonth ?? tierQuotas.messagesPerMonth,
       photosPerMonth: subscription?.quotaOverrides?.photosPerMonth ?? tierQuotas.photosPerMonth,
       voiceMinutesPerMonth: subscription?.quotaOverrides?.voiceMinutesPerMonth ?? tierQuotas.voiceMinutesPerMonth,
     };
 
     return NextResponse.json({
       userId,
-      subscription: subscription || { tier: 'free', status: 'active' },
+      subscription: subscription || { tier: 'basic', status: 'active' },
       usage: usage || {
         messagesThisMonth: 0,
         messagesToday: 0,
@@ -110,17 +113,19 @@ export async function PATCH(
 
     // Update tier if provided
     if (tier !== undefined) {
-      if (!['free', 'premium', 'pro'].includes(tier)) {
+      if (!['basic', 'free', 'premium', 'pro'].includes(tier)) {
         return NextResponse.json(
-          { error: 'Invalid tier. Must be "free", "premium", or "pro"' },
+          { error: 'Invalid tier. Must be "basic", "premium", or "pro"' },
           { status: 400 }
         );
       }
+      // Normalize 'free' to 'basic'
+      const normalizedTier = tier === 'free' ? 'basic' : tier;
 
       const currentSubscription = userData.subscription || {};
       updates.subscription = {
         ...currentSubscription,
-        tier,
+        tier: normalizedTier,
         status: 'active',
         source: 'admin_override',
         manualOverride: true, // Prevents RevenueCat from overwriting this subscription
@@ -144,14 +149,14 @@ export async function PATCH(
         // Validate override values
         const validOverrides: QuotaOverrides = {};
 
-        if (quotaOverrides.messagesPerDay !== undefined) {
-          if (typeof quotaOverrides.messagesPerDay !== 'number' || quotaOverrides.messagesPerDay < -1) {
+        if (quotaOverrides.messagesPerMonth !== undefined) {
+          if (typeof quotaOverrides.messagesPerMonth !== 'number' || quotaOverrides.messagesPerMonth < -1) {
             return NextResponse.json(
-              { error: 'messagesPerDay must be -1 (unlimited) or >= 0' },
+              { error: 'messagesPerMonth must be -1 (unlimited) or >= 0' },
               { status: 400 }
             );
           }
-          validOverrides.messagesPerDay = quotaOverrides.messagesPerDay;
+          validOverrides.messagesPerMonth = quotaOverrides.messagesPerMonth;
         }
 
         if (quotaOverrides.photosPerMonth !== undefined) {
@@ -236,13 +241,14 @@ async function getTierConfig(db: FirebaseFirestore.Firestore): Promise<Subscript
 }
 
 // Helper: Get default quotas for a tier
-function getDefaultQuotas(tier: 'free' | 'premium' | 'pro'): TierQuotas {
+function getDefaultQuotas(tier: SubscriptionTierKey): TierQuotas {
   switch (tier) {
     case 'premium':
       return DEFAULT_PREMIUM_QUOTAS;
     case 'pro':
       return DEFAULT_PRO_QUOTAS;
+    case 'basic':
     default:
-      return DEFAULT_FREE_QUOTAS;
+      return DEFAULT_BASIC_QUOTAS;
   }
 }

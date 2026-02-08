@@ -17,7 +17,7 @@
 
 import * as admin from 'firebase-admin';
 import { Pinecone } from '@pinecone-database/pinecone';
-import { initFirebase, ensureTestUserExists, getProjectId, getRegion } from './lib/firebase-setup';
+import { initFirebase, ensureTestUserExists, getProjectId, getRegion, getTestUserIdToken } from './lib/firebase-setup';
 import { initPinecone, getPineconeIndex } from './lib/pinecone-setup';
 import { runAllTests, parseArgs } from './lib/test-runner';
 import { log, colors, logSection, printSummary } from './lib/reporter';
@@ -28,6 +28,7 @@ declare global {
     db: admin.firestore.Firestore;
     pinecone: Pinecone;
     userId: string;
+    idToken: string;
     projectId: string;
     region: string;
     pineconeIndex: string;
@@ -50,6 +51,8 @@ async function main() {
   let pinecone: Pinecone;
   let userId: string;
 
+  let idToken: string;
+
   try {
     db = initFirebase();
     pinecone = initPinecone();
@@ -58,6 +61,10 @@ async function main() {
     // Ensure integration test user exists
     userId = await ensureTestUserExists();
     log(`\u2713 Test user ready: ${userId}`, colors.green);
+
+    // Generate ID token for the test user
+    idToken = await getTestUserIdToken(userId);
+    log(`\u2713 ID token generated for test user`, colors.green);
   } catch (error: any) {
     log(`\n\u2717 Initialization failed: ${error.message}`, colors.red);
     process.exit(1);
@@ -70,6 +77,7 @@ async function main() {
     db,
     pinecone,
     userId,
+    idToken,
     projectId: getProjectId(),
     region: getRegion(),
     pineconeIndex: getPineconeIndex(),

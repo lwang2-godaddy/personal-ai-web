@@ -1,3 +1,5 @@
+import { UserSubscription } from './Subscription';
+
 export interface User {
   uid: string;
   email: string | null;
@@ -7,6 +9,9 @@ export interface User {
   lastSync: string | null;
   lastActivityAt?: string | null; // Track last user activity
   preferences: UserPreferences;
+
+  // Subscription (synced from RevenueCat via mobile app)
+  subscription?: UserSubscription;
 
   // Notification settings
   notificationPreferences?: NotificationPreferences; // Push notification settings

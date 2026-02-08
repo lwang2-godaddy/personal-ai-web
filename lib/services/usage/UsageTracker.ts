@@ -364,8 +364,10 @@ class UsageTracker {
         };
       }
 
-      // Get user's subscription tier (default to 'free')
-      const tier = userData?.subscription?.tier || 'free';
+      // Get user's subscription tier (default to 'basic')
+      // Import normalizeTier to handle legacy 'free' tier
+      const { normalizeTier } = await import('@/lib/models/Subscription');
+      const tier = normalizeTier(userData?.subscription?.tier);
 
       // Try to get limits from dynamic subscription config
       try {
@@ -374,8 +376,8 @@ class UsageTracker {
         await configService.initialize();
         const config = await configService.getConfig();
 
-        if (config.enableDynamicConfig && config.tiers[tier as 'free' | 'premium' | 'pro']) {
-          const tierQuotas = config.tiers[tier as 'free' | 'premium' | 'pro'];
+        if (config.enableDynamicConfig && config.tiers[tier]) {
+          const tierQuotas = config.tiers[tier];
           return {
             maxTokensPerDay: tierQuotas.maxTokensPerDay ?? DEFAULT_LIMITS.maxTokensPerDay,
             maxApiCallsPerDay: tierQuotas.maxApiCallsPerDay ?? DEFAULT_LIMITS.maxApiCallsPerDay,
