@@ -2,7 +2,7 @@
 
 **Status:** Implemented
 **Implementation Date:** February 2025
-**Version:** 1.0.0
+**Version:** 2.0.0 (Event Date Extraction added February 7, 2025)
 **Location:** `PersonalAIApp/firebase/functions/src/services/TemporalParserService.ts`
 
 ---
@@ -43,6 +43,29 @@ When ANY AI feature (Life Feed, Fun Facts, Daily Summary, Memory Generator, Sent
 
 - **At Index Time:** Temporal references are stored literally ("today") instead of being normalized to actual dates ("February 7, 2025")
 - **At Query Time:** No temporal parsing in RAG queries means Pinecone date filters are unused
+
+### Problem 3: Past Reference Mismatch (NEW in v2.0)
+
+When a user records content that references **past events**, the creation timestamp doesn't match when the event happened:
+
+**Example Scenario:**
+| Date | What Happened |
+|------|---------------|
+| Feb 5 | User played badminton |
+| Feb 6 | User records voice note: "Yesterday I played badminton" |
+| Feb 7 | User asks: "What did I do on Feb 5th?" |
+
+**Previous Behavior (v1.0):**
+- Voice note stored with `timestampMs = Feb 6` (creation date)
+- Query filter: `Feb 5 ≤ timestampMs ≤ Feb 5`
+- **Result: Voice note NOT found** ❌
+
+**New Behavior (v2.0):**
+- Voice note stored with:
+  - `timestampMs = Feb 6` (creation date)
+  - `eventTimestampMs = Feb 5` (extracted event date)
+- Query filter: `eventTimestampMs` OR `timestampMs` in range
+- **Result: Voice note FOUND** ✅
 
 ---
 
@@ -99,6 +122,55 @@ const filter = {
 const results = await pinecone.query({ vector, filter, topK });
 ```
 
+### 5. Event Date Extraction (NEW in v2.0)
+
+Extract when the described **event actually happened** (not when the note was created):
+
+```typescript
+// At index time: Extract event date from content
+const eventDateResult = await temporalParser.extractEventDate(
+  "Yesterday I played badminton",  // Content
+  "2025-02-06T10:00:00Z",          // Created at (Feb 6)
+  "America/Los_Angeles",            // User timezone
+  userId
+);
+// Returns: { eventDate: "2025-02-05", confidence: 0.95 }
+
+// Store both timestamps in Pinecone metadata
+const metadata = {
+  userId,
+  text: normalizedText,
+  timestampMs: createdAtMs,           // When note was created (Feb 6)
+  eventTimestampMs: eventDateMs,      // When event happened (Feb 5)
+};
+```
+
+### 6. Dual-Timestamp Query Filtering (NEW in v2.0)
+
+Query using `$or` to match either event date or creation date (backward compatible):
+
+```typescript
+// Query with dual timestamp filter
+const filter = {
+  $and: [
+    { userId: userId },
+    {
+      $or: [
+        // Match by event date (new records with past references)
+        { eventTimestampMs: { $gte: startTimestamp, $lte: endTimestamp } },
+        // Match by creation date (old records or same-day events)
+        { timestampMs: { $gte: startTimestamp, $lte: endTimestamp } },
+      ],
+    },
+  ],
+};
+```
+
+**Backward Compatibility:**
+- Old records without `eventTimestampMs` → matched by `timestampMs`
+- New records with past references → matched by `eventTimestampMs`
+- New records without past references → `eventTimestampMs` = `timestampMs`, both match
+
 ---
 
 ## System Architecture
@@ -109,7 +181,7 @@ const results = await pinecone.query({ vector, filter, topK });
 ├─────────────────────────────────────────────────────────────────────────┤
 │  When voice note/text note is CREATED:                                   │
 │                                                                          │
-│  Input: "today I played badminton"                                       │
+│  Input: "yesterday I played badminton" (created Feb 6)                   │
 │    │                                                                     │
 │    ▼                                                                     │
 │  TemporalParserService.normalizeText()                                   │
@@ -118,13 +190,32 @@ const results = await pinecone.query({ vector, filter, topK });
 │  GPT-4o-mini (LLM-based, language-agnostic)                             │
 │    │                                                                     │
 │    ▼                                                                     │
-│  Output: "on February 7, 2025, I played badminton"                      │
+│  Output: "on February 5, 2025, I played badminton"                      │
 │    │                                                                     │
 │    ▼                                                                     │
 │  Store: { transcription: original, normalizedTranscription: output }     │
+└─────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│  PART 1B: EVENT DATE EXTRACTION (NEW in v2.0)                            │
+├─────────────────────────────────────────────────────────────────────────┤
+│  After normalization, extract when the EVENT actually happened:          │
+│                                                                          │
+│  Input: "yesterday I played badminton" (created Feb 6)                   │
 │    │                                                                     │
 │    ▼                                                                     │
-│  Generate embedding from normalizedTranscription                         │
+│  TemporalParserService.extractEventDate()                               │
+│    │                                                                     │
+│    ▼                                                                     │
+│  GPT-4o-mini determines: eventDate = "2025-02-05" (Feb 5)               │
+│    │                                                                     │
+│    ▼                                                                     │
+│  Pinecone Metadata:                                                      │
+│  {                                                                       │
+│    timestampMs: 1738800000000,      // Feb 6 (when note created)        │
+│    eventTimestampMs: 1738713600000, // Feb 5 (when event happened) ←NEW │
+│    text: "on February 5, 2025, I played badminton"                      │
+│  }                                                                       │
 └─────────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -147,23 +238,32 @@ const results = await pinecone.query({ vector, filter, topK });
 └─────────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────────┐
-│  PART 3: QUERY-TIME FILTERING                                            │
+│  PART 3: QUERY-TIME FILTERING (Updated in v2.0)                          │
 ├─────────────────────────────────────────────────────────────────────────┤
-│  When user QUERIES "what did I do today?":                               │
+│  When user QUERIES "what did I do on Feb 5?" (asked on Feb 7):          │
 │                                                                          │
-│  Input: "what did I do today?" / "今天我做了什么？"                       │
+│  Input: "what did I do on Feb 5?" / "二月五号我做了什么？"                │
 │    │                                                                     │
 │    ▼                                                                     │
 │  TemporalParserService.parse()                                          │
 │    │                                                                     │
 │    ▼                                                                     │
-│  GPT-4o-mini extracts: { startDate: "2025-02-07", endDate: "2025-02-07" }│
+│  GPT-4o-mini extracts: { startDate: "2025-02-05", endDate: "2025-02-05" }│
 │    │                                                                     │
 │    ▼                                                                     │
-│  Pinecone query with userId + date filter                               │
+│  Pinecone query with DUAL timestamp filter:                             │
+│  {                                                                       │
+│    $and: [                                                               │
+│      { userId: userId },                                                 │
+│      { $or: [                                                            │
+│        { eventTimestampMs: { $gte: Feb5_00:00, $lte: Feb5_23:59 } }, ✅  │
+│        { timestampMs: { $gte: Feb5_00:00, $lte: Feb5_23:59 } }           │
+│      ]}                                                                  │
+│    ]                                                                     │
+│  }                                                                       │
 │    │                                                                     │
 │    ▼                                                                     │
-│  Results filtered to today's data only                                   │
+│  Voice note FOUND (created Feb 6, but eventTimestampMs = Feb 5)         │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
