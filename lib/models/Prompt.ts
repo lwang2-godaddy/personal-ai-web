@@ -155,6 +155,12 @@ export type PromptCategoryId = typeof PROMPT_CATEGORIES[number]['id'];
 /**
  * Services that use the prompt system
  * Organized by AI Features (from mobile app Settings) with metadata for the admin UI
+ *
+ * usedBy field indicates which clients use this service:
+ * - 'mobile' = Mobile app only (client-side)
+ * - 'web' = Web app only
+ * - 'both' = Both mobile and web apps (via Cloud Function)
+ * - 'server' = Server-side only (scheduled jobs, background tasks)
  */
 export const PROMPT_SERVICES = [
   // Chat - Main chat interface & context search
@@ -163,30 +169,33 @@ export const PROMPT_SERVICES = [
     name: 'Chat Responses',
     category: 'chat' as PromptCategoryId,
     icon: '💬',
-    description: 'Main chat completion and image description',
-    trigger: 'When user sends a chat message',
+    description: 'Direct OpenAI chat completion and image description (client-side)',
+    trigger: 'When user sends a chat message without RAG context',
     platform: 'mobile' as const,
+    usedBy: ['mobile'] as const,
     example: 'User asks "What did I do yesterday?"',
   },
   {
     id: 'RAGEngine',
-    name: 'Context Search',
+    name: 'Client-Side RAG',
     category: 'chat' as PromptCategoryId,
     icon: '🔍',
-    description: 'Retrieves relevant context from user data',
-    trigger: 'When chat needs personal data context',
+    description: 'Client-side RAG for offline/local context retrieval',
+    trigger: 'When mobile app processes RAG queries locally',
     platform: 'mobile' as const,
+    usedBy: ['mobile'] as const,
     example: 'Finding relevant health/location data for query',
   },
   {
     id: 'QueryRAGServer',
-    name: 'Server Chat',
+    name: 'Server RAG + AI Personality',
     category: 'chat' as PromptCategoryId,
-    icon: '☁️',
-    description: 'Server-side chat processing',
-    trigger: 'When web app processes chat queries',
+    icon: '🤖',
+    description: 'Main chat service with AI personality selection (queryRAG Cloud Function)',
+    trigger: 'When user sends chat messages in mobile or web app',
     platform: 'server' as const,
-    example: 'Web dashboard chat requests',
+    usedBy: ['mobile', 'web'] as const,
+    example: 'Chat with Friendly, Professional, Witty, Coach, or Chill personality',
   },
   // Life Feed - AI-generated social-style posts
   {
@@ -197,6 +206,7 @@ export const PROMPT_SERVICES = [
     description: 'Generates social-style life updates',
     trigger: 'Periodically from user activity',
     platform: 'server' as const,
+    usedBy: ['mobile', 'web'] as const,
     example: 'Creating "You visited 3 new places this week!"',
   },
   {
@@ -207,6 +217,7 @@ export const PROMPT_SERVICES = [
     description: 'Generates daily and weekly activity summaries',
     trigger: 'Daily at user-preferred time or on-demand',
     platform: 'server' as const,
+    usedBy: ['mobile', 'web'] as const,
     example: 'Creating "You walked 12,000 steps and completed 2 workouts today!"',
   },
   // Fun Facts - Daily insights & smart suggestions
@@ -218,6 +229,7 @@ export const PROMPT_SERVICES = [
     description: 'Generates proactive suggestions and daily insights',
     trigger: 'Based on user patterns and context',
     platform: 'server' as const,
+    usedBy: ['mobile'] as const,
     example: 'Suggesting "Time for your daily walk?"',
   },
   {
@@ -228,6 +240,7 @@ export const PROMPT_SERVICES = [
     description: 'Generates meaningful keywords from user activity patterns',
     trigger: 'Periodically or on-demand (weekly, monthly, quarterly, yearly)',
     platform: 'server' as const,
+    usedBy: ['mobile', 'web'] as const,
     example: 'Generating "Badminton Renaissance" from weekly badminton activity',
   },
   {
@@ -238,6 +251,7 @@ export const PROMPT_SERVICES = [
     description: 'AI-generated insights shown in home screen carousel',
     trigger: 'On pull-to-refresh or carousel refresh button',
     platform: 'mobile' as const,
+    usedBy: ['mobile'] as const,
     example: 'Generating "You walked 20% more this week than last!"',
   },
   {
@@ -248,6 +262,7 @@ export const PROMPT_SERVICES = [
     description: 'Shows memories from this day in previous years',
     trigger: 'Daily, when user has historical data',
     platform: 'mobile' as const,
+    usedBy: ['mobile'] as const,
     example: 'Showing "1 year ago: You played badminton at SF Club"',
   },
   // Mood Compass - Mood detection & sentiment analysis
@@ -259,6 +274,7 @@ export const PROMPT_SERVICES = [
     description: 'Analyzes emotional tone of content',
     trigger: 'When processing user-created content',
     platform: 'server' as const,
+    usedBy: ['mobile', 'web'] as const,
     example: 'Detecting positive mood in diary entry',
   },
   // Memory Companion - Memory summaries & entity extraction (event-driven, not scheduled)
@@ -270,6 +286,7 @@ export const PROMPT_SERVICES = [
     description: 'GPT-4o-mini generates titles (50 chars) and summaries (150 chars) for memories',
     trigger: 'Event-driven: when photo, voice, text, or location data is created',
     platform: 'server' as const,
+    usedBy: ['mobile', 'web'] as const,
     example: '"Dinner at Nopa with Sarah" - voice note about restaurant visit',
   },
   {
@@ -280,6 +297,7 @@ export const PROMPT_SERVICES = [
     description: 'Extracts people, places, events, organizations, topics from content',
     trigger: 'When processing any user-created content for memory triggers',
     platform: 'server' as const,
+    usedBy: ['mobile', 'web'] as const,
     example: 'Extracting "Sarah", "Nopa restaurant", "dinner" from text',
   },
   // Life Forecaster - Pattern predictions & event extraction
@@ -291,6 +309,7 @@ export const PROMPT_SERVICES = [
     description: 'Extracts events and dates from text for predictions',
     trigger: 'When processing text content',
     platform: 'server' as const,
+    usedBy: ['mobile', 'web'] as const,
     example: 'Finding "meeting tomorrow at 3pm"',
   },
   {
@@ -301,11 +320,22 @@ export const PROMPT_SERVICES = [
     description: 'Cross-domain correlation insights and AI explanations',
     trigger: 'Periodically or on-demand when analyzing user data patterns',
     platform: 'server' as const,
+    usedBy: ['mobile', 'web'] as const,
     example: 'Discovering "You sleep 23% better on days when you play badminton"',
   },
 ] as const;
 
 export type ServiceId = typeof PROMPT_SERVICES[number]['id'];
+
+/**
+ * Type for a prompt service definition
+ */
+export type PromptService = typeof PROMPT_SERVICES[number];
+
+/**
+ * Helper type for usedBy field values
+ */
+export type UsedByPlatform = 'mobile' | 'web';
 
 /**
  * LifeFeedGenerator prompt-to-post-type mapping

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { apiGet, apiPost } from '@/lib/api/client';
-import { FirestorePromptConfig, PROMPT_SERVICES, PROMPT_CATEGORIES, SUPPORTED_LANGUAGES } from '@/lib/models/Prompt';
+import { FirestorePromptConfig, PROMPT_SERVICES, PROMPT_CATEGORIES, SUPPORTED_LANGUAGES, PromptService } from '@/lib/models/Prompt';
 import { getOperationsForService } from '@/lib/models/ServiceOperations';
 import { useTrackPage } from '@/lib/hooks/useTrackPage';
 import { TRACKED_SCREENS } from '@/lib/models/BehaviorEvent';
@@ -229,6 +229,26 @@ export default function AdminPromptsPage() {
           <p className="text-gray-600 mt-1">
             Manage AI prompts dynamically without app updates
           </p>
+          {/* Badge Legend */}
+          <div className="flex flex-wrap items-center gap-3 mt-2 text-xs">
+            <span className="text-gray-500 font-medium">Legend:</span>
+            <span className="inline-flex items-center gap-1">
+              <span className="px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700">📱 Mobile</span>
+              <span className="text-gray-400">= Used by mobile app</span>
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <span className="px-1.5 py-0.5 rounded-full bg-green-100 text-green-700">🌐 Web</span>
+              <span className="text-gray-400">= Used by web app</span>
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <span className="px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">📲 Client-side</span>
+              <span className="text-gray-400">= Runs in app</span>
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <span className="px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-700">☁️ Cloud Function</span>
+              <span className="text-gray-400">= Runs on server</span>
+            </span>
+          </div>
         </div>
         <div className="flex items-center space-x-4">
           {/* Language Selector */}
@@ -428,7 +448,7 @@ export default function AdminPromptsPage() {
                       key={service.id}
                       className="bg-white rounded-lg shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow"
                     >
-                      {/* Header Row: Icon + Name + Platform Badge */}
+                      {/* Header Row: Icon + Name + Used By Badges */}
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
@@ -439,14 +459,42 @@ export default function AdminPromptsPage() {
                             {service.id}
                           </code>
                         </div>
-                        <span
-                          className={`px-2 py-0.5 text-xs font-medium rounded-full ${
-                            service.platform === 'mobile'
-                              ? 'bg-blue-100 text-blue-700'
-                              : 'bg-purple-100 text-purple-700'
-                          }`}
-                        >
-                          {service.platform === 'mobile' ? '📱 Mobile' : '☁️ Server'}
+                        {/* Used By Badges - Show which apps use this service */}
+                        <div className="flex flex-col items-end gap-1">
+                          <span className="text-xs text-gray-500 font-medium">Used by:</span>
+                          <div className="flex gap-1">
+                            {('usedBy' in service) && (service.usedBy as readonly string[])?.includes('mobile') && (
+                              <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-700">
+                                📱 Mobile
+                              </span>
+                            )}
+                            {('usedBy' in service) && (service.usedBy as readonly string[])?.includes('web') && (
+                              <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700">
+                                🌐 Web
+                              </span>
+                            )}
+                            {!('usedBy' in service) && (
+                              <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+                                service.platform === 'mobile'
+                                  ? 'bg-blue-100 text-blue-700'
+                                  : 'bg-purple-100 text-purple-700'
+                              }`}>
+                                {service.platform === 'mobile' ? '📱 Mobile' : '☁️ Server'}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Runs On Badge - Where the processing happens */}
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xs text-gray-500">Runs on:</span>
+                        <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+                          service.platform === 'mobile'
+                            ? 'bg-amber-100 text-amber-700'
+                            : 'bg-purple-100 text-purple-700'
+                        }`}>
+                          {service.platform === 'mobile' ? '📲 Client-side' : '☁️ Cloud Function'}
                         </span>
                       </div>
 
