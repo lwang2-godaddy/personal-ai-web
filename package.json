@@ -8,11 +8,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "migrate:users": "tsx scripts/migrate-users.ts",
+    "migrate:users": "tsx scripts/migrations/migrate-users.ts",
     "set-admin": "tsx scripts/set-admin.ts",
-    "migrate:prompts": "tsx scripts/migrate-prompts.ts",
+    "migrate:prompts": "tsx scripts/migrations/migrate-prompts.ts",
     "init-subscription-config": "tsx scripts/init-subscription-config.ts",
-    "test:event-date": "tsx scripts/test-event-date-extraction.ts"
+    "test:event-date": "tsx scripts/integration-tests/test-event-date-extraction.ts",
+    "check:ingestion": "tsx scripts/diagnostics/check-voice-ingestion.ts"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.9",

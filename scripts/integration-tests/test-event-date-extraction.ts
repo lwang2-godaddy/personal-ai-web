@@ -20,13 +20,21 @@ import { Pinecone } from '@pinecone-database/pinecone';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 
-// Load environment variables from .env.local
-dotenv.config({ path: path.join(__dirname, '..', '.env.local') });
+// Load environment variables from .env.local (two levels up from integration-tests/)
+dotenv.config({ path: path.join(__dirname, '..', '..', '.env.local') });
 
 // Configuration - use NEXT_PUBLIC_ prefixed vars from personal-ai-web
-const TEST_USER_ID = process.env.TEST_USER_ID || 'test-regression-user';
 const PINECONE_INDEX = process.env.NEXT_PUBLIC_PINECONE_INDEX || process.env.PINECONE_INDEX || 'personal-ai-data';
 const WAIT_TIME_MS = 15000; // Wait for Cloud Function to process
+const FIREBASE_PROJECT_ID = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'personal-ai-app';
+const FIREBASE_REGION = process.env.FIREBASE_REGION || 'us-central1';
+
+// Integration test user configuration
+const INTEGRATION_TEST_EMAIL = 'integration-test@personalai.local';
+const INTEGRATION_TEST_DISPLAY_NAME = 'Integration Test User';
+
+// This will be set after ensuring the test user exists
+let TEST_USER_ID: string;
 
 // Colors for console output
 const colors = {
@@ -55,19 +63,68 @@ function logInfo(message: string) {
   log(`  ℹ ${message}`, colors.cyan);
 }
 
+/**
+ * Ensure the integration test user exists in Firebase Auth.
+ * Creates the user if it doesn't exist.
+ * Returns the user's UID.
+ */
+async function ensureTestUserExists(): Promise<string> {
+  try {
+    // Try to get existing user by email
+    const existingUser = await admin.auth().getUserByEmail(INTEGRATION_TEST_EMAIL);
+    log(`  Using existing test user: ${existingUser.uid}`, colors.dim);
+    return existingUser.uid;
+  } catch (error: any) {
+    if (error.code === 'auth/user-not-found') {
+      // Create the test user
+      log(`  Creating integration test user...`, colors.dim);
+      const newUser = await admin.auth().createUser({
+        email: INTEGRATION_TEST_EMAIL,
+        displayName: INTEGRATION_TEST_DISPLAY_NAME,
+        emailVerified: true,
+      });
+      log(`  Created test user: ${newUser.uid}`, colors.green);
+      return newUser.uid;
+    }
+    throw error;
+  }
+}
+
 // Initialize Firebase Admin
 function initFirebase() {
   if (admin.apps.length === 0) {
     // Try to use service account from environment
     const serviceAccountPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+    const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+    const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+
     if (serviceAccountPath) {
       const serviceAccount = require(serviceAccountPath);
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
       });
+    } else if (serviceAccountJson) {
+      // Try to parse service account from JSON string in env
+      try {
+        const serviceAccount = JSON.parse(serviceAccountJson);
+        admin.initializeApp({
+          credential: admin.credential.cert(serviceAccount),
+        });
+      } catch (e) {
+        throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY is not valid JSON');
+      }
+    } else if (projectId) {
+      // Fallback: use application default credentials with explicit project ID
+      admin.initializeApp({
+        projectId,
+      });
     } else {
-      // Use default credentials (for Cloud Shell or local emulator)
-      admin.initializeApp();
+      throw new Error(
+        'Firebase credentials required. Set one of:\n' +
+        '  - GOOGLE_APPLICATION_CREDENTIALS=/path/to/serviceAccountKey.json\n' +
+        '  - FIREBASE_SERVICE_ACCOUNT_KEY={"type":"service_account",...}\n' +
+        '  - NEXT_PUBLIC_FIREBASE_PROJECT_ID=your-project-id (with gcloud auth)'
+      );
     }
   }
   return admin.firestore();
@@ -75,9 +132,9 @@ function initFirebase() {
 
 // Initialize Pinecone
 function initPinecone(): Pinecone {
-  const apiKey = process.env.NEXT_PUBLIC_PINECONE_API_KEY || process.env.PINECONE_KEY;
+  const apiKey = process.env.PINECONE_API_KEY || process.env.NEXT_PUBLIC_PINECONE_API_KEY || process.env.PINECONE_KEY;
   if (!apiKey) {
-    throw new Error('NEXT_PUBLIC_PINECONE_API_KEY or PINECONE_KEY environment variable is required');
+    throw new Error('PINECONE_API_KEY environment variable is required');
   }
   return new Pinecone({ apiKey });
 }
@@ -112,12 +169,16 @@ interface TestResult {
 }
 
 /**
- * Test Case 1: Voice note with "yesterday" reference
+ * Test Case 1: Voice note with "yesterday" reference - "昨天我煎了牛排"
  *
- * Creates a voice note saying "yesterday I did X", verifies:
- * 1. eventTimestampMs is set to yesterday's date (not today)
+ * Simulates: User records "昨天我煎了牛排，很好吃" (Yesterday I made steak)
+ * Then asks: "我昨天做了什么饭" (What did I cook yesterday?)
+ *
+ * Verifies:
+ * 1. eventTimestampMs is set to yesterday's date (not today/creation date)
  * 2. Query for yesterday finds the note
- * 3. Query for today does NOT find the note
+ * 3. Found note contains "牛排" (steak)
+ * 4. Query for today does NOT find the note
  */
 async function testYesterdayReference(
   db: admin.firestore.Firestore,
@@ -218,35 +279,69 @@ async function testYesterdayReference(
     }
 
     // Step 6: Query for yesterday - should find the note
+    // Simulates: "我昨天做了什么饭" (What did I cook yesterday?)
     const yesterdayStart = new Date(yesterdayDate + 'T00:00:00Z').getTime();
     const yesterdayEnd = new Date(yesterdayDate + 'T23:59:59Z').getTime();
 
     // Create a dummy embedding for query (we just need to test the filter)
     const dummyEmbedding = new Array(1536).fill(0.01);
 
+    const queryFilter = {
+      $and: [
+        { userId: TEST_USER_ID },
+        {
+          $or: [
+            { eventTimestampMs: { $gte: yesterdayStart, $lte: yesterdayEnd } },
+            { timestampMs: { $gte: yesterdayStart, $lte: yesterdayEnd } },
+          ],
+        },
+      ],
+    };
+
+    log('', colors.reset);
+    log('  ┌─ Query: "我昨天做了什么饭" (What did I cook yesterday?)', colors.cyan);
+    log(`  │ Filter: eventTimestampMs OR timestampMs in [${yesterdayDate}]`, colors.dim);
+    log(`  │ Date range: ${yesterdayStart} - ${yesterdayEnd}`, colors.dim);
+
     const yesterdayQuery = await index.query({
       vector: dummyEmbedding,
       topK: 10,
-      filter: {
-        $and: [
-          { userId: TEST_USER_ID },
-          {
-            $or: [
-              { eventTimestampMs: { $gte: yesterdayStart, $lte: yesterdayEnd } },
-              { timestampMs: { $gte: yesterdayStart, $lte: yesterdayEnd } },
-            ],
-          },
-        ],
-      },
+      filter: queryFilter,
       includeMetadata: true,
     });
 
-    const foundYesterday = yesterdayQuery.matches?.some(m => m.id === vectorId);
+    log(`  │ Results: ${yesterdayQuery.matches?.length || 0} matches found`, colors.dim);
 
-    if (foundYesterday) {
+    const foundMatch = yesterdayQuery.matches?.find(m => m.id === vectorId);
+
+    if (foundMatch) {
+      const noteText = (foundMatch.metadata as any)?.text || '';
+      log(`  │ Match: ${foundMatch.id}`, colors.dim);
+      log(`  │ Text: "${noteText.substring(0, 60)}..."`, colors.dim);
+      log('  └─', colors.cyan);
+
       logPass('Query for yesterday finds the note');
       results.push({ name: 'Query for yesterday finds note', passed: true });
+
+      // Verify the content contains expected keywords (simulates "我昨天做了什么饭" query result)
+      const hasCookingContent = noteText.includes('牛排') || noteText.toLowerCase().includes('steak');
+
+      if (hasCookingContent) {
+        logPass('Found note contains cooking content (牛排)');
+        results.push({ name: 'Found note contains "牛排"', passed: true });
+      } else {
+        logFail('Found note contains "牛排"', `Text: ${noteText.substring(0, 100)}`);
+        results.push({
+          name: 'Found note contains "牛排"',
+          passed: false,
+          reason: 'Note text does not contain expected cooking content',
+          details: { text: noteText.substring(0, 200) },
+        });
+      }
     } else {
+      log(`  │ Expected vector ID not found: ${vectorId}`, colors.dim);
+      log('  └─', colors.cyan);
+
       logFail('Query for yesterday finds the note', 'Note not found in yesterday query results');
       results.push({
         name: 'Query for yesterday finds note',
@@ -257,8 +352,13 @@ async function testYesterdayReference(
     }
 
     // Step 7: Query for today only (not yesterday) - should NOT find the note
+    // This verifies the note won't appear if user asks "我今天做了什么饭"
     const todayStart = new Date(todayDate + 'T00:00:00Z').getTime();
     const todayEnd = new Date(todayDate + 'T23:59:59Z').getTime();
+
+    log('', colors.reset);
+    log('  ┌─ Query: "我今天做了什么饭" (What did I cook today?) - should NOT find note', colors.cyan);
+    log(`  │ Filter: eventTimestampMs ONLY in [${todayDate}] (strict)`, colors.dim);
 
     // Query with ONLY eventTimestampMs (strict event date matching)
     const todayQueryStrict = await index.query({
@@ -273,7 +373,10 @@ async function testYesterdayReference(
       includeMetadata: true,
     });
 
+    log(`  │ Results: ${todayQueryStrict.matches?.length || 0} matches found`, colors.dim);
     const foundTodayStrict = todayQueryStrict.matches?.some(m => m.id === vectorId);
+    log(`  │ Our note found: ${foundTodayStrict ? 'YES (bad!)' : 'NO (correct!)'}`, colors.dim);
+    log('  └─', colors.cyan);
 
     if (!foundTodayStrict) {
       logPass('Query for today (strict eventTimestampMs) does NOT find the note');
@@ -294,15 +397,18 @@ async function testYesterdayReference(
       reason: error.message,
     });
   } finally {
-    // Cleanup: Delete test data
-    logInfo('Cleaning up test data...');
+    // Cleanup: Delete test data from Firestore and Pinecone
+    log('', colors.reset);
+    log('  ┌─ Cleanup', colors.yellow);
+    log(`  │ Deleting Firestore: voiceNotes/${noteId}`, colors.dim);
+    log(`  │ Deleting Pinecone: voice_${noteId}`, colors.dim);
     try {
       await db.collection('voiceNotes').doc(noteId).delete();
       const index = pinecone.index(PINECONE_INDEX);
       await index.deleteOne(`voice_${noteId}`);
-      logInfo('Cleanup complete');
+      log('  └─ ✓ All test data deleted', colors.green);
     } catch (cleanupError) {
-      logInfo(`Cleanup warning: ${cleanupError}`);
+      log(`  └─ ⚠ Cleanup warning: ${cleanupError}`, colors.yellow);
     }
   }
 
@@ -495,14 +601,200 @@ async function testTodayReference(
 }
 
 /**
+ * Test Case 4: RAG Query with temporal filter should use lowered minScore
+ *
+ * This tests the fix for: temporal queries filtering out relevant results
+ * because semantic similarity is low (e.g., "什么饭" vs "牛排")
+ *
+ * The queryRAG function should use a lower minScore (0.25) when a temporal
+ * filter is applied, since the date filter already provides relevance.
+ */
+async function testRAGQueryWithTemporalFilter(
+  db: admin.firestore.Firestore,
+  pinecone: Pinecone
+): Promise<TestResult[]> {
+  const results: TestResult[] = [];
+  const testId = generateTestId();
+  const noteId = `regression-voice-${testId}`;
+
+  log('\n📝 Test Case 4: RAG Query with temporal filter (lowered minScore)', colors.yellow);
+
+  const yesterdayDate = getDateNDaysAgo(1);
+  logInfo(`Yesterday: ${yesterdayDate}`);
+  logInfo(`Creating test voice note: "${noteId}"`);
+
+  try {
+    // Step 1: Create a voice note with "yesterday" reference about making pizza
+    const voiceNoteData = {
+      userId: TEST_USER_ID,
+      transcription: '昨天晚上我做了披萨，自己和面发酵做的饼皮，放了很多芝士和培根',
+      duration: 8,
+      audioUrl: `https://test.storage/${noteId}.m4a`,
+      createdAt: new Date().toISOString(),
+      location: null,
+    };
+
+    await db.collection('voiceNotes').doc(noteId).set(voiceNoteData);
+    logInfo(`Voice note created, waiting ${WAIT_TIME_MS / 1000}s for Cloud Function...`);
+
+    await wait(WAIT_TIME_MS);
+
+    // Step 2: Verify embedding was created
+    const docSnap = await db.collection('voiceNotes').doc(noteId).get();
+    const updatedNote = docSnap.data();
+
+    if (!updatedNote?.embeddingId) {
+      results.push({
+        name: 'RAG Test: Embedding created',
+        passed: false,
+        reason: 'embeddingId not found',
+        details: { embeddingError: updatedNote?.embeddingError },
+      });
+      return results;
+    }
+
+    logPass('Voice note embedded');
+    results.push({ name: 'RAG Test: Embedding created', passed: true });
+
+    // Step 3: Call queryRAG with a temporal query
+    // The query "昨天我做了什么饭" has low semantic similarity to "披萨"
+    // but should still find the note because of temporal filter + lowered minScore
+    const queryRAGUrl = `https://${FIREBASE_REGION}-${FIREBASE_PROJECT_ID}.cloudfunctions.net/queryRAG`;
+
+    log('', colors.reset);
+    log('  ┌─ Calling queryRAG Cloud Function', colors.cyan);
+    log('  │ Query: "昨天我做了什么饭" (What did I cook yesterday?)', colors.dim);
+    log(`  │ URL: ${queryRAGUrl}`, colors.dim);
+
+    const response = await fetch(queryRAGUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        data: {
+          query: '昨天我做了什么饭',
+          userId: TEST_USER_ID,
+          topK: 10,
+          // Don't set minScore - let it use the default (0.5) which should be
+          // lowered to 0.25 for temporal queries automatically
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      log(`  │ HTTP ${response.status}: ${errorText}`, colors.red);
+      log('  └─', colors.cyan);
+      results.push({
+        name: 'RAG Query execution',
+        passed: false,
+        reason: `HTTP ${response.status}: ${errorText}`,
+      });
+      return results;
+    }
+
+    const data = await response.json();
+    const result = data.result || {};
+
+    log(`  │ Response received`, colors.dim);
+    log(`  │ Context items: ${result.contextUsed?.length || 0}`, colors.dim);
+
+    // Step 4: Check if our note was found in the context
+    const contextUsed = result.contextUsed || [];
+    const foundOurNote = contextUsed.some((ctx: any) =>
+      ctx.snippet?.includes('披萨') ||
+      ctx.snippet?.includes('pizza') ||
+      ctx.text?.includes('披萨') ||
+      ctx.id?.includes(noteId)
+    );
+
+    if (foundOurNote) {
+      log(`  │ ✓ Found pizza note in context!`, colors.green);
+      log('  └─', colors.cyan);
+      logPass('RAG query with temporal filter found the note (lowered minScore working)');
+      results.push({
+        name: 'RAG temporal query finds note',
+        passed: true,
+        details: { contextCount: contextUsed.length },
+      });
+    } else {
+      log(`  │ ✗ Pizza note NOT found in context`, colors.red);
+      log(`  │ Context snippets:`, colors.dim);
+      contextUsed.slice(0, 3).forEach((ctx: any, i: number) => {
+        const snippet = ctx.snippet || ctx.text || '';
+        log(`  │   ${i + 1}. ${snippet.substring(0, 50)}...`, colors.dim);
+      });
+      log('  └─', colors.cyan);
+
+      logFail(
+        'RAG temporal query finds note',
+        'Note not found - minScore threshold may be filtering it out'
+      );
+      results.push({
+        name: 'RAG temporal query finds note',
+        passed: false,
+        reason: 'Note not found in RAG context. The lowered minScore for temporal queries may not be working.',
+        details: {
+          contextCount: contextUsed.length,
+          response: result.response?.substring(0, 100),
+        },
+      });
+    }
+
+    // Step 5: Check the AI response mentions pizza/cooking
+    const aiResponse = result.response || '';
+    log('', colors.reset);
+    log('  ┌─ AI Response', colors.cyan);
+    log(`  │ "${aiResponse.substring(0, 150)}..."`, colors.dim);
+    log('  └─', colors.cyan);
+
+    const mentionsCooking = aiResponse.includes('披萨') ||
+      aiResponse.includes('pizza') ||
+      aiResponse.includes('做') ||
+      aiResponse.includes('cook');
+
+    if (mentionsCooking) {
+      logPass('AI response mentions cooking/pizza');
+      results.push({ name: 'AI response relevant', passed: true });
+    } else {
+      logFail('AI response relevant', 'Response does not mention pizza or cooking');
+      results.push({
+        name: 'AI response relevant',
+        passed: false,
+        reason: 'AI response does not mention the cooking content',
+      });
+    }
+
+  } catch (error: any) {
+    results.push({
+      name: 'RAG Test execution',
+      passed: false,
+      reason: error.message,
+    });
+  } finally {
+    // Cleanup
+    log('', colors.reset);
+    log('  ┌─ Cleanup', colors.yellow);
+    try {
+      await db.collection('voiceNotes').doc(noteId).delete();
+      const index = pinecone.index(PINECONE_INDEX);
+      await index.deleteOne(`voice_${noteId}`);
+      log('  └─ ✓ Test data deleted', colors.green);
+    } catch (cleanupError) {
+      log(`  └─ ⚠ Cleanup warning: ${cleanupError}`, colors.yellow);
+    }
+  }
+
+  return results;
+}
+
+/**
  * Main test runner
  */
 async function runTests() {
   log('\n' + '='.repeat(60), colors.cyan);
   log('  Event Date Extraction - Regression Tests', colors.cyan);
   log('='.repeat(60), colors.cyan);
-  log(`\nTest User ID: ${TEST_USER_ID}`);
-  log(`Pinecone Index: ${PINECONE_INDEX}`);
+  log(`\nPinecone Index: ${PINECONE_INDEX}`);
   log(`Wait Time: ${WAIT_TIME_MS / 1000}s per test`);
 
   let db: admin.firestore.Firestore;
@@ -512,10 +804,16 @@ async function runTests() {
     db = initFirebase();
     pinecone = initPinecone();
     log('\n✓ Firebase and Pinecone initialized', colors.green);
+
+    // Ensure integration test user exists
+    TEST_USER_ID = await ensureTestUserExists();
+    log(`✓ Test user ready: ${TEST_USER_ID}`, colors.green);
   } catch (error: any) {
     log(`\n✗ Initialization failed: ${error.message}`, colors.red);
     process.exit(1);
   }
+
+  log(`\nTest User ID: ${TEST_USER_ID}`);
 
   const allResults: TestResult[] = [];
 
@@ -528,6 +826,9 @@ async function runTests() {
 
   const test3Results = await testTodayReference(db, pinecone);
   allResults.push(...test3Results);
+
+  const test4Results = await testRAGQueryWithTemporalFilter(db, pinecone);
+  allResults.push(...test4Results);
 
   // Summary
   const passed = allResults.filter(r => r.passed).length;
