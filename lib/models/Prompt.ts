@@ -115,6 +115,8 @@ export const SERVICE_FILE_MAP: Record<string, string> = {
   RAGEngine: 'rag.yaml',
   QueryRAGServer: 'rag.yaml',
   CarouselInsights: 'carouselInsights.yaml',
+  // Chat suggestions (Firestore only - no YAML)
+  ChatSuggestions: 'chatSuggestions.yaml',
 };
 
 /**
@@ -322,6 +324,18 @@ export const PROMPT_SERVICES = [
     platform: 'server' as const,
     usedBy: ['mobile', 'web'] as const,
     example: 'Discovering "You sleep 23% better on days when you play badminton"',
+  },
+  // Chat suggestions - Follow-up questions shown after AI responses
+  {
+    id: 'ChatSuggestions',
+    name: 'Chat Suggestions',
+    category: 'chat' as PromptCategoryId,
+    icon: '💡',
+    description: 'Follow-up question suggestions shown after AI responses in chat',
+    trigger: 'After AI generates a response, shown as clickable chips',
+    platform: 'mobile' as const,
+    usedBy: ['mobile'] as const,
+    example: 'Suggesting "What about yesterday?" or "Show me my photos"',
   },
 ] as const;
 

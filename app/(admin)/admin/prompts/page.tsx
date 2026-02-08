@@ -277,10 +277,10 @@ export default function AdminPromptsPage() {
           <button
             onClick={() => handleMigrateAll(true)}
             disabled={migrating || migratingAllLanguages}
-            className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Re-sync prompts from YAML files, overwriting existing Firestore data"
+            className="px-4 py-2 bg-gray-400 text-white rounded-md transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed line-through"
+            title="DEPRECATED: Use CLI script instead: npx tsx scripts/migrations/migrate-all-prompts-i18n.ts"
           >
-            {migrating ? 'Syncing...' : `Re-sync ${selectedLanguage.toUpperCase()}`}
+            {migrating ? 'Syncing...' : `Re-sync (Deprecated)`}
           </button>
           <button
             onClick={handleMigrateAllLanguages}
@@ -665,23 +665,24 @@ export default function AdminPromptsPage() {
           {/* CLI Migration Script Panel */}
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
             <h3 className="text-amber-800 font-medium mb-2 flex items-center gap-2">
-              <span>🔧</span> CLI Migration Script
+              <span>🔧</span> CLI Migration Script (Recommended)
             </h3>
             <p className="text-amber-700 text-sm mb-3">
-              For bulk migration or when updating YAML source files, use the CLI script which reads directly from YAML files:
+              To add new prompts or services, update the migration script and run it. This is the <strong>source of truth</strong> for all prompts:
             </p>
             <div className="bg-gray-900 text-gray-100 rounded-lg p-3 font-mono text-xs overflow-x-auto mb-3">
               <div className="text-green-400"># Navigate to personal-ai-web directory first</div>
               <div className="text-gray-300">cd personal-ai-web</div>
-              <div className="text-gray-300 mt-2"># Migrate all languages (skip existing)</div>
-              <div className="text-gray-300">npx tsx scripts/migrate-prompts.ts</div>
-              <div className="text-gray-300 mt-2"># Re-sync from YAML (overwrite existing)</div>
-              <div className="text-gray-300">npx tsx scripts/migrate-prompts.ts --overwrite</div>
+              <div className="text-gray-300 mt-2"># Run the i18n migration script (creates/updates all languages)</div>
+              <div className="text-gray-300">npx tsx scripts/migrations/migrate-all-prompts-i18n.ts</div>
             </div>
             <div className="text-amber-700 text-sm space-y-1">
-              <p><strong>Source:</strong> <code className="bg-amber-100 px-1 rounded text-xs">PersonalAIApp/firebase/functions/src/config/prompts/locales/[lang]/*.yaml</code></p>
-              <p><strong>Target:</strong> Firestore <code className="bg-amber-100 px-1 rounded text-xs">prompts/[service]/languages/[lang]</code></p>
-              <p><strong>When to use:</strong> After editing YAML files directly, or when the web &quot;Re-sync&quot; button doesn&apos;t include your service.</p>
+              <p><strong>Source:</strong> <code className="bg-amber-100 px-1 rounded text-xs">personal-ai-web/scripts/migrations/migrate-all-prompts-i18n.ts</code></p>
+              <p><strong>Target:</strong> Firestore <code className="bg-amber-100 px-1 rounded text-xs">promptConfigs/[lang]/services/[service]</code></p>
+              <p><strong>When to use:</strong> When adding new services, prompts, or translations. Edit the script first, then run it.</p>
+            </div>
+            <div className="mt-3 p-2 bg-amber-100 rounded text-amber-800 text-xs">
+              <strong>Note:</strong> The &quot;Re-sync from YAML&quot; button above is deprecated. YAML files are frozen fallbacks only. Use this CLI script for all prompt changes.
             </div>
           </div>
 
@@ -777,47 +778,49 @@ export default function AdminPromptsPage() {
               {/* Add New Prompts */}
               <div className="border-l-4 border-purple-500 pl-4">
                 <h4 className="font-semibold text-gray-900 mb-2">3. Add New Prompts</h4>
-                <p className="text-gray-600 mb-2">Create a YAML file for your prompts, then migrate to Firestore.</p>
+                <p className="text-gray-600 mb-2">Add prompts directly in the i18n migration script (source of truth), then run it.</p>
 
                 <div className="space-y-3">
                   <div>
-                    <p className="text-gray-700 font-medium mb-1">Step A: Create YAML file</p>
+                    <p className="text-gray-700 font-medium mb-1">Step A: Add to migration script</p>
                     <div className="bg-gray-900 text-gray-100 rounded-lg p-3 font-mono text-xs overflow-x-auto">
-                      <div className="text-green-400"># PersonalAIApp/firebase/functions/src/config/prompts/locales/en/newService.yaml</div>
-                      <div className="text-gray-300">version: &quot;1.0.0&quot;</div>
-                      <div className="text-gray-300">language: &quot;en&quot;</div>
-                      <div className="text-gray-300">lastUpdated: &quot;2025-01-21&quot;</div>
-                      <div className="text-gray-300">prompts:</div>
-                      <div className="text-yellow-300 pl-2">system:</div>
-                      <div className="text-yellow-300 pl-4">id: &quot;new-service-system&quot;</div>
-                      <div className="text-yellow-300 pl-4">service: &quot;NewService&quot;</div>
-                      <div className="text-yellow-300 pl-4">type: &quot;system&quot;  <span className="text-gray-500"># system | user | function</span></div>
-                      <div className="text-yellow-300 pl-4">description: &quot;System prompt for NewService&quot;</div>
-                      <div className="text-yellow-300 pl-4">content: |</div>
-                      <div className="text-yellow-300 pl-6">You are an AI assistant that...</div>
-                      <div className="text-yellow-300 pl-6">{`{{#if context}}`}Context: {`{{context}}`}{`{{/if}}`}</div>
-                      <div className="text-yellow-300 pl-4">metadata:</div>
-                      <div className="text-yellow-300 pl-6">model: &quot;gpt-4o-mini&quot;</div>
-                      <div className="text-yellow-300 pl-6">temperature: 0.7</div>
-                      <div className="text-yellow-300 pl-6">maxTokens: 300</div>
-                      <div className="text-yellow-300 pl-6">responseFormat: &quot;text&quot;  <span className="text-gray-500"># text | json_object</span></div>
-                      <div className="text-yellow-300 pl-4">variables:</div>
-                      <div className="text-yellow-300 pl-6">- name: &quot;context&quot;</div>
-                      <div className="text-yellow-300 pl-8">type: &quot;string&quot;</div>
-                      <div className="text-yellow-300 pl-8">required: false</div>
+                      <div className="text-green-400">// personal-ai-web/scripts/migrations/migrate-all-prompts-i18n.ts</div>
+                      <div className="text-gray-300 mt-2">// 1. Add translations for all languages in the translations object</div>
+                      <div className="text-gray-300">const translations: Record&lt;string, Translations&gt; = {`{`}</div>
+                      <div className="text-gray-300 pl-2">en: {`{`}</div>
+                      <div className="text-yellow-300 pl-4">new_prompt_content: &apos;Your prompt content here...&apos;,</div>
+                      <div className="text-gray-300 pl-2">{`}`},</div>
+                      <div className="text-gray-300 pl-2">zh: {`{`}</div>
+                      <div className="text-yellow-300 pl-4">new_prompt_content: &apos;你的提示内容...&apos;,</div>
+                      <div className="text-gray-300 pl-2">{`}`},</div>
+                      <div className="text-gray-300 pl-2">// ... other languages</div>
+                      <div className="text-gray-300">{`}`};</div>
+                      <div className="text-gray-300 mt-2">// 2. Add to the builder function for your service</div>
+                      <div className="text-gray-300">function buildYourServiceDoc(lang: string, t: Translations) {`{`}</div>
+                      <div className="text-gray-300 pl-2">return {`{`}</div>
+                      <div className="text-gray-300 pl-4">prompts: {`{`}</div>
+                      <div className="text-yellow-300 pl-6">new_prompt: {`{`}</div>
+                      <div className="text-yellow-300 pl-8">id: &apos;new-prompt-id&apos;,</div>
+                      <div className="text-yellow-300 pl-8">service: &apos;YourService&apos;,</div>
+                      <div className="text-yellow-300 pl-8">type: &apos;system&apos;,</div>
+                      <div className="text-yellow-300 pl-8">content: t.new_prompt_content,</div>
+                      <div className="text-yellow-300 pl-8">metadata: {`{`} model: &apos;gpt-4o-mini&apos;, temperature: 0.7 {`}`}</div>
+                      <div className="text-yellow-300 pl-6">{`}`},</div>
+                      <div className="text-gray-300 pl-4">{`}`}</div>
+                      <div className="text-gray-300 pl-2">{`}`};</div>
+                      <div className="text-gray-300">{`}`}</div>
                     </div>
                   </div>
 
                   <div>
-                    <p className="text-gray-700 font-medium mb-1">Step B: Migrate to Firestore</p>
-                    <p className="text-gray-600 text-xs mb-2">Use the &quot;Migrate&quot; or &quot;Re-sync&quot; button on this page, or run the CLI script:</p>
+                    <p className="text-gray-700 font-medium mb-1">Step B: Run migration script</p>
                     <div className="bg-gray-900 text-gray-100 rounded-lg p-3 font-mono text-xs overflow-x-auto">
                       <div className="text-green-400"># From personal-ai-web directory</div>
-                      <div className="text-gray-300">npx tsx scripts/migrate-prompts.ts</div>
-                      <div className="text-gray-300">npx tsx scripts/migrate-prompts.ts --overwrite  <span className="text-gray-500"># To replace existing</span></div>
+                      <div className="text-gray-300">cd personal-ai-web</div>
+                      <div className="text-gray-300">npx tsx scripts/migrations/migrate-all-prompts-i18n.ts</div>
                     </div>
                     <p className="text-gray-500 text-xs mt-2">
-                      The script reads YAML files from <code className="bg-gray-100 px-1 rounded">PersonalAIApp/firebase/functions/src/config/prompts/locales/</code> and syncs them to Firestore.
+                      This creates/updates Firestore documents at <code className="bg-gray-100 px-1 rounded">promptConfigs/[lang]/services/[service]</code> for all 9 languages.
                     </p>
                   </div>
                 </div>
@@ -864,16 +867,16 @@ export default function AdminPromptsPage() {
                       <td className="py-1 font-mono text-gray-900">personal-ai-web/lib/models/Prompt.ts</td>
                     </tr>
                     <tr className="border-b border-gray-200">
-                      <td className="py-1 text-gray-600">YAML Prompts</td>
-                      <td className="py-1 font-mono text-gray-900">PersonalAIApp/firebase/functions/src/config/prompts/locales/</td>
+                      <td className="py-1 text-gray-600">Migration Script (Source of Truth)</td>
+                      <td className="py-1 font-mono text-gray-900">personal-ai-web/scripts/migrations/migrate-all-prompts-i18n.ts</td>
                     </tr>
                     <tr className="border-b border-gray-200">
-                      <td className="py-1 text-gray-600">PromptLoader</td>
+                      <td className="py-1 text-gray-600">PromptLoader (Cloud Functions)</td>
                       <td className="py-1 font-mono text-gray-900">PersonalAIApp/firebase/functions/src/config/prompts/loader.ts</td>
                     </tr>
                     <tr className="border-b border-gray-200">
-                      <td className="py-1 text-gray-600">Migration Script</td>
-                      <td className="py-1 font-mono text-gray-900">personal-ai-web/scripts/migrate-prompts.ts</td>
+                      <td className="py-1 text-gray-600">YAML Prompts (Deprecated Fallback)</td>
+                      <td className="py-1 font-mono text-gray-900 text-gray-500">PersonalAIApp/firebase/functions/src/config/prompts/locales/</td>
                     </tr>
                     <tr>
                       <td className="py-1 text-gray-600">Full Documentation</td>
