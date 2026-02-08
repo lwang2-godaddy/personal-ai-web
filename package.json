@@ -11,7 +11,8 @@
     "migrate:users": "tsx scripts/migrate-users.ts",
     "set-admin": "tsx scripts/set-admin.ts",
     "migrate:prompts": "tsx scripts/migrate-prompts.ts",
-    "init-subscription-config": "tsx scripts/init-subscription-config.ts"
+    "init-subscription-config": "tsx scripts/init-subscription-config.ts",
+    "test:event-date": "tsx scripts/test-event-date-extraction.ts"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.9",
@@ -31,7 +32,7 @@
     "react-redux": "^9.2.0",
     "recharts": "^3.6.0",
     "redux-persist": "^6.0.0",
-    "vercel": "^50.10.1"
+    "vercel": "^50.13.2"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

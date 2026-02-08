@@ -302,19 +302,30 @@ firebase deploy
 
 **Note:** Cloud Functions are deployed from the mobile app repository: `PersonalAIApp/firebase/functions/`
 
-### Admin Scripts
+### Scripts (Centralized Location)
 
-**Migrate users from PersonalAIApp to personal-ai-web:**
+**IMPORTANT:** All test scripts, migration scripts, and admin scripts should be in `personal-ai-web/scripts/`. This is the single source for operational scripts across both repositories.
+
+**Available scripts:**
 ```bash
-npm run migrate:users
-# Requires: FIREBASE_PROJECT_ID_WEB, FIREBASE_PROJECT_ID_APP, GOOGLE_APPLICATION_CREDENTIALS
+# Regression tests
+npm run test:event-date           # Test event date extraction for temporal queries
+
+# Migration scripts
+npm run migrate:users             # Migrate users between Firebase projects
+npm run migrate:prompts           # Migrate AI prompts to Firestore
+
+# Admin scripts
+npm run set-admin -- --uid=<uid>  # Set admin role for a user
+npm run init-subscription-config  # Initialize subscription config
 ```
 
-**Set admin role for a user:**
-```bash
-npm run set-admin -- --uid=<user_id>
-# Example: npm run set-admin -- --uid=abc123xyz
-```
+**Why centralized here:**
+- Dependencies (tsx, dotenv, firebase-admin) already installed
+- Web project has admin dashboard integration
+- Easier to maintain in one location
+
+**See also:** `scripts/REGRESSION_TESTS.md` for test documentation
 
 ### Vercel Deployment
 
@@ -492,10 +503,14 @@ personal-ai-web/
 │       ├── version.ts           # Version utility
 │       └── index.ts             # Utility exports
 ├── public/                      # Static assets
-├── scripts/                     # Build/admin scripts
+├── scripts/                     # ALL scripts (tests, migrations, admin)
 │   ├── generate-version.js      # Build-time version extraction
 │   ├── migrate-users.ts         # User migration script
-│   └── set-admin.ts             # Admin role assignment
+│   ├── migrate-prompts.ts       # Prompt migration to Firestore
+│   ├── set-admin.ts             # Admin role assignment
+│   ├── init-subscription-config.ts # Subscription config init
+│   ├── test-event-date-extraction.ts # Regression test: temporal queries
+│   └── REGRESSION_TESTS.md      # Test documentation
 ├── firebase.json                # Firebase configuration
 ├── firestore.rules              # Firestore security rules
 ├── firestore.indexes.json       # Firestore indexes
