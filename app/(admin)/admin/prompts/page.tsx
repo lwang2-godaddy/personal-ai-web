@@ -463,23 +463,14 @@ export default function AdminPromptsPage() {
                         <div className="flex flex-col items-end gap-1">
                           <span className="text-xs text-gray-500 font-medium">Used by:</span>
                           <div className="flex gap-1">
-                            {('usedBy' in service) && (service.usedBy as readonly string[])?.includes('mobile') && (
+                            {(service.usedBy as readonly string[])?.includes('mobile') && (
                               <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-700">
                                 📱 Mobile
                               </span>
                             )}
-                            {('usedBy' in service) && (service.usedBy as readonly string[])?.includes('web') && (
+                            {(service.usedBy as readonly string[])?.includes('web') && (
                               <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700">
                                 🌐 Web
-                              </span>
-                            )}
-                            {!('usedBy' in service) && (
-                              <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
-                                service.platform === 'mobile'
-                                  ? 'bg-blue-100 text-blue-700'
-                                  : 'bg-purple-100 text-purple-700'
-                              }`}>
-                                {service.platform === 'mobile' ? '📱 Mobile' : '☁️ Server'}
                               </span>
                             )}
                           </div>
