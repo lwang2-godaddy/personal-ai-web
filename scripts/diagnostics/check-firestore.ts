@@ -321,6 +321,90 @@ async function listPromptServices() {
   });
 }
 
+// Command: Check prompts collection (used by CarouselInsights/FunFacts)
+async function checkPromptsCollection(service?: string, language?: string, showContent: boolean = false) {
+  const db = admin.firestore();
+
+  log(`\n🎠 Checking Prompts Collection (FunFacts/CarouselInsights)\n`);
+
+  const languages = language ? [language] : ['en', 'zh', 'ja', 'ko', 'es', 'fr', 'de', 'it', 'pt'];
+
+  if (service) {
+    // Check specific service across languages
+    log(`Service: ${colors.bright}${service}${colors.reset}\n`);
+
+    for (const lang of languages) {
+      const docId = `${lang}_${service}`;
+      const docRef = db.collection('prompts').doc(docId);
+      const docSnap = await docRef.get();
+
+      if (docSnap.exists) {
+        const data = docSnap.data();
+        const promptCount = data?.prompts ? Object.keys(data.prompts).length : 0;
+        const promptKeys = data?.prompts ? Object.keys(data.prompts).slice(0, 5).join(', ') : '';
+        logSuccess(`[${lang}] Found - ${promptCount} prompts, version: ${data?.version || 'N/A'}`);
+        if (promptKeys) {
+          log(`    Prompts: ${promptKeys}${promptCount > 5 ? '...' : ''}`);
+        }
+
+        // Show prompt content if requested
+        if (showContent && data?.prompts) {
+          log(`\n${colors.bright}Prompt Content:${colors.reset}`);
+          for (const [key, prompt] of Object.entries(data.prompts)) {
+            const p = prompt as any;
+            log(`\n  ${colors.cyan}${key}${colors.reset}:`);
+            log(`    Type: ${p.type || 'N/A'}`);
+            if (p.content) {
+              const contentPreview = p.content.length > 200
+                ? p.content.substring(0, 200) + '...'
+                : p.content;
+              log(`    Content: ${contentPreview.replace(/\n/g, '\\n')}`);
+            }
+          }
+        }
+      } else {
+        logError(`[${lang}] NOT FOUND (looking for prompts/${docId})`);
+      }
+    }
+  } else {
+    // List all documents in prompts collection
+    log(`Listing all documents in 'prompts' collection:\n`);
+
+    const snapshot = await db.collection('prompts').get();
+
+    if (snapshot.empty) {
+      logWarning('No documents found in prompts collection');
+      return;
+    }
+
+    logSuccess(`Found ${snapshot.size} document(s)\n`);
+
+    // Group by service
+    const byService: Map<string, string[]> = new Map();
+
+    snapshot.docs.forEach(doc => {
+      const data = doc.data();
+      const service = data.service || 'Unknown';
+      const language = data.language || 'N/A';
+      const promptCount = data.prompts ? Object.keys(data.prompts).length : 0;
+
+      if (!byService.has(service)) {
+        byService.set(service, []);
+      }
+      byService.get(service)!.push(`${language} (${promptCount} prompts)`);
+
+      log(`  ${colors.cyan}${doc.id}${colors.reset}`);
+      log(`    Service: ${service}, Language: ${language}, Prompts: ${promptCount}, Version: ${data.version || 'N/A'}`);
+    });
+
+    // Summary by service
+    log(`\n${colors.bright}Summary by Service:${colors.reset}`);
+    byService.forEach((langs, svc) => {
+      log(`  ${colors.cyan}${svc}${colors.reset}: ${langs.join(', ')}`);
+    });
+  }
+}
+
 // Command: Count documents in a collection
 async function countDocuments(collectionPath: string) {
   const db = admin.firestore();
@@ -394,9 +478,15 @@ ${colors.cyan}Commands:${colors.reset}
     Example: doc promptConfigs/en/services/ChatSuggestions --full
 
   ${colors.bright}prompts${colors.reset} [service] [language]
-    Check prompt configs
+    Check prompt configs (promptConfigs/{lang}/services/{service})
     Example: prompts ChatSuggestions en
     Example: prompts (lists all services)
+
+  ${colors.bright}funfacts${colors.reset} [service] [language] [--content]
+    Check prompts collection (used by CarouselInsights/FunFacts)
+    Format: prompts/{lang}_{service}
+    Example: funfacts CarouselInsights zh --content
+    Example: funfacts (lists all)
 
   ${colors.bright}prompt-services${colors.reset}
     List all prompt service documents across all languages
@@ -418,6 +508,15 @@ ${colors.cyan}Examples:${colors.reset}
 
   # Check prompts for a specific service
   npx tsx scripts/diagnostics/check-firestore.ts prompts ChatSuggestions
+
+  # Check Chinese fun facts (CarouselInsights) prompts
+  npx tsx scripts/diagnostics/check-firestore.ts funfacts CarouselInsights zh
+
+  # Show Chinese fun facts prompt content
+  npx tsx scripts/diagnostics/check-firestore.ts funfacts CarouselInsights zh --content
+
+  # List all documents in prompts collection
+  npx tsx scripts/diagnostics/check-firestore.ts funfacts
 
   # Count users
   npx tsx scripts/diagnostics/check-firestore.ts count users
@@ -465,6 +564,12 @@ async function main() {
     case 'prompt-services':
     case 'services':
       await listPromptServices();
+      break;
+
+    case 'funfacts':
+    case 'carousel':
+    case 'prompts-v2':
+      await checkPromptsCollection(args[1], args[2], args.includes('--content'));
       break;
 
     case 'count':

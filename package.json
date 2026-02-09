@@ -14,6 +14,7 @@
     "init-subscription-config": "tsx scripts/init-subscription-config.ts",
     "test": "tsx scripts/integration-tests/run-all.ts",
     "test:event-date": "tsx scripts/integration-tests/run-all.ts --filter event-date",
+    "test:insights": "tsx scripts/integration-tests/run-all.ts --filter insights-orchestrator",
     "check:ingestion": "tsx scripts/diagnostics/check-voice-ingestion.ts",
     "check:firestore": "tsx scripts/diagnostics/check-firestore.ts"
   },

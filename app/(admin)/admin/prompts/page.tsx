@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { apiGet, apiPost } from '@/lib/api/client';
-import { FirestorePromptConfig, PROMPT_SERVICES, PROMPT_CATEGORIES, SUPPORTED_LANGUAGES, PromptService } from '@/lib/models/Prompt';
+import { FirestorePromptConfig, PROMPT_SERVICES, PROMPT_CATEGORIES, SERVICE_OUTPUT_CATEGORIES, SUPPORTED_LANGUAGES, PromptService, LIFE_FEED_PROMPT_POST_TYPES } from '@/lib/models/Prompt';
 import { getOperationsForService } from '@/lib/models/ServiceOperations';
 import { useTrackPage } from '@/lib/hooks/useTrackPage';
 import { TRACKED_SCREENS } from '@/lib/models/BehaviorEvent';
@@ -214,8 +214,14 @@ export default function AdminPromptsPage() {
     };
   });
 
-  // Group services by category
-  const servicesByCategory = PROMPT_CATEGORIES.map(category => ({
+  // Group services by OUTPUT category (matches /admin/insights?tab=debug structure)
+  const servicesByOutputCategory = SERVICE_OUTPUT_CATEGORIES.map(category => ({
+    ...category,
+    services: serviceMatrix.filter(s => (category.services as readonly string[]).includes(s.id)),
+  }));
+
+  // Legacy: Group services by feature category (for reference)
+  const servicesByFeatureCategory = PROMPT_CATEGORIES.map(category => ({
     ...category,
     services: serviceMatrix.filter(s => s.category === category.id),
   }));
@@ -419,8 +425,8 @@ export default function AdminPromptsPage() {
         </div>
       ) : (
         <>
-          {/* Services Grouped by Category */}
-          {servicesByCategory.map(category => (
+          {/* Services Grouped by Output Category (matches /admin/insights?tab=debug) */}
+          {servicesByOutputCategory.map(category => (
             <div key={category.id} className="space-y-4">
               {/* Category Header */}
               <div className="border-b border-gray-200 pb-2">
@@ -428,7 +434,12 @@ export default function AdminPromptsPage() {
                   <span className="text-xl">{category.icon}</span>
                   {category.name}
                 </h2>
-                <p className="text-sm text-gray-500 mt-1">{category.description}</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <p className="text-sm text-gray-500">{category.description}</p>
+                  <span className="px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded-full">
+                    → {category.outputCollection}
+                  </span>
+                </div>
               </div>
 
               {/* Services Grid */}
@@ -512,27 +523,45 @@ export default function AdminPromptsPage() {
                             Prompts ({service.config ? Object.keys(service.config.prompts).length : 0}):
                           </p>
                           {service.config && (
-                            <div className="space-y-1 max-h-32 overflow-y-auto">
-                              {Object.values(service.config.prompts).map((prompt: any) => (
-                                <div key={prompt.id} className="flex items-center gap-1.5">
-                                  {/* Type Badge */}
-                                  <span
-                                    className={`px-1.5 py-0.5 text-xs rounded shrink-0 ${
-                                      prompt.type === 'system'
-                                        ? 'bg-purple-100 text-purple-700'
-                                        : prompt.type === 'user'
-                                        ? 'bg-blue-100 text-blue-700'
-                                        : 'bg-yellow-100 text-yellow-700'
-                                    }`}
-                                  >
-                                    {prompt.type}
-                                  </span>
-                                  {/* Prompt ID */}
-                                  <span className="text-xs text-gray-600 truncate" title={prompt.description || prompt.id}>
-                                    {prompt.id}
-                                  </span>
-                                </div>
-                              ))}
+                            <div className="space-y-1 max-h-40 overflow-y-auto">
+                              {Object.values(service.config.prompts).map((prompt: any) => {
+                                // Get per-prompt context sources for LifeFeedGenerator
+                                const promptContextSources = service.id === 'LifeFeedGenerator' && LIFE_FEED_PROMPT_POST_TYPES[prompt.id]
+                                  ? LIFE_FEED_PROMPT_POST_TYPES[prompt.id].contextSources
+                                  : [];
+                                const contextIcons: Record<string, string> = {
+                                  textNotes: '📝', voiceNotes: '🎤', photoMemories: '📸',
+                                  healthData: '❤️', locationData: '📍', events: '📅',
+                                  memories: '🧠', chatHistory: '💬', moodEntries: '😊',
+                                };
+
+                                return (
+                                  <div key={prompt.id} className="flex items-center gap-1.5">
+                                    {/* Type Badge */}
+                                    <span
+                                      className={`px-1.5 py-0.5 text-xs rounded shrink-0 ${
+                                        prompt.type === 'system'
+                                          ? 'bg-purple-100 text-purple-700'
+                                          : prompt.type === 'user'
+                                          ? 'bg-blue-100 text-blue-700'
+                                          : 'bg-yellow-100 text-yellow-700'
+                                      }`}
+                                    >
+                                      {prompt.type}
+                                    </span>
+                                    {/* Prompt ID */}
+                                    <span className="text-xs text-gray-600 truncate" title={prompt.description || prompt.id}>
+                                      {prompt.id}
+                                    </span>
+                                    {/* Per-prompt context sources (LifeFeedGenerator only) */}
+                                    {promptContextSources.length > 0 && (
+                                      <span className="text-xs text-gray-400 ml-auto shrink-0" title={`Uses: ${promptContextSources.join(', ')}`}>
+                                        {promptContextSources.map((c: string) => contextIcons[c] || '📦').join('')}
+                                      </span>
+                                    )}
+                                  </div>
+                                );
+                              })}
                             </div>
                           )}
                           {!service.config && (
@@ -579,6 +608,49 @@ export default function AdminPromptsPage() {
                                   </span>
                                 )}
                               </div>
+                            </div>
+                          );
+                        })()}
+
+                        {/* Context Sources */}
+                        {(() => {
+                          const contextSources = (service as any).contextSources || [];
+                          const collectionIcons: Record<string, string> = {
+                            textNotes: '📝',
+                            voiceNotes: '🎤',
+                            photoMemories: '📸',
+                            healthData: '❤️',
+                            locationData: '📍',
+                            events: '📅',
+                            memories: '🧠',
+                            chatHistory: '💬',
+                            moodEntries: '😊',
+                          };
+
+                          return (
+                            <div className="mb-3">
+                              <p className="text-xs font-medium text-gray-500 mb-1.5">Context Sources:</p>
+                              {contextSources.length > 0 ? (
+                                <div className="flex flex-wrap gap-1">
+                                  {contextSources.slice(0, 4).map((src: any) => (
+                                    <span
+                                      key={src.collection}
+                                      className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-emerald-50 text-emerald-700 cursor-help"
+                                      title={`${src.description}\n\nTrigger: ${src.trigger}`}
+                                    >
+                                      <span className="mr-1">{collectionIcons[src.collection] || '📦'}</span>
+                                      {src.collection}
+                                    </span>
+                                  ))}
+                                  {contextSources.length > 4 && (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-gray-50 text-gray-500">
+                                      +{contextSources.length - 4} more
+                                    </span>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-xs text-gray-400 italic">Direct user input (no collections)</span>
+                              )}
                             </div>
                           );
                         })()}
@@ -650,6 +722,33 @@ export default function AdminPromptsPage() {
               </div>
             </div>
           ))}
+
+          {/* Service Categorization Info */}
+          <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+            <h3 className="text-indigo-800 font-medium mb-2 flex items-center gap-2">
+              <span>📊</span> Understanding Service Categories
+            </h3>
+            <p className="text-indigo-700 text-sm mb-3">
+              Services are grouped by their <strong>output destination</strong> (where they write data), matching the structure in{' '}
+              <Link href="/admin/insights?tab=debug" className="underline hover:text-indigo-900">
+                Insights Debug Tab
+              </Link>.
+            </p>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+              <div className="bg-white/60 rounded p-2">
+                <span className="font-medium text-indigo-800">Context Sources</span>
+                <p className="text-indigo-600">Collections the service READS from</p>
+              </div>
+              <div className="bg-white/60 rounded p-2">
+                <span className="font-medium text-indigo-800">Output Collection</span>
+                <p className="text-indigo-600">Where the service WRITES to</p>
+              </div>
+              <div className="bg-white/60 rounded p-2">
+                <span className="font-medium text-indigo-800">Trigger</span>
+                <p className="text-indigo-600">What causes data to be created</p>
+              </div>
+            </div>
+          </div>
 
           {/* Info Panel */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">

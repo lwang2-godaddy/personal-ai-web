@@ -9,10 +9,11 @@ import {
   CategoriesTab,
   LifeKeywordsTab,
   AIFeaturesTab,
+  DebugTab,
 } from '@/components/admin/insights';
 
-// Tab definitions - reorganized to include Categories
-type TabId = 'overview' | 'life-feed' | 'categories' | 'life-keywords' | 'ai-features';
+// Tab definitions - reorganized to include Categories and Debug
+type TabId = 'overview' | 'life-feed' | 'categories' | 'life-keywords' | 'ai-features' | 'debug';
 
 const TABS: { id: TabId; label: string; icon: string; description: string }[] = [
   { id: 'overview', label: 'Overview', icon: '📊', description: 'Dashboard & settings' },
@@ -20,6 +21,7 @@ const TABS: { id: TabId; label: string; icon: string; description: string }[] = 
   { id: 'categories', label: 'Categories', icon: '📁', description: '12 unified categories' },
   { id: 'life-keywords', label: 'Life Keywords', icon: '🔑', description: 'Themes & patterns' },
   { id: 'ai-features', label: 'AI Features', icon: '🤖', description: '4 analysis features' },
+  { id: 'debug', label: 'Debug', icon: '🔧', description: 'Architecture & data' },
 ];
 
 /**
@@ -57,6 +59,8 @@ export default function AdminInsightsPage() {
         return <LifeKeywordsTab onSaving={setSaving} />;
       case 'ai-features':
         return <AIFeaturesTab onSaving={setSaving} />;
+      case 'debug':
+        return <DebugTab onSaving={setSaving} />;
       default:
         return null;
     }

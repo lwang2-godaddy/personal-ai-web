@@ -155,6 +155,146 @@ export const PROMPT_CATEGORIES = [
 export type PromptCategoryId = typeof PROMPT_CATEGORIES[number]['id'];
 
 /**
+ * Service categories by OUTPUT destination
+ * Matches the structure shown in /admin/insights?tab=debug
+ * This helps users understand where each service writes data TO
+ */
+export const SERVICE_OUTPUT_CATEGORIES = [
+  {
+    id: 'life_feed_writers',
+    name: 'Life Feed Writers',
+    icon: '📝',
+    description: 'Services that write to lifeFeedPosts collection',
+    outputCollection: 'lifeFeedPosts',
+    services: ['LifeFeedGenerator'], // InsightsIntegrationService is not a prompt service
+  },
+  {
+    id: 'chat_services',
+    name: 'Chat & RAG Services',
+    icon: '💬',
+    description: 'Services that power chat and context retrieval',
+    outputCollection: 'chatHistory (responses)',
+    services: ['OpenAIService', 'RAGEngine', 'QueryRAGServer', 'ChatSuggestions'],
+  },
+  {
+    id: 'analysis_services',
+    name: 'Content Analysis Services',
+    icon: '🔬',
+    description: 'Services that analyze user content (triggered by data creation)',
+    outputCollection: 'Various (moodEntries, events, memories)',
+    services: ['SentimentAnalysisService', 'EntityExtractionService', 'EventExtractionService', 'MemoryGeneratorService'],
+  },
+  {
+    id: 'insights_services',
+    name: 'Insights & Analytics Services',
+    icon: '📊',
+    description: 'Services that generate insights from aggregated data',
+    outputCollection: 'Various (funFacts, lifeKeywords, lifeConnections)',
+    services: ['CarouselInsights', 'KeywordGenerator', 'LifeConnectionsService', 'SuggestionEngine'],
+  },
+  {
+    id: 'summary_services',
+    name: 'Summary & Memory Services',
+    icon: '📅',
+    description: 'Services that generate summaries and surface memories',
+    outputCollection: 'Push notifications, thisDayMemories',
+    services: ['DailySummaryService', 'ThisDayService'],
+  },
+  {
+    id: 'other_services',
+    name: 'Other AI Services',
+    icon: '✨',
+    description: 'Additional AI-powered services',
+    outputCollection: 'funFacts',
+    services: ['FunFactsService'],
+  },
+] as const;
+
+export type ServiceOutputCategoryId = typeof SERVICE_OUTPUT_CATEGORIES[number]['id'];
+
+/**
+ * Context source - Firestore collection that provides data to a service
+ */
+export interface ContextSource {
+  collection: string;
+  description: string;
+  trigger: string; // What conditions generate data in this collection
+}
+
+/**
+ * Prompt selection logic types
+ */
+export type SelectionLogic =
+  | 'always'           // Single prompt, always used
+  | 'random'           // Random selection among variants
+  | 'conditional'      // Selected based on conditions
+  | 'personality'      // Selected based on user personality setting
+  | 'context-based';   // Selected based on available context data
+
+/**
+ * Prompt usage information - how and when a prompt gets used
+ */
+export interface PromptUsageInfo {
+  dataTimeRange: string;       // e.g., "Last 7 days", "Last 24 hours", "Real-time"
+  selectionLogic: SelectionLogic;
+  variantGroup?: string;       // Group name if part of random selection
+  variants?: string[];         // Other prompts in the same variant group
+  cooldownDays?: number;       // Cooldown between generations (for LifeFeed)
+}
+
+/**
+ * Common context source definitions with triggers
+ * Reusable across services to maintain consistency
+ */
+export const CONTEXT_SOURCES = {
+  textNotes: {
+    collection: 'textNotes',
+    description: 'Diary entries and quick thoughts',
+    trigger: 'User creates diary entry or quick thought in app',
+  },
+  voiceNotes: {
+    collection: 'voiceNotes',
+    description: 'Transcribed voice recordings',
+    trigger: 'User records voice note → Whisper transcription',
+  },
+  photoMemories: {
+    collection: 'photoMemories',
+    description: 'Photos with AI descriptions',
+    trigger: 'User uploads photo → GPT-4o vision generates description',
+  },
+  healthData: {
+    collection: 'healthData',
+    description: 'Steps, sleep, workouts from HealthKit',
+    trigger: 'HealthKit sync (iOS) or Google Fit sync (Android)',
+  },
+  locationData: {
+    collection: 'locationData',
+    description: 'Places visited with activity tags',
+    trigger: 'Background location tracking detects significant visit (5+ min dwell)',
+  },
+  events: {
+    collection: 'events',
+    description: 'Calendar events and extracted dates',
+    trigger: 'EventExtractionService extracts dates from text/voice notes',
+  },
+  memories: {
+    collection: 'memories',
+    description: 'AI-enriched memory summaries',
+    trigger: 'MemoryGeneratorService processes new text/voice/photo data',
+  },
+  chatHistory: {
+    collection: 'chatHistory',
+    description: 'Previous conversation context',
+    trigger: 'User sends message in chat → stored for context',
+  },
+  moodEntries: {
+    collection: 'moodEntries',
+    description: 'Emotion tracking and sentiment',
+    trigger: 'SentimentAnalysisService analyzes new text/voice notes',
+  },
+} as const;
+
+/**
  * Services that use the prompt system
  * Organized by AI Features (from mobile app Settings) with metadata for the admin UI
  *
@@ -176,6 +316,8 @@ export const PROMPT_SERVICES = [
     platform: 'mobile' as const,
     usedBy: ['mobile'] as const,
     example: 'User asks "What did I do yesterday?"',
+    contextSources: [] as ContextSource[], // Direct user input, no collections
+    usageInfo: { dataTimeRange: 'Real-time (user input)', selectionLogic: 'always' as SelectionLogic },
   },
   {
     id: 'RAGEngine',
@@ -187,6 +329,16 @@ export const PROMPT_SERVICES = [
     platform: 'mobile' as const,
     usedBy: ['mobile'] as const,
     example: 'Finding relevant health/location data for query',
+    contextSources: [
+      CONTEXT_SOURCES.textNotes,
+      CONTEXT_SOURCES.voiceNotes,
+      CONTEXT_SOURCES.photoMemories,
+      CONTEXT_SOURCES.healthData,
+      CONTEXT_SOURCES.locationData,
+      CONTEXT_SOURCES.events,
+      CONTEXT_SOURCES.memories,
+    ] as ContextSource[],
+    usageInfo: { dataTimeRange: 'All time (semantic search)', selectionLogic: 'always' as SelectionLogic },
   },
   {
     id: 'QueryRAGServer',
@@ -198,6 +350,16 @@ export const PROMPT_SERVICES = [
     platform: 'server' as const,
     usedBy: ['mobile', 'web'] as const,
     example: 'Chat with Friendly, Professional, Witty, Coach, or Chill personality',
+    contextSources: [
+      CONTEXT_SOURCES.textNotes,
+      CONTEXT_SOURCES.voiceNotes,
+      CONTEXT_SOURCES.photoMemories,
+      CONTEXT_SOURCES.healthData,
+      CONTEXT_SOURCES.locationData,
+      CONTEXT_SOURCES.events,
+      CONTEXT_SOURCES.chatHistory,
+    ] as ContextSource[],
+    usageInfo: { dataTimeRange: 'All time (semantic search)', selectionLogic: 'personality' as SelectionLogic },
   },
   // Life Feed - AI-generated social-style posts
   {
@@ -210,6 +372,15 @@ export const PROMPT_SERVICES = [
     platform: 'server' as const,
     usedBy: ['mobile', 'web'] as const,
     example: 'Creating "You visited 3 new places this week!"',
+    contextSources: [
+      CONTEXT_SOURCES.healthData,
+      CONTEXT_SOURCES.locationData,
+      CONTEXT_SOURCES.photoMemories,
+      CONTEXT_SOURCES.voiceNotes,
+      CONTEXT_SOURCES.textNotes,
+      CONTEXT_SOURCES.moodEntries,
+    ] as ContextSource[],
+    usageInfo: { dataTimeRange: 'Last 7 days (per prompt varies)', selectionLogic: 'random' as SelectionLogic },
   },
   {
     id: 'DailySummaryService',
@@ -221,6 +392,13 @@ export const PROMPT_SERVICES = [
     platform: 'server' as const,
     usedBy: ['mobile', 'web'] as const,
     example: 'Creating "You walked 12,000 steps and completed 2 workouts today!"',
+    contextSources: [
+      CONTEXT_SOURCES.healthData,
+      CONTEXT_SOURCES.locationData,
+      CONTEXT_SOURCES.events,
+      CONTEXT_SOURCES.moodEntries,
+    ] as ContextSource[],
+    usageInfo: { dataTimeRange: 'Last 24 hours (daily) or Last 7 days (weekly)', selectionLogic: 'conditional' as SelectionLogic },
   },
   // Fun Facts - Daily insights & smart suggestions
   {
@@ -233,6 +411,13 @@ export const PROMPT_SERVICES = [
     platform: 'server' as const,
     usedBy: ['mobile'] as const,
     example: 'Suggesting "Time for your daily walk?"',
+    contextSources: [
+      CONTEXT_SOURCES.healthData,
+      CONTEXT_SOURCES.locationData,
+      CONTEXT_SOURCES.events,
+      CONTEXT_SOURCES.moodEntries,
+    ] as ContextSource[],
+    usageInfo: { dataTimeRange: 'Last 7 days + upcoming events', selectionLogic: 'context-based' as SelectionLogic },
   },
   {
     id: 'KeywordGenerator',
@@ -244,6 +429,13 @@ export const PROMPT_SERVICES = [
     platform: 'server' as const,
     usedBy: ['mobile', 'web'] as const,
     example: 'Generating "Badminton Renaissance" from weekly badminton activity',
+    contextSources: [
+      CONTEXT_SOURCES.textNotes,
+      CONTEXT_SOURCES.voiceNotes,
+      CONTEXT_SOURCES.locationData,
+      CONTEXT_SOURCES.photoMemories,
+    ] as ContextSource[], // Via Pinecone vectors
+    usageInfo: { dataTimeRange: 'Configurable (7/30/90/365 days)', selectionLogic: 'conditional' as SelectionLogic },
   },
   {
     id: 'CarouselInsights',
@@ -255,6 +447,13 @@ export const PROMPT_SERVICES = [
     platform: 'mobile' as const,
     usedBy: ['mobile'] as const,
     example: 'Generating "You walked 20% more this week than last!"',
+    contextSources: [
+      CONTEXT_SOURCES.healthData,
+      CONTEXT_SOURCES.locationData,
+      CONTEXT_SOURCES.photoMemories,
+      CONTEXT_SOURCES.voiceNotes,
+    ] as ContextSource[],
+    usageInfo: { dataTimeRange: 'Last 7 days vs previous 7 days', selectionLogic: 'always' as SelectionLogic },
   },
   {
     id: 'ThisDayService',
@@ -266,6 +465,10 @@ export const PROMPT_SERVICES = [
     platform: 'mobile' as const,
     usedBy: ['mobile'] as const,
     example: 'Showing "1 year ago: You played badminton at SF Club"',
+    contextSources: [
+      CONTEXT_SOURCES.memories,
+    ] as ContextSource[],
+    usageInfo: { dataTimeRange: 'Same day in previous years', selectionLogic: 'always' as SelectionLogic },
   },
   // Mood Compass - Mood detection & sentiment analysis
   {
@@ -278,6 +481,11 @@ export const PROMPT_SERVICES = [
     platform: 'server' as const,
     usedBy: ['mobile', 'web'] as const,
     example: 'Detecting positive mood in diary entry',
+    contextSources: [
+      CONTEXT_SOURCES.textNotes,
+      CONTEXT_SOURCES.voiceNotes,
+    ] as ContextSource[],
+    usageInfo: { dataTimeRange: 'Real-time (single item)', selectionLogic: 'always' as SelectionLogic },
   },
   // Memory Companion - Memory summaries & entity extraction (event-driven, not scheduled)
   {
@@ -290,6 +498,12 @@ export const PROMPT_SERVICES = [
     platform: 'server' as const,
     usedBy: ['mobile', 'web'] as const,
     example: '"Dinner at Nopa with Sarah" - voice note about restaurant visit',
+    contextSources: [
+      CONTEXT_SOURCES.textNotes,
+      CONTEXT_SOURCES.voiceNotes,
+      CONTEXT_SOURCES.photoMemories,
+    ] as ContextSource[],
+    usageInfo: { dataTimeRange: 'Real-time (single item)', selectionLogic: 'always' as SelectionLogic },
   },
   {
     id: 'EntityExtractionService',
@@ -301,6 +515,12 @@ export const PROMPT_SERVICES = [
     platform: 'server' as const,
     usedBy: ['mobile', 'web'] as const,
     example: 'Extracting "Sarah", "Nopa restaurant", "dinner" from text',
+    contextSources: [
+      CONTEXT_SOURCES.textNotes,
+      CONTEXT_SOURCES.voiceNotes,
+      CONTEXT_SOURCES.photoMemories,
+    ] as ContextSource[],
+    usageInfo: { dataTimeRange: 'Real-time (single item)', selectionLogic: 'always' as SelectionLogic },
   },
   // Life Forecaster - Pattern predictions & event extraction
   {
@@ -313,6 +533,11 @@ export const PROMPT_SERVICES = [
     platform: 'server' as const,
     usedBy: ['mobile', 'web'] as const,
     example: 'Finding "meeting tomorrow at 3pm"',
+    contextSources: [
+      CONTEXT_SOURCES.textNotes,
+      CONTEXT_SOURCES.voiceNotes,
+    ] as ContextSource[],
+    usageInfo: { dataTimeRange: 'Real-time (single item)', selectionLogic: 'always' as SelectionLogic },
   },
   {
     id: 'LifeConnectionsService',
@@ -324,6 +549,13 @@ export const PROMPT_SERVICES = [
     platform: 'server' as const,
     usedBy: ['mobile', 'web'] as const,
     example: 'Discovering "You sleep 23% better on days when you play badminton"',
+    contextSources: [
+      CONTEXT_SOURCES.healthData,
+      CONTEXT_SOURCES.locationData,
+      CONTEXT_SOURCES.moodEntries,
+      CONTEXT_SOURCES.voiceNotes,
+    ] as ContextSource[],
+    usageInfo: { dataTimeRange: 'Last 30 days', selectionLogic: 'always' as SelectionLogic },
   },
   // Chat suggestions - Follow-up questions shown after AI responses
   {
@@ -336,6 +568,24 @@ export const PROMPT_SERVICES = [
     platform: 'mobile' as const,
     usedBy: ['mobile'] as const,
     example: 'Suggesting "What about yesterday?" or "Show me my photos"',
+    contextSources: [
+      CONTEXT_SOURCES.chatHistory,
+    ] as ContextSource[],
+    usageInfo: { dataTimeRange: 'Current conversation', selectionLogic: 'context-based' as SelectionLogic },
+  },
+  // Fun Facts Service - RAG-based AI fun facts (different from FunFactGenerator)
+  {
+    id: 'FunFactsService',
+    name: 'Fun Facts (AI)',
+    category: 'fun_facts' as PromptCategoryId,
+    icon: '✨',
+    description: 'RAG + GPT-4o-mini generates personalized fun facts with LLM intelligence',
+    trigger: 'Daily scheduled or on-demand refresh',
+    platform: 'server' as const,
+    usedBy: ['mobile'] as const,
+    example: 'Generating "You\'ve visited 15 unique coffee shops this month!"',
+    contextSources: [] as ContextSource[], // Via Pinecone vectors (not direct collections)
+    usageInfo: { dataTimeRange: 'All time (via Pinecone vectors)', selectionLogic: 'always' as SelectionLogic },
   },
 ] as const;
 
@@ -352,66 +602,344 @@ export type PromptService = typeof PROMPT_SERVICES[number];
 export type UsedByPlatform = 'mobile' | 'web';
 
 /**
+ * Life Feed prompt context sources by post type
+ * Maps each post type to the Firestore collections it reads from
+ */
+export const LIFE_FEED_CONTEXT_BY_POST_TYPE: Record<string, string[]> = {
+  life_summary: ['healthData', 'locationData', 'photoMemories', 'voiceNotes', 'textNotes'],
+  milestone: ['healthData', 'locationData', 'photoMemories'],
+  pattern_prediction: ['locationData', 'healthData'],
+  reflective_insight: ['moodEntries', 'healthData', 'locationData'],
+  memory_highlight: ['photoMemories', 'voiceNotes', 'textNotes'],
+  streak_achievement: ['healthData', 'locationData'],
+  comparison: ['healthData', 'locationData'],
+  seasonal_reflection: ['healthData', 'locationData', 'moodEntries'],
+  activity_pattern: ['locationData'],
+  health_alert: ['healthData'],
+  category_insight: ['locationData'],
+};
+
+/**
  * LifeFeedGenerator prompt-to-post-type mapping
  * Used in admin portal to show which post type each prompt generates
  *
  * Post types with multiple prompts randomly select one variant when generating
  * This provides variety in the feed (e.g., life_summary can be detailed or minimal)
  */
-export const LIFE_FEED_PROMPT_POST_TYPES: Record<string, { postType: string; isVariant: boolean; description: string }> = {
+export interface LifeFeedPromptInfo {
+  postType: string;
+  isVariant: boolean;
+  description: string;
+  contextSources: string[];
+  usageInfo: PromptUsageInfo;
+}
+
+export const LIFE_FEED_PROMPT_POST_TYPES: Record<string, LifeFeedPromptInfo> = {
   // System prompt (used by all post types)
-  system: { postType: 'all', isVariant: false, description: 'System instruction for all post types' },
+  system: {
+    postType: 'all',
+    isVariant: false,
+    description: 'System instruction for all post types',
+    contextSources: [],
+    usageInfo: { dataTimeRange: 'N/A (system)', selectionLogic: 'always' },
+  },
 
   // life_summary variants (1-day cooldown)
-  life_summary: { postType: 'life_summary', isVariant: false, description: 'Weekly/daily summary - default' },
-  life_summary_detailed: { postType: 'life_summary', isVariant: true, description: 'Weekly/daily summary - with specific stats' },
-  life_summary_minimal: { postType: 'life_summary', isVariant: true, description: 'Weekly/daily summary - punchy one-liner' },
+  life_summary: {
+    postType: 'life_summary',
+    isVariant: false,
+    description: 'Weekly/daily summary - default',
+    contextSources: LIFE_FEED_CONTEXT_BY_POST_TYPE.life_summary,
+    usageInfo: {
+      dataTimeRange: 'Last 7 days',
+      selectionLogic: 'random',
+      variantGroup: 'life_summary',
+      variants: ['life_summary', 'life_summary_detailed', 'life_summary_minimal'],
+      cooldownDays: 1,
+    },
+  },
+  life_summary_detailed: {
+    postType: 'life_summary',
+    isVariant: true,
+    description: 'Weekly/daily summary - with specific stats',
+    contextSources: LIFE_FEED_CONTEXT_BY_POST_TYPE.life_summary,
+    usageInfo: {
+      dataTimeRange: 'Last 7 days',
+      selectionLogic: 'random',
+      variantGroup: 'life_summary',
+      variants: ['life_summary', 'life_summary_detailed', 'life_summary_minimal'],
+      cooldownDays: 1,
+    },
+  },
+  life_summary_minimal: {
+    postType: 'life_summary',
+    isVariant: true,
+    description: 'Weekly/daily summary - punchy one-liner',
+    contextSources: LIFE_FEED_CONTEXT_BY_POST_TYPE.life_summary,
+    usageInfo: {
+      dataTimeRange: 'Last 7 days',
+      selectionLogic: 'random',
+      variantGroup: 'life_summary',
+      variants: ['life_summary', 'life_summary_detailed', 'life_summary_minimal'],
+      cooldownDays: 1,
+    },
+  },
 
   // milestone (7-day cooldown)
-  milestone: { postType: 'milestone', isVariant: false, description: 'Achievement celebration' },
+  milestone: {
+    postType: 'milestone',
+    isVariant: false,
+    description: 'Achievement celebration',
+    contextSources: LIFE_FEED_CONTEXT_BY_POST_TYPE.milestone,
+    usageInfo: { dataTimeRange: 'All time (count-based)', selectionLogic: 'always', cooldownDays: 7 },
+  },
 
   // pattern_prediction variants (1-day cooldown)
-  pattern_prediction: { postType: 'pattern_prediction', isVariant: false, description: 'Activity prediction - default' },
-  pattern_prediction_curious: { postType: 'pattern_prediction', isVariant: true, description: 'Activity prediction - questioning tone' },
-  pattern_prediction_playful: { postType: 'pattern_prediction', isVariant: true, description: 'Activity prediction - humorous tone' },
+  pattern_prediction: {
+    postType: 'pattern_prediction',
+    isVariant: false,
+    description: 'Activity prediction - default',
+    contextSources: LIFE_FEED_CONTEXT_BY_POST_TYPE.pattern_prediction,
+    usageInfo: {
+      dataTimeRange: 'Last 7 days',
+      selectionLogic: 'random',
+      variantGroup: 'pattern_prediction',
+      variants: ['pattern_prediction', 'pattern_prediction_curious', 'pattern_prediction_playful'],
+      cooldownDays: 1,
+    },
+  },
+  pattern_prediction_curious: {
+    postType: 'pattern_prediction',
+    isVariant: true,
+    description: 'Activity prediction - questioning tone',
+    contextSources: LIFE_FEED_CONTEXT_BY_POST_TYPE.pattern_prediction,
+    usageInfo: {
+      dataTimeRange: 'Last 7 days',
+      selectionLogic: 'random',
+      variantGroup: 'pattern_prediction',
+      variants: ['pattern_prediction', 'pattern_prediction_curious', 'pattern_prediction_playful'],
+      cooldownDays: 1,
+    },
+  },
+  pattern_prediction_playful: {
+    postType: 'pattern_prediction',
+    isVariant: true,
+    description: 'Activity prediction - humorous tone',
+    contextSources: LIFE_FEED_CONTEXT_BY_POST_TYPE.pattern_prediction,
+    usageInfo: {
+      dataTimeRange: 'Last 7 days',
+      selectionLogic: 'random',
+      variantGroup: 'pattern_prediction',
+      variants: ['pattern_prediction', 'pattern_prediction_curious', 'pattern_prediction_playful'],
+      cooldownDays: 1,
+    },
+  },
 
   // reflective_insight variants (3-day cooldown)
-  reflective_insight: { postType: 'reflective_insight', isVariant: false, description: 'Behavioral insight - default' },
-  reflective_insight_mood: { postType: 'reflective_insight', isVariant: true, description: 'Behavioral insight - mood focused' },
-  reflective_insight_discovery: { postType: 'reflective_insight', isVariant: true, description: 'Behavioral insight - aha moment' },
+  reflective_insight: {
+    postType: 'reflective_insight',
+    isVariant: false,
+    description: 'Behavioral insight - default',
+    contextSources: LIFE_FEED_CONTEXT_BY_POST_TYPE.reflective_insight,
+    usageInfo: {
+      dataTimeRange: 'Last 7 days',
+      selectionLogic: 'random',
+      variantGroup: 'reflective_insight',
+      variants: ['reflective_insight', 'reflective_insight_mood', 'reflective_insight_discovery'],
+      cooldownDays: 3,
+    },
+  },
+  reflective_insight_mood: {
+    postType: 'reflective_insight',
+    isVariant: true,
+    description: 'Behavioral insight - mood focused',
+    contextSources: LIFE_FEED_CONTEXT_BY_POST_TYPE.reflective_insight,
+    usageInfo: {
+      dataTimeRange: 'Last 7 days',
+      selectionLogic: 'random',
+      variantGroup: 'reflective_insight',
+      variants: ['reflective_insight', 'reflective_insight_mood', 'reflective_insight_discovery'],
+      cooldownDays: 3,
+    },
+  },
+  reflective_insight_discovery: {
+    postType: 'reflective_insight',
+    isVariant: true,
+    description: 'Behavioral insight - aha moment',
+    contextSources: LIFE_FEED_CONTEXT_BY_POST_TYPE.reflective_insight,
+    usageInfo: {
+      dataTimeRange: 'Last 7 days',
+      selectionLogic: 'random',
+      variantGroup: 'reflective_insight',
+      variants: ['reflective_insight', 'reflective_insight_mood', 'reflective_insight_discovery'],
+      cooldownDays: 3,
+    },
+  },
 
   // memory_highlight variants (7-day cooldown)
-  memory_highlight: { postType: 'memory_highlight', isVariant: false, description: 'Memory celebration - default' },
-  memory_highlight_celebration: { postType: 'memory_highlight', isVariant: true, description: 'Memory celebration - enthusiastic' },
-  memory_highlight_story: { postType: 'memory_highlight', isVariant: true, description: 'Memory celebration - narrative style' },
+  memory_highlight: {
+    postType: 'memory_highlight',
+    isVariant: false,
+    description: 'Memory celebration - default',
+    contextSources: LIFE_FEED_CONTEXT_BY_POST_TYPE.memory_highlight,
+    usageInfo: {
+      dataTimeRange: 'Last 7 days',
+      selectionLogic: 'random',
+      variantGroup: 'memory_highlight',
+      variants: ['memory_highlight', 'memory_highlight_celebration', 'memory_highlight_story'],
+      cooldownDays: 7,
+    },
+  },
+  memory_highlight_celebration: {
+    postType: 'memory_highlight',
+    isVariant: true,
+    description: 'Memory celebration - enthusiastic',
+    contextSources: LIFE_FEED_CONTEXT_BY_POST_TYPE.memory_highlight,
+    usageInfo: {
+      dataTimeRange: 'Last 7 days',
+      selectionLogic: 'random',
+      variantGroup: 'memory_highlight',
+      variants: ['memory_highlight', 'memory_highlight_celebration', 'memory_highlight_story'],
+      cooldownDays: 7,
+    },
+  },
+  memory_highlight_story: {
+    postType: 'memory_highlight',
+    isVariant: true,
+    description: 'Memory celebration - narrative style',
+    contextSources: LIFE_FEED_CONTEXT_BY_POST_TYPE.memory_highlight,
+    usageInfo: {
+      dataTimeRange: 'Last 7 days',
+      selectionLogic: 'random',
+      variantGroup: 'memory_highlight',
+      variants: ['memory_highlight', 'memory_highlight_celebration', 'memory_highlight_story'],
+      cooldownDays: 7,
+    },
+  },
 
   // streak_achievement (3-day cooldown)
-  streak_achievement: { postType: 'streak_achievement', isVariant: false, description: 'Streak/habit celebration' },
+  streak_achievement: {
+    postType: 'streak_achievement',
+    isVariant: false,
+    description: 'Streak/habit celebration',
+    contextSources: LIFE_FEED_CONTEXT_BY_POST_TYPE.streak_achievement,
+    usageInfo: { dataTimeRange: 'Last 7 days', selectionLogic: 'always', cooldownDays: 3 },
+  },
 
   // comparison (14-day cooldown)
-  comparison: { postType: 'comparison', isVariant: false, description: 'Time period comparison' },
+  comparison: {
+    postType: 'comparison',
+    isVariant: false,
+    description: 'Time period comparison',
+    contextSources: LIFE_FEED_CONTEXT_BY_POST_TYPE.comparison,
+    usageInfo: { dataTimeRange: 'Last 14 days vs previous 14 days', selectionLogic: 'always', cooldownDays: 14 },
+  },
 
   // seasonal_reflection variants (30-day cooldown)
-  seasonal_reflection: { postType: 'seasonal_reflection', isVariant: false, description: 'Seasonal summary - default' },
-  seasonal_reflection_growth: { postType: 'seasonal_reflection', isVariant: true, description: 'Seasonal summary - growth focused' },
-  seasonal_reflection_gratitude: { postType: 'seasonal_reflection', isVariant: true, description: 'Seasonal summary - gratitude focused' },
+  seasonal_reflection: {
+    postType: 'seasonal_reflection',
+    isVariant: false,
+    description: 'Seasonal summary - default',
+    contextSources: LIFE_FEED_CONTEXT_BY_POST_TYPE.seasonal_reflection,
+    usageInfo: {
+      dataTimeRange: 'Last 30 days',
+      selectionLogic: 'random',
+      variantGroup: 'seasonal_reflection',
+      variants: ['seasonal_reflection', 'seasonal_reflection_growth', 'seasonal_reflection_gratitude'],
+      cooldownDays: 30,
+    },
+  },
+  seasonal_reflection_growth: {
+    postType: 'seasonal_reflection',
+    isVariant: true,
+    description: 'Seasonal summary - growth focused',
+    contextSources: LIFE_FEED_CONTEXT_BY_POST_TYPE.seasonal_reflection,
+    usageInfo: {
+      dataTimeRange: 'Last 30 days',
+      selectionLogic: 'random',
+      variantGroup: 'seasonal_reflection',
+      variants: ['seasonal_reflection', 'seasonal_reflection_growth', 'seasonal_reflection_gratitude'],
+      cooldownDays: 30,
+    },
+  },
+  seasonal_reflection_gratitude: {
+    postType: 'seasonal_reflection',
+    isVariant: true,
+    description: 'Seasonal summary - gratitude focused',
+    contextSources: LIFE_FEED_CONTEXT_BY_POST_TYPE.seasonal_reflection,
+    usageInfo: {
+      dataTimeRange: 'Last 30 days',
+      selectionLogic: 'random',
+      variantGroup: 'seasonal_reflection',
+      variants: ['seasonal_reflection', 'seasonal_reflection_growth', 'seasonal_reflection_gratitude'],
+      cooldownDays: 30,
+    },
+  },
 
   // activity_pattern (7-day cooldown)
-  activity_pattern: { postType: 'activity_pattern', isVariant: false, description: 'Discovered activity pattern' },
+  activity_pattern: {
+    postType: 'activity_pattern',
+    isVariant: false,
+    description: 'Discovered activity pattern',
+    contextSources: LIFE_FEED_CONTEXT_BY_POST_TYPE.activity_pattern,
+    usageInfo: { dataTimeRange: 'Last 7 days', selectionLogic: 'always', cooldownDays: 7 },
+  },
 
   // health_alert (1-day cooldown)
-  health_alert: { postType: 'health_alert', isVariant: false, description: 'Health metric awareness' },
+  health_alert: {
+    postType: 'health_alert',
+    isVariant: false,
+    description: 'Health metric awareness',
+    contextSources: LIFE_FEED_CONTEXT_BY_POST_TYPE.health_alert,
+    usageInfo: { dataTimeRange: 'Last 24 hours', selectionLogic: 'always', cooldownDays: 1 },
+  },
 
   // category_insight variants (3-day cooldown)
-  category_insight: { postType: 'category_insight', isVariant: false, description: 'Category distribution - default' },
-  category_trend: { postType: 'category_insight', isVariant: true, description: 'Category distribution - trend focused' },
-  category_correlation: { postType: 'category_insight', isVariant: true, description: 'Category distribution - correlation focused' },
+  category_insight: {
+    postType: 'category_insight',
+    isVariant: false,
+    description: 'Category distribution - default',
+    contextSources: LIFE_FEED_CONTEXT_BY_POST_TYPE.category_insight,
+    usageInfo: {
+      dataTimeRange: 'Last 7 days',
+      selectionLogic: 'random',
+      variantGroup: 'category_insight',
+      variants: ['category_insight', 'category_trend', 'category_correlation'],
+      cooldownDays: 3,
+    },
+  },
+  category_trend: {
+    postType: 'category_insight',
+    isVariant: true,
+    description: 'Category distribution - trend focused',
+    contextSources: LIFE_FEED_CONTEXT_BY_POST_TYPE.category_insight,
+    usageInfo: {
+      dataTimeRange: 'Last 7 days',
+      selectionLogic: 'random',
+      variantGroup: 'category_insight',
+      variants: ['category_insight', 'category_trend', 'category_correlation'],
+      cooldownDays: 3,
+    },
+  },
+  category_correlation: {
+    postType: 'category_insight',
+    isVariant: true,
+    description: 'Category distribution - correlation focused',
+    contextSources: LIFE_FEED_CONTEXT_BY_POST_TYPE.category_insight,
+    usageInfo: {
+      dataTimeRange: 'Last 7 days',
+      selectionLogic: 'random',
+      variantGroup: 'category_insight',
+      variants: ['category_insight', 'category_trend', 'category_correlation'],
+      cooldownDays: 3,
+    },
+  },
 };
 
 /**
  * Get the post type for a LifeFeedGenerator prompt ID
  */
-export function getLifeFeedPromptPostType(promptId: string): { postType: string; isVariant: boolean; description: string } | null {
+export function getLifeFeedPromptPostType(promptId: string): LifeFeedPromptInfo | null {
   return LIFE_FEED_PROMPT_POST_TYPES[promptId] || null;
 }
 

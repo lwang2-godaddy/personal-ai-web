@@ -18,6 +18,8 @@ import {
   SUPPORTED_LANGUAGES,
   PromptVariable,
   getLifeFeedPromptPostType,
+  LIFE_FEED_PROMPT_POST_TYPES,
+  CONTEXT_SOURCES,
 } from '@/lib/models/Prompt';
 import {
   PROMPT_TEMPLATES,
@@ -495,21 +497,104 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
                       </div>
                       {/* Show post type badge for LifeFeedGenerator */}
                       {postTypeInfo && (
-                        <div className="flex items-center gap-1.5 mt-1.5">
-                          <span className={`px-1.5 py-0.5 text-xs rounded ${
-                            postTypeInfo.postType === 'all'
-                              ? 'bg-purple-100 text-purple-700'
-                              : postTypeInfo.isVariant
-                              ? 'bg-amber-100 text-amber-700'
-                              : 'bg-green-100 text-green-700'
-                          }`}>
-                            {postTypeInfo.postType === 'all' ? '🎯 system' : `📝 ${postTypeInfo.postType}`}
-                          </span>
-                          {postTypeInfo.isVariant && (
-                            <span className="text-xs text-amber-600">variant</span>
-                          )}
+                        <div className="mt-1.5 space-y-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className={`px-1.5 py-0.5 text-xs rounded ${
+                              postTypeInfo.postType === 'all'
+                                ? 'bg-purple-100 text-purple-700'
+                                : postTypeInfo.isVariant
+                                ? 'bg-amber-100 text-amber-700'
+                                : 'bg-green-100 text-green-700'
+                            }`}>
+                              {postTypeInfo.postType === 'all' ? '🎯 system' : `📝 ${postTypeInfo.postType}`}
+                            </span>
+                            {postTypeInfo.isVariant && (
+                              <span className="text-xs text-amber-600">variant</span>
+                            )}
+                          </div>
                         </div>
                       )}
+                      {/* Context sources preview for all prompts */}
+                      {(() => {
+                        const icons: Record<string, string> = {
+                          textNotes: '📝', voiceNotes: '🎤', photoMemories: '📸',
+                          healthData: '❤️', locationData: '📍', events: '📅',
+                          memories: '🧠', chatHistory: '💬', moodEntries: '😊',
+                        };
+
+                        // Get service-level sources
+                        const serviceSources: string[] = serviceInfo && (serviceInfo as any).contextSources
+                          ? ((serviceInfo as any).contextSources as any[]).map((s: any) => s.collection || s)
+                          : [];
+
+                        // Get prompt-level sources for LifeFeedGenerator
+                        const promptSources = postTypeInfo?.contextSources || [];
+
+                        if (serviceSources.length === 0 && promptSources.length === 0) return null;
+
+                        return (
+                          <div className="mt-1.5 space-y-0.5">
+                            {/* Service sources (blue) */}
+                            {serviceSources.length > 0 && (
+                              <div className="flex flex-wrap gap-0.5 items-center">
+                                <span className="text-[10px] text-blue-500 mr-0.5">S:</span>
+                                {serviceSources.slice(0, 4).map((src: string) => (
+                                  <span key={`svc-${src}`} className="text-xs opacity-60" title={`Service: ${src}`}>
+                                    {icons[src] || '📦'}
+                                  </span>
+                                ))}
+                                {serviceSources.length > 4 && (
+                                  <span className="text-[10px] text-gray-400">+{serviceSources.length - 4}</span>
+                                )}
+                              </div>
+                            )}
+                            {/* Prompt sources (green) - only if different from service sources */}
+                            {postTypeInfo && promptSources.length > 0 && (
+                              <div className="flex flex-wrap gap-0.5 items-center">
+                                <span className="text-[10px] text-emerald-500 mr-0.5">P:</span>
+                                {promptSources.map((src: string) => (
+                                  <span key={`pmt-${src}`} className="text-xs" title={`Prompt: ${src}`}>
+                                    {icons[src] || '📦'}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                            {/* For non-LifeFeedGenerator, show "Uses all" indicator */}
+                            {!postTypeInfo && serviceSources.length > 0 && (
+                              <div className="flex items-center">
+                                <span className="text-[10px] text-emerald-500 mr-0.5">P:</span>
+                                <span className="text-[10px] text-gray-400 italic">all</span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
+                      {/* Usage info preview */}
+                      {(() => {
+                        const usageInfo = postTypeInfo?.usageInfo || (serviceInfo && (serviceInfo as any).usageInfo);
+                        if (!usageInfo) return null;
+
+                        const logicIcons: Record<string, string> = {
+                          'always': '✓', 'random': '🎲', 'conditional': '⚡',
+                          'personality': '🎭', 'context-based': '🎯',
+                        };
+
+                        return (
+                          <div className="mt-1 flex flex-wrap gap-1 text-[10px]">
+                            <span className="text-amber-600" title={`Time range: ${usageInfo.dataTimeRange}`}>
+                              ⏱️ {usageInfo.dataTimeRange.split(' ').slice(0, 2).join(' ')}
+                            </span>
+                            <span className="text-violet-600" title={`Selection: ${usageInfo.selectionLogic}`}>
+                              {logicIcons[usageInfo.selectionLogic] || '?'} {usageInfo.selectionLogic}
+                            </span>
+                            {usageInfo.cooldownDays && (
+                              <span className="text-orange-500" title={`Cooldown: ${usageInfo.cooldownDays} days`}>
+                                ⏳{usageInfo.cooldownDays}d
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </button>
                     {/* Action buttons */}
                     <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -618,6 +703,193 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
                       )}
                     </div>
                   </div>
+
+                  {/* Context Sources for all prompts - showing both service and prompt level */}
+                  {(() => {
+                    // Get service-level context sources
+                    let serviceContextSources: string[] = [];
+                    if (serviceInfo) {
+                      const svcContextSources = (serviceInfo as any).contextSources;
+                      if (svcContextSources && Array.isArray(svcContextSources)) {
+                        serviceContextSources = svcContextSources.map((s: any) => s.collection || s);
+                      }
+                    }
+
+                    // Get prompt-level context sources (for LifeFeedGenerator)
+                    let promptContextSources: string[] | null = null;
+                    if (service === 'LifeFeedGenerator' && selectedPromptId && LIFE_FEED_PROMPT_POST_TYPES[selectedPromptId]) {
+                      promptContextSources = LIFE_FEED_PROMPT_POST_TYPES[selectedPromptId].contextSources;
+                    }
+
+                    const icons: Record<string, string> = {
+                      textNotes: '📝', voiceNotes: '🎤', photoMemories: '📸',
+                      healthData: '❤️', locationData: '📍', events: '📅',
+                      memories: '🧠', chatHistory: '💬', moodEntries: '😊',
+                    };
+
+                    return (
+                      <div className="mt-3 space-y-2">
+                        {/* Service-Level Context Sources */}
+                        <div className="p-3 bg-blue-50 rounded-lg">
+                          <h4 className="text-xs font-medium text-blue-800 mb-2">
+                            Service Context Sources
+                            <span className="ml-1 text-blue-600 font-normal">- all data available to {serviceInfo?.name || service}</span>
+                          </h4>
+                          {serviceContextSources.length > 0 ? (
+                            <div className="flex flex-wrap gap-2">
+                              {serviceContextSources.map((src: string) => {
+                                const sourceInfo = CONTEXT_SOURCES[src as keyof typeof CONTEXT_SOURCES];
+                                const isUsedByPrompt = promptContextSources ? promptContextSources.includes(src) : true;
+                                return (
+                                  <span
+                                    key={src}
+                                    className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs cursor-help ${
+                                      isUsedByPrompt
+                                        ? 'bg-white text-blue-700 border border-blue-200'
+                                        : 'bg-blue-100 text-blue-400 border border-blue-100'
+                                    }`}
+                                    title={sourceInfo ? `${sourceInfo.description}\n\nTrigger: ${sourceInfo.trigger}${!isUsedByPrompt ? '\n\n⚠️ Not used by this prompt' : ''}` : src}
+                                  >
+                                    <span>{icons[src] || '📦'}</span>
+                                    {src}
+                                    {!isUsedByPrompt && <span className="text-blue-300">✗</span>}
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <span className="text-xs text-blue-600 italic">Direct user input (no data collections)</span>
+                          )}
+                        </div>
+
+                        {/* Prompt-Level Context Sources (for LifeFeedGenerator and potentially other services) */}
+                        <div className="p-3 bg-emerald-50 rounded-lg">
+                          <h4 className="text-xs font-medium text-emerald-800 mb-2">
+                            Prompt Context Sources
+                            <span className="ml-1 text-emerald-600 font-normal">- data used by this specific prompt</span>
+                          </h4>
+                          {promptContextSources ? (
+                            promptContextSources.length > 0 ? (
+                              <div className="flex flex-wrap gap-2">
+                                {promptContextSources.map((src: string) => {
+                                  const sourceInfo = CONTEXT_SOURCES[src as keyof typeof CONTEXT_SOURCES];
+                                  return (
+                                    <span
+                                      key={src}
+                                      className="inline-flex items-center gap-1 px-2 py-1 bg-white rounded text-xs text-emerald-700 border border-emerald-200 cursor-help"
+                                      title={sourceInfo ? `${sourceInfo.description}\n\nTrigger: ${sourceInfo.trigger}` : src}
+                                    >
+                                      <span>{icons[src] || '📦'}</span>
+                                      {src}
+                                    </span>
+                                  );
+                                })}
+                              </div>
+                            ) : (
+                              <span className="text-xs text-emerald-600 italic">System prompt - used by all post types</span>
+                            )
+                          ) : serviceContextSources.length > 0 ? (
+                            <span className="text-xs text-emerald-600 italic">Uses all service context sources</span>
+                          ) : (
+                            <span className="text-xs text-emerald-600 italic">No data context (processes direct input)</span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Usage Info: Data Time Range & Selection Logic */}
+                  {(() => {
+                    // Get usage info for this prompt
+                    let usageInfo: { dataTimeRange: string; selectionLogic: string; variantGroup?: string; variants?: string[]; cooldownDays?: number } | null = null;
+
+                    if (service === 'LifeFeedGenerator' && selectedPromptId && LIFE_FEED_PROMPT_POST_TYPES[selectedPromptId]) {
+                      usageInfo = LIFE_FEED_PROMPT_POST_TYPES[selectedPromptId].usageInfo;
+                    } else if (serviceInfo && (serviceInfo as any).usageInfo) {
+                      usageInfo = (serviceInfo as any).usageInfo;
+                    }
+
+                    if (!usageInfo) return null;
+
+                    const selectionLogicLabels: Record<string, { label: string; icon: string; description: string }> = {
+                      'always': { label: 'Always', icon: '✓', description: 'This prompt is always used when the service runs' },
+                      'random': { label: 'Random', icon: '🎲', description: 'Randomly selected from variant group when generating' },
+                      'conditional': { label: 'Conditional', icon: '⚡', description: 'Selected based on specific conditions (e.g., daily vs weekly)' },
+                      'personality': { label: 'Personality', icon: '🎭', description: 'Selected based on user\'s personality setting' },
+                      'context-based': { label: 'Context-based', icon: '🎯', description: 'Selected based on available context data' },
+                    };
+
+                    const logicInfo = selectionLogicLabels[usageInfo.selectionLogic] || { label: usageInfo.selectionLogic, icon: '?', description: 'Unknown selection logic' };
+
+                    return (
+                      <div className="mt-3 grid grid-cols-2 gap-3">
+                        {/* Data Time Range */}
+                        <div className="p-3 bg-amber-50 rounded-lg">
+                          <h4 className="text-xs font-medium text-amber-800 mb-1.5 flex items-center gap-1">
+                            <span>⏱️</span> Data Time Range
+                          </h4>
+                          <p className="text-sm text-amber-900 font-medium">{usageInfo.dataTimeRange}</p>
+                          <p className="text-xs text-amber-600 mt-1">How far back data is fetched</p>
+                        </div>
+
+                        {/* Selection Logic */}
+                        <div className="p-3 bg-violet-50 rounded-lg">
+                          <h4 className="text-xs font-medium text-violet-800 mb-1.5 flex items-center gap-1">
+                            <span>{logicInfo.icon}</span> Selection Logic
+                          </h4>
+                          <p className="text-sm text-violet-900 font-medium">{logicInfo.label}</p>
+                          <p className="text-xs text-violet-600 mt-1">{logicInfo.description}</p>
+                        </div>
+
+                        {/* Variant Group (if random selection) */}
+                        {usageInfo.selectionLogic === 'random' && usageInfo.variants && usageInfo.variants.length > 0 && (
+                          <div className="col-span-2 p-3 bg-gray-50 rounded-lg">
+                            <h4 className="text-xs font-medium text-gray-700 mb-1.5 flex items-center gap-1">
+                              <span>🎲</span> Variant Group: <span className="text-gray-900">{usageInfo.variantGroup}</span>
+                            </h4>
+                            <div className="flex flex-wrap gap-1.5">
+                              {usageInfo.variants.map((variant) => (
+                                <span
+                                  key={variant}
+                                  className={`px-2 py-1 text-xs rounded ${
+                                    variant === selectedPromptId
+                                      ? 'bg-violet-600 text-white font-medium'
+                                      : 'bg-white border border-gray-200 text-gray-600 hover:border-violet-300 cursor-pointer'
+                                  }`}
+                                  onClick={() => {
+                                    if (variant !== selectedPromptId && config?.prompts[variant]) {
+                                      handlePromptSelect(variant);
+                                    }
+                                  }}
+                                >
+                                  {variant}
+                                  {variant === selectedPromptId && ' (current)'}
+                                </span>
+                              ))}
+                            </div>
+                            <p className="text-xs text-gray-500 mt-2">
+                              Each time a <span className="font-medium">{usageInfo.variantGroup}</span> post is generated, one of these {usageInfo.variants.length} prompts is randomly selected
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Cooldown (if applicable) */}
+                        {usageInfo.cooldownDays && usageInfo.cooldownDays > 0 && (
+                          <div className={`${usageInfo.selectionLogic === 'random' && usageInfo.variants ? '' : 'col-span-2'} p-3 bg-orange-50 rounded-lg`}>
+                            <h4 className="text-xs font-medium text-orange-800 mb-1 flex items-center gap-1">
+                              <span>⏳</span> Cooldown Period
+                            </h4>
+                            <p className="text-sm text-orange-900 font-medium">
+                              {usageInfo.cooldownDays} day{usageInfo.cooldownDays > 1 ? 's' : ''} between generations
+                            </p>
+                            <p className="text-xs text-orange-600 mt-1">
+                              After generating a {usageInfo.variantGroup || 'post of this type'}, wait {usageInfo.cooldownDays} day{usageInfo.cooldownDays > 1 ? 's' : ''} before generating another
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Editable Metadata */}
