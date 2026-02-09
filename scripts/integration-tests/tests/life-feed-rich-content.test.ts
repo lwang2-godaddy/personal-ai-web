@@ -9,22 +9,12 @@
  * 2. Content scoring factors
  * 3. Existing posts contain actual content (not just counts)
  * 4. Normalized content usage
- * 5. END-TO-END: Generate posts with test data and verify rich content
+ *
+ * Note: E2E test (calling Cloud Functions) is in a separate file:
+ *   life-feed-rich-content-e2e.test.ts
  *
  * Prerequisites:
- *   - Cloud Functions deployed with LifeFeedGenerator using ContentSummaryService
  *   - Test user authenticated (via run-all.ts)
- *
- * Cloud Function Notes:
- *   This test calls `generateLifeFeedNow` (onCall), NOT `generateLifeFeedPosts` (onSchedule).
- *
- *   - `generateLifeFeedPosts` is a scheduled function (cron) - cannot be called via HTTP
- *   - `generateLifeFeedNow` is an onCall function - accepts HTTP with Firebase Auth token
- *
- *   The onCall function automatically extracts userId from request.auth.uid,
- *   so we don't pass userId in the request body.
- *
- *   See README.md for more details on Cloud Function types.
  */
 
 import * as admin from 'firebase-admin';
@@ -32,7 +22,6 @@ import type { TestResult } from '../lib/test-utils';
 import {
   generateTestId,
   getDateNDaysAgo,
-  wait,
 } from '../lib/test-utils';
 import {
   log,
@@ -75,9 +64,7 @@ export async function run(): Promise<TestResult[]> {
   const test4Results = await testNormalizedContentUsage(db, userId);
   allResults.push(...test4Results);
 
-  // Test Case 5: END-TO-END - Generate posts and verify they contain test content
-  const test5Results = await testEndToEndGeneration(db, userId);
-  allResults.push(...test5Results);
+  // Note: E2E test is in life-feed-rich-content-e2e.test.ts
 
   // Cleanup
   await cleanup(db);
@@ -585,301 +572,6 @@ async function testNormalizedContentUsage(
     logFail('Test execution', error.message);
     results.push({
       name: 'Normalized content: Test execution',
-      passed: false,
-      reason: `Error: ${error.message}`,
-    });
-  }
-
-  return results;
-}
-
-/**
- * Test Case 5: END-TO-END - Create test data, generate posts, verify content
- *
- * This is the critical test that verifies the full pipeline:
- * 1. Create voice notes and diary entries with unique identifiable content
- * 2. Call the generateLifeFeedPosts Cloud Function
- * 3. Verify the generated posts contain phrases from the test data
- */
-async function testEndToEndGeneration(
-  db: admin.firestore.Firestore,
-  userId: string
-): Promise<TestResult[]> {
-  const results: TestResult[] = [];
-  logTestCase('END-TO-END: Generate Posts with Test Content');
-
-  const testId = generateTestId();
-  const generatedPostIds: string[] = [];
-
-  // Unique identifiable phrases that should appear in generated posts
-  const uniquePhrases = {
-    voiceNote1: `played pickleball with Marcus at Sunnyvale courts ${testId}`,
-    voiceNote2: `feeling excited about the new photography project ${testId}`,
-    diary1: `visited the Japanese Tea Garden with family ${testId}`,
-  };
-
-  try {
-    // Step 1: Create test content with unique identifiable phrases
-    logInfo('Step 1: Creating test content with unique phrases...');
-
-    const voiceNote1Id = `e2e-voice1-${testId}`;
-    const voiceNote2Id = `e2e-voice2-${testId}`;
-    const diaryId = `e2e-diary-${testId}`;
-
-    // Voice note 1 - activity content
-    await db.collection('voiceNotes').doc(voiceNote1Id).set({
-      userId,
-      transcription: `Today I ${uniquePhrases.voiceNote1}. It was such a great workout, we played for about two hours. My backhand is really improving!`,
-      normalizedTranscription: `Today I ${uniquePhrases.voiceNote1}. It was such a great workout, we played for about two hours. My backhand is really improving!`,
-      duration: 45,
-      audioUrl: `https://test.storage/${voiceNote1Id}.m4a`,
-      createdAt: new Date().toISOString(),
-      tags: ['sports', 'pickleball', 'exercise'],
-      sentimentScore: 0.8,
-      analysis: { sentiment: { score: 0.8, label: 'positive' } },
-    });
-    createdDocs.push({ collection: 'voiceNotes', id: voiceNote1Id });
-
-    // Voice note 2 - emotional/project content
-    await db.collection('voiceNotes').doc(voiceNote2Id).set({
-      userId,
-      transcription: `I'm ${uniquePhrases.voiceNote2}. Planning to shoot some sunset photos this weekend at the coast.`,
-      normalizedTranscription: `I'm ${uniquePhrases.voiceNote2}. Planning to shoot some sunset photos this weekend at the coast.`,
-      duration: 30,
-      audioUrl: `https://test.storage/${voiceNote2Id}.m4a`,
-      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-      tags: ['photography', 'creative', 'hobby'],
-      sentimentScore: 0.9,
-      analysis: { sentiment: { score: 0.9, label: 'positive' } },
-    });
-    createdDocs.push({ collection: 'voiceNotes', id: voiceNote2Id });
-
-    // Diary entry - family outing
-    await db.collection('textNotes').doc(diaryId).set({
-      userId,
-      title: 'Weekend Adventure',
-      content: `What a beautiful day! We ${uniquePhrases.diary1}. The cherry blossoms were in full bloom and the weather was perfect. Kids loved feeding the koi fish.`,
-      normalizedContent: `What a beautiful day! We ${uniquePhrases.diary1}. The cherry blossoms were in full bloom and the weather was perfect. Kids loved feeding the koi fish.`,
-      type: 'diary',
-      createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(), // 4 hours ago
-      tags: ['family', 'nature', 'outing'],
-      sentimentScore: 0.85,
-      analysis: { sentiment: { score: 0.85, label: 'positive' } },
-    });
-    createdDocs.push({ collection: 'textNotes', id: diaryId });
-
-    logPass('Test content created (3 items with unique phrases)');
-    log(`  Voice 1: "${uniquePhrases.voiceNote1.substring(0, 40)}..."`, colors.dim);
-    log(`  Voice 2: "${uniquePhrases.voiceNote2.substring(0, 40)}..."`, colors.dim);
-    log(`  Diary: "${uniquePhrases.diary1.substring(0, 40)}..."`, colors.dim);
-
-    results.push({
-      name: 'E2E: Test content created',
-      passed: true,
-      reason: '3 items with unique identifiable phrases',
-      details: { voiceNote1Id, voiceNote2Id, diaryId },
-    });
-
-    // Step 2: Call the generateLifeFeedPosts Cloud Function
-    logInfo('Step 2: Calling generateLifeFeedPosts Cloud Function...');
-
-    const { idToken, projectId, region } = globalThis.testContext;
-
-    if (!idToken) {
-      logInfo('No ID token available - skipping Cloud Function call');
-      results.push({
-        name: 'E2E: Cloud Function call',
-        passed: true,
-        reason: 'Skipped - no ID token (run with auth to enable)',
-        details: { skipped: true },
-      });
-      return results;
-    }
-
-    // Call the Cloud Function (generateLifeFeedNow is the onCall version)
-    const functionUrl = `https://${region}-${projectId}.cloudfunctions.net/generateLifeFeedNow`;
-
-    let functionResponse: any;
-    try {
-      const response = await fetch(functionUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${idToken}`,
-        },
-        body: JSON.stringify({
-          data: {}, // generateLifeFeedNow uses request.auth.uid, no need to pass userId
-        }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Function returned ${response.status}: ${errorText}`);
-      }
-
-      functionResponse = await response.json();
-      logPass('Cloud Function called successfully');
-
-      results.push({
-        name: 'E2E: Cloud Function call',
-        passed: true,
-        reason: 'Function executed successfully',
-        details: { status: response.status },
-      });
-
-    } catch (error: any) {
-      // Function may not be deployed or may fail - still check for posts
-      logInfo(`Cloud Function call failed: ${error.message}`);
-      logInfo('Will check for recently generated posts instead...');
-
-      results.push({
-        name: 'E2E: Cloud Function call',
-        passed: true, // Soft pass - may need deployment
-        reason: `Function call failed: ${error.message}`,
-        details: { error: error.message },
-      });
-    }
-
-    // Step 3: Wait for posts to be generated
-    logInfo('Step 3: Waiting for posts to be generated...');
-    await wait(5000); // Wait 5 seconds for async processing
-
-    // Step 4: Check generated posts for our unique phrases
-    logInfo('Step 4: Checking generated posts for test content...');
-
-    // Get recent posts (within last 10 minutes)
-    const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
-    const postsSnap = await db.collection('lifeFeedPosts')
-      .where('userId', '==', userId)
-      .where('createdAt', '>=', tenMinutesAgo)
-      .orderBy('createdAt', 'desc')
-      .limit(10)
-      .get();
-
-    logQueryBox('Recent Life Feed Posts', [
-      `Time range: Last 10 minutes`,
-      `Found: ${postsSnap.size} posts`,
-    ]);
-
-    if (postsSnap.size === 0) {
-      logInfo('No recent posts generated');
-      logInfo('This may be due to:');
-      logInfo('  - Cooldowns preventing generation');
-      logInfo('  - Insufficient data variety');
-      logInfo('  - Cloud Function not deployed');
-
-      results.push({
-        name: 'E2E: Posts generated',
-        passed: true, // Soft pass - generation is conditional
-        reason: 'No posts generated (may be due to cooldowns or conditions)',
-        details: { postsFound: 0 },
-      });
-
-      return results;
-    }
-
-    // Track generated post IDs for cleanup
-    postsSnap.docs.forEach(doc => {
-      generatedPostIds.push(doc.id);
-      createdDocs.push({ collection: 'lifeFeedPosts', id: doc.id });
-    });
-
-    logPass(`${postsSnap.size} posts generated`);
-
-    results.push({
-      name: 'E2E: Posts generated',
-      passed: true,
-      reason: `${postsSnap.size} posts found`,
-      details: { postsFound: postsSnap.size },
-    });
-
-    // Step 5: Verify posts contain our unique content
-    logInfo('Step 5: Verifying posts contain test content...');
-
-    // Combine all post content for analysis
-    const allPostContent = postsSnap.docs.map(doc => {
-      const data = doc.data();
-      return `${data.title || ''} ${data.content || ''}`.toLowerCase();
-    }).join(' ');
-
-    // Check which unique phrases appear in the posts
-    const phraseMatches: { phrase: string; found: boolean; context?: string }[] = [];
-
-    // Check for key words from our test content (not full phrases, as AI rewrites)
-    const keywordsToFind = [
-      { keyword: 'pickleball', source: 'voice note 1' },
-      { keyword: 'marcus', source: 'voice note 1' },
-      { keyword: 'sunnyvale', source: 'voice note 1' },
-      { keyword: 'photography', source: 'voice note 2' },
-      { keyword: 'japanese tea garden', source: 'diary' },
-      { keyword: 'tea garden', source: 'diary' },
-      { keyword: 'cherry blossom', source: 'diary' },
-      { keyword: 'koi', source: 'diary' },
-    ];
-
-    let matchedKeywords = 0;
-    keywordsToFind.forEach(({ keyword, source }) => {
-      const found = allPostContent.includes(keyword.toLowerCase());
-      if (found) {
-        matchedKeywords++;
-        log(`  ✓ Found "${keyword}" (from ${source})`, colors.green);
-      }
-      phraseMatches.push({ phrase: keyword, found, context: source });
-    });
-
-    const matchRate = keywordsToFind.length > 0
-      ? (matchedKeywords / keywordsToFind.length * 100).toFixed(0)
-      : 0;
-
-    log(`  Keyword match rate: ${matchedKeywords}/${keywordsToFind.length} (${matchRate}%)`, colors.dim);
-
-    // Consider it a pass if at least 2 keywords from test content appear
-    const hasRichContent = matchedKeywords >= 2;
-
-    if (hasRichContent) {
-      logPass('Posts contain content from test data!');
-    } else if (matchedKeywords > 0) {
-      logInfo('Some test content found in posts');
-    } else {
-      logInfo('Test keywords not found - AI may have paraphrased significantly');
-    }
-
-    results.push({
-      name: 'E2E: Posts contain test content',
-      passed: hasRichContent,
-      reason: hasRichContent
-        ? `${matchedKeywords} keywords from test data found in posts`
-        : `Only ${matchedKeywords} keywords found (AI may have paraphrased)`,
-      details: {
-        matchedKeywords,
-        totalKeywords: keywordsToFind.length,
-        matchRate,
-        matches: phraseMatches.filter(m => m.found),
-      },
-    });
-
-    // Show sample post content
-    if (postsSnap.size > 0) {
-      const samplePost = postsSnap.docs[0].data();
-      log(`  Sample generated post (${samplePost.type}):`, colors.dim);
-      log(`    "${samplePost.content?.substring(0, 150)}..."`, colors.dim);
-
-      results.push({
-        name: 'E2E: Sample post quality',
-        passed: true,
-        reason: `Type: ${samplePost.type}, Length: ${samplePost.content?.length || 0} chars`,
-        details: {
-          type: samplePost.type,
-          title: samplePost.title,
-          contentPreview: samplePost.content?.substring(0, 200),
-        },
-      });
-    }
-
-  } catch (error: any) {
-    logFail('Test execution', error.message);
-    results.push({
-      name: 'E2E: Test execution',
       passed: false,
       reason: `Error: ${error.message}`,
     });

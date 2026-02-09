@@ -25,18 +25,39 @@ export async function discoverTests(): Promise<string[]> {
 }
 
 /**
- * Filter tests by pattern
+ * Check if a test file is an E2E test (naming convention: *-e2e.test.ts)
  */
-export function filterTests(testFiles: string[], pattern?: string): string[] {
-  if (!pattern) {
-    return testFiles;
+export function isE2ETest(filePath: string): boolean {
+  const basename = path.basename(filePath).toLowerCase();
+  return basename.includes('-e2e.test.ts');
+}
+
+/**
+ * Filter tests by pattern and E2E mode
+ */
+export function filterTests(
+  testFiles: string[],
+  options: { pattern?: string; skipE2E?: boolean; e2eOnly?: boolean } = {}
+): string[] {
+  let filtered = testFiles;
+
+  // Filter by pattern
+  if (options.pattern) {
+    const lowerPattern = options.pattern.toLowerCase();
+    filtered = filtered.filter(f => {
+      const basename = path.basename(f).toLowerCase();
+      return basename.includes(lowerPattern);
+    });
   }
 
-  const lowerPattern = pattern.toLowerCase();
-  return testFiles.filter(f => {
-    const basename = path.basename(f).toLowerCase();
-    return basename.includes(lowerPattern);
-  });
+  // Filter by E2E mode
+  if (options.skipE2E) {
+    filtered = filtered.filter(f => !isE2ETest(f));
+  } else if (options.e2eOnly) {
+    filtered = filtered.filter(f => isE2ETest(f));
+  }
+
+  return filtered;
 }
 
 /**
@@ -76,22 +97,36 @@ export async function runTestFile(filePath: string): Promise<{ results: TestResu
 export async function runAllTests(options: {
   filter?: string;
   verbose?: boolean;
+  skipE2E?: boolean;
+  e2eOnly?: boolean;
 } = {}): Promise<{ passed: number; failed: number; total: number; results: TestResult[] }> {
   const testFiles = await discoverTests();
-  const filteredFiles = filterTests(testFiles, options.filter);
+  const filteredFiles = filterTests(testFiles, {
+    pattern: options.filter,
+    skipE2E: options.skipE2E,
+    e2eOnly: options.e2eOnly,
+  });
 
   if (filteredFiles.length === 0) {
     if (options.filter) {
       log(`\nNo tests found matching filter: "${options.filter}"`, colors.yellow);
+    } else if (options.e2eOnly) {
+      log('\nNo E2E tests found (files must end with -e2e.test.ts)', colors.yellow);
     } else {
       log('\nNo test files found in tests/ directory', colors.yellow);
     }
     return { passed: 0, failed: 0, total: 0, results: [] };
   }
 
-  log(`\nFound ${filteredFiles.length} test file(s)${options.filter ? ` matching "${options.filter}"` : ''}:`, colors.dim);
+  // Show E2E mode in output
+  let modeLabel = '';
+  if (options.skipE2E) modeLabel = ' (excluding E2E)';
+  if (options.e2eOnly) modeLabel = ' (E2E only)';
+
+  log(`\nFound ${filteredFiles.length} test file(s)${options.filter ? ` matching "${options.filter}"` : ''}${modeLabel}:`, colors.dim);
   filteredFiles.forEach(f => {
-    log(`  - ${path.basename(f)}`, colors.dim);
+    const e2eTag = isE2ETest(f) ? ' [E2E]' : '';
+    log(`  - ${path.basename(f)}${e2eTag}`, colors.dim);
   });
 
   const allResults: TestResult[] = [];
@@ -118,8 +153,18 @@ export async function runAllTests(options: {
 /**
  * Parse command line arguments
  */
-export function parseArgs(args: string[]): { filter?: string; verbose?: boolean } {
-  const result: { filter?: string; verbose?: boolean } = {};
+export function parseArgs(args: string[]): {
+  filter?: string;
+  verbose?: boolean;
+  skipE2E?: boolean;
+  e2eOnly?: boolean;
+} {
+  const result: {
+    filter?: string;
+    verbose?: boolean;
+    skipE2E?: boolean;
+    e2eOnly?: boolean;
+  } = {};
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -131,6 +176,10 @@ export function parseArgs(args: string[]): { filter?: string; verbose?: boolean 
       result.filter = arg.split('=')[1];
     } else if (arg === '--verbose' || arg === '-v') {
       result.verbose = true;
+    } else if (arg === '--skip-e2e') {
+      result.skipE2E = true;
+    } else if (arg === '--e2e-only' || arg === '--e2e') {
+      result.e2eOnly = true;
     }
   }
 

@@ -8,6 +8,12 @@
  *   npm test                          # Run all tests
  *   npm test -- --filter event-date   # Run tests matching "event-date"
  *   npm test -- --verbose             # Run with verbose output
+ *   npm test -- --skip-e2e            # Skip E2E tests (faster)
+ *   npm test -- --e2e-only            # Run only E2E tests
+ *
+ * E2E Test Convention:
+ *   Files ending with '-e2e.test.ts' are considered E2E tests.
+ *   These tests call Cloud Functions and require full backend setup.
  *
  * Prerequisites:
  *   - Firebase Admin SDK credentials (GOOGLE_APPLICATION_CREDENTIALS or service account)
@@ -88,6 +94,8 @@ async function main() {
   const { passed, failed, results } = await runAllTests({
     filter: args.filter,
     verbose: args.verbose,
+    skipE2E: args.skipE2E,
+    e2eOnly: args.e2eOnly,
   });
 
   // Print summary

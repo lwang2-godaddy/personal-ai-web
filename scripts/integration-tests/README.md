@@ -13,7 +13,22 @@ npm test -- --filter event-date
 
 # Run with verbose output
 npm test -- --verbose
+
+# Skip E2E tests (faster, no Cloud Function calls)
+npm test -- --skip-e2e
+
+# Run only E2E tests
+npm test -- --e2e-only
 ```
+
+## E2E Test Convention
+
+Files ending with `-e2e.test.ts` are considered E2E tests:
+- They call Cloud Functions and require full backend setup
+- They take longer to run (external service calls)
+- They may be affected by cooldowns and rate limits
+
+Use `--skip-e2e` for faster CI runs, `--e2e-only` to test Cloud Function integration.
 
 ## Architecture
 
