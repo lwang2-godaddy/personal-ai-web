@@ -118,6 +118,61 @@ import {
 | Test | Filter | Description |
 |------|--------|-------------|
 | Event Date Extraction | `event-date` | Tests temporal references in voice notes |
+| Life Feed Rich Content | `life-feed-rich` | Tests that Life Feed uses actual content (not just counts) |
+| Embedding Pipeline | `embedding` | Tests embedding generation pipeline |
+| Insights Orchestrator | `insights` | Tests the insights generation orchestrator |
+| Memory Normalized Content | `memory-normalized` | Tests memory generation with normalized content |
+| RAG Engine | `rag-engine` | Tests RAG query functionality |
+| Temporal Parser | `temporal-parser` | Tests deployed temporal parser |
+| Temporal RAG Query | `temporal-rag` | Tests RAG with temporal filters |
+
+---
+
+## Life Feed Rich Content Test
+
+Tests that the Life Feed generator uses actual content from voice notes, text notes, and photos rather than just counts/statistics.
+
+**What it tests:**
+1. **Algorithm config** - Verifies `config/lifeFeedAlgorithm` document exists and has valid scoring parameters
+2. **Content scoring** - Tests that items are scored based on recency, content length, sentiment, and tags
+3. **Posts contain rich content** - Analyzes existing posts for specific content vs generic counts
+4. **Normalized content usage** - Verifies normalized transcription/content fields are used
+5. **END-TO-END generation** - Creates test data with unique phrases, triggers generation, verifies content
+
+**Run it:**
+```bash
+npm test -- --filter life-feed-rich
+```
+
+### Cloud Function Authentication
+
+**IMPORTANT:** The E2E test calls the `generateLifeFeedNow` Cloud Function, NOT `generateLifeFeedPosts`.
+
+| Function | Type | How to Call |
+|----------|------|-------------|
+| `generateLifeFeedPosts` | `onSchedule` (cron) | Cannot be called directly - only runs on schedule |
+| `generateLifeFeedNow` | `onCall` | HTTP callable with Firebase Auth token |
+
+**Calling onCall functions from tests:**
+```typescript
+const functionUrl = `https://${region}-${projectId}.cloudfunctions.net/generateLifeFeedNow`;
+
+const response = await fetch(functionUrl, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${idToken}`,  // Firebase ID token
+  },
+  body: JSON.stringify({
+    data: {},  // onCall functions get userId from request.auth.uid
+  }),
+});
+```
+
+**Key differences:**
+- `onSchedule` functions cannot be called directly via HTTP
+- `onCall` functions require Firebase Auth token in Authorization header
+- `onCall` functions automatically get the user from `request.auth.uid` (no need to pass userId)
 
 ---
 
@@ -248,3 +303,72 @@ Found 1 test file(s):
 
 - `0` - All tests passed
 - `1` - One or more tests failed
+
+---
+
+## Cloud Function Types Reference
+
+When writing integration tests that call Cloud Functions, it's important to understand the different function types:
+
+### onSchedule (Scheduled/Cron)
+
+```typescript
+// firebase/functions/src/index.ts
+export const generateLifeFeedPosts = onSchedule('every 4 hours', async () => {
+  // Runs on schedule, no HTTP endpoint
+});
+```
+
+- **Cannot** be called directly via HTTP
+- Only runs on the configured schedule
+- No authentication context available
+- Use for background batch processing
+
+### onCall (HTTP Callable)
+
+```typescript
+// firebase/functions/src/index.ts
+export const generateLifeFeedNow = onCall(async (request) => {
+  const userId = request.auth?.uid;  // User from Firebase Auth token
+  // ...
+});
+```
+
+- **Can** be called via HTTP with auth token
+- User identity available from `request.auth.uid`
+- Use for user-initiated actions in integration tests
+
+### Calling onCall Functions from Tests
+
+```typescript
+// Get the test context (setup in run-all.ts)
+const { idToken, projectId, region } = globalThis.testContext;
+
+// Build the function URL
+const functionUrl = `https://${region}-${projectId}.cloudfunctions.net/yourFunctionName`;
+
+// Call with auth token
+const response = await fetch(functionUrl, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${idToken}`,
+  },
+  body: JSON.stringify({
+    data: { /* your params */ },
+  }),
+});
+
+// Parse response
+const result = await response.json();
+```
+
+### Available Cloud Functions for Testing
+
+| Function | Type | Purpose |
+|----------|------|---------|
+| `generateLifeFeedNow` | onCall | Generate life feed posts for authenticated user |
+| `queryRAG` | onCall | Query RAG engine |
+| `generateDailySummary` | onCall | Generate daily summary |
+| `generateLifeFeedPosts` | onSchedule | (Cannot test directly) |
+| `processInsights` | onSchedule | (Cannot test directly) |

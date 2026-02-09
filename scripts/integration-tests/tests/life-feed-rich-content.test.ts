@@ -14,6 +14,17 @@
  * Prerequisites:
  *   - Cloud Functions deployed with LifeFeedGenerator using ContentSummaryService
  *   - Test user authenticated (via run-all.ts)
+ *
+ * Cloud Function Notes:
+ *   This test calls `generateLifeFeedNow` (onCall), NOT `generateLifeFeedPosts` (onSchedule).
+ *
+ *   - `generateLifeFeedPosts` is a scheduled function (cron) - cannot be called via HTTP
+ *   - `generateLifeFeedNow` is an onCall function - accepts HTTP with Firebase Auth token
+ *
+ *   The onCall function automatically extracts userId from request.auth.uid,
+ *   so we don't pass userId in the request body.
+ *
+ *   See README.md for more details on Cloud Function types.
  */
 
 import * as admin from 'firebase-admin';
@@ -685,8 +696,8 @@ async function testEndToEndGeneration(
       return results;
     }
 
-    // Call the Cloud Function
-    const functionUrl = `https://${region}-${projectId}.cloudfunctions.net/generateLifeFeedPosts`;
+    // Call the Cloud Function (generateLifeFeedNow is the onCall version)
+    const functionUrl = `https://${region}-${projectId}.cloudfunctions.net/generateLifeFeedNow`;
 
     let functionResponse: any;
     try {
@@ -697,10 +708,7 @@ async function testEndToEndGeneration(
           'Authorization': `Bearer ${idToken}`,
         },
         body: JSON.stringify({
-          data: {
-            userId,
-            forceGenerate: true, // Bypass cooldowns for testing
-          },
+          data: {}, // generateLifeFeedNow uses request.auth.uid, no need to pass userId
         }),
       });
 
