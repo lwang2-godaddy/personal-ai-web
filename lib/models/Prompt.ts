@@ -110,6 +110,7 @@ export const SERVICE_FILE_MAP: Record<string, string> = {
   DailySummaryService: 'dailySummary.yaml',
   KeywordGenerator: 'lifeKeywords.yaml',
   LifeConnectionsService: 'lifeConnections.yaml',
+  ContentSummaryService: 'contentSummary.yaml',
   // Mobile app / Server services
   OpenAIService: 'chat.yaml',
   RAGEngine: 'rag.yaml',
@@ -182,7 +183,7 @@ export const SERVICE_OUTPUT_CATEGORIES = [
     icon: '🔬',
     description: 'Services that analyze user content (triggered by data creation)',
     outputCollection: 'Various (moodEntries, events, memories)',
-    services: ['SentimentAnalysisService', 'EntityExtractionService', 'EventExtractionService', 'MemoryGeneratorService'],
+    services: ['SentimentAnalysisService', 'EntityExtractionService', 'EventExtractionService', 'MemoryGeneratorService', 'ContentSummaryService'],
   },
   {
     id: 'insights_services',
@@ -234,12 +235,36 @@ export type SelectionLogic =
 /**
  * Prompt usage information - how and when a prompt gets used
  */
+/**
+ * Data selection algorithm info for prompts
+ * Explains how many items are selected and the scoring algorithm
+ */
+export interface DataSelectionInfo {
+  maxItems: {                  // Max items selected per data type
+    voiceNotes?: number;
+    photos?: number;
+    diaryEntries?: number;
+  };
+  strategy: 'scored' | 'recent' | 'diverse';  // Selection strategy
+  scoringFactors?: {           // If strategy is 'scored', these factors apply
+    recency: { maxPoints: number; description: string };
+    contentLength: { maxPoints: number; description: string };
+    sentiment: { maxPoints: number; description: string };
+    tags: { maxPoints: number; description: string };
+  };
+  summarization?: {            // Content summarization settings
+    wordThreshold: number;     // Words above which content gets summarized
+    description: string;
+  };
+}
+
 export interface PromptUsageInfo {
   dataTimeRange: string;       // e.g., "Last 7 days", "Last 24 hours", "Real-time"
   selectionLogic: SelectionLogic;
   variantGroup?: string;       // Group name if part of random selection
   variants?: string[];         // Other prompts in the same variant group
   cooldownDays?: number;       // Cooldown between generations (for LifeFeed)
+  dataSelection?: DataSelectionInfo;  // How data is selected for this prompt
 }
 
 /**
@@ -522,6 +547,24 @@ export const PROMPT_SERVICES = [
     ] as ContextSource[],
     usageInfo: { dataTimeRange: 'Real-time (single item)', selectionLogic: 'always' as SelectionLogic },
   },
+  // Content Summary - Summarizes long content for AI context
+  {
+    id: 'ContentSummaryService',
+    name: 'Content Summary',
+    category: 'memory_companion' as PromptCategoryId,
+    icon: '📝',
+    description: 'Summarizes long diary entries, voice notes, and photo descriptions for AI context in LifeFeed generation',
+    trigger: 'When LifeFeedGenerator needs to summarize content >150 words',
+    platform: 'server' as const,
+    usedBy: ['mobile', 'web'] as const,
+    example: 'Summarizing a 500-word diary entry to 75 words for AI context',
+    contextSources: [
+      CONTEXT_SOURCES.textNotes,
+      CONTEXT_SOURCES.voiceNotes,
+      CONTEXT_SOURCES.photoMemories,
+    ] as ContextSource[],
+    usageInfo: { dataTimeRange: 'Real-time (single item)', selectionLogic: 'always' as SelectionLogic },
+  },
   // Life Forecaster - Pattern predictions & event extraction
   {
     id: 'EventExtractionService',
@@ -620,6 +663,41 @@ export const LIFE_FEED_CONTEXT_BY_POST_TYPE: Record<string, string[]> = {
 };
 
 /**
+ * LifeFeedGenerator default data selection algorithm
+ * Applies to prompts that use diary entries, voice notes, and photos
+ */
+export const LIFE_FEED_DATA_SELECTION: DataSelectionInfo = {
+  maxItems: {
+    voiceNotes: 5,
+    photos: 5,
+    diaryEntries: 5,
+  },
+  strategy: 'scored',
+  scoringFactors: {
+    recency: {
+      maxPoints: 40,
+      description: 'Newer items score higher (40pts - 5pts per day old)',
+    },
+    contentLength: {
+      maxPoints: 30,
+      description: 'Richer content scores higher (1pt per 10 chars, max 30)',
+    },
+    sentiment: {
+      maxPoints: 20,
+      description: 'Strong emotions (positive or negative) score higher',
+    },
+    tags: {
+      maxPoints: 10,
+      description: 'Well-tagged content scores higher (2pts per tag, max 5 tags)',
+    },
+  },
+  summarization: {
+    wordThreshold: 150,
+    description: 'Content over 150 words is summarized via GPT to preserve key topics',
+  },
+};
+
+/**
  * LifeFeedGenerator prompt-to-post-type mapping
  * Used in admin portal to show which post type each prompt generates
  *
@@ -641,7 +719,11 @@ export const LIFE_FEED_PROMPT_POST_TYPES: Record<string, LifeFeedPromptInfo> = {
     isVariant: false,
     description: 'System instruction for all post types',
     contextSources: [],
-    usageInfo: { dataTimeRange: 'N/A (system)', selectionLogic: 'always' },
+    usageInfo: {
+      dataTimeRange: 'N/A (system)',
+      selectionLogic: 'always',
+      dataSelection: LIFE_FEED_DATA_SELECTION,
+    },
   },
 
   // life_summary variants (1-day cooldown)
@@ -656,6 +738,7 @@ export const LIFE_FEED_PROMPT_POST_TYPES: Record<string, LifeFeedPromptInfo> = {
       variantGroup: 'life_summary',
       variants: ['life_summary', 'life_summary_detailed', 'life_summary_minimal'],
       cooldownDays: 1,
+      dataSelection: LIFE_FEED_DATA_SELECTION,
     },
   },
   life_summary_detailed: {
@@ -669,6 +752,7 @@ export const LIFE_FEED_PROMPT_POST_TYPES: Record<string, LifeFeedPromptInfo> = {
       variantGroup: 'life_summary',
       variants: ['life_summary', 'life_summary_detailed', 'life_summary_minimal'],
       cooldownDays: 1,
+      dataSelection: LIFE_FEED_DATA_SELECTION,
     },
   },
   life_summary_minimal: {
@@ -682,6 +766,7 @@ export const LIFE_FEED_PROMPT_POST_TYPES: Record<string, LifeFeedPromptInfo> = {
       variantGroup: 'life_summary',
       variants: ['life_summary', 'life_summary_detailed', 'life_summary_minimal'],
       cooldownDays: 1,
+      dataSelection: LIFE_FEED_DATA_SELECTION,
     },
   },
 
@@ -788,6 +873,7 @@ export const LIFE_FEED_PROMPT_POST_TYPES: Record<string, LifeFeedPromptInfo> = {
       variantGroup: 'memory_highlight',
       variants: ['memory_highlight', 'memory_highlight_celebration', 'memory_highlight_story'],
       cooldownDays: 7,
+      dataSelection: LIFE_FEED_DATA_SELECTION,
     },
   },
   memory_highlight_celebration: {
@@ -801,6 +887,7 @@ export const LIFE_FEED_PROMPT_POST_TYPES: Record<string, LifeFeedPromptInfo> = {
       variantGroup: 'memory_highlight',
       variants: ['memory_highlight', 'memory_highlight_celebration', 'memory_highlight_story'],
       cooldownDays: 7,
+      dataSelection: LIFE_FEED_DATA_SELECTION,
     },
   },
   memory_highlight_story: {
@@ -814,6 +901,7 @@ export const LIFE_FEED_PROMPT_POST_TYPES: Record<string, LifeFeedPromptInfo> = {
       variantGroup: 'memory_highlight',
       variants: ['memory_highlight', 'memory_highlight_celebration', 'memory_highlight_story'],
       cooldownDays: 7,
+      dataSelection: LIFE_FEED_DATA_SELECTION,
     },
   },
 

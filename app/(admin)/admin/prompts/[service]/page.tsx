@@ -4,7 +4,7 @@ import { useEffect, useState, use } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/hooks/useAuth';
-import { apiGet, apiPatch } from '@/lib/api/client';
+import { apiGet, apiPatch, apiPost } from '@/lib/api/client';
 import { useTrackPage } from '@/lib/hooks/useTrackPage';
 import { TRACKED_SCREENS } from '@/lib/models/BehaviorEvent';
 import {
@@ -20,6 +20,7 @@ import {
   getLifeFeedPromptPostType,
   LIFE_FEED_PROMPT_POST_TYPES,
   CONTEXT_SOURCES,
+  DataSelectionInfo,
 } from '@/lib/models/Prompt';
 import {
   PROMPT_TEMPLATES,
@@ -75,6 +76,31 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
   const [templateCategory, setTemplateCategory] = useState('chat');
 
+  // Algorithm configuration state (for LifeFeedGenerator)
+  interface AlgorithmConfig {
+    dataTimeRangeDays: number;
+    maxVoiceNotes: number;
+    maxPhotos: number;
+    maxDiaryEntries: number;
+    recencyMaxPoints: number;
+    recencyDecayPerDay: number;
+    contentLengthMaxPoints: number;
+    contentLengthCharsPerPoint: number;
+    sentimentMaxPoints: number;
+    tagsMaxPoints: number;
+    tagsPointsPerTag: number;
+    summarizationWordThreshold: number;
+    confidenceThreshold: number;
+    maxPostsPerRun: number;
+    lastUpdated: string;
+    lastUpdatedBy: string;
+  }
+  const [algorithmConfig, setAlgorithmConfig] = useState<AlgorithmConfig | null>(null);
+  const [algorithmLoading, setAlgorithmLoading] = useState(false);
+  const [algorithmSaving, setAlgorithmSaving] = useState(false);
+  const [showAlgorithmSettings, setShowAlgorithmSettings] = useState(false);
+  const [algorithmEdits, setAlgorithmEdits] = useState<Partial<AlgorithmConfig>>({});
+
   const serviceInfo = PROMPT_SERVICES.find(s => s.id === service);
 
   useEffect(() => {
@@ -87,6 +113,86 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
       fetchExecutions();
     }
   }, [selectedPromptId, selectedLanguage, service]);
+
+  // Fetch algorithm config for LifeFeedGenerator
+  useEffect(() => {
+    if (service === 'LifeFeedGenerator') {
+      fetchAlgorithmConfig();
+    }
+  }, [service]);
+
+  const fetchAlgorithmConfig = async () => {
+    try {
+      setAlgorithmLoading(true);
+      const response = await apiGet<{ config: AlgorithmConfig; isDefault: boolean }>(
+        '/api/admin/prompts/algorithm'
+      );
+      setAlgorithmConfig(response.config);
+      setAlgorithmEdits({});
+    } catch (err) {
+      console.error('Failed to fetch algorithm config:', err);
+    } finally {
+      setAlgorithmLoading(false);
+    }
+  };
+
+  const handleSaveAlgorithmConfig = async () => {
+    if (!algorithmConfig || Object.keys(algorithmEdits).length === 0) return;
+
+    try {
+      setAlgorithmSaving(true);
+      setError(null);
+
+      const response = await apiPatch('/api/admin/prompts/algorithm', {
+        updates: algorithmEdits,
+      });
+
+      setAlgorithmConfig(response.config);
+      setAlgorithmEdits({});
+      setSuccess('Algorithm configuration saved successfully!');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to save algorithm config';
+      setError(message);
+    } finally {
+      setAlgorithmSaving(false);
+    }
+  };
+
+  const handleResetAlgorithmConfig = async () => {
+    if (!confirm('Reset algorithm configuration to defaults? This cannot be undone.')) return;
+
+    try {
+      setAlgorithmSaving(true);
+      setError(null);
+
+      const response = await apiPost('/api/admin/prompts/algorithm', {
+        action: 'reset',
+      });
+
+      setAlgorithmConfig(response.config);
+      setAlgorithmEdits({});
+      setSuccess('Algorithm configuration reset to defaults!');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to reset algorithm config';
+      setError(message);
+    } finally {
+      setAlgorithmSaving(false);
+    }
+  };
+
+  const updateAlgorithmEdit = (field: keyof AlgorithmConfig, value: number) => {
+    setAlgorithmEdits(prev => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const getAlgorithmValue = (field: keyof AlgorithmConfig): number => {
+    if (field in algorithmEdits) {
+      return algorithmEdits[field] as number;
+    }
+    return algorithmConfig ? (algorithmConfig[field] as number) : 0;
+  };
 
   const fetchExecutions = async () => {
     if (!selectedPromptId) return;
@@ -675,6 +781,245 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
                 <div>Last Updated: {new Date(config.lastUpdated).toLocaleString()}</div>
               </div>
             </div>
+
+            {/* Algorithm Settings (LifeFeedGenerator only) */}
+            {service === 'LifeFeedGenerator' && (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 mt-4">
+                <button
+                  onClick={() => setShowAlgorithmSettings(!showAlgorithmSettings)}
+                  className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">⚙️</span>
+                    <h3 className="font-semibold text-gray-900">Algorithm Settings</h3>
+                  </div>
+                  <svg
+                    className={`w-5 h-5 text-gray-500 transition-transform ${showAlgorithmSettings ? 'rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {showAlgorithmSettings && (
+                  <div className="px-4 pb-4 border-t border-gray-100">
+                    {algorithmLoading ? (
+                      <div className="py-4 text-center">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-red-600 mx-auto"></div>
+                      </div>
+                    ) : algorithmConfig ? (
+                      <div className="space-y-4 pt-4">
+                        {/* Data Fetching */}
+                        <div>
+                          <h4 className="text-xs font-medium text-gray-600 mb-2 uppercase tracking-wide">Data Fetching</h4>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <label className="text-xs text-gray-500">Time Range (days)</label>
+                              <input
+                                type="number"
+                                min="1"
+                                max="90"
+                                value={getAlgorithmValue('dataTimeRangeDays')}
+                                onChange={(e) => updateAlgorithmEdit('dataTimeRangeDays', parseInt(e.target.value) || 7)}
+                                className="w-full mt-1 px-2 py-1 text-sm border rounded"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Item Selection */}
+                        <div>
+                          <h4 className="text-xs font-medium text-gray-600 mb-2 uppercase tracking-wide">Max Items Selected</h4>
+                          <div className="grid grid-cols-3 gap-2">
+                            <div>
+                              <label className="text-xs text-gray-500">🎤 Voice</label>
+                              <input
+                                type="number"
+                                min="1"
+                                max="20"
+                                value={getAlgorithmValue('maxVoiceNotes')}
+                                onChange={(e) => updateAlgorithmEdit('maxVoiceNotes', parseInt(e.target.value) || 5)}
+                                className="w-full mt-1 px-2 py-1 text-sm border rounded"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-xs text-gray-500">📸 Photos</label>
+                              <input
+                                type="number"
+                                min="1"
+                                max="20"
+                                value={getAlgorithmValue('maxPhotos')}
+                                onChange={(e) => updateAlgorithmEdit('maxPhotos', parseInt(e.target.value) || 5)}
+                                className="w-full mt-1 px-2 py-1 text-sm border rounded"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-xs text-gray-500">📝 Diary</label>
+                              <input
+                                type="number"
+                                min="1"
+                                max="20"
+                                value={getAlgorithmValue('maxDiaryEntries')}
+                                onChange={(e) => updateAlgorithmEdit('maxDiaryEntries', parseInt(e.target.value) || 5)}
+                                className="w-full mt-1 px-2 py-1 text-sm border rounded"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Scoring Factors */}
+                        <div>
+                          <h4 className="text-xs font-medium text-gray-600 mb-2 uppercase tracking-wide">Scoring Points (Max)</h4>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <label className="text-xs text-gray-500">Recency</label>
+                              <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                value={getAlgorithmValue('recencyMaxPoints')}
+                                onChange={(e) => updateAlgorithmEdit('recencyMaxPoints', parseInt(e.target.value) || 40)}
+                                className="w-full mt-1 px-2 py-1 text-sm border rounded"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-xs text-gray-500">Decay/Day</label>
+                              <input
+                                type="number"
+                                min="0"
+                                max="20"
+                                value={getAlgorithmValue('recencyDecayPerDay')}
+                                onChange={(e) => updateAlgorithmEdit('recencyDecayPerDay', parseInt(e.target.value) || 5)}
+                                className="w-full mt-1 px-2 py-1 text-sm border rounded"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-xs text-gray-500">Content Length</label>
+                              <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                value={getAlgorithmValue('contentLengthMaxPoints')}
+                                onChange={(e) => updateAlgorithmEdit('contentLengthMaxPoints', parseInt(e.target.value) || 30)}
+                                className="w-full mt-1 px-2 py-1 text-sm border rounded"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-xs text-gray-500">Chars/Point</label>
+                              <input
+                                type="number"
+                                min="1"
+                                max="100"
+                                value={getAlgorithmValue('contentLengthCharsPerPoint')}
+                                onChange={(e) => updateAlgorithmEdit('contentLengthCharsPerPoint', parseInt(e.target.value) || 10)}
+                                className="w-full mt-1 px-2 py-1 text-sm border rounded"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-xs text-gray-500">Sentiment</label>
+                              <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                value={getAlgorithmValue('sentimentMaxPoints')}
+                                onChange={(e) => updateAlgorithmEdit('sentimentMaxPoints', parseInt(e.target.value) || 20)}
+                                className="w-full mt-1 px-2 py-1 text-sm border rounded"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-xs text-gray-500">Tags Max</label>
+                              <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                value={getAlgorithmValue('tagsMaxPoints')}
+                                onChange={(e) => updateAlgorithmEdit('tagsMaxPoints', parseInt(e.target.value) || 10)}
+                                className="w-full mt-1 px-2 py-1 text-sm border rounded"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Other Settings */}
+                        <div>
+                          <h4 className="text-xs font-medium text-gray-600 mb-2 uppercase tracking-wide">Other Settings</h4>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <label className="text-xs text-gray-500">Summarize &gt; words</label>
+                              <input
+                                type="number"
+                                min="50"
+                                max="500"
+                                value={getAlgorithmValue('summarizationWordThreshold')}
+                                onChange={(e) => updateAlgorithmEdit('summarizationWordThreshold', parseInt(e.target.value) || 150)}
+                                className="w-full mt-1 px-2 py-1 text-sm border rounded"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-xs text-gray-500">Max Posts/Run</label>
+                              <input
+                                type="number"
+                                min="1"
+                                max="10"
+                                value={getAlgorithmValue('maxPostsPerRun')}
+                                onChange={(e) => updateAlgorithmEdit('maxPostsPerRun', parseInt(e.target.value) || 3)}
+                                className="w-full mt-1 px-2 py-1 text-sm border rounded"
+                              />
+                            </div>
+                            <div className="col-span-2">
+                              <label className="text-xs text-gray-500">Confidence Threshold (0-1)</label>
+                              <input
+                                type="number"
+                                min="0"
+                                max="1"
+                                step="0.1"
+                                value={getAlgorithmValue('confidenceThreshold')}
+                                onChange={(e) => updateAlgorithmEdit('confidenceThreshold', parseFloat(e.target.value) || 0.5)}
+                                className="w-full mt-1 px-2 py-1 text-sm border rounded"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Save/Reset Buttons */}
+                        <div className="flex gap-2 pt-2">
+                          <button
+                            onClick={handleSaveAlgorithmConfig}
+                            disabled={algorithmSaving || Object.keys(algorithmEdits).length === 0}
+                            className={`flex-1 px-3 py-2 text-xs font-medium rounded-md transition-colors ${
+                              algorithmSaving || Object.keys(algorithmEdits).length === 0
+                                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                : 'bg-red-600 text-white hover:bg-red-700'
+                            }`}
+                          >
+                            {algorithmSaving ? 'Saving...' : 'Save Changes'}
+                          </button>
+                          <button
+                            onClick={handleResetAlgorithmConfig}
+                            disabled={algorithmSaving}
+                            className="px-3 py-2 text-xs font-medium text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                          >
+                            Reset
+                          </button>
+                        </div>
+
+                        {/* Last Updated */}
+                        <p className="text-xs text-gray-400 pt-2 border-t border-gray-100">
+                          Last updated: {new Date(algorithmConfig.lastUpdated).toLocaleString()}
+                          {algorithmConfig.lastUpdatedBy && ` by ${algorithmConfig.lastUpdatedBy}`}
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="py-4 text-sm text-gray-500 text-center">
+                        Failed to load algorithm configuration
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Editor Area */}
@@ -801,7 +1146,7 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
                   {/* Usage Info: Data Time Range & Selection Logic */}
                   {(() => {
                     // Get usage info for this prompt
-                    let usageInfo: { dataTimeRange: string; selectionLogic: string; variantGroup?: string; variants?: string[]; cooldownDays?: number } | null = null;
+                    let usageInfo: { dataTimeRange: string; selectionLogic: string; variantGroup?: string; variants?: string[]; cooldownDays?: number; dataSelection?: DataSelectionInfo } | null = null;
 
                     if (service === 'LifeFeedGenerator' && selectedPromptId && LIFE_FEED_PROMPT_POST_TYPES[selectedPromptId]) {
                       usageInfo = LIFE_FEED_PROMPT_POST_TYPES[selectedPromptId].usageInfo;
@@ -885,6 +1230,88 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
                             <p className="text-xs text-orange-600 mt-1">
                               After generating a {usageInfo.variantGroup || 'post of this type'}, wait {usageInfo.cooldownDays} day{usageInfo.cooldownDays > 1 ? 's' : ''} before generating another
                             </p>
+                          </div>
+                        )}
+
+                        {/* Data Selection Algorithm (if applicable) */}
+                        {(usageInfo.dataSelection || (service === 'LifeFeedGenerator' && algorithmConfig)) && (
+                          <div className="col-span-2 p-3 bg-indigo-50 rounded-lg">
+                            <h4 className="text-xs font-medium text-indigo-800 mb-2 flex items-center gap-1">
+                              <span>🎯</span> Data Selection Algorithm
+                              {algorithmConfig && (
+                                <span className="ml-2 px-1.5 py-0.5 bg-indigo-200 text-indigo-700 rounded text-[10px]">
+                                  Configurable
+                                </span>
+                              )}
+                            </h4>
+
+                            {/* Max Items - use algorithmConfig if available */}
+                            <div className="mb-3">
+                              <p className="text-xs text-indigo-600 font-medium mb-1">Items Selected (Top N by score):</p>
+                              <div className="flex flex-wrap gap-2">
+                                <span className="px-2 py-1 bg-white rounded text-xs text-indigo-700 border border-indigo-200">
+                                  🎤 {algorithmConfig?.maxVoiceNotes || usageInfo.dataSelection?.maxItems.voiceNotes || 5} voice notes
+                                </span>
+                                <span className="px-2 py-1 bg-white rounded text-xs text-indigo-700 border border-indigo-200">
+                                  📸 {algorithmConfig?.maxPhotos || usageInfo.dataSelection?.maxItems.photos || 5} photos
+                                </span>
+                                <span className="px-2 py-1 bg-white rounded text-xs text-indigo-700 border border-indigo-200">
+                                  📝 {algorithmConfig?.maxDiaryEntries || usageInfo.dataSelection?.maxItems.diaryEntries || 5} diary entries
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Scoring Factors - use algorithmConfig if available */}
+                            <div className="mb-3">
+                              <p className="text-xs text-indigo-600 font-medium mb-1">
+                                Scoring Algorithm (scored strategy, max 100 points):
+                              </p>
+                              <div className="grid grid-cols-2 gap-2">
+                                <div className="p-2 bg-white rounded border border-indigo-100">
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-xs font-medium text-indigo-800">Recency</span>
+                                    <span className="text-xs text-indigo-600 font-mono">max {algorithmConfig?.recencyMaxPoints || 40}pts</span>
+                                  </div>
+                                  <p className="text-[10px] text-indigo-500 mt-0.5">Newer items score higher ({algorithmConfig?.recencyDecayPerDay || 5}pts lost per day)</p>
+                                </div>
+                                <div className="p-2 bg-white rounded border border-indigo-100">
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-xs font-medium text-indigo-800">Content Length</span>
+                                    <span className="text-xs text-indigo-600 font-mono">max {algorithmConfig?.contentLengthMaxPoints || 30}pts</span>
+                                  </div>
+                                  <p className="text-[10px] text-indigo-500 mt-0.5">1pt per {algorithmConfig?.contentLengthCharsPerPoint || 10} chars</p>
+                                </div>
+                                <div className="p-2 bg-white rounded border border-indigo-100">
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-xs font-medium text-indigo-800">Sentiment</span>
+                                    <span className="text-xs text-indigo-600 font-mono">max {algorithmConfig?.sentimentMaxPoints || 20}pts</span>
+                                  </div>
+                                  <p className="text-[10px] text-indigo-500 mt-0.5">Strong emotions score higher</p>
+                                </div>
+                                <div className="p-2 bg-white rounded border border-indigo-100">
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-xs font-medium text-indigo-800">Tags</span>
+                                    <span className="text-xs text-indigo-600 font-mono">max {algorithmConfig?.tagsMaxPoints || 10}pts</span>
+                                  </div>
+                                  <p className="text-[10px] text-indigo-500 mt-0.5">{algorithmConfig?.tagsPointsPerTag || 2}pts per tag</p>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Summarization */}
+                            <div className="p-2 bg-white rounded border border-indigo-100">
+                              <p className="text-xs text-indigo-600 font-medium">
+                                ✂️ Summarization: Content &gt;{algorithmConfig?.summarizationWordThreshold || 150} words
+                              </p>
+                              <p className="text-[10px] text-indigo-500">Content over threshold is summarized via GPT to preserve key topics</p>
+                            </div>
+
+                            {/* Link to settings */}
+                            {algorithmConfig && (
+                              <p className="text-[10px] text-indigo-500 mt-2 italic">
+                                Edit these values in the Algorithm Settings panel on the left sidebar
+                              </p>
+                            )}
                           </div>
                         )}
                       </div>
