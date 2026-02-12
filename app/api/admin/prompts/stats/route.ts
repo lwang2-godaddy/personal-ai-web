@@ -1,6 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/middleware/auth';
 import { getAdminFirestore } from '@/lib/api/firebase/admin';
+import { SAMPLING_RATES } from '../usage/route';
+
+/**
+ * Get the sampling rate for a service
+ * Uses the rate stored in the document if available, otherwise falls back to config
+ */
+function getSamplingRate(service: string, docSamplingRate?: number): number {
+  if (docSamplingRate && docSamplingRate > 1) {
+    return docSamplingRate;
+  }
+  return SAMPLING_RATES[service] || SAMPLING_RATES.default;
+}
 
 interface ServiceStats {
   service: string;
@@ -56,13 +68,19 @@ export async function GET(request: NextRequest) {
       .where('executedAt', '<=', endDate.toISOString())
       .get();
 
-    // Aggregate by service
+    // Aggregate by service (with sampling rate adjustment)
     const serviceMap = new Map<string, { totalCost: number; executionCount: number }>();
 
     snapshot.docs.forEach((doc) => {
       const data = doc.data();
       const service = data.service as string;
-      const cost = (data.estimatedCostUSD as number) || 0;
+      const rawCost = (data.estimatedCostUSD as number) || 0;
+      const docSamplingRate = data.samplingRate as number | undefined;
+
+      // Get sampling rate and apply multiplier
+      const samplingRate = getSamplingRate(service, docSamplingRate);
+      const cost = rawCost * samplingRate;
+      const callCount = samplingRate;
 
       if (!serviceMap.has(service)) {
         serviceMap.set(service, { totalCost: 0, executionCount: 0 });
@@ -70,7 +88,7 @@ export async function GET(request: NextRequest) {
 
       const stats = serviceMap.get(service)!;
       stats.totalCost += cost;
-      stats.executionCount += 1;
+      stats.executionCount += callCount;
     });
 
     // Convert to array and calculate averages

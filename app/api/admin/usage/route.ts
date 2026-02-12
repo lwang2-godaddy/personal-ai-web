@@ -4,6 +4,37 @@ import { getAdminFirestore } from '@/lib/api/firebase/admin';
 import { SERVICE_OPERATIONS_MAP } from '@/lib/models/ServiceOperations';
 
 /**
+ * Sampling rates per service - MUST match PromptExecutionTracker.ts in Cloud Functions
+ *
+ * These rates are used to calculate actual costs from sampled data:
+ * actualCost = loggedCost * samplingRate
+ *
+ * Example: If EmbeddingService has samplingRate=100, and we logged $0.01,
+ * the actual cost is $0.01 * 100 = $1.00
+ *
+ * Keep in sync with: PersonalAIApp/firebase/functions/src/services/tracking/PromptExecutionTracker.ts
+ */
+export const SAMPLING_RATES: Record<string, number> = {
+  // EmbeddingService: sample 1 in 100 (low cost, high volume)
+  EmbeddingService: 100,
+  // All other services: log 100% of calls
+  default: 1,
+};
+
+/**
+ * Get the sampling rate for a service
+ * Uses the rate stored in the document if available, otherwise falls back to config
+ */
+function getSamplingRate(service: string, docSamplingRate?: number): number {
+  // If the document has a samplingRate, use it (more accurate)
+  if (docSamplingRate && docSamplingRate > 1) {
+    return docSamplingRate;
+  }
+  // Otherwise use the configured rate
+  return SAMPLING_RATES[service] || SAMPLING_RATES.default;
+}
+
+/**
  * Map service names to user-friendly operation labels
  * Note: sourceType field takes precedence when available (e.g., 'embedding', 'vision')
  */
@@ -257,8 +288,18 @@ export async function GET(request: NextRequest) {
       const userId = data.userId as string;
       const service = data.service as string;
       const sourceType = data.sourceType as string | undefined;
-      const cost = (data.estimatedCostUSD as number) || 0;
-      const tokens = (data.totalTokens as number) || 0;
+      const rawCost = (data.estimatedCostUSD as number) || 0;
+      const rawTokens = (data.totalTokens as number) || 0;
+      const docSamplingRate = data.samplingRate as number | undefined;
+
+      // Get sampling rate: prefer document's stored rate, fallback to config
+      const samplingRate = getSamplingRate(service, docSamplingRate);
+
+      // Apply sampling multiplier to get actual estimated values
+      // If samplingRate=100, this logged execution represents ~100 actual calls
+      const cost = rawCost * samplingRate;
+      const tokens = rawTokens * samplingRate;
+      const callCount = samplingRate; // Each logged execution represents N actual calls
 
       // Map to operation: sourceType takes precedence over service mapping
       // This allows embeddings (sourceType='embedding') to be tracked separately from chat
@@ -300,12 +341,12 @@ export async function GET(request: NextRequest) {
 
       const periodData = usageByPeriod.get(period)!;
       periodData.totalCostUSD += cost;
-      periodData.totalApiCalls += 1;
+      periodData.totalApiCalls += callCount;
       periodData.totalTokens += tokens;
       periodData.userCount.add(userId);
 
       // Aggregate operation counts and costs
-      periodData.operationCounts[operation] = (periodData.operationCounts[operation] || 0) + 1;
+      periodData.operationCounts[operation] = (periodData.operationCounts[operation] || 0) + callCount;
       periodData.operationCosts[operation] = (periodData.operationCosts[operation] || 0) + cost;
 
       // Aggregate per-user stats
@@ -320,7 +361,7 @@ export async function GET(request: NextRequest) {
         }
         const userStat = userStats.get(userId)!;
         userStat.totalCost += cost;
-        userStat.totalApiCalls += 1;
+        userStat.totalApiCalls += callCount;
         userStat.totalTokens += tokens;
       }
 
@@ -329,7 +370,7 @@ export async function GET(request: NextRequest) {
       if (model) {
         const existing = modelStats.get(model) || { cost: 0, calls: 0, tokens: 0 };
         existing.cost += cost;
-        existing.calls += 1;
+        existing.calls += callCount;
         existing.tokens += tokens;
         modelStats.set(model, existing);
       }
@@ -339,7 +380,7 @@ export async function GET(request: NextRequest) {
       if (endpoint) {
         const existing = endpointStats.get(endpoint) || { cost: 0, calls: 0, tokens: 0 };
         existing.cost += cost;
-        existing.calls += 1;
+        existing.calls += callCount;
         existing.tokens += tokens;
         endpointStats.set(endpoint, existing);
       }
@@ -355,17 +396,17 @@ export async function GET(request: NextRequest) {
           webCost: 0, webCalls: 0,
         };
         existing.cost += cost;
-        existing.calls += 1;
+        existing.calls += callCount;
         existing.tokens += tokens;
 
         // Track source: WebApp service = web, everything else = mobile/cloud functions
         const isWeb = service === 'WebApp';
         if (isWeb) {
           existing.webCost += cost;
-          existing.webCalls += 1;
+          existing.webCalls += callCount;
         } else {
           existing.mobileCost += cost;
-          existing.mobileCalls += 1;
+          existing.mobileCalls += callCount;
         }
 
         featureStats.set(feature, existing);
@@ -461,6 +502,15 @@ export async function GET(request: NextRequest) {
       }))
       .sort((a, b) => b.cost - a.cost);
 
+    // Build sampling info for UI display
+    const samplingInfo = Object.entries(SAMPLING_RATES)
+      .filter(([service, rate]) => service !== 'default' && rate > 1)
+      .map(([service, rate]) => ({
+        service,
+        rate,
+        description: `1 in ${rate} calls logged`,
+      }));
+
     return NextResponse.json({
       usage,
       totals: {
@@ -475,6 +525,8 @@ export async function GET(request: NextRequest) {
       endDate: endDateStr,
       groupBy,
       serviceFilter: serviceFilter || undefined,
+      // Include sampling info so UI can show it
+      samplingInfo: samplingInfo.length > 0 ? samplingInfo : undefined,
     });
   } catch (error: any) {
     console.error('[Admin Usage API] Error:', error);

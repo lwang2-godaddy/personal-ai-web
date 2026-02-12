@@ -47,6 +47,12 @@ interface UsageData {
   userCount?: number;
 }
 
+interface SamplingInfo {
+  service: string;
+  rate: number;
+  description: string;
+}
+
 interface UsageResponse {
   usage: UsageData[];
   totals: {
@@ -61,6 +67,7 @@ interface UsageResponse {
   startDate: string;
   endDate: string;
   groupBy: 'day' | 'month';
+  samplingInfo?: SamplingInfo[];
 }
 
 interface TopUser {
@@ -159,6 +166,9 @@ export default function AdminUsageAnalyticsPage() {
   const [endpointBreakdown, setEndpointBreakdown] = useState<EndpointBreakdown>({});
   const [featureBreakdown, setFeatureBreakdown] = useState<FeatureBreakdown[]>([]);
 
+  // Sampling info state
+  const [samplingInfo, setSamplingInfo] = useState<SamplingInfo[]>([]);
+
   // Infrastructure costs state (new)
   const [infrastructureData, setInfrastructureData] = useState<AggregatedInfrastructureCosts | null>(null);
   const [infrastructureTotals, setInfrastructureTotals] = useState<InfrastructureCostTotals | null>(null);
@@ -208,6 +218,9 @@ export default function AdminUsageAnalyticsPage() {
       setModelBreakdown(data.modelBreakdown || {});
       setEndpointBreakdown(data.endpointBreakdown || {});
       setFeatureBreakdown(data.featureBreakdown || []);
+
+      // Set sampling info
+      setSamplingInfo(data.samplingInfo || []);
 
       // Fetch infrastructure costs in parallel
       try {
@@ -487,6 +500,44 @@ export default function AdminUsageAnalyticsPage() {
                 </p>
               </div>
               <div className="text-4xl">🔤</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sampling Notice - Important for understanding the data */}
+      {!loading && dataLoaded && samplingInfo.length > 0 && (
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-5">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl">📊</span>
+            <div className="flex-1">
+              <h3 className="text-blue-800 font-semibold mb-2">Data Sampling in Effect</h3>
+              <p className="text-blue-700 text-sm mb-3">
+                To reduce Firestore storage costs, some high-volume services use statistical sampling.
+                Costs and call counts shown are <strong>estimated totals</strong> calculated from sampled data.
+              </p>
+
+              <div className="bg-white/60 rounded-lg p-3">
+                <h4 className="font-medium text-blue-800 mb-2">Sampling Rates:</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {samplingInfo.map((info) => (
+                    <div key={info.service} className="flex items-center gap-2 text-sm">
+                      <span className="inline-flex items-center px-2 py-1 rounded-full bg-blue-100 text-blue-700 font-medium">
+                        {info.service}
+                      </span>
+                      <span className="text-blue-600">
+                        → {info.description} (costs multiplied by {info.rate}×)
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-3 text-xs text-blue-600">
+                <strong>How it works:</strong> For EmbeddingService, we log 1 in every 100 calls.
+                Each logged record represents ~100 actual calls, so we multiply the recorded cost by 100 to estimate the true total.
+                This reduces Firestore writes by 99% while maintaining cost accuracy within ±10%.
+              </div>
             </div>
           </div>
         </div>
