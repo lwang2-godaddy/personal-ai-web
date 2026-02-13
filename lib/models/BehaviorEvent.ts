@@ -326,7 +326,7 @@ export const TRACKED_SCREENS = {
   settingsQuietHours: 'settings_quiet_hours',
   settingsLifeFeed: 'settings_life_feed',
 
-  // Admin (15 screens)
+  // Admin (16 screens)
   adminOverview: 'admin_overview',
   adminUsers: 'admin_users',
   adminUserDetail: 'admin_user_detail',
@@ -344,6 +344,7 @@ export const TRACKED_SCREENS = {
   adminMigrationDetail: 'admin_migration_detail',
   adminExploreQuestions: 'admin_explore_questions',
   adminDocs: 'admin_docs',
+  adminDemoData: 'admin_demo_data',
 
   // Mobile (for cross-platform compatibility)
   home: 'home',
