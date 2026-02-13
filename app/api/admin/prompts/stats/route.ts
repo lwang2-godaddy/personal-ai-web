@@ -1,18 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/middleware/auth';
 import { getAdminFirestore } from '@/lib/api/firebase/admin';
-import { SAMPLING_RATES } from '../usage/route';
-
-/**
- * Get the sampling rate for a service
- * Uses the rate stored in the document if available, otherwise falls back to config
- */
-function getSamplingRate(service: string, docSamplingRate?: number): number {
-  if (docSamplingRate && docSamplingRate > 1) {
-    return docSamplingRate;
-  }
-  return SAMPLING_RATES[service] || SAMPLING_RATES.default;
-}
+import { getSamplingRate } from '@/lib/config/samplingRates';
 
 interface ServiceStats {
   service: string;
