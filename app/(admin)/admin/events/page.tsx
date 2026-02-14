@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
+import { apiGet } from '@/lib/api/client';
 import {
   useAdminDataViewer,
   UserSelector,
@@ -10,7 +11,7 @@ import {
   LoadingSpinner,
   EmptyState,
 } from '@/components/admin/shared';
-import { EventCard, EventDetailModal } from '@/components/admin/events';
+import { EventCard, EventDetailModal, EventAlgorithmReference } from '@/components/admin/events';
 import type { AdminEvent } from '@/components/admin/events';
 
 // ============================================================================
@@ -132,16 +133,12 @@ export default function EventsViewerPage() {
     setExecutionData(null);
 
     try {
-      const response = await fetch(`/api/admin/events/${eventId}`);
-      if (response.ok) {
-        const data = await response.json();
-        const exec = data.execution || null;
-        executionCacheRef.current[eventId] = exec;
-        setExecutionData(exec);
-      } else {
-        executionCacheRef.current[eventId] = null;
-        setExecutionData(null);
-      }
+      const data = await apiGet<{ event: AdminEvent; execution: ExecutionData | null }>(
+        `/api/admin/events/${eventId}`
+      );
+      const exec = data.execution || null;
+      executionCacheRef.current[eventId] = exec;
+      setExecutionData(exec);
     } catch {
       executionCacheRef.current[eventId] = null;
       setExecutionData(null);
@@ -209,6 +206,9 @@ export default function EventsViewerPage() {
           {loading || loadingUsers ? 'Loading...' : 'Refresh'}
         </button>
       </div>
+
+      {/* Algorithm Reference */}
+      <EventAlgorithmReference />
 
       {/* User Selector */}
       <UserSelector
