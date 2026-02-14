@@ -38,12 +38,6 @@ const PERIOD_TYPES = [
   { value: 'yearly', label: 'Yearly' },
 ];
 
-const SOURCE_OPTIONS = [
-  { value: '', label: 'All Sources' },
-  { value: 'fun_facts', label: 'Template-based (fun_facts)' },
-  { value: 'funFacts', label: 'AI-generated (funFacts)' },
-];
-
 const VISIBILITY_OPTIONS = [
   { value: '', label: 'All' },
   { value: 'viewed', label: 'Viewed Only' },
@@ -85,7 +79,6 @@ interface ExecutionData {
 export default function FunFactsViewerPage() {
   // Filters (page-specific state)
   const [categoryFilter, setCategoryFilter] = useState('');
-  const [sourceFilter, setSourceFilter] = useState('');
   const [periodTypeFilter, setPeriodTypeFilter] = useState('');
   const [visibilityFilter, setVisibilityFilter] = useState('');
 
@@ -120,7 +113,6 @@ export default function FunFactsViewerPage() {
     responseKey: 'facts',
     params: {
       category: categoryFilter,
-      source: sourceFilter,
     },
   });
 
@@ -165,14 +157,11 @@ export default function FunFactsViewerPage() {
   // Enhanced view details handler
   const handleViewFactDetails = useCallback((factId: string) => {
     handleViewDetails(factId);
-    // If we're opening (not closing), fetch execution data for AI facts
+    // If we're opening (not closing), fetch execution data
     if (selectedItemId !== factId) {
-      const fact = facts.find((f) => f.id === factId);
-      if (fact && fact.source === 'funFacts') {
-        fetchExecutionData(factId);
-      }
+      fetchExecutionData(factId);
     }
-  }, [handleViewDetails, selectedItemId, fetchExecutionData, facts]);
+  }, [handleViewDetails, selectedItemId, fetchExecutionData]);
 
   // ============================================================================
   // Stats
@@ -183,8 +172,6 @@ export default function FunFactsViewerPage() {
       ? filteredFacts.reduce((sum, f) => sum + (f.confidence || 0), 0) / filteredFacts.length
       : 0;
 
-  const templateCount = filteredFacts.filter((f) => f.source === 'fun_facts').length;
-  const aiCount = filteredFacts.filter((f) => f.source === 'funFacts').length;
   const viewedCount = filteredFacts.filter((f) => f.viewed).length;
   const hiddenCount = filteredFacts.filter((f) => f.hidden).length;
 
@@ -212,7 +199,7 @@ export default function FunFactsViewerPage() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Fun Facts</h1>
           <p className="mt-1 text-gray-600">
-            Browse fun facts from both template-based and AI-generated collections
+            Browse AI-generated fun facts powered by hybrid data + AI system
           </p>
         </div>
         <button
@@ -243,7 +230,7 @@ export default function FunFactsViewerPage() {
 
       {/* Filters */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1 uppercase">Category</label>
             <select
@@ -269,18 +256,6 @@ export default function FunFactsViewerPage() {
             </select>
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1 uppercase">Source Collection</label>
-            <select
-              value={sourceFilter}
-              onChange={(e) => setSourceFilter(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 focus:ring-2 focus:ring-red-500 focus:border-red-500"
-            >
-              {SOURCE_OPTIONS.map((s) => (
-                <option key={s.value} value={s.value}>{s.label}</option>
-              ))}
-            </select>
-          </div>
-          <div>
             <label className="block text-xs font-medium text-gray-500 mb-1 uppercase">Visibility</label>
             <select
               value={visibilityFilter}
@@ -302,8 +277,6 @@ export default function FunFactsViewerPage() {
               <span className="font-medium text-gray-900">{totalCount}</span> facts
             </span>
             <span className="text-gray-300">|</span>
-            <span className="text-green-600">{templateCount} template</span>
-            <span className="text-purple-600">{aiCount} AI</span>
             <span className="text-gray-600">
               Avg Confidence: {(avgConfidence * 100).toFixed(0)}%
             </span>
@@ -329,7 +302,7 @@ export default function FunFactsViewerPage() {
           {filteredFacts.length === 0 ? (
             <EmptyState
               message="No fun facts found matching the current filters."
-              hint="Try adjusting your filters or selecting a different source."
+              hint="Try adjusting your filters or selecting a different category."
             />
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

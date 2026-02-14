@@ -205,24 +205,28 @@ Guidelines:
 - Start with an emoji that matches the insight
 - Never make the user feel bad about their data
 - The insight should make the user smile or feel recognized — it should reflect something personal to them
+- When precise data stats are provided (steps, distances, streaks, etc.), ALWAYS cite the actual numbers
+- Reference specific metrics: "You walked 38,200 steps" not "You've been active"
+- Compare periods when data is available: "12% more than last week"
+- Mention specific activities, places, and times from the data
 
 Avoid these anti-patterns:
 - NEVER say generic things like "You've been active" or "Keep up the good work"
 - NEVER give vague insights that could apply to anyone
 - ALWAYS mention a specific activity, place, time, or metric from the data
 - BAD: "You've been very active this week!" GOOD: "You played badminton 3 times this week — your most active sport!"`,
-    carousel_patterns: 'Based on my recent data, tell me one interesting pattern about a specific activity, place, or habit. Reference actual data. One sentence only.',
-    carousel_surprising: 'What is one surprising or unexpected thing in my recent data? Be specific about what makes it unusual. One sentence only.',
-    carousel_recommendation: 'Based on a specific pattern in my recent data, give me one actionable recommendation. Reference the actual data. One sentence only.',
-    carousel_weekly_patterns: 'Based on my data for {{periodLabel}}, tell me one interesting pattern about a specific activity or place this week. Reference actual numbers or days. One sentence only.',
-    carousel_weekly_surprising: 'Looking at {{periodLabel}}, what is one surprising thing about my week? Be specific about what activity, place, or metric stands out. One sentence only.',
-    carousel_weekly_recommendation: 'Based on a specific pattern from {{periodLabel}}, give me one actionable recommendation for next week. Reference the actual data. One sentence only.',
-    carousel_monthly_patterns: 'Based on my data for {{periodLabel}}, tell me one interesting pattern about a specific activity or habit this month. Reference actual numbers or trends. One sentence only.',
-    carousel_monthly_surprising: 'Looking at {{periodLabel}}, what is one surprising insight about my month? Be specific about what changed or stood out. One sentence only.',
-    carousel_monthly_recommendation: 'Based on a specific trend from {{periodLabel}}, give me one recommendation to improve next month. Reference the actual data. One sentence only.',
-    carousel_quarterly_patterns: 'Based on my data for {{periodLabel}}, tell me one interesting trend about a specific activity or habit from this quarter. Reference actual numbers. One sentence only.',
-    carousel_quarterly_surprising: 'Looking at {{periodLabel}}, what is one surprising achievement or change from this quarter? Be specific. One sentence only.',
-    carousel_quarterly_recommendation: 'Based on a specific trend from {{periodLabel}}, give me one strategic recommendation for the next quarter. Reference the actual data. One sentence only.',
+    carousel_patterns: 'Based on my recent data, tell me one interesting pattern about a specific activity, place, or habit. Use the precise stats provided (step counts, activity frequencies, locations visited) to give a specific, data-backed insight. Reference actual numbers. One sentence only.',
+    carousel_surprising: 'What is one surprising or unexpected thing in my recent data? Use the precise stats provided to cite specific numbers. Be specific about what makes it unusual. One sentence only.',
+    carousel_recommendation: 'Based on a specific pattern in my recent data, give me one actionable recommendation. Use the precise stats provided to reference actual numbers and trends. One sentence only.',
+    carousel_weekly_patterns: 'Based on my data for {{periodLabel}}, tell me one interesting pattern about a specific activity or place this week. Use the precise stats provided (step counts, activity frequencies, locations visited) to give a data-backed insight. Reference actual numbers or days. One sentence only.',
+    carousel_weekly_surprising: 'Looking at {{periodLabel}}, what is one surprising thing about my week? Use the precise stats provided to cite specific numbers or comparisons. Be specific about what activity, place, or metric stands out. One sentence only.',
+    carousel_weekly_recommendation: 'Based on a specific pattern from {{periodLabel}}, give me one actionable recommendation for next week. Use the precise stats provided to reference actual numbers. One sentence only.',
+    carousel_monthly_patterns: 'Based on my data for {{periodLabel}}, tell me one interesting pattern about a specific activity or habit this month. Use the precise stats provided to reference actual numbers or trends. One sentence only.',
+    carousel_monthly_surprising: 'Looking at {{periodLabel}}, what is one surprising insight about my month? Use the precise stats provided to cite specific numbers or changes. Be specific about what changed or stood out. One sentence only.',
+    carousel_monthly_recommendation: 'Based on a specific trend from {{periodLabel}}, give me one recommendation to improve next month. Use the precise stats provided to reference actual numbers. One sentence only.',
+    carousel_quarterly_patterns: 'Based on my data for {{periodLabel}}, tell me one interesting trend about a specific activity or habit from this quarter. Use the precise stats provided to reference actual numbers. One sentence only.',
+    carousel_quarterly_surprising: 'Looking at {{periodLabel}}, what is one surprising achievement or change from this quarter? Use the precise stats provided to cite specific numbers. Be specific. One sentence only.',
+    carousel_quarterly_recommendation: 'Based on a specific trend from {{periodLabel}}, give me one strategic recommendation for the next quarter. Use the precise stats provided to reference actual numbers. One sentence only.',
     chat_system: `You are a personal AI assistant with access to the user's health, location, and voice data. Use the following context from the user's personal data to answer their question:
 
 {{context}}
@@ -899,6 +903,10 @@ Rules:
 - 以匹配洞察内容的表情符号开头
 - 永远不要让用户对他们的数据感到不好
 - 洞察应该让用户会心一笑——要反映只有他们才能理解的个人特点
+- 当提供精确数据统计（步数、距离、连续天数等）时，必须引用实际数字
+- 引用具体指标："你走了38,200步"而不是"你很活跃"
+- 当有数据时进行时间段比较："比上周多12%"
+- 提到数据中的具体活动、地点和时间
 - 必须用中文回复
 
 避免以下问题：
@@ -906,18 +914,18 @@ Rules:
 - 绝对不要给出适用于任何人的模糊洞察
 - 必须提到数据中的具体活动、地点、时间或指标
 - 错误示例："你这周很活跃！" 正确示例："你这周打了3次羽毛球——是你最活跃的运动！"`,
-    carousel_patterns: '根据我最近的数据，告诉我一个关于具体活动、地点或习惯的有趣模式。引用实际数据。只用一句话，用中文回复。',
-    carousel_surprising: '我最近的数据中有什么令人惊讶或意外的事情？具体说明是什么让它不寻常。只用一句话，用中文回复。',
-    carousel_recommendation: '根据我最近数据中的一个具体模式，给我一个可行的建议。引用实际数据。只用一句话，用中文回复。',
-    carousel_weekly_patterns: '根据我{{periodLabel}}的数据，告诉我一个关于这周具体活动或地点的有趣模式。引用实际数字或日期。只用一句话，用中文回复。',
-    carousel_weekly_surprising: '看看{{periodLabel}}，我这周有什么令人惊讶的事情？具体说明哪个活动、地点或指标突出。只用一句话，用中文回复。',
-    carousel_weekly_recommendation: '根据{{periodLabel}}中的一个具体模式，给我一个下周可行的建议。引用实际数据。只用一句话，用中文回复。',
-    carousel_monthly_patterns: '根据我{{periodLabel}}的数据，告诉我一个关于这个月具体活动或习惯的有趣模式。引用实际数字或趋势。只用一句话，用中文回复。',
-    carousel_monthly_surprising: '看看{{periodLabel}}，我这个月有什么令人惊讶的洞察？具体说明什么发生了变化或突出。只用一句话，用中文回复。',
-    carousel_monthly_recommendation: '根据{{periodLabel}}中的一个具体趋势，给我一个改进下个月的建议。引用实际数据。只用一句话，用中文回复。',
-    carousel_quarterly_patterns: '根据我{{periodLabel}}的数据，告诉我一个关于这个季度具体活动或习惯的有趣趋势。引用实际数字。只用一句话，用中文回复。',
-    carousel_quarterly_surprising: '看看{{periodLabel}}，这个季度有什么令人惊讶的成就或变化？要具体。只用一句话，用中文回复。',
-    carousel_quarterly_recommendation: '根据{{periodLabel}}中的一个具体趋势，给我一个下个季度的战略建议。引用实际数据。只用一句话，用中文回复。',
+    carousel_patterns: '根据我最近的数据，告诉我一个关于具体活动、地点或习惯的有趣模式。使用提供的精确统计数据（步数、活动频率、访问地点）来给出具体的、有数据支持的洞察。引用实际数字。只用一句话，用中文回复。',
+    carousel_surprising: '我最近的数据中有什么令人惊讶或意外的事情？使用提供的精确统计数据来引用具体数字。具体说明是什么让它不寻常。只用一句话，用中文回复。',
+    carousel_recommendation: '根据我最近数据中的一个具体模式，给我一个可行的建议。使用提供的精确统计数据来引用实际数字和趋势。只用一句话，用中文回复。',
+    carousel_weekly_patterns: '根据我{{periodLabel}}的数据，告诉我一个关于这周具体活动或地点的有趣模式。使用提供的精确统计数据（步数、活动频率、访问地点）来给出有数据支持的洞察。引用实际数字或日期。只用一句话，用中文回复。',
+    carousel_weekly_surprising: '看看{{periodLabel}}，我这周有什么令人惊讶的事情？使用提供的精确统计数据来引用具体数字或比较。具体说明哪个活动、地点或指标突出。只用一句话，用中文回复。',
+    carousel_weekly_recommendation: '根据{{periodLabel}}中的一个具体模式，给我一个下周可行的建议。使用提供的精确统计数据来引用实际数字。只用一句话，用中文回复。',
+    carousel_monthly_patterns: '根据我{{periodLabel}}的数据，告诉我一个关于这个月具体活动或习惯的有趣模式。使用提供的精确统计数据来引用实际数字或趋势。只用一句话，用中文回复。',
+    carousel_monthly_surprising: '看看{{periodLabel}}，我这个月有什么令人惊讶的洞察？使用提供的精确统计数据来引用具体数字或变化。具体说明什么发生了变化或突出。只用一句话，用中文回复。',
+    carousel_monthly_recommendation: '根据{{periodLabel}}中的一个具体趋势，给我一个改进下个月的建议。使用提供的精确统计数据来引用实际数字。只用一句话，用中文回复。',
+    carousel_quarterly_patterns: '根据我{{periodLabel}}的数据，告诉我一个关于这个季度具体活动或习惯的有趣趋势。使用提供的精确统计数据来引用实际数字。只用一句话，用中文回复。',
+    carousel_quarterly_surprising: '看看{{periodLabel}}，这个季度有什么令人惊讶的成就或变化？使用提供的精确统计数据来引用具体数字。要具体。只用一句话，用中文回复。',
+    carousel_quarterly_recommendation: '根据{{periodLabel}}中的一个具体趋势，给我一个下个季度的战略建议。使用提供的精确统计数据来引用实际数字。只用一句话，用中文回复。',
     chat_system: `你是一个个人AI助手，可以访问用户的健康、位置和语音数据。使用以下来自用户个人数据的上下文来回答问题：
 
 {{context}}
@@ -1591,24 +1599,28 @@ Rules:
 - ユーザーがデータについて悪く感じないようにする
 - インサイトはユーザーの心に響くものに——その人だけの個人的な特徴を反映する
 - 必ず日本語で回答
+- 精確なデータ統計（歩数、距離、連続日数等）が提供された場合、必ず実際の数字を引用する
+- 具体的な指標を引用：「38,200歩歩きました」であり「アクティブでした」ではない
+- データがある場合は期間を比較：「先週より12%多い」
+- データの具体的な活動、場所、時間を言及する
 
 以下のパターンを避けてください：
 - 「最近活動的ですね」「その調子で頑張って」のような一般的な表現は絶対に使わない
 - 誰にでも当てはまるような曖昧なインサイトは絶対に出さない
 - データ内の具体的な活動、場所、時間、指標を必ず言及する
 - 悪い例：「今週はとても活動的でした！」良い例：「今週バドミントンを3回プレイしました——最もアクティブなスポーツです！」`,
-    carousel_patterns: '最近のデータに基づいて、具体的な活動、場所、または習慣に関する興味深いパターンを1つ教えてください。実際のデータを引用してください。1文のみ、日本語で。',
-    carousel_surprising: '最近のデータで驚きや予想外のことは何ですか？何がそれを珍しくするのか具体的に教えてください。1文のみ、日本語で。',
-    carousel_recommendation: '最近のデータの具体的なパターンに基づいて、実行可能な提案を1つください。実際のデータを引用してください。1文のみ、日本語で。',
-    carousel_weekly_patterns: '{{periodLabel}}のデータに基づいて、今週の具体的な活動や場所に関する興味深いパターンを1つ教えてください。実際の数字や日を引用してください。1文のみ、日本語で。',
-    carousel_weekly_surprising: '{{periodLabel}}を見て、今週何が驚きでしたか？どの活動、場所、指標が突出しているか具体的に教えてください。1文のみ、日本語で。',
-    carousel_weekly_recommendation: '{{periodLabel}}の具体的なパターンに基づいて、来週のための実行可能な提案を1つください。実際のデータを引用してください。1文のみ、日本語で。',
-    carousel_monthly_patterns: '{{periodLabel}}のデータに基づいて、今月の具体的な活動や習慣に関する興味深いパターンを1つ教えてください。実際の数字やトレンドを引用してください。1文のみ、日本語で。',
-    carousel_monthly_surprising: '{{periodLabel}}を見て、今月何が驚きでしたか？何が変わったか、何が突出しているか具体的に教えてください。1文のみ、日本語で。',
-    carousel_monthly_recommendation: '{{periodLabel}}の具体的なトレンドに基づいて、来月改善するための提案を1つください。実際のデータを引用してください。1文のみ、日本語で。',
-    carousel_quarterly_patterns: '{{periodLabel}}のデータに基づいて、この四半期の具体的な活動や習慣に関する興味深いトレンドを1つ教えてください。実際の数字を引用してください。1文のみ、日本語で。',
-    carousel_quarterly_surprising: '{{periodLabel}}を見て、この四半期で驚きの達成や変化は何ですか？具体的に教えてください。1文のみ、日本語で。',
-    carousel_quarterly_recommendation: '{{periodLabel}}の具体的なトレンドに基づいて、次の四半期のための戦略的な提案を1つください。実際のデータを引用してください。1文のみ、日本語で。',
+    carousel_patterns: '最近のデータに基づいて、具体的な活動、場所、または習慣に関する興味深いパターンを1つ教えてください。提供された精確な統計データ（歩数、活動頻度、訪問場所）を使用して、具体的なデータに基づいたインサイトを提供してください。実際の数字を引用してください。1文のみ、日本語で。',
+    carousel_surprising: '最近のデータで驚きや予想外のことは何ですか？提供された精確な統計データを使用して具体的な数字を引用してください。何がそれを珍しくするのか具体的に教えてください。1文のみ、日本語で。',
+    carousel_recommendation: '最近のデータの具体的なパターンに基づいて、実行可能な提案を1つください。提供された精確な統計データを使用して実際の数字とトレンドを引用してください。1文のみ、日本語で。',
+    carousel_weekly_patterns: '{{periodLabel}}のデータに基づいて、今週の具体的な活動や場所に関する興味深いパターンを1つ教えてください。提供された精確な統計データ（歩数、活動頻度、訪問場所）を使用して、データに基づいたインサイトを提供してください。実際の数字や日を引用してください。1文のみ、日本語で。',
+    carousel_weekly_surprising: '{{periodLabel}}を見て、今週何が驚きでしたか？提供された精確な統計データを使用して具体的な数字や比較を引用してください。どの活動、場所、指標が突出しているか具体的に教えてください。1文のみ、日本語で。',
+    carousel_weekly_recommendation: '{{periodLabel}}の具体的なパターンに基づいて、来週のための実行可能な提案を1つください。提供された精確な統計データを使用して実際の数字を引用してください。1文のみ、日本語で。',
+    carousel_monthly_patterns: '{{periodLabel}}のデータに基づいて、今月の具体的な活動や習慣に関する興味深いパターンを1つ教えてください。提供された精確な統計データを使用して実際の数字やトレンドを引用してください。1文のみ、日本語で。',
+    carousel_monthly_surprising: '{{periodLabel}}を見て、今月何が驚きでしたか？提供された精確な統計データを使用して具体的な数字や変化を引用してください。何が変わったか、何が突出しているか具体的に教えてください。1文のみ、日本語で。',
+    carousel_monthly_recommendation: '{{periodLabel}}の具体的なトレンドに基づいて、来月改善するための提案を1つください。提供された精確な統計データを使用して実際の数字を引用してください。1文のみ、日本語で。',
+    carousel_quarterly_patterns: '{{periodLabel}}のデータに基づいて、この四半期の具体的な活動や習慣に関する興味深いトレンドを1つ教えてください。提供された精確な統計データを使用して実際の数字を引用してください。1文のみ、日本語で。',
+    carousel_quarterly_surprising: '{{periodLabel}}を見て、この四半期で驚きの達成や変化は何ですか？提供された精確な統計データを使用して具体的な数字を引用してください。1文のみ、日本語で。',
+    carousel_quarterly_recommendation: '{{periodLabel}}の具体的なトレンドに基づいて、次の四半期のための戦略的な提案を1つください。提供された精確な統計データを使用して実際の数字を引用してください。1文のみ、日本語で。',
     chat_system: `あなたはユーザーの健康、位置情報、音声データにアクセスできるパーソナルAIアシスタントです。ユーザーの個人データから以下のコンテキストを使用して質問に答えてください：
 
 {{context}}
@@ -2257,24 +2269,28 @@ JSON形式で返してください：
 - 사용자가 데이터에 대해 나쁘게 느끼지 않도록
 - 인사이트는 사용자만이 이해할 수 있는 개인적인 특성을 반영해야 함
 - 반드시 한국어로 응답
+- 정확한 데이터 통계(걸음 수, 거리, 연속 일수 등)가 제공되면 반드시 실제 숫자를 인용
+- 구체적인 지표 인용: "38,200보를 걸었습니다"이지 "활동적이었습니다"가 아님
+- 데이터가 있을 때 기간 비교: "지난주보다 12% 더 많음"
+- 데이터의 구체적인 활동, 장소, 시간을 언급
 
 다음 패턴을 피하세요:
 - "최근에 활동적이네요"나 "계속 힘내세요" 같은 일반적인 표현은 절대 사용하지 마세요
 - 누구에게나 해당되는 모호한 인사이트는 절대 제공하지 마세요
 - 데이터의 구체적인 활동, 장소, 시간, 지표를 반드시 언급하세요
 - 나쁜 예: "이번 주 정말 활동적이었어요!" 좋은 예: "이번 주 배드민턴을 3번 치셨어요 — 가장 활발한 운동이네요!"`,
-    carousel_patterns: '최근 데이터를 바탕으로 구체적인 활동, 장소 또는 습관에 대한 흥미로운 패턴 하나를 알려주세요. 실제 데이터를 인용해주세요. 한 문장만, 한국어로.',
-    carousel_surprising: '최근 데이터에서 놀랍거나 예상치 못한 것은 무엇인가요? 무엇이 그것을 특이하게 만드는지 구체적으로 알려주세요. 한 문장만, 한국어로.',
-    carousel_recommendation: '최근 데이터의 구체적인 패턴을 바탕으로 실행 가능한 추천 하나를 해주세요. 실제 데이터를 인용해주세요. 한 문장만, 한국어로.',
-    carousel_weekly_patterns: '{{periodLabel}} 데이터를 바탕으로 이번 주 구체적인 활동이나 장소에 대한 흥미로운 패턴 하나를 알려주세요. 실제 숫자나 날짜를 인용해주세요. 한 문장만, 한국어로.',
-    carousel_weekly_surprising: '{{periodLabel}}을 보면서 이번 주 무엇이 놀라웠나요? 어떤 활동, 장소, 지표가 돋보이는지 구체적으로 알려주세요. 한 문장만, 한국어로.',
-    carousel_weekly_recommendation: '{{periodLabel}}의 구체적인 패턴을 바탕으로 다음 주를 위한 실행 가능한 추천 하나를 해주세요. 실제 데이터를 인용해주세요. 한 문장만, 한국어로.',
-    carousel_monthly_patterns: '{{periodLabel}} 데이터를 바탕으로 이번 달 구체적인 활동이나 습관에 대한 흥미로운 패턴 하나를 알려주세요. 실제 숫자나 트렌드를 인용해주세요. 한 문장만, 한국어로.',
-    carousel_monthly_surprising: '{{periodLabel}}을 보면서 이번 달 무엇이 놀라웠나요? 무엇이 변했거나 돋보이는지 구체적으로 알려주세요. 한 문장만, 한국어로.',
-    carousel_monthly_recommendation: '{{periodLabel}}의 구체적인 트렌드를 바탕으로 다음 달 개선을 위한 추천 하나를 해주세요. 실제 데이터를 인용해주세요. 한 문장만, 한국어로.',
-    carousel_quarterly_patterns: '{{periodLabel}} 데이터를 바탕으로 이번 분기 구체적인 활동이나 습관에 대한 흥미로운 트렌드 하나를 알려주세요. 실제 숫자를 인용해주세요. 한 문장만, 한국어로.',
-    carousel_quarterly_surprising: '{{periodLabel}}을 보면서 이번 분기에 놀라운 성과나 변화는 무엇인가요? 구체적으로 알려주세요. 한 문장만, 한국어로.',
-    carousel_quarterly_recommendation: '{{periodLabel}}의 구체적인 트렌드를 바탕으로 다음 분기를 위한 전략적 추천 하나를 해주세요. 실제 데이터를 인용해주세요. 한 문장만, 한국어로.',
+    carousel_patterns: '최근 데이터를 바탕으로 구체적인 활동, 장소 또는 습관에 대한 흥미로운 패턴 하나를 알려주세요. 제공된 정확한 통계 데이터(걸음 수, 활동 빈도, 방문 장소)를 사용하여 구체적인 데이터 기반 인사이트를 제공해주세요. 실제 숫자를 인용해주세요. 한 문장만, 한국어로.',
+    carousel_surprising: '최근 데이터에서 놀랍거나 예상치 못한 것은 무엇인가요? 제공된 정확한 통계 데이터를 사용하여 구체적인 숫자를 인용해주세요. 무엇이 그것을 특이하게 만드는지 구체적으로 알려주세요. 한 문장만, 한국어로.',
+    carousel_recommendation: '최근 데이터의 구체적인 패턴을 바탕으로 실행 가능한 추천 하나를 해주세요. 제공된 정확한 통계 데이터를 사용하여 실제 숫자와 트렌드를 인용해주세요. 한 문장만, 한국어로.',
+    carousel_weekly_patterns: '{{periodLabel}} 데이터를 바탕으로 이번 주 구체적인 활동이나 장소에 대한 흥미로운 패턴 하나를 알려주세요. 제공된 정확한 통계 데이터(걸음 수, 활동 빈도, 방문 장소)를 사용하여 데이터 기반 인사이트를 제공해주세요. 실제 숫자나 날짜를 인용해주세요. 한 문장만, 한국어로.',
+    carousel_weekly_surprising: '{{periodLabel}}을 보면서 이번 주 무엇이 놀라웠나요? 제공된 정확한 통계 데이터를 사용하여 구체적인 숫자나 비교를 인용해주세요. 어떤 활동, 장소, 지표가 돋보이는지 구체적으로 알려주세요. 한 문장만, 한국어로.',
+    carousel_weekly_recommendation: '{{periodLabel}}의 구체적인 패턴을 바탕으로 다음 주를 위한 실행 가능한 추천 하나를 해주세요. 제공된 정확한 통계 데이터를 사용하여 실제 숫자를 인용해주세요. 한 문장만, 한국어로.',
+    carousel_monthly_patterns: '{{periodLabel}} 데이터를 바탕으로 이번 달 구체적인 활동이나 습관에 대한 흥미로운 패턴 하나를 알려주세요. 제공된 정확한 통계 데이터를 사용하여 실제 숫자나 트렌드를 인용해주세요. 한 문장만, 한국어로.',
+    carousel_monthly_surprising: '{{periodLabel}}을 보면서 이번 달 무엇이 놀라웠나요? 제공된 정확한 통계 데이터를 사용하여 구체적인 숫자나 변화를 인용해주세요. 무엇이 변했거나 돋보이는지 구체적으로 알려주세요. 한 문장만, 한국어로.',
+    carousel_monthly_recommendation: '{{periodLabel}}의 구체적인 트렌드를 바탕으로 다음 달 개선을 위한 추천 하나를 해주세요. 제공된 정확한 통계 데이터를 사용하여 실제 숫자를 인용해주세요. 한 문장만, 한국어로.',
+    carousel_quarterly_patterns: '{{periodLabel}} 데이터를 바탕으로 이번 분기 구체적인 활동이나 습관에 대한 흥미로운 트렌드 하나를 알려주세요. 제공된 정확한 통계 데이터를 사용하여 실제 숫자를 인용해주세요. 한 문장만, 한국어로.',
+    carousel_quarterly_surprising: '{{periodLabel}}을 보면서 이번 분기에 놀라운 성과나 변화는 무엇인가요? 제공된 정확한 통계 데이터를 사용하여 구체적인 숫자를 인용해주세요. 한 문장만, 한국어로.',
+    carousel_quarterly_recommendation: '{{periodLabel}}의 구체적인 트렌드를 바탕으로 다음 분기를 위한 전략적 추천 하나를 해주세요. 제공된 정확한 통계 데이터를 사용하여 실제 숫자를 인용해주세요. 한 문장만, 한국어로.',
     chat_system: `당신은 사용자의 건강, 위치, 음성 데이터에 접근할 수 있는 개인 AI 어시스턴트입니다. 사용자의 개인 데이터에서 다음 컨텍스트를 사용하여 질문에 답하세요:
 
 {{context}}
@@ -2894,24 +2910,28 @@ Directrices:
 - Nunca hagas que el usuario se sienta mal por sus datos
 - El insight debe hacer sonreír al usuario — debe reflejar algo personal que solo ellos entenderían
 - Responde siempre en español
+- Cuando se proporcionan estadísticas precisas (pasos, distancias, rachas, etc.), cita SIEMPRE los números reales
+- Referencia métricas específicas: "Caminaste 38.200 pasos" en lugar de "Has estado activo"
+- Compara períodos cuando los datos están disponibles: "12% más que la semana pasada"
+- Menciona las actividades, lugares y horarios específicos de los datos
 
 Evita estos anti-patrones:
 - NUNCA digas cosas genéricas como "Has estado activo" o "Sigue así"
 - NUNCA des insights vagos que podrían aplicarse a cualquiera
 - SIEMPRE menciona una actividad, lugar, tiempo o métrica específica de los datos
 - MAL: "¡Has estado muy activo esta semana!" BIEN: "¡Jugaste bádminton 3 veces esta semana — tu deporte más activo!"`,
-    carousel_patterns: 'Basándote en mis datos recientes, dime un patrón interesante sobre una actividad, lugar o hábito específico. Referencia datos reales. Solo una oración, en español.',
-    carousel_surprising: '¿Qué cosa sorprendente o inesperada hay en mis datos recientes? Sé específico sobre qué lo hace inusual. Solo una oración, en español.',
-    carousel_recommendation: 'Basándote en un patrón específico de mis datos recientes, dame una recomendación práctica. Referencia los datos reales. Solo una oración, en español.',
-    carousel_weekly_patterns: 'Basándote en mis datos de {{periodLabel}}, dime un patrón interesante sobre una actividad o lugar específico esta semana. Referencia números o días reales. Solo una oración, en español.',
-    carousel_weekly_surprising: 'Mirando {{periodLabel}}, ¿qué cosa sorprendente hay de mi semana? Sé específico sobre qué actividad, lugar o métrica destaca. Solo una oración, en español.',
-    carousel_weekly_recommendation: 'Basándote en un patrón específico de {{periodLabel}}, dame una recomendación práctica para la próxima semana. Referencia los datos reales. Solo una oración, en español.',
-    carousel_monthly_patterns: 'Basándote en mis datos de {{periodLabel}}, dime un patrón interesante sobre una actividad o hábito específico este mes. Referencia números o tendencias reales. Solo una oración, en español.',
-    carousel_monthly_surprising: 'Mirando {{periodLabel}}, ¿qué insight sorprendente hay de mi mes? Sé específico sobre qué cambió o destacó. Solo una oración, en español.',
-    carousel_monthly_recommendation: 'Basándote en una tendencia específica de {{periodLabel}}, dame una recomendación para mejorar el próximo mes. Referencia los datos reales. Solo una oración, en español.',
-    carousel_quarterly_patterns: 'Basándote en mis datos de {{periodLabel}}, dime una tendencia interesante sobre una actividad o hábito específico este trimestre. Referencia números reales. Solo una oración, en español.',
-    carousel_quarterly_surprising: 'Mirando {{periodLabel}}, ¿qué logro o cambio sorprendente hay de este trimestre? Sé específico. Solo una oración, en español.',
-    carousel_quarterly_recommendation: 'Basándote en una tendencia específica de {{periodLabel}}, dame una recomendación estratégica para el próximo trimestre. Referencia los datos reales. Solo una oración, en español.',
+    carousel_patterns: 'Basándote en mis datos recientes, dime un patrón interesante sobre una actividad, lugar o hábito específico. Usa las estadísticas precisas proporcionadas (conteo de pasos, frecuencias de actividades, lugares visitados) para dar un insight específico respaldado por datos. Referencia números reales. Solo una oración, en español.',
+    carousel_surprising: '¿Qué cosa sorprendente o inesperada hay en mis datos recientes? Usa las estadísticas precisas proporcionadas para citar números específicos. Sé específico sobre qué lo hace inusual. Solo una oración, en español.',
+    carousel_recommendation: 'Basándote en un patrón específico de mis datos recientes, dame una recomendación práctica. Usa las estadísticas precisas proporcionadas para referenciar números y tendencias reales. Solo una oración, en español.',
+    carousel_weekly_patterns: 'Basándote en mis datos de {{periodLabel}}, dime un patrón interesante sobre una actividad o lugar específico esta semana. Usa las estadísticas precisas proporcionadas (conteo de pasos, frecuencias de actividades, lugares visitados) para dar un insight respaldado por datos. Referencia números o días reales. Solo una oración, en español.',
+    carousel_weekly_surprising: 'Mirando {{periodLabel}}, ¿qué cosa sorprendente hay de mi semana? Usa las estadísticas precisas proporcionadas para citar números o comparaciones específicas. Sé específico sobre qué actividad, lugar o métrica destaca. Solo una oración, en español.',
+    carousel_weekly_recommendation: 'Basándote en un patrón específico de {{periodLabel}}, dame una recomendación práctica para la próxima semana. Usa las estadísticas precisas proporcionadas para referenciar números reales. Solo una oración, en español.',
+    carousel_monthly_patterns: 'Basándote en mis datos de {{periodLabel}}, dime un patrón interesante sobre una actividad o hábito específico este mes. Usa las estadísticas precisas proporcionadas para referenciar números o tendencias reales. Solo una oración, en español.',
+    carousel_monthly_surprising: 'Mirando {{periodLabel}}, ¿qué insight sorprendente hay de mi mes? Usa las estadísticas precisas proporcionadas para citar números o cambios específicos. Sé específico sobre qué cambió o destacó. Solo una oración, en español.',
+    carousel_monthly_recommendation: 'Basándote en una tendencia específica de {{periodLabel}}, dame una recomendación para mejorar el próximo mes. Usa las estadísticas precisas proporcionadas para referenciar números reales. Solo una oración, en español.',
+    carousel_quarterly_patterns: 'Basándote en mis datos de {{periodLabel}}, dime una tendencia interesante sobre una actividad o hábito específico este trimestre. Usa las estadísticas precisas proporcionadas para referenciar números reales. Solo una oración, en español.',
+    carousel_quarterly_surprising: 'Mirando {{periodLabel}}, ¿qué logro o cambio sorprendente hay de este trimestre? Usa las estadísticas precisas proporcionadas para citar números específicos. Sé específico. Solo una oración, en español.',
+    carousel_quarterly_recommendation: 'Basándote en una tendencia específica de {{periodLabel}}, dame una recomendación estratégica para el próximo trimestre. Usa las estadísticas precisas proporcionadas para referenciar números reales. Solo una oración, en español.',
     chat_system: `Eres un asistente personal de IA con acceso a los datos de salud, ubicación y voz del usuario. Usa el siguiente contexto de los datos personales del usuario para responder su pregunta:
 
 {{context}}
@@ -3531,24 +3551,28 @@ Directives:
 - Ne faites jamais sentir mal l'utilisateur à propos de ses données
 - L'insight doit faire sourire l'utilisateur — il doit refléter quelque chose de personnel
 - Répondez toujours en français
+- Lorsque des statistiques précises sont fournies (pas, distances, séries, etc.), citez TOUJOURS les chiffres réels
+- Référencez des métriques spécifiques : « Vous avez marché 38 200 pas » et non « Vous avez été actif »
+- Comparez les périodes lorsque les données sont disponibles : « 12% de plus que la semaine dernière »
+- Mentionnez les activités, lieux et horaires spécifiques des données
 
 Évitez ces anti-patterns:
 - NE dites JAMAIS des choses génériques comme "Vous avez été actif" ou "Continuez comme ça"
 - NE donnez JAMAIS des insights vagues qui pourraient s'appliquer à n'importe qui
 - Mentionnez TOUJOURS une activité, lieu, moment ou métrique spécifique des données
 - MAUVAIS: "Vous avez été très actif cette semaine!" BON: "Vous avez joué au badminton 3 fois cette semaine — votre sport le plus actif!"`,
-    carousel_patterns: 'Basé sur mes données récentes, dites-moi un pattern intéressant sur une activité, lieu ou habitude spécifique. Référencez les données réelles. Une seule phrase, en français.',
-    carousel_surprising: 'Qu\'y a-t-il de surprenant ou inattendu dans mes données récentes? Soyez précis sur ce qui le rend inhabituel. Une seule phrase, en français.',
-    carousel_recommendation: 'Basé sur un pattern spécifique de mes données récentes, donnez-moi une recommandation pratique. Référencez les données réelles. Une seule phrase, en français.',
-    carousel_weekly_patterns: 'Basé sur mes données de {{periodLabel}}, dites-moi un pattern intéressant sur une activité ou lieu spécifique cette semaine. Référencez les chiffres ou jours réels. Une seule phrase, en français.',
-    carousel_weekly_surprising: 'En regardant {{periodLabel}}, qu\'y a-t-il de surprenant dans ma semaine? Soyez précis sur quelle activité, lieu ou métrique se démarque. Une seule phrase, en français.',
-    carousel_weekly_recommendation: 'Basé sur un pattern spécifique de {{periodLabel}}, donnez-moi une recommandation pratique pour la semaine prochaine. Référencez les données réelles. Une seule phrase, en français.',
-    carousel_monthly_patterns: 'Basé sur mes données de {{periodLabel}}, dites-moi un pattern intéressant sur une activité ou habitude spécifique ce mois-ci. Référencez les chiffres ou tendances réels. Une seule phrase, en français.',
-    carousel_monthly_surprising: 'En regardant {{periodLabel}}, quel insight surprenant y a-t-il de mon mois? Soyez précis sur ce qui a changé ou s\'est démarqué. Une seule phrase, en français.',
-    carousel_monthly_recommendation: 'Basé sur une tendance spécifique de {{periodLabel}}, donnez-moi une recommandation pour améliorer le mois prochain. Référencez les données réelles. Une seule phrase, en français.',
-    carousel_quarterly_patterns: 'Basé sur mes données de {{periodLabel}}, dites-moi une tendance intéressante sur une activité ou habitude spécifique ce trimestre. Référencez les chiffres réels. Une seule phrase, en français.',
-    carousel_quarterly_surprising: 'En regardant {{periodLabel}}, quelle réalisation ou changement surprenant y a-t-il de ce trimestre? Soyez précis. Une seule phrase, en français.',
-    carousel_quarterly_recommendation: 'Basé sur une tendance spécifique de {{periodLabel}}, donnez-moi une recommandation stratégique pour le prochain trimestre. Référencez les données réelles. Une seule phrase, en français.',
+    carousel_patterns: 'Basé sur mes données récentes, dites-moi un pattern intéressant sur une activité, lieu ou habitude spécifique. Utilisez les statistiques précises fournies (nombre de pas, fréquences d\'activités, lieux visités) pour donner un insight spécifique étayé par les données. Référencez les chiffres réels. Une seule phrase, en français.',
+    carousel_surprising: 'Qu\'y a-t-il de surprenant ou inattendu dans mes données récentes? Utilisez les statistiques précises fournies pour citer des chiffres spécifiques. Soyez précis sur ce qui le rend inhabituel. Une seule phrase, en français.',
+    carousel_recommendation: 'Basé sur un pattern spécifique de mes données récentes, donnez-moi une recommandation pratique. Utilisez les statistiques précises fournies pour référencer les chiffres et tendances réels. Une seule phrase, en français.',
+    carousel_weekly_patterns: 'Basé sur mes données de {{periodLabel}}, dites-moi un pattern intéressant sur une activité ou lieu spécifique cette semaine. Utilisez les statistiques précises fournies (nombre de pas, fréquences d\'activités, lieux visités) pour donner un insight étayé par les données. Référencez les chiffres ou jours réels. Une seule phrase, en français.',
+    carousel_weekly_surprising: 'En regardant {{periodLabel}}, qu\'y a-t-il de surprenant dans ma semaine? Utilisez les statistiques précises fournies pour citer des chiffres ou comparaisons spécifiques. Soyez précis sur quelle activité, lieu ou métrique se démarque. Une seule phrase, en français.',
+    carousel_weekly_recommendation: 'Basé sur un pattern spécifique de {{periodLabel}}, donnez-moi une recommandation pratique pour la semaine prochaine. Utilisez les statistiques précises fournies pour référencer les chiffres réels. Une seule phrase, en français.',
+    carousel_monthly_patterns: 'Basé sur mes données de {{periodLabel}}, dites-moi un pattern intéressant sur une activité ou habitude spécifique ce mois-ci. Utilisez les statistiques précises fournies pour référencer les chiffres ou tendances réels. Une seule phrase, en français.',
+    carousel_monthly_surprising: 'En regardant {{periodLabel}}, quel insight surprenant y a-t-il de mon mois? Utilisez les statistiques précises fournies pour citer des chiffres ou changements spécifiques. Soyez précis sur ce qui a changé ou s\'est démarqué. Une seule phrase, en français.',
+    carousel_monthly_recommendation: 'Basé sur une tendance spécifique de {{periodLabel}}, donnez-moi une recommandation pour améliorer le mois prochain. Utilisez les statistiques précises fournies pour référencer les chiffres réels. Une seule phrase, en français.',
+    carousel_quarterly_patterns: 'Basé sur mes données de {{periodLabel}}, dites-moi une tendance intéressante sur une activité ou habitude spécifique ce trimestre. Utilisez les statistiques précises fournies pour référencer les chiffres réels. Une seule phrase, en français.',
+    carousel_quarterly_surprising: 'En regardant {{periodLabel}}, quelle réalisation ou changement surprenant y a-t-il de ce trimestre? Utilisez les statistiques précises fournies pour citer des chiffres spécifiques. Soyez précis. Une seule phrase, en français.',
+    carousel_quarterly_recommendation: 'Basé sur une tendance spécifique de {{periodLabel}}, donnez-moi une recommandation stratégique pour le prochain trimestre. Utilisez les statistiques précises fournies pour référencer les chiffres réels. Une seule phrase, en français.',
     chat_system: `Vous êtes un assistant IA personnel avec accès aux données de santé, de localisation et vocales de l'utilisateur. Utilisez le contexte suivant des données personnelles de l'utilisateur pour répondre à sa question:
 
 {{context}}
@@ -4168,24 +4192,28 @@ Richtlinien:
 - Lassen Sie den Benutzer niemals schlecht über seine Daten fühlen
 - Der Insight soll den Benutzer zum Lächeln bringen — er soll etwas Persönliches widerspiegeln
 - Antworten Sie immer auf Deutsch
+- Wenn präzise Datenstatistiken bereitgestellt werden (Schritte, Entfernungen, Serien usw.), zitieren Sie IMMER die tatsächlichen Zahlen
+- Referenzieren Sie spezifische Metriken: „Sie sind 38.200 Schritte gelaufen" statt „Sie waren aktiv"
+- Vergleichen Sie Zeiträume, wenn Daten verfügbar sind: „12% mehr als letzte Woche"
+- Erwähnen Sie die spezifischen Aktivitäten, Orte und Zeiten aus den Daten
 
 Vermeiden Sie diese Anti-Muster:
 - Sagen Sie NIEMALS generische Dinge wie "Sie waren aktiv" oder "Weiter so"
 - Geben Sie NIEMALS vage Insights, die auf jeden zutreffen könnten
 - Erwähnen Sie IMMER eine konkrete Aktivität, einen Ort, eine Zeit oder eine Kennzahl aus den Daten
 - SCHLECHT: "Sie waren diese Woche sehr aktiv!" GUT: "Sie haben diese Woche 3 Mal Badminton gespielt — Ihr aktivster Sport!"`,
-    carousel_patterns: 'Basierend auf meinen aktuellen Daten, nennen Sie mir ein interessantes Muster über eine konkrete Aktivität, einen Ort oder eine Gewohnheit. Referenzieren Sie echte Daten. Nur ein Satz, auf Deutsch.',
-    carousel_surprising: 'Was gibt es Überraschendes oder Unerwartetes in meinen aktuellen Daten? Seien Sie konkret darüber, was es ungewöhnlich macht. Nur ein Satz, auf Deutsch.',
-    carousel_recommendation: 'Basierend auf einem konkreten Muster in meinen aktuellen Daten, geben Sie mir eine umsetzbare Empfehlung. Referenzieren Sie die echten Daten. Nur ein Satz, auf Deutsch.',
-    carousel_weekly_patterns: 'Basierend auf meinen Daten für {{periodLabel}}, nennen Sie mir ein interessantes Muster über eine konkrete Aktivität oder einen Ort diese Woche. Referenzieren Sie echte Zahlen oder Tage. Nur ein Satz, auf Deutsch.',
-    carousel_weekly_surprising: 'Wenn ich mir {{periodLabel}} ansehe, was war überraschend an meiner Woche? Seien Sie konkret über welche Aktivität, welcher Ort oder welche Kennzahl heraussticht. Nur ein Satz, auf Deutsch.',
-    carousel_weekly_recommendation: 'Basierend auf einem konkreten Muster aus {{periodLabel}}, geben Sie mir eine umsetzbare Empfehlung für nächste Woche. Referenzieren Sie die echten Daten. Nur ein Satz, auf Deutsch.',
-    carousel_monthly_patterns: 'Basierend auf meinen Daten für {{periodLabel}}, nennen Sie mir ein interessantes Muster über eine konkrete Aktivität oder Gewohnheit diesen Monat. Referenzieren Sie echte Zahlen oder Trends. Nur ein Satz, auf Deutsch.',
-    carousel_monthly_surprising: 'Wenn ich mir {{periodLabel}} ansehe, welcher überraschende Einblick gibt es aus meinem Monat? Seien Sie konkret über was sich verändert hat oder heraussticht. Nur ein Satz, auf Deutsch.',
-    carousel_monthly_recommendation: 'Basierend auf einem konkreten Trend aus {{periodLabel}}, geben Sie mir eine Empfehlung zur Verbesserung des nächsten Monats. Referenzieren Sie die echten Daten. Nur ein Satz, auf Deutsch.',
-    carousel_quarterly_patterns: 'Basierend auf meinen Daten für {{periodLabel}}, nennen Sie mir einen interessanten Trend über eine konkrete Aktivität oder Gewohnheit aus diesem Quartal. Referenzieren Sie echte Zahlen. Nur ein Satz, auf Deutsch.',
-    carousel_quarterly_surprising: 'Wenn ich mir {{periodLabel}} ansehe, welche überraschende Errungenschaft oder Veränderung gibt es aus diesem Quartal? Seien Sie konkret. Nur ein Satz, auf Deutsch.',
-    carousel_quarterly_recommendation: 'Basierend auf einem konkreten Trend aus {{periodLabel}}, geben Sie mir eine strategische Empfehlung für das nächste Quartal. Referenzieren Sie die echten Daten. Nur ein Satz, auf Deutsch.',
+    carousel_patterns: 'Basierend auf meinen aktuellen Daten, nennen Sie mir ein interessantes Muster über eine konkrete Aktivität, einen Ort oder eine Gewohnheit. Verwenden Sie die bereitgestellten präzisen Statistiken (Schrittzahlen, Aktivitätshäufigkeiten, besuchte Orte) für einen spezifischen, datengestützten Einblick. Referenzieren Sie echte Zahlen. Nur ein Satz, auf Deutsch.',
+    carousel_surprising: 'Was gibt es Überraschendes oder Unerwartetes in meinen aktuellen Daten? Verwenden Sie die bereitgestellten präzisen Statistiken, um konkrete Zahlen zu zitieren. Seien Sie konkret darüber, was es ungewöhnlich macht. Nur ein Satz, auf Deutsch.',
+    carousel_recommendation: 'Basierend auf einem konkreten Muster in meinen aktuellen Daten, geben Sie mir eine umsetzbare Empfehlung. Verwenden Sie die bereitgestellten präzisen Statistiken, um echte Zahlen und Trends zu referenzieren. Nur ein Satz, auf Deutsch.',
+    carousel_weekly_patterns: 'Basierend auf meinen Daten für {{periodLabel}}, nennen Sie mir ein interessantes Muster über eine konkrete Aktivität oder einen Ort diese Woche. Verwenden Sie die bereitgestellten präzisen Statistiken (Schrittzahlen, Aktivitätshäufigkeiten, besuchte Orte) für einen datengestützten Einblick. Referenzieren Sie echte Zahlen oder Tage. Nur ein Satz, auf Deutsch.',
+    carousel_weekly_surprising: 'Wenn ich mir {{periodLabel}} ansehe, was war überraschend an meiner Woche? Verwenden Sie die bereitgestellten präzisen Statistiken, um konkrete Zahlen oder Vergleiche zu zitieren. Seien Sie konkret über welche Aktivität, welcher Ort oder welche Kennzahl heraussticht. Nur ein Satz, auf Deutsch.',
+    carousel_weekly_recommendation: 'Basierend auf einem konkreten Muster aus {{periodLabel}}, geben Sie mir eine umsetzbare Empfehlung für nächste Woche. Verwenden Sie die bereitgestellten präzisen Statistiken, um echte Zahlen zu referenzieren. Nur ein Satz, auf Deutsch.',
+    carousel_monthly_patterns: 'Basierend auf meinen Daten für {{periodLabel}}, nennen Sie mir ein interessantes Muster über eine konkrete Aktivität oder Gewohnheit diesen Monat. Verwenden Sie die bereitgestellten präzisen Statistiken, um echte Zahlen oder Trends zu referenzieren. Nur ein Satz, auf Deutsch.',
+    carousel_monthly_surprising: 'Wenn ich mir {{periodLabel}} ansehe, welcher überraschende Einblick gibt es aus meinem Monat? Verwenden Sie die bereitgestellten präzisen Statistiken, um konkrete Zahlen oder Veränderungen zu zitieren. Seien Sie konkret über was sich verändert hat oder heraussticht. Nur ein Satz, auf Deutsch.',
+    carousel_monthly_recommendation: 'Basierend auf einem konkreten Trend aus {{periodLabel}}, geben Sie mir eine Empfehlung zur Verbesserung des nächsten Monats. Verwenden Sie die bereitgestellten präzisen Statistiken, um echte Zahlen zu referenzieren. Nur ein Satz, auf Deutsch.',
+    carousel_quarterly_patterns: 'Basierend auf meinen Daten für {{periodLabel}}, nennen Sie mir einen interessanten Trend über eine konkrete Aktivität oder Gewohnheit aus diesem Quartal. Verwenden Sie die bereitgestellten präzisen Statistiken, um echte Zahlen zu referenzieren. Nur ein Satz, auf Deutsch.',
+    carousel_quarterly_surprising: 'Wenn ich mir {{periodLabel}} ansehe, welche überraschende Errungenschaft oder Veränderung gibt es aus diesem Quartal? Verwenden Sie die bereitgestellten präzisen Statistiken, um konkrete Zahlen zu zitieren. Seien Sie konkret. Nur ein Satz, auf Deutsch.',
+    carousel_quarterly_recommendation: 'Basierend auf einem konkreten Trend aus {{periodLabel}}, geben Sie mir eine strategische Empfehlung für das nächste Quartal. Verwenden Sie die bereitgestellten präzisen Statistiken, um echte Zahlen zu referenzieren. Nur ein Satz, auf Deutsch.',
     chat_system: `Sie sind ein persönlicher KI-Assistent mit Zugriff auf die Gesundheits-, Standort- und Sprachdaten des Benutzers. Verwenden Sie den folgenden Kontext aus den persönlichen Daten des Benutzers, um seine Frage zu beantworten:
 
 {{context}}
@@ -4805,24 +4833,28 @@ Linee guida:
 - Non far mai sentire male l'utente riguardo ai suoi dati
 - L'insight dovrebbe far sorridere l'utente — dovrebbe riflettere qualcosa di personale
 - Rispondi sempre in italiano
+- Quando vengono fornite statistiche precise (passi, distanze, serie, ecc.), cita SEMPRE i numeri reali
+- Fai riferimento a metriche specifiche: "Hai camminato 38.200 passi" non "Sei stato attivo"
+- Confronta i periodi quando i dati sono disponibili: "12% in più rispetto alla settimana scorsa"
+- Menziona le attività, i luoghi e gli orari specifici dai dati
 
 Evita questi anti-pattern:
 - NON dire MAI cose generiche come "Sei stato attivo" o "Continua così"
 - NON dare MAI insights vaghi che potrebbero applicarsi a chiunque
 - Menziona SEMPRE un'attività, luogo, momento o metrica specifica dai dati
 - MALE: "Sei stato molto attivo questa settimana!" BENE: "Hai giocato a badminton 3 volte questa settimana — il tuo sport più attivo!"`,
-    carousel_patterns: 'Basandoti sui miei dati recenti, dimmi un pattern interessante su un\'attività, luogo o abitudine specifica. Fai riferimento ai dati reali. Solo una frase, in italiano.',
-    carousel_surprising: 'Cosa c\'è di sorprendente o inaspettato nei miei dati recenti? Sii specifico su cosa lo rende insolito. Solo una frase, in italiano.',
-    carousel_recommendation: 'Basandoti su un pattern specifico nei miei dati recenti, dammi una raccomandazione pratica. Fai riferimento ai dati reali. Solo una frase, in italiano.',
-    carousel_weekly_patterns: 'Basandoti sui miei dati per {{periodLabel}}, dimmi un pattern interessante su un\'attività o luogo specifico questa settimana. Fai riferimento a numeri o giorni reali. Solo una frase, in italiano.',
-    carousel_weekly_surprising: 'Guardando {{periodLabel}}, cosa c\'è di sorprendente nella mia settimana? Sii specifico su quale attività, luogo o metrica si distingue. Solo una frase, in italiano.',
-    carousel_weekly_recommendation: 'Basandoti su un pattern specifico di {{periodLabel}}, dammi una raccomandazione pratica per la prossima settimana. Fai riferimento ai dati reali. Solo una frase, in italiano.',
-    carousel_monthly_patterns: 'Basandoti sui miei dati per {{periodLabel}}, dimmi un pattern interessante su un\'attività o abitudine specifica questo mese. Fai riferimento a numeri o tendenze reali. Solo una frase, in italiano.',
-    carousel_monthly_surprising: 'Guardando {{periodLabel}}, quale insight sorprendente c\'è dal mio mese? Sii specifico su cosa è cambiato o si è distinto. Solo una frase, in italiano.',
-    carousel_monthly_recommendation: 'Basandoti su una tendenza specifica di {{periodLabel}}, dammi una raccomandazione per migliorare il prossimo mese. Fai riferimento ai dati reali. Solo una frase, in italiano.',
-    carousel_quarterly_patterns: 'Basandoti sui miei dati per {{periodLabel}}, dimmi una tendenza interessante su un\'attività o abitudine specifica questo trimestre. Fai riferimento a numeri reali. Solo una frase, in italiano.',
-    carousel_quarterly_surprising: 'Guardando {{periodLabel}}, quale risultato o cambiamento sorprendente c\'è da questo trimestre? Sii specifico. Solo una frase, in italiano.',
-    carousel_quarterly_recommendation: 'Basandoti su una tendenza specifica di {{periodLabel}}, dammi una raccomandazione strategica per il prossimo trimestre. Fai riferimento ai dati reali. Solo una frase, in italiano.',
+    carousel_patterns: 'Basandoti sui miei dati recenti, dimmi un pattern interessante su un\'attività, luogo o abitudine specifica. Usa le statistiche precise fornite (conteggio passi, frequenze di attività, luoghi visitati) per dare un insight specifico supportato dai dati. Fai riferimento ai numeri reali. Solo una frase, in italiano.',
+    carousel_surprising: 'Cosa c\'è di sorprendente o inaspettato nei miei dati recenti? Usa le statistiche precise fornite per citare numeri specifici. Sii specifico su cosa lo rende insolito. Solo una frase, in italiano.',
+    carousel_recommendation: 'Basandoti su un pattern specifico nei miei dati recenti, dammi una raccomandazione pratica. Usa le statistiche precise fornite per fare riferimento a numeri e tendenze reali. Solo una frase, in italiano.',
+    carousel_weekly_patterns: 'Basandoti sui miei dati per {{periodLabel}}, dimmi un pattern interessante su un\'attività o luogo specifico questa settimana. Usa le statistiche precise fornite (conteggio passi, frequenze di attività, luoghi visitati) per dare un insight supportato dai dati. Fai riferimento a numeri o giorni reali. Solo una frase, in italiano.',
+    carousel_weekly_surprising: 'Guardando {{periodLabel}}, cosa c\'è di sorprendente nella mia settimana? Usa le statistiche precise fornite per citare numeri o confronti specifici. Sii specifico su quale attività, luogo o metrica si distingue. Solo una frase, in italiano.',
+    carousel_weekly_recommendation: 'Basandoti su un pattern specifico di {{periodLabel}}, dammi una raccomandazione pratica per la prossima settimana. Usa le statistiche precise fornite per fare riferimento ai numeri reali. Solo una frase, in italiano.',
+    carousel_monthly_patterns: 'Basandoti sui miei dati per {{periodLabel}}, dimmi un pattern interessante su un\'attività o abitudine specifica questo mese. Usa le statistiche precise fornite per fare riferimento a numeri o tendenze reali. Solo una frase, in italiano.',
+    carousel_monthly_surprising: 'Guardando {{periodLabel}}, quale insight sorprendente c\'è dal mio mese? Usa le statistiche precise fornite per citare numeri o cambiamenti specifici. Sii specifico su cosa è cambiato o si è distinto. Solo una frase, in italiano.',
+    carousel_monthly_recommendation: 'Basandoti su una tendenza specifica di {{periodLabel}}, dammi una raccomandazione per migliorare il prossimo mese. Usa le statistiche precise fornite per fare riferimento ai numeri reali. Solo una frase, in italiano.',
+    carousel_quarterly_patterns: 'Basandoti sui miei dati per {{periodLabel}}, dimmi una tendenza interessante su un\'attività o abitudine specifica questo trimestre. Usa le statistiche precise fornite per fare riferimento ai numeri reali. Solo una frase, in italiano.',
+    carousel_quarterly_surprising: 'Guardando {{periodLabel}}, quale risultato o cambiamento sorprendente c\'è da questo trimestre? Usa le statistiche precise fornite per citare numeri specifici. Sii specifico. Solo una frase, in italiano.',
+    carousel_quarterly_recommendation: 'Basandoti su una tendenza specifica di {{periodLabel}}, dammi una raccomandazione strategica per il prossimo trimestre. Usa le statistiche precise fornite per fare riferimento ai numeri reali. Solo una frase, in italiano.',
     chat_system: `Sei un assistente IA personale con accesso ai dati sulla salute, posizione e voce dell'utente. Usa il seguente contesto dai dati personali dell'utente per rispondere alla sua domanda:
 
 {{context}}
@@ -5442,24 +5474,28 @@ Diretrizes:
 - Nunca faça o usuário se sentir mal sobre seus dados
 - O insight deve fazer o usuário sorrir — deve refletir algo pessoal que só ele entenderia
 - Responda sempre em português
+- Quando estatísticas precisas são fornecidas (passos, distâncias, sequências, etc.), cite SEMPRE os números reais
+- Referencie métricas específicas: "Você caminhou 38.200 passos" em vez de "Você tem sido ativo"
+- Compare períodos quando os dados estão disponíveis: "12% a mais que na semana passada"
+- Mencione as atividades, locais e horários específicos dos dados
 
 Evite estes anti-padrões:
 - NUNCA diga coisas genéricas como "Você tem sido ativo" ou "Continue assim"
 - NUNCA dê insights vagos que poderiam se aplicar a qualquer pessoa
 - SEMPRE mencione uma atividade, local, horário ou métrica específica dos dados
 - RUIM: "Você foi muito ativo esta semana!" BOM: "Você jogou badminton 3 vezes esta semana — seu esporte mais ativo!"`,
-    carousel_patterns: 'Com base nos meus dados recentes, diga-me um padrão interessante sobre uma atividade, local ou hábito específico. Referencie dados reais. Apenas uma frase, em português.',
-    carousel_surprising: 'O que há de surpreendente ou inesperado nos meus dados recentes? Seja específico sobre o que o torna incomum. Apenas uma frase, em português.',
-    carousel_recommendation: 'Com base em um padrão específico nos meus dados recentes, dê-me uma recomendação prática. Referencie os dados reais. Apenas uma frase, em português.',
-    carousel_weekly_patterns: 'Com base nos meus dados de {{periodLabel}}, diga-me um padrão interessante sobre uma atividade ou local específico esta semana. Referencie números ou dias reais. Apenas uma frase, em português.',
-    carousel_weekly_surprising: 'Olhando para {{periodLabel}}, o que foi surpreendente na minha semana? Seja específico sobre qual atividade, local ou métrica se destaca. Apenas uma frase, em português.',
-    carousel_weekly_recommendation: 'Com base em um padrão específico de {{periodLabel}}, dê-me uma recomendação prática para a próxima semana. Referencie os dados reais. Apenas uma frase, em português.',
-    carousel_monthly_patterns: 'Com base nos meus dados de {{periodLabel}}, diga-me um padrão interessante sobre uma atividade ou hábito específico este mês. Referencie números ou tendências reais. Apenas uma frase, em português.',
-    carousel_monthly_surprising: 'Olhando para {{periodLabel}}, que insight surpreendente há do meu mês? Seja específico sobre o que mudou ou se destacou. Apenas uma frase, em português.',
-    carousel_monthly_recommendation: 'Com base em uma tendência específica de {{periodLabel}}, dê-me uma recomendação para melhorar o próximo mês. Referencie os dados reais. Apenas uma frase, em português.',
-    carousel_quarterly_patterns: 'Com base nos meus dados de {{periodLabel}}, diga-me uma tendência interessante sobre uma atividade ou hábito específico este trimestre. Referencie números reais. Apenas uma frase, em português.',
-    carousel_quarterly_surprising: 'Olhando para {{periodLabel}}, que conquista ou mudança surpreendente há deste trimestre? Seja específico. Apenas uma frase, em português.',
-    carousel_quarterly_recommendation: 'Com base em uma tendência específica de {{periodLabel}}, dê-me uma recomendação estratégica para o próximo trimestre. Referencie os dados reais. Apenas uma frase, em português.',
+    carousel_patterns: 'Com base nos meus dados recentes, diga-me um padrão interessante sobre uma atividade, local ou hábito específico. Use as estatísticas precisas fornecidas (contagem de passos, frequências de atividades, locais visitados) para dar um insight específico baseado em dados. Referencie números reais. Apenas uma frase, em português.',
+    carousel_surprising: 'O que há de surpreendente ou inesperado nos meus dados recentes? Use as estatísticas precisas fornecidas para citar números específicos. Seja específico sobre o que o torna incomum. Apenas uma frase, em português.',
+    carousel_recommendation: 'Com base em um padrão específico nos meus dados recentes, dê-me uma recomendação prática. Use as estatísticas precisas fornecidas para referenciar números e tendências reais. Apenas uma frase, em português.',
+    carousel_weekly_patterns: 'Com base nos meus dados de {{periodLabel}}, diga-me um padrão interessante sobre uma atividade ou local específico esta semana. Use as estatísticas precisas fornecidas (contagem de passos, frequências de atividades, locais visitados) para dar um insight baseado em dados. Referencie números ou dias reais. Apenas uma frase, em português.',
+    carousel_weekly_surprising: 'Olhando para {{periodLabel}}, o que foi surpreendente na minha semana? Use as estatísticas precisas fornecidas para citar números ou comparações específicas. Seja específico sobre qual atividade, local ou métrica se destaca. Apenas uma frase, em português.',
+    carousel_weekly_recommendation: 'Com base em um padrão específico de {{periodLabel}}, dê-me uma recomendação prática para a próxima semana. Use as estatísticas precisas fornecidas para referenciar números reais. Apenas uma frase, em português.',
+    carousel_monthly_patterns: 'Com base nos meus dados de {{periodLabel}}, diga-me um padrão interessante sobre uma atividade ou hábito específico este mês. Use as estatísticas precisas fornecidas para referenciar números ou tendências reais. Apenas uma frase, em português.',
+    carousel_monthly_surprising: 'Olhando para {{periodLabel}}, que insight surpreendente há do meu mês? Use as estatísticas precisas fornecidas para citar números ou mudanças específicas. Seja específico sobre o que mudou ou se destacou. Apenas uma frase, em português.',
+    carousel_monthly_recommendation: 'Com base em uma tendência específica de {{periodLabel}}, dê-me uma recomendação para melhorar o próximo mês. Use as estatísticas precisas fornecidas para referenciar números reais. Apenas uma frase, em português.',
+    carousel_quarterly_patterns: 'Com base nos meus dados de {{periodLabel}}, diga-me uma tendência interessante sobre uma atividade ou hábito específico este trimestre. Use as estatísticas precisas fornecidas para referenciar números reais. Apenas uma frase, em português.',
+    carousel_quarterly_surprising: 'Olhando para {{periodLabel}}, que conquista ou mudança surpreendente há deste trimestre? Use as estatísticas precisas fornecidas para citar números específicos. Seja específico. Apenas uma frase, em português.',
+    carousel_quarterly_recommendation: 'Com base em uma tendência específica de {{periodLabel}}, dê-me uma recomendação estratégica para o próximo trimestre. Use as estatísticas precisas fornecidas para referenciar números reais. Apenas uma frase, em português.',
     chat_system: `Você é um assistente de IA pessoal com acesso aos dados de saúde, localização e voz do usuário. Use o seguinte contexto dos dados pessoais do usuário para responder à sua pergunta:
 
 {{context}}
@@ -6076,7 +6112,7 @@ function buildCarouselInsightsDoc(lang: string, t: Translations) {
   return {
     language: lang,
     service: 'CarouselInsights',
-    version: '1.2.0',
+    version: '1.3.0',
     status: 'published',
     enabled: true,
     prompts: {
