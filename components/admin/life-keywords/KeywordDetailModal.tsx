@@ -1,12 +1,39 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { DetailModalShell, InfoGrid, formatDateFull } from '@/components/admin/shared';
 import type { LifeKeyword } from '@/components/admin/shared';
+
+interface PromptExecution {
+  id: string;
+  userId: string;
+  service: string;
+  promptId: string;
+  language: string;
+  promptVersion: string;
+  promptSource: string;
+  model: string;
+  temperature: number;
+  maxTokens: number;
+  inputSummary: string;
+  inputTokens: number;
+  outputSummary: string;
+  outputTokens: number;
+  totalTokens: number;
+  estimatedCostUSD: number;
+  latencyMs: number;
+  success: boolean;
+  errorMessage?: string;
+  executedAt: string;
+  metadata?: Record<string, unknown>;
+}
 
 interface KeywordDetailModalProps {
   keyword: LifeKeyword;
   onClose: () => void;
+  execution?: PromptExecution | null;
+  loadingExecution?: boolean;
 }
 
 const CATEGORIES: Record<string, { label: string; color: string }> = {
@@ -35,8 +62,22 @@ function getCategoryMeta(category: string) {
   return CATEGORIES[category] || { label: category, color: '#999' };
 }
 
-export default function KeywordDetailModal({ keyword, onClose }: KeywordDetailModalProps) {
+function formatDate(dateStr: string | undefined): string {
+  if (!dateStr) return '-';
+  try {
+    return new Date(dateStr).toLocaleString();
+  } catch {
+    return dateStr;
+  }
+}
+
+export default function KeywordDetailModal({ keyword, onClose, execution, loadingExecution }: KeywordDetailModalProps) {
   const catMeta = getCategoryMeta(keyword.category);
+
+  // Compute cluster ranking score
+  const confidence = keyword.confidence ?? 0;
+  const dataPointCount = keyword.dataPointCount ?? 0;
+  const clusterScore = confidence * Math.sqrt(dataPointCount);
 
   return (
     <DetailModalShell
@@ -118,6 +159,184 @@ export default function KeywordDetailModal({ keyword, onClose }: KeywordDetailMo
             <p className="text-xs text-gray-500 mt-1">Data Points</p>
           </div>
         </div>
+      </div>
+
+      {/* Cluster Stats */}
+      <div>
+        <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+          <span>🧮</span> Cluster Stats
+        </h3>
+        <div className="bg-teal-50 rounded-lg p-4 border border-teal-200">
+          <p className="text-sm text-teal-800 mb-2">
+            This keyword was generated from a cluster ranked by the formula:
+          </p>
+          <div className="bg-white rounded-md p-3 border border-teal-100 text-center">
+            <p className="text-xs text-teal-600 mb-1">Ranking Score</p>
+            <p className="text-sm font-mono text-teal-900">
+              score = cohesion × √(cluster_size)
+            </p>
+            <p className="text-lg font-mono font-bold text-teal-800 mt-1">
+              {confidence.toFixed(3)} × √({dataPointCount}) = {clusterScore.toFixed(3)}
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-3 mt-3 text-sm">
+            <div>
+              <span className="text-teal-600">Cohesion (confidence):</span>
+              <span className="ml-1 font-mono text-teal-900">{confidence.toFixed(3)}</span>
+            </div>
+            <div>
+              <span className="text-teal-600">Cluster size:</span>
+              <span className="ml-1 font-mono text-teal-900">{dataPointCount} vectors</span>
+            </div>
+            {keyword.dominanceScore !== undefined && (
+              <div className="col-span-2">
+                <span className="text-teal-600">Dominance (cluster/total):</span>
+                <span className="ml-1 font-mono text-teal-900">{(keyword.dominanceScore * 100).toFixed(1)}%</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Generation Info */}
+      <div>
+        <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+          <span>🤖</span> Generation Info
+        </h3>
+
+        {loadingExecution ? (
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <div className="w-4 h-4 border-2 border-teal-600 border-t-transparent rounded-full animate-spin"></div>
+            Loading execution data...
+          </div>
+        ) : execution ? (
+          <div className="bg-white rounded-md border border-gray-200 p-4">
+            {/* Stats Grid */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+              <div className="bg-blue-50 rounded-md p-2 text-center">
+                <p className="text-xs text-blue-600 font-medium">Total Tokens</p>
+                <p className="text-lg font-bold text-blue-900">
+                  {execution.totalTokens.toLocaleString()}
+                </p>
+                <p className="text-xs text-blue-500">
+                  {execution.inputTokens.toLocaleString()} in / {execution.outputTokens.toLocaleString()} out
+                </p>
+              </div>
+              <div className="bg-green-50 rounded-md p-2 text-center">
+                <p className="text-xs text-green-600 font-medium">Cost</p>
+                <p className="text-lg font-bold text-green-900">
+                  ${execution.estimatedCostUSD.toFixed(6)}
+                </p>
+              </div>
+              <div className="bg-amber-50 rounded-md p-2 text-center">
+                <p className="text-xs text-amber-600 font-medium">Latency</p>
+                <p className="text-lg font-bold text-amber-900">
+                  {execution.latencyMs.toLocaleString()}ms
+                </p>
+              </div>
+              <div className={`rounded-md p-2 text-center ${execution.success ? 'bg-green-50' : 'bg-red-50'}`}>
+                <p className={`text-xs font-medium ${execution.success ? 'text-green-600' : 'text-red-600'}`}>
+                  Status
+                </p>
+                <p className={`text-lg font-bold ${execution.success ? 'text-green-900' : 'text-red-900'}`}>
+                  {execution.success ? 'Success' : 'Failed'}
+                </p>
+                {execution.errorMessage && (
+                  <p className="text-xs text-red-500 mt-1">{execution.errorMessage}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Execution Metadata */}
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 text-sm border-t border-gray-100 pt-3">
+              <div>
+                <span className="text-gray-500">Model:</span>
+                <span className="ml-1 font-mono text-gray-900">{execution.model}</span>
+              </div>
+              <div>
+                <span className="text-gray-500">Temperature:</span>
+                <span className="ml-1 text-gray-900">{execution.temperature}</span>
+              </div>
+              <div>
+                <span className="text-gray-500">Prompt ID:</span>
+                <Link
+                  href={`/admin/prompts/KeywordGenerator?prompt=${execution.promptId}`}
+                  className="ml-1 font-mono text-teal-600 hover:text-teal-800 hover:underline"
+                >
+                  {execution.promptId}
+                </Link>
+              </div>
+              <div>
+                <span className="text-gray-500">Language:</span>
+                <span className="ml-1 text-gray-900">{execution.language}</span>
+              </div>
+              <div>
+                <span className="text-gray-500">Prompt Source:</span>
+                <span className="ml-1 text-gray-900">{execution.promptSource}</span>
+              </div>
+              <div>
+                <span className="text-gray-500">Executed:</span>
+                <span className="ml-1 text-gray-900">{formatDate(execution.executedAt)}</span>
+              </div>
+            </div>
+
+            {/* Input/Output Summaries */}
+            {(execution.inputSummary || execution.outputSummary) && (
+              <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
+                {execution.inputSummary && (
+                  <div>
+                    <p className="text-xs font-medium text-gray-500 mb-1">Input Summary:</p>
+                    <p className="text-xs text-gray-700 font-mono bg-gray-50 p-2 rounded whitespace-pre-wrap max-h-40 overflow-y-auto">
+                      {execution.inputSummary}
+                    </p>
+                  </div>
+                )}
+                {execution.outputSummary && (
+                  <div>
+                    <p className="text-xs font-medium text-gray-500 mb-1">Output Summary:</p>
+                    <p className="text-xs text-gray-700 font-mono bg-gray-50 p-2 rounded whitespace-pre-wrap max-h-40 overflow-y-auto">
+                      {execution.outputSummary}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        ) : (
+          /* Fallback: no execution record found */
+          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+            <p className="text-sm text-gray-600 mb-3">
+              No matching execution record found. Known generation parameters:
+            </p>
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <div>
+                <span className="text-gray-500">Model:</span>
+                <span className="ml-1 font-mono text-gray-900">gpt-4o-mini</span>
+              </div>
+              <div>
+                <span className="text-gray-500">Temperature:</span>
+                <span className="ml-1 text-gray-900">0.8</span>
+              </div>
+              <div>
+                <span className="text-gray-500">Prompt ID:</span>
+                <Link
+                  href="/admin/prompts/KeywordGenerator"
+                  className="ml-1 font-mono text-teal-600 hover:text-teal-800 hover:underline"
+                >
+                  {keyword.periodType}_keyword
+                </Link>
+              </div>
+              <div>
+                <span className="text-gray-500">Response format:</span>
+                <span className="ml-1 text-gray-900">JSON mode</span>
+              </div>
+            </div>
+            <p className="text-xs text-gray-400 mt-3">
+              Execution records are matched heuristically by service, category, period type, and timestamp proximity.
+              The record may have been pruned or the keyword was generated before execution tracking was enabled.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Related Data Types */}

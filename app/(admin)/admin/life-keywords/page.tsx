@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import {
   useAdminDataViewer,
@@ -11,7 +11,7 @@ import {
   EmptyState,
 } from '@/components/admin/shared';
 import type { LifeKeyword } from '@/components/admin/shared';
-import { KeywordCard, KeywordDetailModal } from '@/components/admin/life-keywords';
+import { KeywordCard, KeywordDetailModal, KeywordAlgorithmReference } from '@/components/admin/life-keywords';
 
 // ============================================================================
 // Constants
@@ -48,6 +48,34 @@ const VISIBILITY_OPTIONS = [
 ];
 
 // ============================================================================
+// Types
+// ============================================================================
+
+interface ExecutionData {
+  id: string;
+  userId: string;
+  service: string;
+  promptId: string;
+  language: string;
+  promptVersion: string;
+  promptSource: string;
+  model: string;
+  temperature: number;
+  maxTokens: number;
+  inputSummary: string;
+  inputTokens: number;
+  outputSummary: string;
+  outputTokens: number;
+  totalTokens: number;
+  estimatedCostUSD: number;
+  latencyMs: number;
+  success: boolean;
+  errorMessage?: string;
+  executedAt: string;
+  metadata?: Record<string, unknown>;
+}
+
+// ============================================================================
 // Main Page Component
 // ============================================================================
 
@@ -56,6 +84,11 @@ export default function LifeKeywordsViewerPage() {
   const [categoryFilter, setCategoryFilter] = useState('');
   const [periodTypeFilter, setPeriodTypeFilter] = useState('');
   const [visibilityFilter, setVisibilityFilter] = useState('');
+
+  // Execution data state
+  const [executionData, setExecutionData] = useState<ExecutionData | null>(null);
+  const [loadingExecution, setLoadingExecution] = useState(false);
+  const executionCacheRef = useRef<Record<string, ExecutionData | null>>({});
 
   // Shared data viewer hook
   const {
@@ -87,6 +120,45 @@ export default function LifeKeywordsViewerPage() {
       visibility: visibilityFilter,
     },
   });
+
+  // Fetch execution data for a keyword
+  const fetchExecutionData = useCallback(async (keywordId: string) => {
+    // Check cache first
+    if (keywordId in executionCacheRef.current) {
+      setExecutionData(executionCacheRef.current[keywordId]);
+      return;
+    }
+
+    setLoadingExecution(true);
+    setExecutionData(null);
+
+    try {
+      const response = await fetch(`/api/admin/life-keywords/${keywordId}`);
+      if (response.ok) {
+        const data = await response.json();
+        const exec = data.execution || null;
+        executionCacheRef.current[keywordId] = exec;
+        setExecutionData(exec);
+      } else {
+        executionCacheRef.current[keywordId] = null;
+        setExecutionData(null);
+      }
+    } catch {
+      executionCacheRef.current[keywordId] = null;
+      setExecutionData(null);
+    } finally {
+      setLoadingExecution(false);
+    }
+  }, []);
+
+  // Enhanced view details handler
+  const handleViewKeywordDetails = useCallback((keywordId: string) => {
+    handleViewDetails(keywordId);
+    // If we're opening (not closing), fetch execution data
+    if (selectedItemId !== keywordId) {
+      fetchExecutionData(keywordId);
+    }
+  }, [handleViewDetails, selectedItemId, fetchExecutionData]);
 
   // ============================================================================
   // Stats
@@ -134,6 +206,9 @@ export default function LifeKeywordsViewerPage() {
           {loading || loadingUsers ? 'Loading...' : 'Refresh'}
         </button>
       </div>
+
+      {/* Algorithm Reference */}
+      <KeywordAlgorithmReference />
 
       {/* User Selector */}
       <UserSelector
@@ -232,7 +307,7 @@ export default function LifeKeywordsViewerPage() {
                   key={kw.id}
                   keyword={kw}
                   isSelected={selectedItemId === kw.id}
-                  onViewDetails={() => handleViewDetails(kw.id)}
+                  onViewDetails={() => handleViewKeywordDetails(kw.id)}
                 />
               ))}
             </div>
@@ -256,6 +331,8 @@ export default function LifeKeywordsViewerPage() {
         <KeywordDetailModal
           keyword={keywords.find((k) => k.id === selectedItemId)!}
           onClose={() => handleViewDetails(selectedItemId)}
+          execution={executionData}
+          loadingExecution={loadingExecution}
         />
       )}
     </div>
