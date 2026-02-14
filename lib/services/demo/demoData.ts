@@ -4,6 +4,9 @@
  * All seed data arrays for the demo account (Alex Chen persona).
  * Extracted from scripts/diagnostics/seed-demo-data.ts for reuse
  * by both the CLI script and admin API routes.
+ *
+ * Coverage: ~60 days of recent data + ~7 days from 1 year ago
+ * (so "This Day Memories" can find historical content).
  */
 
 // ---------------------------------------------------------------------------
@@ -48,8 +51,9 @@ export function daysAgoISO(days: number, hour = 12, minute = 0): string {
 export function getDemoHealthData(uid: string): Record<string, any>[] {
   const docs: Record<string, any>[] = [];
 
-  // --- Steps (28 records, daily for 4 weeks) ---
-  for (let day = 1; day <= 28; day++) {
+  // --- Steps (61 records, today + daily for ~2 months) ---
+  // Start from day 0 (today) so smart frequency freshness check sees recent data
+  for (let day = 0; day <= 60; day++) {
     const date = daysAgo(day, 23, 59);
     const dayOfWeek = date.getDay();
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
@@ -81,8 +85,34 @@ export function getDemoHealthData(uid: string): Record<string, any>[] {
     });
   }
 
-  // --- Workouts (12 records, ~3/week) ---
+  // --- Steps from 1 year ago (7 records) ---
+  for (let offset = 0; offset < 7; offset++) {
+    const day = 365 + offset;
+    const date = daysAgo(day, 23, 59);
+    const dayOfWeek = date.getDay();
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+    const steps = isWeekend
+      ? 4000 + Math.floor(Math.random() * 3000)
+      : 6000 + Math.floor(Math.random() * 2000);
+
+    docs.push({
+      userId: uid,
+      type: 'steps',
+      value: steps,
+      unit: 'count',
+      startDate: daysAgoISO(day, 0, 0),
+      endDate: daysAgoISO(day, 23, 59),
+      source: 'healthkit',
+      metadata: {},
+      syncedAt: new Date().toISOString(),
+      embeddingId: '',
+      createdAt: daysAgoISO(day, 23, 59),
+    });
+  }
+
+  // --- Workouts (~24 records, ~3/week for 2 months) ---
   const workoutSchedule = [
+    // Week 1-4 (days 1-28)
     { day: 26, type: 'Badminton', durationMin: 90, hour: 19 },
     { day: 24, type: 'Gym', durationMin: 60, hour: 7 },
     { day: 19, type: 'Badminton', durationMin: 90, hour: 19 },
@@ -95,6 +125,23 @@ export function getDemoHealthData(uid: string): Record<string, any>[] {
     { day: 4, type: 'Gym', durationMin: 70, hour: 7 },
     { day: 2, type: 'Running', durationMin: 30, hour: 8 },
     { day: 1, type: 'Yoga', durationMin: 60, hour: 10 },
+    // Week 5-8 (days 29-60)
+    { day: 54, type: 'Badminton', durationMin: 80, hour: 19 },
+    { day: 52, type: 'Gym', durationMin: 55, hour: 7 },
+    { day: 50, type: 'Running', durationMin: 45, hour: 8 },
+    { day: 47, type: 'Badminton', durationMin: 90, hour: 19 },
+    { day: 45, type: 'Gym', durationMin: 60, hour: 7 },
+    { day: 43, type: 'Yoga', durationMin: 55, hour: 10 },
+    { day: 40, type: 'Badminton', durationMin: 85, hour: 19 },
+    { day: 38, type: 'Gym', durationMin: 65, hour: 7 },
+    { day: 36, type: 'Running', durationMin: 38, hour: 9 },
+    { day: 33, type: 'Badminton', durationMin: 90, hour: 19 },
+    { day: 31, type: 'Gym', durationMin: 60, hour: 7 },
+    { day: 29, type: 'Running', durationMin: 35, hour: 8 },
+    // 1 year ago (3 workouts)
+    { day: 365, type: 'Running', durationMin: 25, hour: 9 },
+    { day: 363, type: 'Gym', durationMin: 45, hour: 7 },
+    { day: 361, type: 'Badminton', durationMin: 75, hour: 19 },
   ];
 
   for (const w of workoutSchedule) {
@@ -117,8 +164,8 @@ export function getDemoHealthData(uid: string): Record<string, any>[] {
     });
   }
 
-  // --- Sleep (8 records, every ~3 days) ---
-  const sleepDays = [1, 4, 7, 10, 14, 17, 21, 25];
+  // --- Sleep (16 records, every ~3-4 days for 2 months) ---
+  const sleepDays = [1, 4, 7, 10, 14, 17, 21, 25, 29, 33, 37, 41, 45, 49, 53, 57];
   for (const day of sleepDays) {
     const totalHours = (6.5 + Math.random() * 1.6).toFixed(1);
     docs.push({
@@ -139,8 +186,8 @@ export function getDemoHealthData(uid: string): Record<string, any>[] {
     });
   }
 
-  // --- Heart Rate (8 records, every ~3 days) ---
-  const hrDays = [1, 4, 7, 10, 14, 17, 21, 25];
+  // --- Heart Rate (16 records, every ~3-4 days for 2 months) ---
+  const hrDays = [1, 4, 7, 10, 14, 17, 21, 25, 29, 33, 37, 41, 45, 49, 53, 57];
   for (const day of hrDays) {
     const avg = 68 + Math.floor(Math.random() * 8);
     docs.push({
@@ -181,11 +228,15 @@ const PLACES = {
   ferry: { lat: 37.7955, lng: -122.3937, address: 'Ferry Building, San Francisco, CA', name: 'Ferry Building Marketplace', activity: 'shopping' },
   yoga: { lat: 37.7599, lng: -122.4148, address: '2140 Mission St, San Francisco, CA', name: 'Inner Sunset Yoga', activity: 'yoga' },
   dolores: { lat: 37.7596, lng: -122.4269, address: 'Dolores Park, San Francisco, CA', name: 'Dolores Park', activity: 'relaxing' },
+  muirWoods: { lat: 37.8970, lng: -122.5811, address: 'Muir Woods, Mill Valley, CA', name: 'Muir Woods National Monument', activity: 'hiking' },
 } as const;
 
 type PlaceKey = keyof typeof PLACES;
 
 const VISIT_SCHEDULE: { day: number; place: PlaceKey; hour: number; duration: number; visitCount: number }[] = [
+  // Today (day 0) — ensures smart frequency freshness check sees recent location data
+  { day: 0, place: 'office', hour: 9, duration: 240, visitCount: 13 },
+  // Week 1-4 (days 1-28)
   { day: 27, place: 'office', hour: 9, duration: 480, visitCount: 1 },
   { day: 26, place: 'badminton', hour: 19, duration: 120, visitCount: 1 },
   { day: 20, place: 'office', hour: 9, duration: 480, visitCount: 2 },
@@ -206,6 +257,28 @@ const VISIT_SCHEDULE: { day: number; place: PlaceKey; hour: number; duration: nu
   { day: 2, place: 'tartine', hour: 12, duration: 45, visitCount: 1 },
   { day: 1, place: 'yoga', hour: 10, duration: 75, visitCount: 1 },
   { day: 1, place: 'dolores', hour: 14, duration: 90, visitCount: 1 },
+  // Week 5-8 (days 29-60)
+  { day: 55, place: 'office', hour: 9, duration: 480, visitCount: 9 },
+  { day: 54, place: 'badminton', hour: 19, duration: 120, visitCount: 4 },
+  { day: 52, place: 'gym', hour: 7, duration: 75, visitCount: 3 },
+  { day: 50, place: 'muirWoods', hour: 10, duration: 180, visitCount: 1 },
+  { day: 48, place: 'office', hour: 9, duration: 480, visitCount: 10 },
+  { day: 47, place: 'badminton', hour: 19, duration: 120, visitCount: 5 },
+  { day: 45, place: 'gym', hour: 7, duration: 75, visitCount: 4 },
+  { day: 43, place: 'blueBottle', hour: 8, duration: 30, visitCount: 3 },
+  { day: 41, place: 'office', hour: 9, duration: 480, visitCount: 11 },
+  { day: 40, place: 'badminton', hour: 19, duration: 120, visitCount: 6 },
+  { day: 38, place: 'gym', hour: 7, duration: 75, visitCount: 5 },
+  { day: 36, place: 'ggPark', hour: 9, duration: 60, visitCount: 2 },
+  { day: 34, place: 'office', hour: 9, duration: 480, visitCount: 12 },
+  { day: 33, place: 'badminton', hour: 19, duration: 120, visitCount: 7 },
+  { day: 31, place: 'gym', hour: 7, duration: 75, visitCount: 6 },
+  { day: 30, place: 'ferry', hour: 11, duration: 60, visitCount: 1 },
+  // 1 year ago (4 visits)
+  { day: 365, place: 'office', hour: 9, duration: 480, visitCount: 1 },
+  { day: 364, place: 'blueBottle', hour: 8, duration: 25, visitCount: 1 },
+  { day: 363, place: 'gym', hour: 7, duration: 60, visitCount: 1 },
+  { day: 361, place: 'badminton', hour: 19, duration: 90, visitCount: 1 },
 ];
 
 export function getDemoLocationData(uid: string): Record<string, any>[] {
@@ -235,6 +308,13 @@ export function getDemoLocationData(uid: string): Record<string, any>[] {
 // ---------------------------------------------------------------------------
 
 const VOICE_NOTES_DATA = [
+  // Today (day 0) — ensures smart frequency freshness check sees recent voice data
+  {
+    day: 0, hour: 8, duration: 20,
+    transcription: 'Quick morning note. Had a great morning run in Dolores Park, about 3 miles. The weather is perfect today. Meeting with the product team at 10 to discuss the Q2 roadmap. Need to remember to pick up groceries after work.',
+    category: 'routine', icon: 'sunny-outline',
+  },
+  // Recent (days 1-28)
   {
     day: 27, hour: 18, duration: 45,
     transcription: 'Had a really productive day at work. Finished the API integration ahead of schedule. The team was impressed with the clean architecture. Feeling good about the project direction.',
@@ -285,6 +365,48 @@ const VOICE_NOTES_DATA = [
     transcription: 'Weekend plans: Saturday morning yoga, then brunch with Sarah and Mike at Tartine. Afternoon at Dolores Park if the weather holds. Sunday maybe try the new climbing gym in SOMA.',
     category: 'social', icon: 'calendar-outline',
   },
+  // Extended (days 29-60)
+  {
+    day: 55, hour: 18, duration: 50,
+    transcription: 'Team offsite was amazing. We did a mini hackathon and my group built a prototype for the internal analytics dashboard in just 6 hours. Won the best demo award. The whole team was really energized, felt like the early startup days again.',
+    category: 'work', icon: 'briefcase-outline',
+  },
+  {
+    day: 50, hour: 16, duration: 35,
+    transcription: 'Weekend hike at Muir Woods with Sarah. The redwoods are absolutely stunning in the morning light. We took the Bootjack Trail loop, about 6 miles total. Saw a banana slug the size of my hand. Need to come back here more often.',
+    category: 'travel', icon: 'leaf-outline',
+  },
+  {
+    day: 45, hour: 20, duration: 25,
+    transcription: 'Just listened to an incredible podcast episode of Lex Fridman interviewing a neuroscientist about habit formation. Ties in perfectly with what I read in Atomic Habits. The idea of dopamine reward prediction errors is fascinating.',
+    category: 'learning', icon: 'headset-outline',
+  },
+  {
+    day: 40, hour: 19, duration: 20,
+    transcription: 'Tried making mapo tofu tonight from scratch. Used the doubanjiang paste I got from the Chinese grocery store on Clement Street. Turned out pretty good, though not as spicy as the restaurant version. Sarah loved it.',
+    category: 'food', icon: 'restaurant-outline',
+  },
+  {
+    day: 37, hour: 17, duration: 30,
+    transcription: 'Big milestone at work today. We shipped the v2 API to production. Zero downtime deployment, all tests passing. Three months of work and it is finally live. The team went out for celebratory drinks at Zeitgeist.',
+    category: 'work', icon: 'trophy-outline',
+  },
+  {
+    day: 32, hour: 21, duration: 25,
+    transcription: 'Rainy Sunday, perfect for reading. Started "Deep Work" by Cal Newport. Already love the concept of time blocking for focused work. Going to try implementing a two-hour deep work block every morning starting Monday.',
+    category: 'learning', icon: 'book-outline',
+  },
+  // 1 year ago
+  {
+    day: 365, hour: 20, duration: 40,
+    transcription: 'Just moved to San Francisco last week. The city is amazing. Walked across the Golden Gate Bridge today, the fog rolling in was surreal. My apartment in the Mission is tiny but has great light. Still unpacking but already feels like home.',
+    category: 'life', icon: 'home-outline',
+  },
+  {
+    day: 360, hour: 19, duration: 35,
+    transcription: 'Started my new job at the startup today. The team is small but talented, only twelve engineers. The office is on Market Street with views of the bay. Had my first standup and already got assigned a ticket. Excited but nervous.',
+    category: 'work', icon: 'briefcase-outline',
+  },
 ];
 
 export function getDemoVoiceNotes(uid: string): Record<string, any>[] {
@@ -306,6 +428,7 @@ export function getDemoVoiceNotes(uid: string): Record<string, any>[] {
 // ---------------------------------------------------------------------------
 
 const TEXT_NOTES_DATA = [
+  // Recent (days 1-28)
   {
     day: 25, hour: 21, title: 'Q1 Goals & Intentions', tags: ['goals', 'planning'],
     category: 'work', icon: 'flag-outline',
@@ -330,6 +453,28 @@ const TEXT_NOTES_DATA = [
     day: 2, hour: 20, title: "Grandma's Dan Dan Noodles Recipe", tags: ['recipe', 'family', 'cooking'],
     category: 'food', icon: 'restaurant-outline',
     content: `Mom shared grandma's dan dan noodles recipe over the phone today. Writing it down before I forget!\n\n**Ingredients:**\n- Fresh wheat noodles (not dried)\n- Ground pork, 200g\n- Ya cai (preserved mustard greens)\n- Sesame paste, 3 tbsp\n- Chili oil, 2 tbsp (homemade is best)\n- Light soy sauce, 2 tbsp\n- Black vinegar, 1 tbsp\n- Sichuan peppercorn oil, 1 tsp\n- Chopped scallions, peanuts\n\n**Key tips from grandma:**\n- Toast the sesame paste in a dry pan first — brings out the nutty flavor\n- The ya cai is the secret ingredient, don't skip it\n- Cook noodles al dente, they continue cooking in the sauce\n- Always add a splash of noodle cooking water to the sauce\n\nGoing to try making this this weekend. Miss grandma's cooking so much.`,
+  },
+  // Extended (days 29-60)
+  {
+    day: 52, hour: 21, title: 'Team Offsite Recap — Hackathon Results', tags: ['work', 'hackathon', 'team'],
+    category: 'work', icon: 'trophy-outline',
+    content: `Our team offsite was a huge success. Day 1 was strategy sessions, Day 2 was the hackathon.\n\n**Hackathon Projects:**\n1. **Analytics Dashboard** (my team) — Built a real-time internal metrics dashboard. Won best demo!\n2. **AI Code Reviewer** — Used GPT-4 to review PRs automatically\n3. **Customer Feedback Classifier** — NLP pipeline to categorize support tickets\n\n**Key Takeaways:**\n- The team works incredibly well under pressure\n- We should do hackathons quarterly, not just annually\n- The analytics dashboard might actually become a real product feature\n\nAlso had a great team dinner at a rooftop restaurant in SOMA. Good vibes all around.`,
+  },
+  {
+    day: 42, hour: 20, title: 'Muir Woods Trail Notes', tags: ['hiking', 'nature', 'weekend'],
+    category: 'travel', icon: 'leaf-outline',
+    content: `Hiked the Bootjack Trail loop at Muir Woods today with Sarah.\n\n**Trail Details:**\n- Distance: ~6.2 miles\n- Elevation gain: ~1,200 ft\n- Duration: 3.5 hours (including photo stops)\n\n**Highlights:**\n- The Cathedral Grove section is breathtaking — some trees are over 250 feet tall\n- Spotted a banana slug, a Steller's jay, and what I think was a red-tailed hawk\n- The creek crossings were beautiful with all the recent rain\n- Packed sandwiches from Tartine and ate at a bench overlooking the valley\n\nThis is exactly why I moved to the Bay Area. Nature like this, 30 minutes from the city. Already planning to come back for the Dipsea Trail.`,
+  },
+  {
+    day: 33, hour: 22, title: 'February Goals & Monthly Planning', tags: ['goals', 'planning', 'monthly'],
+    category: 'planning', icon: 'calendar-outline',
+    content: `February planning session:\n\n**Work:**\n- v2 API launch target: Feb 15th\n- Start mentoring Lisa on backend patterns\n- Prep slides for March all-hands tech talk\n\n**Health:**\n- Continue 3x/week workouts (badminton, gym, running)\n- Target: deadlift 235 lbs (halfway to 250 goal)\n- Try a new yoga class at Inner Sunset Yoga\n\n**Personal:**\n- Start reading "Deep Work" by Cal Newport\n- Cook at home at least 4 nights/week\n- Plan Portland trip for late March\n- Try making mapo tofu from scratch\n\n**Side Project:**\n- Set up React Native project for recipe app\n- Build photo capture + OpenAI Vision integration\n- Design basic UI mockups in Figma`,
+  },
+  // 1 year ago
+  {
+    day: 362, hour: 22, title: 'First Week in San Francisco', tags: ['moving', 'sf', 'new-chapter'],
+    category: 'life', icon: 'home-outline',
+    content: `It's been one week since I moved to San Francisco. Here are my first impressions:\n\n**The Good:**\n- The Mission is vibrant and walkable — taquerias, coffee shops, murals everywhere\n- Golden Gate Park is massive and beautiful, could spend weeks exploring\n- The tech scene is exactly what I hoped for — everyone has a side project\n- The food is incredible. Already found amazing pho, ramen, and dim sum spots\n\n**The Challenging:**\n- My apartment is half the size of my Portland place for twice the rent\n- The fog is real — Karl the Fog, they call it\n- Still don't know many people outside work\n\n**Goals for my first month:**\n- Join a badminton club (found SF Badminton Club on Divisadero)\n- Explore all the neighborhoods\n- Find a good gym near home\n- Try to make at least one friend outside of work\n\nThis is a new chapter and I'm here for it.`,
   },
 ];
 
@@ -360,4 +505,10 @@ export const PHOTO_DESCRIPTIONS = [
   { desc: 'Latte art at Blue Bottle Coffee — a perfect rosetta on a flat white.', activity: 'coffee', day: 3, hour: 17 },
   { desc: 'Dolores Park on a sunny afternoon, view of downtown SF skyline in the background.', activity: 'relaxing', day: 1, hour: 15 },
   { desc: 'Tartine morning bun — flakey, caramelized, and still warm from the oven.', activity: 'dining', day: 2, hour: 12 },
+  // Extended
+  { desc: 'Towering redwoods along the Bootjack Trail at Muir Woods, sunlight filtering through the canopy.', activity: 'hiking', day: 50, hour: 11 },
+  { desc: 'Team hackathon whiteboard covered in architecture diagrams and sticky notes.', activity: 'work', day: 52, hour: 15 },
+  { desc: 'Homemade mapo tofu in a cast iron skillet, bright red with chili oil and Sichuan peppercorns.', activity: 'cooking', day: 40, hour: 19 },
+  // 1 year ago
+  { desc: 'View from my new apartment window on the first day in San Francisco, rooftops and palm trees.', activity: 'life', day: 365, hour: 10 },
 ];

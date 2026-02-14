@@ -8,6 +8,7 @@ import DemoStatusCard from '@/components/admin/demo/DemoStatusCard';
 import DemoActionButton from '@/components/admin/demo/DemoActionButton';
 import DemoProgressLog from '@/components/admin/demo/DemoProgressLog';
 import type { DemoStatus, DemoProgressEvent } from '@/lib/services/demo/types';
+import { DEMO_EMAIL, DEMO_PASSWORD, DEMO_DISPLAY_NAME } from '@/lib/services/demo/demoData';
 
 interface EmbeddingDetail {
   total: number;
@@ -92,6 +93,25 @@ export default function AdminDemoDataPage() {
         </p>
       </div>
 
+      {/* Demo Credentials */}
+      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+        <h3 className="text-sm font-semibold text-gray-700 mb-2">Demo Account Credentials</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+          <div>
+            <span className="text-gray-500">Name: </span>
+            <span className="font-mono font-medium text-gray-900">{DEMO_DISPLAY_NAME}</span>
+          </div>
+          <div>
+            <span className="text-gray-500">Email: </span>
+            <span className="font-mono font-medium text-gray-900">{DEMO_EMAIL}</span>
+          </div>
+          <div>
+            <span className="text-gray-500">Password: </span>
+            <span className="font-mono font-medium text-gray-900">{DEMO_PASSWORD}</span>
+          </div>
+        </div>
+      </div>
+
       {/* Status Card */}
       <DemoStatusCard
         status={status}
@@ -102,10 +122,10 @@ export default function AdminDemoDataPage() {
       {/* Quick Actions */}
       <div>
         <h2 className="text-xl font-bold text-gray-900 mb-4">Actions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <DemoActionButton
             title="Full Reset & Seed"
-            description="Clean up existing data and seed fresh demo content"
+            description="Clean up existing data and seed fresh 2-month demo content"
             icon="🔄"
             apiEndpoint="/api/admin/demo/seed"
             body={{ skipPhotos: true, skipLifeFeed: false, skipWait: false }}
@@ -129,6 +149,36 @@ export default function AdminDemoDataPage() {
             description="Generate life feed posts for the demo account"
             icon="📰"
             apiEndpoint="/api/admin/demo/life-feed"
+            variant="secondary"
+            disabled={!status?.exists}
+            onProgress={handleProgress}
+            onComplete={handleOperationComplete}
+          />
+          <DemoActionButton
+            title="Generate Keywords"
+            description="Generate weekly keyword summaries from demo data"
+            icon="🏷️"
+            apiEndpoint="/api/admin/demo/keywords"
+            variant="secondary"
+            disabled={!status?.exists}
+            onProgress={handleProgress}
+            onComplete={handleOperationComplete}
+          />
+          <DemoActionButton
+            title="Generate Insights"
+            description="Generate fun facts and pattern insights"
+            icon="💡"
+            apiEndpoint="/api/admin/demo/insights"
+            variant="secondary"
+            disabled={!status?.exists}
+            onProgress={handleProgress}
+            onComplete={handleOperationComplete}
+          />
+          <DemoActionButton
+            title="This Day Memories"
+            description="Generate memories from 1 year ago for today"
+            icon="🧠"
+            apiEndpoint="/api/admin/demo/memories"
             variant="secondary"
             disabled={!status?.exists}
             onProgress={handleProgress}
@@ -229,6 +279,137 @@ export default function AdminDemoDataPage() {
         </div>
       )}
 
+      {/* Smart Frequency Algorithm Reference */}
+      <div className="bg-purple-50 border border-purple-200 rounded-lg p-6">
+        <div className="flex items-start gap-3">
+          <div className="text-purple-500 text-xl">&#9881;</div>
+          <div className="w-full">
+            <h3 className="text-lg font-semibold text-purple-900 mb-3">Life Feed: Smart Frequency Algorithm</h3>
+            <p className="text-sm text-purple-800 mb-4">
+              <code>generateLifeFeedNow</code> uses <code>SmartFrequencyCalculator</code> to decide <strong>how many</strong> posts
+              to generate. It scores three dimensions (each 0–1), combines them with configurable weights, and maps the total to a post count.
+            </p>
+
+            {/* Scoring Components */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+              <div className="bg-white rounded-lg p-3 border border-purple-100">
+                <p className="font-semibold text-purple-900 text-sm mb-1">Data Volume <span className="text-purple-500 font-normal">(40%)</span></p>
+                <p className="text-xs text-purple-700">
+                  Counts data points in last <strong>7 days</strong> (steps, workouts, locations, notes, photos).
+                  Logarithmic scaling: <code>log(pts+1)/log(51)</code>. Diminishing returns after ~20 points.
+                </p>
+              </div>
+              <div className="bg-white rounded-lg p-3 border border-purple-100">
+                <p className="font-semibold text-purple-900 text-sm mb-1">Data Freshness <span className="text-purple-500 font-normal">(30%)</span></p>
+                <p className="text-xs text-purple-700">
+                  Checks for data within last <strong>24 hours</strong> across 3 collections: health, location, voice.
+                  Score = freshCollections / 3. Values: <strong>0, 0.33, 0.67, or 1.0</strong>.
+                </p>
+              </div>
+              <div className="bg-white rounded-lg p-3 border border-purple-100">
+                <p className="font-semibold text-purple-900 text-sm mb-1">Activity Diversity <span className="text-purple-500 font-normal">(30%)</span></p>
+                <p className="text-xs text-purple-700">
+                  Unique activities (60% weight, capped at 10) + data types present (40% weight, out of 7 types).
+                  More varied data = higher score.
+                </p>
+              </div>
+            </div>
+
+            {/* Score → Posts table */}
+            <div className="bg-white rounded-lg p-3 border border-purple-100 mb-4">
+              <p className="font-semibold text-purple-900 text-sm mb-2">Total Score → Recommended Posts</p>
+              <div className="grid grid-cols-5 gap-1 text-xs text-center">
+                <div className="bg-green-100 text-green-800 rounded px-2 py-1 font-medium">&ge; 0.8 → 3 posts</div>
+                <div className="bg-blue-100 text-blue-800 rounded px-2 py-1 font-medium">&ge; 0.6 → 2 posts</div>
+                <div className="bg-yellow-100 text-yellow-800 rounded px-2 py-1 font-medium">&ge; 0.4 → 1 post</div>
+                <div className="bg-orange-100 text-orange-800 rounded px-2 py-1 font-medium">&ge; 0.2 → 1 post</div>
+                <div className="bg-red-100 text-red-800 rounded px-2 py-1 font-medium">&lt; 0.2 → 0 posts</div>
+              </div>
+            </div>
+
+            {/* Worked Example */}
+            <div className="bg-white rounded-lg p-4 border border-purple-100 mb-4">
+              <p className="font-semibold text-purple-900 text-sm mb-3">Worked Example: Demo Seed Data</p>
+
+              {/* Scenario comparison table */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-purple-200">
+                      <th className="text-left py-1.5 pr-3 text-purple-700 font-semibold">Component</th>
+                      <th className="text-left py-1.5 pr-3 text-purple-700 font-semibold">Formula</th>
+                      <th className="text-center py-1.5 px-2 text-red-700 font-semibold">Without day-0 data</th>
+                      <th className="text-center py-1.5 px-2 text-green-700 font-semibold">With day-0 data</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-purple-800">
+                    <tr className="border-b border-purple-100">
+                      <td className="py-1.5 pr-3 font-medium">Volume (40%)</td>
+                      <td className="py-1.5 pr-3"><code className="text-[10px]">log(~13+1)/log(51)</code></td>
+                      <td className="py-1.5 px-2 text-center font-mono">0.67</td>
+                      <td className="py-1.5 px-2 text-center font-mono">0.67</td>
+                    </tr>
+                    <tr className="border-b border-purple-100">
+                      <td className="py-1.5 pr-3 font-medium">Freshness (30%)</td>
+                      <td className="py-1.5 pr-3"><code className="text-[10px]">freshCollections / 3</code></td>
+                      <td className="py-1.5 px-2 text-center font-mono text-red-600 font-bold">0.0</td>
+                      <td className="py-1.5 px-2 text-center font-mono text-green-600 font-bold">1.0</td>
+                    </tr>
+                    <tr className="border-b border-purple-100">
+                      <td className="py-1.5 pr-3 font-medium">Diversity (30%)</td>
+                      <td className="py-1.5 pr-3"><code className="text-[10px]">(acts/10)*.6 + (types/7)*.4</code></td>
+                      <td className="py-1.5 px-2 text-center font-mono">0.70</td>
+                      <td className="py-1.5 px-2 text-center font-mono">0.70</td>
+                    </tr>
+                    <tr className="border-t-2 border-purple-300">
+                      <td className="py-2 pr-3 font-bold">Total</td>
+                      <td className="py-2 pr-3"><code className="text-[10px]">V*.4 + F*.3 + D*.3</code></td>
+                      <td className="py-2 px-2 text-center">
+                        <span className="font-mono font-bold text-red-600">0.478</span>
+                        <span className="block text-[10px] text-red-500 mt-0.5">1 post/round</span>
+                      </td>
+                      <td className="py-2 px-2 text-center">
+                        <span className="font-mono font-bold text-green-600">0.778</span>
+                        <span className="block text-[10px] text-green-500 mt-0.5">2-3 posts/round</span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Freshness detail */}
+              <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="bg-red-50 rounded p-2.5 border border-red-100">
+                  <p className="font-semibold text-red-800 text-xs mb-1">Without day-0: Freshness = 0.0</p>
+                  <div className="space-y-0.5 text-[11px] text-red-700">
+                    <p>healthData in last 24h? <strong>No</strong> (earliest = day 1 = 24h+ ago)</p>
+                    <p>locationData in last 24h? <strong>No</strong></p>
+                    <p>voiceNotes in last 24h? <strong>No</strong></p>
+                    <p className="mt-1 font-medium">0/3 fresh → score <strong>0.0</strong> → total drops to 0.478 → <strong>1 post</strong></p>
+                  </div>
+                </div>
+                <div className="bg-green-50 rounded p-2.5 border border-green-100">
+                  <p className="font-semibold text-green-800 text-xs mb-1">With day-0: Freshness = 1.0</p>
+                  <div className="space-y-0.5 text-[11px] text-green-700">
+                    <p>healthData in last 24h? <strong>Yes</strong> (day-0 steps)</p>
+                    <p>locationData in last 24h? <strong>Yes</strong> (day-0 office visit)</p>
+                    <p>voiceNotes in last 24h? <strong>Yes</strong> (day-0 morning note)</p>
+                    <p className="mt-1 font-medium">3/3 fresh → score <strong>1.0</strong> → total rises to 0.778 → <strong>2-3 posts</strong></p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Demo seed note */}
+            <p className="text-xs text-purple-600">
+              <strong>Demo note:</strong> Seed data includes &quot;day 0&quot; entries for health, location, and voice so that the
+              freshness score = 1.0 at seed time. The full pipeline calls <code>generateLifeFeedNow</code> in 4 rounds
+              (with 2s delays) to generate up to 12 posts across different post types.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Info Box */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
         <div className="flex items-start gap-3">
@@ -237,16 +418,28 @@ export default function AdminDemoDataPage() {
             <h3 className="text-lg font-semibold text-blue-900 mb-2">How This Works</h3>
             <div className="space-y-2 text-sm text-blue-800">
               <p>
-                <strong>Full Reset &amp; Seed</strong> creates a demo account (Alex Chen) with 4 weeks of realistic data:
-                health records, location visits, voice notes, text notes, and life feed posts.
+                <strong>Full Reset &amp; Seed</strong> creates a demo account (Alex Chen) with ~2 months of realistic data
+                plus historical data from 1 year ago: health records, location visits, voice notes, text notes, and photos.
               </p>
               <p>
                 <strong>Embeddings</strong> are generated automatically by Cloud Functions when data is written to Firestore.
                 This takes 2-5 minutes after seeding.
               </p>
               <p>
-                <strong>Life Feed</strong> generation calls the <code>generateLifeFeedNow</code> Cloud Function to
-                create AI-generated insight posts based on the seeded data.
+                <strong>Life Feed</strong> calls <code>generateLifeFeedNow</code> to create AI-generated insight posts
+                based on the seeded data. Uses <strong>Smart Frequency</strong> (see above) to determine post count.
+              </p>
+              <p>
+                <strong>Keywords</strong> calls <code>generateKeywordsNow</code> to extract weekly keyword summaries
+                from the demo user&apos;s data.
+              </p>
+              <p>
+                <strong>Insights</strong> calls <code>generateUnifiedInsightsNow</code> to generate fun facts, patterns,
+                and anomaly insights from the demo data.
+              </p>
+              <p>
+                <strong>This Day Memories</strong> calls <code>generateThisDayMemories</code> to find what the demo user
+                was doing exactly 1 year ago today. Requires the 1-year-ago seed data.
               </p>
               <p>
                 <strong>Screenshots</strong> use <code>xcrun simctl</code> to capture the current iOS Simulator screen.

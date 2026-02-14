@@ -11,6 +11,9 @@ import {
   seedPhotos,
   waitForEmbeddings,
   triggerLifeFeed,
+  triggerKeywords,
+  triggerUnifiedInsights,
+  triggerThisDayMemories,
 } from '@/lib/services/demo/demoOperations';
 import type { DemoProgressEvent } from '@/lib/services/demo/types';
 
@@ -77,9 +80,30 @@ export async function POST(request: NextRequest) {
           send({ phase: 8, phaseName: 'Life Feed', level: 'info', message: 'Life feed generation skipped.' });
         }
 
-        // Phase 9: Done
+        // Phase 9: Keywords
+        if (!skipLifeFeed) {
+          await triggerKeywords(uid, send, auth);
+        } else {
+          send({ phase: 9, phaseName: 'Keywords', level: 'info', message: 'Keywords generation skipped.' });
+        }
+
+        // Phase 10: Insights (fun facts)
+        if (!skipLifeFeed) {
+          await triggerUnifiedInsights(uid, send, auth);
+        } else {
+          send({ phase: 10, phaseName: 'Insights', level: 'info', message: 'Insights generation skipped.' });
+        }
+
+        // Phase 11: This Day Memories
+        if (!skipLifeFeed) {
+          await triggerThisDayMemories(uid, send, auth);
+        } else {
+          send({ phase: 11, phaseName: 'Memories', level: 'info', message: 'Memories generation skipped.' });
+        }
+
+        // Phase 12: Done
         send({
-          phase: 9,
+          phase: 12,
           phaseName: 'Complete',
           level: 'success',
           message: `Seed complete! Health: ${healthCount}, Location: ${locationCount}, Voice: ${voiceCount}, Text: ${textCount}, Photos: ${photoCount}`,

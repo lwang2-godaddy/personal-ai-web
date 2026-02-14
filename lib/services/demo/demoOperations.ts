@@ -456,25 +456,39 @@ export async function waitForEmbeddings(
 }
 
 // ---------------------------------------------------------------------------
-// Phase 8: Trigger Life Feed
+// Cloud Function Caller Helper
 // ---------------------------------------------------------------------------
 
-export async function triggerLifeFeed(
+/**
+ * Calls a Firebase Cloud Function as a specific user.
+ *
+ * 1. Creates a custom token via Admin SDK
+ * 2. Exchanges it for an ID token via Identity Toolkit REST API
+ * 3. Calls the Cloud Function URL with Authorization header
+ *
+ * Returns the parsed response data (the `result` field for onCall functions),
+ * or null if an error occurred (errors are reported via onProgress).
+ */
+async function callCloudFunctionAsUser(
   uid: string,
+  functionName: string,
+  data: Record<string, any>,
   onProgress: ProgressCallback,
   authInstance?: admin.auth.Auth,
-): Promise<void> {
+  options?: { phase?: number; phaseName?: string },
+): Promise<any | null> {
   const auth = getAuth(authInstance);
-  onProgress({ phase: 8, phaseName: 'Life Feed', level: 'info', message: 'Triggering life feed generation...' });
+  const phase = options?.phase ?? 0;
+  const phaseName = options?.phaseName ?? functionName;
 
   const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
   if (!apiKey) {
-    onProgress({ phase: 8, phaseName: 'Life Feed', level: 'warning', message: 'NEXT_PUBLIC_FIREBASE_API_KEY not set — skipping life feed trigger' });
-    return;
+    onProgress({ phase, phaseName, level: 'warning', message: 'NEXT_PUBLIC_FIREBASE_API_KEY not set — skipping' });
+    return null;
   }
 
   // Create custom token → exchange for ID token
-  onProgress({ phase: 8, phaseName: 'Life Feed', level: 'info', message: 'Generating ID token...' });
+  onProgress({ phase, phaseName, level: 'info', message: 'Generating ID token...' });
   const customToken = await auth.createCustomToken(uid);
 
   const tokenResponse = await fetch(
@@ -488,20 +502,20 @@ export async function triggerLifeFeed(
 
   if (!tokenResponse.ok) {
     const err = await tokenResponse.text();
-    onProgress({ phase: 8, phaseName: 'Life Feed', level: 'error', message: `Failed to exchange token: ${err}` });
-    return;
+    onProgress({ phase, phaseName, level: 'error', message: `Failed to exchange token: ${err}` });
+    return null;
   }
 
   const tokenData = await tokenResponse.json();
   const idToken = tokenData.idToken;
-  onProgress({ phase: 8, phaseName: 'Life Feed', level: 'success', message: 'Got ID token' });
+  onProgress({ phase, phaseName, level: 'success', message: 'Got ID token' });
 
-  // Call generateLifeFeedNow
+  // Call Cloud Function
   const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'personal-ai-app';
   const region = process.env.FIREBASE_REGION || 'us-central1';
-  const functionUrl = `https://${region}-${projectId}.cloudfunctions.net/generateLifeFeedNow`;
+  const functionUrl = `https://${region}-${projectId}.cloudfunctions.net/${functionName}`;
 
-  onProgress({ phase: 8, phaseName: 'Life Feed', level: 'info', message: 'Calling generateLifeFeedNow...' });
+  onProgress({ phase, phaseName, level: 'info', message: `Calling ${functionName}...` });
 
   try {
     const response = await fetch(functionUrl, {
@@ -510,18 +524,52 @@ export async function triggerLifeFeed(
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${idToken}`,
       },
-      body: JSON.stringify({ data: {} }),
+      body: JSON.stringify({ data }),
     });
 
     if (!response.ok) {
       const errText = await response.text();
-      onProgress({ phase: 8, phaseName: 'Life Feed', level: 'error', message: `Cloud Function returned ${response.status}: ${errText}` });
-      return;
+      onProgress({ phase, phaseName, level: 'error', message: `Cloud Function returned ${response.status}: ${errText}` });
+      return null;
     }
 
     const result = await response.json();
-    const data = result.result || result;
-    onProgress({ phase: 8, phaseName: 'Life Feed', level: 'success', message: `Life feed generated: ${data.count || 0} posts, status: ${data.status}` });
+    return result.result || result;
+  } catch (err) {
+    onProgress({ phase, phaseName, level: 'error', message: `Failed to call ${functionName}: ${err}` });
+    return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Phase 8: Trigger Life Feed
+// ---------------------------------------------------------------------------
+
+export async function triggerLifeFeed(
+  uid: string,
+  onProgress: ProgressCallback,
+  authInstance?: admin.auth.Auth,
+): Promise<void> {
+  // The Cloud Function generates max 3 posts per call and applies per-type cooldowns.
+  // To get a variety of post types we call it multiple rounds. Each round picks
+  // different types because previously generated types go into cooldown.
+  const ROUNDS = 4;
+  let totalPosts = 0;
+
+  onProgress({ phase: 8, phaseName: 'Life Feed', level: 'info', message: `Triggering life feed generation (${ROUNDS} rounds for variety)...` });
+
+  for (let round = 1; round <= ROUNDS; round++) {
+    onProgress({ phase: 8, phaseName: 'Life Feed', level: 'info', message: `Round ${round}/${ROUNDS}...` });
+
+    const data = await callCloudFunctionAsUser(uid, 'generateLifeFeedNow', {}, onProgress, authInstance, {
+      phase: 8,
+      phaseName: 'Life Feed',
+    });
+
+    if (!data) break;
+
+    const count = data.count || 0;
+    totalPosts += count;
 
     if (data.posts && data.posts.length > 0) {
       for (const post of data.posts) {
@@ -531,8 +579,149 @@ export async function triggerLifeFeed(
         });
       }
     }
-  } catch (err) {
-    onProgress({ phase: 8, phaseName: 'Life Feed', level: 'error', message: `Failed to call generateLifeFeedNow: ${err}` });
+
+    if (count === 0) {
+      onProgress({ phase: 8, phaseName: 'Life Feed', level: 'info', message: `Round ${round} generated 0 posts — stopping early (all types exhausted or in cooldown)` });
+      break;
+    }
+
+    // Brief pause between rounds to let cooldowns register
+    if (round < ROUNDS) {
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+  }
+
+  onProgress({ phase: 8, phaseName: 'Life Feed', level: 'success', message: `Life feed complete: ${totalPosts} total posts generated` });
+}
+
+// ---------------------------------------------------------------------------
+// Phase 9: Trigger Keywords
+// ---------------------------------------------------------------------------
+
+export async function triggerKeywords(
+  uid: string,
+  onProgress: ProgressCallback,
+  authInstance?: admin.auth.Auth,
+): Promise<void> {
+  onProgress({ phase: 9, phaseName: 'Keywords', level: 'info', message: 'Triggering keyword generation...' });
+
+  const data = await callCloudFunctionAsUser(
+    uid,
+    'generateKeywordsNow',
+    { periodType: 'weekly', force: true },
+    onProgress,
+    authInstance,
+    { phase: 9, phaseName: 'Keywords' },
+  );
+
+  if (!data) return;
+
+  if (data.success) {
+    const keywords: string[] = data.keywords || [];
+    onProgress({ phase: 9, phaseName: 'Keywords', level: 'success', message: data.message || `Generated ${keywords.length} keywords` });
+
+    if (keywords.length > 0) {
+      const preview = keywords.slice(0, 10).join(', ');
+      onProgress({ phase: 9, phaseName: 'Keywords', level: 'info', message: `Preview: ${preview}${keywords.length > 10 ? '...' : ''}` });
+    }
+  } else {
+    onProgress({ phase: 9, phaseName: 'Keywords', level: 'warning', message: data.message || 'Keywords generation returned unsuccessful' });
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Phase 10: Trigger Unified Insights
+// ---------------------------------------------------------------------------
+
+export async function triggerUnifiedInsights(
+  uid: string,
+  onProgress: ProgressCallback,
+  authInstance?: admin.auth.Auth,
+): Promise<void> {
+  // Like life feed, insights have per-type cooldowns and a daily cap of 10.
+  // Run multiple rounds to generate a variety of insight types (fun facts, patterns, anomalies).
+  const ROUNDS = 3;
+  let totalPosts = 0;
+
+  onProgress({ phase: 10, phaseName: 'Insights', level: 'info', message: `Triggering unified insights generation (${ROUNDS} rounds)...` });
+
+  for (let round = 1; round <= ROUNDS; round++) {
+    onProgress({ phase: 10, phaseName: 'Insights', level: 'info', message: `Round ${round}/${ROUNDS}...` });
+
+    const data = await callCloudFunctionAsUser(
+      uid,
+      'generateUnifiedInsightsNow',
+      {},
+      onProgress,
+      authInstance,
+      { phase: 10, phaseName: 'Insights' },
+    );
+
+    if (!data) break;
+
+    if (data.success) {
+      const created = data.postsCreated || 0;
+      totalPosts += created;
+      onProgress({ phase: 10, phaseName: 'Insights', level: 'info', message: `Round ${round}: ${data.message || `${created} posts`}` });
+
+      if (data.sources && data.sources.length > 0) {
+        onProgress({ phase: 10, phaseName: 'Insights', level: 'info', message: `  Sources: ${data.sources.join(', ')}` });
+      }
+      if (data.errors && data.errors.length > 0) {
+        for (const err of data.errors) {
+          onProgress({ phase: 10, phaseName: 'Insights', level: 'warning', message: `  Error: ${err}` });
+        }
+      }
+
+      if (created === 0) {
+        onProgress({ phase: 10, phaseName: 'Insights', level: 'info', message: `Round ${round} generated 0 — stopping early` });
+        break;
+      }
+    } else {
+      onProgress({ phase: 10, phaseName: 'Insights', level: 'warning', message: data.message || data.error || 'Insights generation returned unsuccessful' });
+      break;
+    }
+
+    if (round < ROUNDS) {
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+  }
+
+  onProgress({ phase: 10, phaseName: 'Insights', level: 'success', message: `Insights complete: ${totalPosts} total posts generated` });
+}
+
+// ---------------------------------------------------------------------------
+// Phase 11: Trigger This Day Memories
+// ---------------------------------------------------------------------------
+
+export async function triggerThisDayMemories(
+  uid: string,
+  onProgress: ProgressCallback,
+  authInstance?: admin.auth.Auth,
+): Promise<void> {
+  onProgress({ phase: 11, phaseName: 'Memories', level: 'info', message: 'Triggering This Day Memories generation...' });
+
+  const data = await callCloudFunctionAsUser(
+    uid,
+    'generateThisDayMemories',
+    { forceRefresh: true },
+    onProgress,
+    authInstance,
+    { phase: 11, phaseName: 'Memories' },
+  );
+
+  if (!data) return;
+
+  const memories: any[] = data.memories || [];
+  const fromCache = data.fromCache ? ' (from cache)' : '';
+  onProgress({ phase: 11, phaseName: 'Memories', level: 'success', message: `Found ${memories.length} memories for ${data.month}/${data.day}${fromCache}` });
+
+  for (const mem of memories) {
+    const preview = (mem.narrative || mem.title || '').substring(0, 80);
+    onProgress({
+      phase: 11, phaseName: 'Memories', level: 'info',
+      message: `  [${mem.yearsAgo}y ago] ${mem.emoji || ''} ${preview}${preview.length >= 80 ? '...' : ''}`,
+    });
   }
 }
 
