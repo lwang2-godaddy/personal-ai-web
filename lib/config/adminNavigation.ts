@@ -43,6 +43,7 @@ export const ADMIN_NAVIGATION: NavGroup[] = [
     icon: '📈',
     items: [
       { href: '/admin/usage', label: 'Usage Analytics', icon: '📈' },
+      { href: '/admin/usage/alerts', label: 'Cost Alerts', icon: '🚨' },
       { href: '/admin/behavior', label: 'Behavior', icon: '🎯' },
     ],
   },
@@ -58,6 +59,7 @@ export const ADMIN_NAVIGATION: NavGroup[] = [
       { href: '/admin/memory-builder', label: 'Memory Builder', icon: '🧠' },
       { href: '/admin/life-keywords', label: 'Life Keywords', icon: '🔑' },
       { href: '/admin/fun-facts', label: 'Fun Facts', icon: '🎲' },
+      { href: '/admin/events', label: 'Events', icon: '📅' },
       { href: '/admin/vocabulary', label: 'Vocabulary', icon: '📚' },
       { href: '/admin/notifications', label: 'Notifications', icon: '🔔' },
       { href: '/admin/voice-categories', label: 'Voice Categories', icon: '🎤' },
