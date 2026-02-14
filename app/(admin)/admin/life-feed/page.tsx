@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { apiGet } from '@/lib/api/client';
 import { useAppSelector } from '@/lib/store/hooks';
-import { PostCard, PostDetailModal } from '@/components/admin/life-feed';
+import { PostCard, PostDetailModal, AlgorithmReference } from '@/components/admin/life-feed';
 
 // ============================================================================
 // Types
@@ -397,6 +397,9 @@ export default function LifeFeedViewerPage() {
           {loadingPosts || loadingUsers ? 'Loading...' : 'Refresh'}
         </button>
       </div>
+
+      {/* Algorithm Reference (collapsible) */}
+      <AlgorithmReference />
 
       {/* User Selector */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
