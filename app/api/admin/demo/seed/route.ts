@@ -11,6 +11,10 @@ import {
   seedPhotos,
   waitForEmbeddings,
   triggerLifeFeed,
+  createDemoFriend,
+  seedFriendship,
+  seedFriendPosts,
+  seedSocialEngagement,
   triggerKeywords,
   triggerUnifiedInsights,
   triggerThisDayMemories,
@@ -80,6 +84,18 @@ export async function POST(request: NextRequest) {
           send({ phase: 8, phaseName: 'Life Feed', level: 'info', message: 'Life feed generation skipped.' });
         }
 
+        // Phase 13: Create friend user (Sarah Johnson)
+        const friendUid = await createDemoFriend(db, send, auth);
+
+        // Phase 14: Seed friendship + predefined circles
+        await seedFriendship(db, uid, friendUid, send);
+
+        // Phase 15: Seed friend's life feed posts
+        const friendPostCount = await seedFriendPosts(db, uid, friendUid, send);
+
+        // Phase 16: Seed social engagement (likes, comments, views)
+        await seedSocialEngagement(db, uid, friendUid, send);
+
         // Phase 9: Keywords
         if (!skipLifeFeed) {
           await triggerKeywords(uid, send, auth);
@@ -106,7 +122,7 @@ export async function POST(request: NextRequest) {
           phase: 12,
           phaseName: 'Complete',
           level: 'success',
-          message: `Seed complete! Health: ${healthCount}, Location: ${locationCount}, Voice: ${voiceCount}, Text: ${textCount}, Photos: ${photoCount}`,
+          message: `Seed complete! Health: ${healthCount}, Location: ${locationCount}, Voice: ${voiceCount}, Text: ${textCount}, Photos: ${photoCount}, Friend Posts: ${friendPostCount}`,
         });
       } catch (error: any) {
         send({

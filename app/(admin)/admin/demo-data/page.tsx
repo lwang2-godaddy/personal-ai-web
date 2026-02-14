@@ -8,7 +8,14 @@ import DemoStatusCard from '@/components/admin/demo/DemoStatusCard';
 import DemoActionButton from '@/components/admin/demo/DemoActionButton';
 import DemoProgressLog from '@/components/admin/demo/DemoProgressLog';
 import type { DemoStatus, DemoProgressEvent } from '@/lib/services/demo/types';
-import { DEMO_EMAIL, DEMO_PASSWORD, DEMO_DISPLAY_NAME } from '@/lib/services/demo/demoData';
+import {
+  DEMO_EMAIL,
+  DEMO_PASSWORD,
+  DEMO_DISPLAY_NAME,
+  DEMO_FRIEND_EMAIL,
+  DEMO_FRIEND_PASSWORD,
+  DEMO_FRIEND_DISPLAY_NAME,
+} from '@/lib/services/demo/demoData';
 
 interface EmbeddingDetail {
   total: number;
@@ -94,21 +101,51 @@ export default function AdminDemoDataPage() {
       </div>
 
       {/* Demo Credentials */}
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-        <h3 className="text-sm font-semibold text-gray-700 mb-2">Demo Account Credentials</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
-          <div>
-            <span className="text-gray-500">Name: </span>
-            <span className="font-mono font-medium text-gray-900">{DEMO_DISPLAY_NAME}</span>
+      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3">
+        <div>
+          <h3 className="text-sm font-semibold text-gray-700 mb-2">Demo Account — Alex Chen (primary)</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+            <div>
+              <span className="text-gray-500">Name: </span>
+              <span className="font-mono font-medium text-gray-900">{DEMO_DISPLAY_NAME}</span>
+            </div>
+            <div>
+              <span className="text-gray-500">Email: </span>
+              <span className="font-mono font-medium text-gray-900">{DEMO_EMAIL}</span>
+            </div>
+            <div>
+              <span className="text-gray-500">Password: </span>
+              <span className="font-mono font-medium text-gray-900">{DEMO_PASSWORD}</span>
+            </div>
           </div>
-          <div>
-            <span className="text-gray-500">Email: </span>
-            <span className="font-mono font-medium text-gray-900">{DEMO_EMAIL}</span>
+        </div>
+        <div className="border-t border-gray-200 pt-3">
+          <h3 className="text-sm font-semibold text-gray-700 mb-2">
+            Friend Account — Sarah Johnson
+            {status?.friendExists && <span className="ml-2 text-xs font-normal text-green-600">(active)</span>}
+            {status && !status.friendExists && <span className="ml-2 text-xs font-normal text-gray-400">(not seeded)</span>}
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+            <div>
+              <span className="text-gray-500">Name: </span>
+              <span className="font-mono font-medium text-gray-900">{DEMO_FRIEND_DISPLAY_NAME}</span>
+            </div>
+            <div>
+              <span className="text-gray-500">Email: </span>
+              <span className="font-mono font-medium text-gray-900">{DEMO_FRIEND_EMAIL}</span>
+            </div>
+            <div>
+              <span className="text-gray-500">Password: </span>
+              <span className="font-mono font-medium text-gray-900">{DEMO_FRIEND_PASSWORD}</span>
+            </div>
           </div>
-          <div>
-            <span className="text-gray-500">Password: </span>
-            <span className="font-mono font-medium text-gray-900">{DEMO_PASSWORD}</span>
-          </div>
+          {status?.friendExists && (
+            <div className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-gray-500">
+              <div>Friend Posts: <span className="font-medium text-gray-700">{status.friendLifeFeedCount ?? 0}</span></div>
+              <div>Circles: <span className="font-medium text-gray-700">{status.circleCount ?? 0}</span></div>
+              <div>UID: <span className="font-mono text-gray-700">{status.friendUid?.slice(0, 12)}...</span></div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -143,6 +180,17 @@ export default function AdminDemoDataPage() {
             onProgress={handleProgress}
             onComplete={handleOperationComplete}
             confirmMessage="This will permanently delete all demo data. Continue?"
+          />
+          <DemoActionButton
+            title="Seed Friend (Sarah)"
+            description="Create Sarah Johnson as Alex's friend with posts, circles, and engagement"
+            icon="👥"
+            apiEndpoint="/api/admin/demo/seed-friend"
+            variant="secondary"
+            disabled={!status?.exists || !!status?.friendExists}
+            onProgress={handleProgress}
+            onComplete={handleOperationComplete}
+            confirmMessage="This will create a friend user (Sarah Johnson) with life feed posts and social data. Continue?"
           />
           <DemoActionButton
             title="Trigger Life Feed"
@@ -405,6 +453,143 @@ export default function AdminDemoDataPage() {
               <strong>Demo note:</strong> Seed data includes &quot;day 0&quot; entries for health, location, and voice so that the
               freshness score = 1.0 at seed time. The full pipeline calls <code>generateLifeFeedNow</code> in 4 rounds
               (with 2s delays) to generate up to 12 posts across different post types.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Type Selection Algorithm */}
+      <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-6">
+        <div className="flex items-start gap-3">
+          <div className="text-indigo-500 text-xl">&#127919;</div>
+          <div className="w-full">
+            <h3 className="text-lg font-semibold text-indigo-900 mb-3">Life Feed: Post Type Selection Algorithm</h3>
+            <p className="text-sm text-indigo-800 mb-4">
+              Once <code>SmartFrequencyCalculator</code> decides <strong>how many</strong> posts (N), the generator iterates through
+              all post types from <code>config/insightsPostTypes</code> and passes each through <strong>4 filters</strong>.
+              Candidates are then ranked by AI confidence and the top N are returned.
+            </p>
+
+            {/* 4-Filter Pipeline */}
+            <div className="bg-white rounded-lg p-4 border border-indigo-100 mb-4">
+              <p className="font-semibold text-indigo-900 text-sm mb-3">Filter Pipeline (per type)</p>
+              <div className="flex flex-col sm:flex-row items-stretch gap-2">
+                {[
+                  { num: '1', label: 'Admin Enabled?', desc: 'config/insightsPostTypes', color: 'indigo' },
+                  { num: '2', label: 'User Enabled?', desc: 'User preferences', color: 'indigo' },
+                  { num: '3', label: 'Not in Cooldown?', desc: 'Per-type cooldown period', color: 'indigo' },
+                  { num: '4', label: 'Data Eligible?', desc: 'isPostTypeEligible()', color: 'indigo' },
+                ].map((f) => (
+                  <div key={f.num} className="flex-1 flex items-center gap-2">
+                    <div className="bg-indigo-100 rounded-lg p-2.5 flex-1 text-center">
+                      <p className="text-xs font-bold text-indigo-700">Filter {f.num}</p>
+                      <p className="text-xs font-semibold text-indigo-900 mt-0.5">{f.label}</p>
+                      <p className="text-[10px] text-indigo-600 mt-0.5">{f.desc}</p>
+                    </div>
+                    {f.num !== '4' && <span className="text-indigo-300 font-bold hidden sm:block">&rarr;</span>}
+                  </div>
+                ))}
+              </div>
+              <div className="mt-3 flex items-center justify-center gap-2 text-xs text-indigo-700">
+                <span>All 4 pass?</span>
+                <span className="font-bold">&rarr;</span>
+                <span className="bg-indigo-100 px-2 py-1 rounded font-semibold">Generate post via GPT</span>
+                <span className="font-bold">&rarr;</span>
+                <span className="bg-indigo-100 px-2 py-1 rounded font-semibold">Add to candidates</span>
+              </div>
+            </div>
+
+            {/* Cooldown Periods */}
+            <div className="bg-white rounded-lg p-4 border border-indigo-100 mb-4">
+              <p className="font-semibold text-indigo-900 text-sm mb-2">Cooldown Periods (Filter 3)</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 text-xs">
+                {[
+                  { type: 'life_summary', days: '1d' },
+                  { type: 'health_alert', days: '1d' },
+                  { type: 'pattern_prediction', days: '1d' },
+                  { type: 'streak_achievement', days: '3d' },
+                  { type: 'reflective_insight', days: '3d' },
+                  { type: 'category_insight', days: '3d' },
+                  { type: 'milestone', days: '7d' },
+                  { type: 'memory_highlight', days: '7d' },
+                  { type: 'activity_pattern', days: '7d' },
+                  { type: 'comparison', days: '14d' },
+                  { type: 'seasonal_reflection', days: '30d' },
+                ].map((c) => (
+                  <div key={c.type} className="flex items-center justify-between bg-indigo-50 rounded px-2 py-1">
+                    <span className="text-indigo-800 truncate">{c.type}</span>
+                    <span className="font-mono font-bold text-indigo-600 ml-1 shrink-0">{c.days}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Data Eligibility Rules */}
+            <div className="bg-white rounded-lg p-4 border border-indigo-100 mb-4">
+              <p className="font-semibold text-indigo-900 text-sm mb-2">Data Eligibility Rules (Filter 4)</p>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-indigo-200">
+                      <th className="text-left py-1.5 pr-3 text-indigo-700 font-semibold">Post Type</th>
+                      <th className="text-left py-1.5 text-indigo-700 font-semibold">Requires</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-indigo-800">
+                    {[
+                      { type: 'life_summary', req: 'Always eligible', highlight: true },
+                      { type: 'milestone', req: 'Detected milestones (special detection pass)', highlight: false },
+                      { type: 'streak_achievement', req: 'Detected streaks (special detection pass)', highlight: false },
+                      { type: 'pattern_prediction', req: 'Detected predictions (special detection pass)', highlight: false },
+                      { type: 'health_alert', req: 'Detected anomalies in health data', highlight: false },
+                      { type: 'activity_pattern', req: 'Detected patterns in data', highlight: false },
+                      { type: 'reflective_insight', req: 'Any steps, activities, or locations', highlight: true },
+                      { type: 'comparison', req: 'Any steps, activities, or locations', highlight: true },
+                      { type: 'memory_highlight', req: 'Any photos, voice notes, or text notes', highlight: false },
+                      { type: 'seasonal_reflection', req: '2+ activities/patterns OR 1+ event', highlight: false },
+                      { type: 'category_insight', req: '5+ total content items (notes + photos)', highlight: false },
+                    ].map((r) => (
+                      <tr key={r.type} className="border-b border-indigo-50">
+                        <td className="py-1.5 pr-3 font-medium font-mono">{r.type}</td>
+                        <td className={`py-1.5 ${r.highlight ? 'text-green-700' : ''}`}>{r.req}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Final Ranking */}
+            <div className="bg-white rounded-lg p-4 border border-indigo-100 mb-4">
+              <p className="font-semibold text-indigo-900 text-sm mb-2">Final Ranking &amp; Selection</p>
+              <div className="flex flex-col sm:flex-row items-stretch gap-2 text-xs text-center">
+                <div className="flex-1 bg-indigo-50 rounded-lg p-2.5">
+                  <p className="font-bold text-indigo-700">Collect</p>
+                  <p className="text-indigo-600 mt-0.5">Generate up to N+2 candidates (buffer for filtering)</p>
+                </div>
+                <span className="text-indigo-300 font-bold self-center hidden sm:block">&rarr;</span>
+                <div className="flex-1 bg-indigo-50 rounded-lg p-2.5">
+                  <p className="font-bold text-indigo-700">Filter</p>
+                  <p className="text-indigo-600 mt-0.5">Drop posts with confidence &lt; 0.5</p>
+                </div>
+                <span className="text-indigo-300 font-bold self-center hidden sm:block">&rarr;</span>
+                <div className="flex-1 bg-indigo-50 rounded-lg p-2.5">
+                  <p className="font-bold text-indigo-700">Rank</p>
+                  <p className="text-indigo-600 mt-0.5">Sort by GPT confidence score (descending)</p>
+                </div>
+                <span className="text-indigo-300 font-bold self-center hidden sm:block">&rarr;</span>
+                <div className="flex-1 bg-green-50 rounded-lg p-2.5 border border-green-200">
+                  <p className="font-bold text-green-700">Select Top N</p>
+                  <p className="text-green-600 mt-0.5">Return the highest-confidence posts</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Key insight */}
+            <p className="text-xs text-indigo-600">
+              <strong>Key insight:</strong> Types are tried in the order they appear in <code>config/insightsPostTypes</code>.
+              The loop stops early after collecting N+2 candidates. There is no pre-scoring to pick types &mdash; eligibility
+              is binary, and <strong>GPT confidence</strong> is the sole ranking factor for the final selection.
             </p>
           </div>
         </div>

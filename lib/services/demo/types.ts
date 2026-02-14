@@ -19,6 +19,11 @@ export interface DemoStatus {
   counts: Record<string, number>;
   embeddingStatus: { total: number; completed: number; percentage: number };
   lifeFeedCount: number;
+  friendExists?: boolean;
+  friendUid?: string;
+  friendDisplayName?: string;
+  friendLifeFeedCount?: number;
+  circleCount?: number;
 }
 
 export type ProgressCallback = (event: DemoProgressEvent) => void;

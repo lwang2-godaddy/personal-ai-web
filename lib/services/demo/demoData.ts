@@ -17,6 +17,10 @@ export const DEMO_EMAIL = 'demo-appstore@personalai.app';
 export const DEMO_PASSWORD = 'DemoScreenshot2026!';
 export const DEMO_DISPLAY_NAME = 'Alex Chen';
 
+export const DEMO_FRIEND_EMAIL = 'demo-friend@personalai.app';
+export const DEMO_FRIEND_PASSWORD = 'DemoFriend2026!';
+export const DEMO_FRIEND_DISPLAY_NAME = 'Sarah Johnson';
+
 export const USER_COLLECTIONS = [
   'healthData',
   'locationData',
@@ -512,3 +516,380 @@ export const PHOTO_DESCRIPTIONS = [
   // 1 year ago
   { desc: 'View from my new apartment window on the first day in San Francisco, rooftops and palm trees.', activity: 'life', day: 365, hour: 10 },
 ];
+
+// ---------------------------------------------------------------------------
+// Friend Life Feed Posts (pre-created for Sarah Johnson)
+// ---------------------------------------------------------------------------
+
+export function getDemoFriendLifeFeedPosts(
+  friendUid: string,
+  alexUid: string,
+): Record<string, any>[] {
+  const posts = [
+    {
+      day: 1,
+      hour: 7,
+      type: 'life_summary',
+      category: 'health',
+      emoji: '🧘‍♀️',
+      title: 'Morning Yoga Victory',
+      content: 'Finally nailed crow pose in my morning yoga session today! Been working on this for weeks. The key was engaging my core more and trusting the balance. Held it for a solid 10 seconds — progress! My instructor said my form is really coming together. Starting the day with this kind of win sets the tone for everything else.',
+    },
+    {
+      day: 2,
+      hour: 14,
+      type: 'life_summary',
+      category: 'travel',
+      emoji: '🥾',
+      title: 'Lands End Trail Magic',
+      content: 'Hiked the Lands End Trail this morning and the Golden Gate Bridge views were absolutely stunning through the fog. Found a hidden labyrinth made of rocks overlooking the ocean — someone told me it gets rebuilt by locals every time it gets knocked down. The cypress trees along the coastal path are so dramatic. This city never stops surprising me.',
+    },
+    {
+      day: 3,
+      hour: 18,
+      type: 'life_summary',
+      category: 'food',
+      emoji: '🍞',
+      title: 'Sourdough Success!',
+      content: 'After three failed attempts, my sourdough bread finally came out perfect! Golden crust, beautiful ear, open crumb structure. The secret was a longer autolyse and being more patient with the bulk fermentation. The apartment smells incredible. Already planning to bring a loaf to Alex and the crew this weekend.',
+    },
+    {
+      day: 4,
+      hour: 17,
+      type: 'life_summary',
+      category: 'work',
+      emoji: '🎨',
+      title: 'App Redesign Ships!',
+      content: 'Our design team finally shipped the app redesign we\'ve been working on for the past two months! The new onboarding flow increased completion rates by 40% in early testing. Really proud of how the team collaborated on this — lots of late nights but the result speaks for itself. Celebrated with champagne at the office.',
+    },
+    {
+      day: 0,
+      hour: 10,
+      type: 'life_summary',
+      category: 'social',
+      emoji: '🏖️',
+      title: 'Beach Day Planning',
+      content: 'Planning a beach day at Baker Beach this weekend! The weather forecast looks perfect — sunny and 72°F. Going to pack a picnic with that sourdough I made, some cheese from the Ferry Building, and a bottle of rosé. Already texted the group chat. Need to remember sunscreen this time.',
+    },
+  ];
+
+  return posts.map((p) => ({
+    userId: friendUid,
+    type: p.type,
+    category: p.category,
+    emoji: p.emoji,
+    title: p.title,
+    content: p.content,
+    publishedAt: daysAgoISO(p.day, p.hour, 0),
+    createdAt: daysAgoISO(p.day, p.hour, 0),
+    updatedAt: daysAgoISO(p.day, p.hour, 0),
+    language: 'en',
+    visibility: 'friends',
+    hiddenFromFriends: false,
+    sharingStatus: {
+      isShareable: true,
+      sharedToFriendIds: [alexUid],
+    },
+    likedBy: [],
+    likeCount: 0,
+    comments: [],
+    commentCount: 0,
+    viewedBy: [],
+    viewCount: 0,
+    forwardCount: 0,
+    confidence: 0.95,
+    metadata: {},
+  }));
+}
+
+// ---------------------------------------------------------------------------
+// Friendship Documents
+// ---------------------------------------------------------------------------
+
+export function getDemoFriendshipDocs(
+  alexUid: string,
+  friendUid: string,
+): { docId: string; data: Record<string, any> }[] {
+  const thirtyDaysAgo = daysAgoISO(30, 12, 0);
+
+  return [
+    {
+      docId: `${alexUid}_${friendUid}`,
+      data: {
+        userId: alexUid,
+        friendUid: friendUid,
+        friendEmail: DEMO_FRIEND_EMAIL,
+        friendDisplayName: DEMO_FRIEND_DISPLAY_NAME,
+        friendPhotoURL: '',
+        status: 'accepted',
+        privacySettings: {
+          shareHealth: true,
+          shareLocation: true,
+          shareActivities: true,
+          shareVoiceNotes: true,
+          sharePhotos: true,
+        },
+        createdAt: thirtyDaysAgo,
+        updatedAt: thirtyDaysAgo,
+      },
+    },
+    {
+      docId: `${friendUid}_${alexUid}`,
+      data: {
+        userId: friendUid,
+        friendUid: alexUid,
+        friendEmail: DEMO_EMAIL,
+        friendDisplayName: DEMO_DISPLAY_NAME,
+        friendPhotoURL: '',
+        status: 'accepted',
+        privacySettings: {
+          shareHealth: true,
+          shareLocation: true,
+          shareActivities: true,
+          shareVoiceNotes: true,
+          sharePhotos: true,
+        },
+        createdAt: thirtyDaysAgo,
+        updatedAt: thirtyDaysAgo,
+      },
+    },
+  ];
+}
+
+// ---------------------------------------------------------------------------
+// Predefined Privacy Circles + Members
+// ---------------------------------------------------------------------------
+
+interface CircleAndMembers {
+  circles: { docId?: string; data: Record<string, any> }[];
+  members: { circleIndex: number; docId: string; data: Record<string, any> }[];
+}
+
+const PREDEFINED_TIERS: {
+  tier: string;
+  name: string;
+  emoji: string;
+  dataSharing: Record<string, boolean>;
+}[] = [
+  {
+    tier: 'acquaintances',
+    name: 'Acquaintances',
+    emoji: '👋',
+    dataSharing: {
+      shareHealth: false,
+      shareLocation: false,
+      shareActivities: true,
+      shareDiary: false,
+      shareVoiceNotes: false,
+      sharePhotos: false,
+    },
+  },
+  {
+    tier: 'friends',
+    name: 'Friends',
+    emoji: '🤝',
+    dataSharing: {
+      shareHealth: false,
+      shareLocation: false,
+      shareActivities: true,
+      shareDiary: true,
+      shareVoiceNotes: false,
+      sharePhotos: true,
+    },
+  },
+  {
+    tier: 'close_friends',
+    name: 'Close Friends',
+    emoji: '💫',
+    dataSharing: {
+      shareHealth: true,
+      shareLocation: true,
+      shareActivities: true,
+      shareDiary: true,
+      shareVoiceNotes: true,
+      sharePhotos: true,
+    },
+  },
+  {
+    tier: 'inner_circle',
+    name: 'Inner Circle',
+    emoji: '❤️',
+    dataSharing: {
+      shareHealth: true,
+      shareLocation: true,
+      shareActivities: true,
+      shareDiary: true,
+      shareVoiceNotes: true,
+      sharePhotos: true,
+    },
+  },
+];
+
+export function getDemoPredefinedCircles(
+  ownerUid: string,
+  ownerName: string,
+  friendUid?: string,
+  friendName?: string,
+): CircleAndMembers {
+  const now = new Date().toISOString();
+  const circles: CircleAndMembers['circles'] = [];
+  const members: CircleAndMembers['members'] = [];
+
+  PREDEFINED_TIERS.forEach((tier, index) => {
+    const memberIds: string[] = [];
+    // Add friend to close_friends tier
+    if (tier.tier === 'close_friends' && friendUid) {
+      memberIds.push(friendUid);
+    }
+
+    circles.push({
+      data: {
+        name: tier.name,
+        description: `${tier.name} privacy tier`,
+        emoji: tier.emoji,
+        createdBy: 'system',
+        memberIds,
+        type: 'private',
+        dataSharing: tier.dataSharing,
+        settings: {
+          allowMemberInvites: false,
+          allowChallenges: tier.tier !== 'acquaintances',
+          allowGroupChat: tier.tier !== 'acquaintances',
+          notifyOnNewMember: true,
+          notifyOnActivity: tier.tier === 'close_friends' || tier.tier === 'inner_circle',
+        },
+        isPredefined: true,
+        privacyTier: tier.tier,
+        ownerUserId: ownerUid,
+        systemCreatedAt: now,
+        createdAt: now,
+        updatedAt: now,
+      },
+    });
+
+    // Owner is always a member of their own circle
+    members.push({
+      circleIndex: index,
+      docId: `PLACEHOLDER_${index}_${ownerUid}`,
+      data: {
+        userId: ownerUid,
+        role: 'creator',
+        joinedAt: now,
+        invitedBy: 'system',
+        status: 'active',
+        displayName: ownerName,
+        avatarUrl: '',
+      },
+    });
+
+    // If friend is in this tier, add member doc for them
+    if (tier.tier === 'close_friends' && friendUid && friendName) {
+      members.push({
+        circleIndex: index,
+        docId: `PLACEHOLDER_${index}_${friendUid}`,
+        data: {
+          userId: friendUid,
+          role: 'member',
+          joinedAt: now,
+          invitedBy: ownerUid,
+          status: 'active',
+          displayName: friendName,
+          avatarUrl: '',
+        },
+      });
+    }
+  });
+
+  return { circles, members };
+}
+
+// ---------------------------------------------------------------------------
+// Social Engagement (likes, comments, views between Alex & Sarah)
+// ---------------------------------------------------------------------------
+
+export interface SocialEngagementData {
+  /** Sarah's engagement on Alex's posts (apply to Alex's lifeFeedPosts) */
+  sarahOnAlex: {
+    postIndex: number; // index into Alex's posts (0 = most recent)
+    like?: { userId: string; displayName: string; likedAt: string };
+    comment?: { id: string; userId: string; displayName: string; text: string; createdAt: string };
+  }[];
+  /** Alex's engagement on Sarah's posts (apply to Sarah's lifeFeedPosts) */
+  alexOnSarah: {
+    postIndex: number; // index into Sarah's posts (0-4)
+    view?: { userId: string; displayName: string; viewedAt: string };
+    like?: { userId: string; displayName: string; likedAt: string };
+  }[];
+}
+
+export function getDemoSocialEngagement(
+  alexUid: string,
+  friendUid: string,
+): SocialEngagementData {
+  const now = new Date();
+  const hoursAgo = (h: number) => new Date(now.getTime() - h * 3600_000).toISOString();
+
+  return {
+    sarahOnAlex: [
+      {
+        postIndex: 0,
+        like: {
+          userId: friendUid,
+          displayName: DEMO_FRIEND_DISPLAY_NAME,
+          likedAt: hoursAgo(2),
+        },
+        comment: {
+          id: 'comment_sarah_1',
+          userId: friendUid,
+          displayName: DEMO_FRIEND_DISPLAY_NAME,
+          text: 'This is amazing! So proud of you 🎉',
+          createdAt: hoursAgo(1.5),
+        },
+      },
+      {
+        postIndex: 1,
+        like: {
+          userId: friendUid,
+          displayName: DEMO_FRIEND_DISPLAY_NAME,
+          likedAt: hoursAgo(8),
+        },
+      },
+    ],
+    alexOnSarah: [
+      {
+        postIndex: 0, // Beach day planning
+        view: {
+          userId: alexUid,
+          displayName: DEMO_DISPLAY_NAME,
+          viewedAt: hoursAgo(1),
+        },
+        like: {
+          userId: alexUid,
+          displayName: DEMO_DISPLAY_NAME,
+          likedAt: hoursAgo(0.5),
+        },
+      },
+      {
+        postIndex: 2, // Sourdough
+        view: {
+          userId: alexUid,
+          displayName: DEMO_DISPLAY_NAME,
+          viewedAt: hoursAgo(4),
+        },
+        like: {
+          userId: alexUid,
+          displayName: DEMO_DISPLAY_NAME,
+          likedAt: hoursAgo(3.5),
+        },
+      },
+      {
+        postIndex: 4, // Yoga
+        view: {
+          userId: alexUid,
+          displayName: DEMO_DISPLAY_NAME,
+          viewedAt: hoursAgo(20),
+        },
+      },
+    ],
+  };
+}

@@ -19,12 +19,19 @@ import {
   DEMO_EMAIL,
   DEMO_PASSWORD,
   DEMO_DISPLAY_NAME,
+  DEMO_FRIEND_EMAIL,
+  DEMO_FRIEND_PASSWORD,
+  DEMO_FRIEND_DISPLAY_NAME,
   USER_COLLECTIONS,
   daysAgo,
   getDemoHealthData,
   getDemoLocationData,
   getDemoVoiceNotes,
   getDemoTextNotes,
+  getDemoFriendLifeFeedPosts,
+  getDemoFriendshipDocs,
+  getDemoPredefinedCircles,
+  getDemoSocialEngagement,
   PHOTO_DESCRIPTIONS,
 } from './demoData';
 
@@ -135,9 +142,78 @@ export async function cleanupDemoData(
 
   // Delete Firebase Auth user
   await auth.deleteUser(uid);
-  onProgress({ phase: 0, phaseName: 'Cleanup', level: 'success', message: 'Deleted Firebase Auth user' });
+  onProgress({ phase: 0, phaseName: 'Cleanup', level: 'success', message: 'Deleted Firebase Auth user (Alex)' });
+
+  // --- Clean up friend user (Sarah) ---
+  await cleanupFriendData(db, uid, onProgress, auth);
 
   return { deletedUid: uid };
+}
+
+/** Clean up the demo friend user and all related social data */
+async function cleanupFriendData(
+  db: admin.firestore.Firestore,
+  alexUid: string,
+  onProgress: ProgressCallback,
+  auth: admin.auth.Auth,
+): Promise<void> {
+  let friendUid: string | null = null;
+  try {
+    const friendUser = await auth.getUserByEmail(DEMO_FRIEND_EMAIL);
+    friendUid = friendUser.uid;
+    onProgress({ phase: 0, phaseName: 'Cleanup', level: 'info', message: `Found friend user: ${friendUid}` });
+  } catch (err: any) {
+    if (err.code === 'auth/user-not-found') {
+      onProgress({ phase: 0, phaseName: 'Cleanup', level: 'info', message: 'No friend user found — skipping friend cleanup.' });
+    }
+  }
+
+  // Delete friendship docs (both directions)
+  if (friendUid) {
+    const friendDocIds = [`${alexUid}_${friendUid}`, `${friendUid}_${alexUid}`];
+    for (const docId of friendDocIds) {
+      try {
+        await db.collection('friends').doc(docId).delete();
+      } catch { /* may not exist */ }
+    }
+    onProgress({ phase: 0, phaseName: 'Cleanup', level: 'success', message: 'Deleted friendship docs' });
+  }
+
+  // Delete predefined circles for both users
+  const uidsToClean = friendUid ? [alexUid, friendUid] : [alexUid];
+  for (const ownerUid of uidsToClean) {
+    const circlesSnap = await db.collection('circles').where('ownerUserId', '==', ownerUid).get();
+    if (!circlesSnap.empty) {
+      for (const circleDoc of circlesSnap.docs) {
+        // Delete members subcollection
+        const membersSnap = await circleDoc.ref.collection('members').get();
+        if (!membersSnap.empty) {
+          await deleteInBatches(db, membersSnap.docs);
+        }
+        await circleDoc.ref.delete();
+      }
+      onProgress({ phase: 0, phaseName: 'Cleanup', level: 'success', message: `Deleted ${circlesSnap.size} circles for ${ownerUid.slice(0, 8)}...` });
+    }
+  }
+
+  // Delete friend's data collections and user doc
+  if (friendUid) {
+    for (const col of USER_COLLECTIONS) {
+      const snapshot = await db.collection(col).where('userId', '==', friendUid).get();
+      if (!snapshot.empty) {
+        await deleteInBatches(db, snapshot.docs);
+        onProgress({ phase: 0, phaseName: 'Cleanup', level: 'success', message: `Friend ${col}: deleted ${snapshot.size} docs` });
+      }
+    }
+
+    try {
+      await db.collection('users').doc(friendUid).delete();
+      onProgress({ phase: 0, phaseName: 'Cleanup', level: 'success', message: 'Deleted friend user document' });
+    } catch { /* may not exist */ }
+
+    await auth.deleteUser(friendUid);
+    onProgress({ phase: 0, phaseName: 'Cleanup', level: 'success', message: 'Deleted Firebase Auth user (Sarah)' });
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -726,6 +802,245 @@ export async function triggerThisDayMemories(
 }
 
 // ---------------------------------------------------------------------------
+// Phase 13: Create Demo Friend
+// ---------------------------------------------------------------------------
+
+export async function createDemoFriend(
+  db: admin.firestore.Firestore,
+  onProgress: ProgressCallback,
+  authInstance?: admin.auth.Auth,
+): Promise<string> {
+  const auth = getAuth(authInstance);
+  onProgress({ phase: 13, phaseName: 'Create Friend', level: 'info', message: 'Creating demo friend account (Sarah Johnson)...' });
+
+  const user = await auth.createUser({
+    email: DEMO_FRIEND_EMAIL,
+    password: DEMO_FRIEND_PASSWORD,
+    displayName: DEMO_FRIEND_DISPLAY_NAME,
+    emailVerified: true,
+  });
+  const friendUid = user.uid;
+  onProgress({ phase: 13, phaseName: 'Create Friend', level: 'success', message: `Created auth user: ${friendUid}` });
+
+  // Wait briefly for onUserCreated Cloud Function
+  onProgress({ phase: 13, phaseName: 'Create Friend', level: 'info', message: 'Waiting for onUserCreated...' });
+  await sleep(5000);
+
+  const userDoc = await db.collection('users').doc(friendUid).get();
+  if (!userDoc.exists) {
+    onProgress({ phase: 13, phaseName: 'Create Friend', level: 'warning', message: 'User document not created by Cloud Function — creating manually' });
+    await db.collection('users').doc(friendUid).set({
+      uid: friendUid,
+      email: DEMO_FRIEND_EMAIL,
+      displayName: DEMO_FRIEND_DISPLAY_NAME,
+      photoURL: '',
+      createdAt: new Date().toISOString(),
+      lastSync: null,
+      lastActivityAt: new Date().toISOString(),
+      locale: 'en',
+      timezone: 'America/Los_Angeles',
+      preferences: {
+        dataCollection: { health: true, location: true, voice: true },
+        syncFrequency: 'realtime',
+        notifications: { activityTagging: true, syncComplete: true },
+        privacy: { encryptLocal: false, includeExactLocations: true, shareActivityWithFriends: true, feedVisibilityDays: 30 },
+      },
+    });
+  }
+  onProgress({ phase: 13, phaseName: 'Create Friend', level: 'success', message: 'Friend user document exists' });
+
+  // Upgrade to premium + set feed visibility to 30 days
+  await db.collection('users').doc(friendUid).update({
+    locale: 'en',
+    timezone: 'America/Los_Angeles',
+    'preferences.privacy.feedVisibilityDays': 30,
+    'subscription.tier': 'premium',
+    'subscription.status': 'active',
+    'subscription.startDate': new Date().toISOString(),
+    'subscription.expiresAt': '2030-12-31T23:59:59.000Z',
+    'subscription.autoRenew': true,
+    'subscription.manualOverride': true,
+  });
+  onProgress({ phase: 13, phaseName: 'Create Friend', level: 'success', message: 'Upgraded to premium, feedVisibilityDays=30' });
+
+  return friendUid;
+}
+
+// ---------------------------------------------------------------------------
+// Phase 14: Seed Friendship + Circles
+// ---------------------------------------------------------------------------
+
+export async function seedFriendship(
+  db: admin.firestore.Firestore,
+  alexUid: string,
+  friendUid: string,
+  onProgress: ProgressCallback,
+): Promise<void> {
+  onProgress({ phase: 14, phaseName: 'Friendship', level: 'info', message: 'Creating friendship documents...' });
+
+  // Write friendship docs
+  const friendDocs = getDemoFriendshipDocs(alexUid, friendUid);
+  for (const { docId, data } of friendDocs) {
+    await db.collection('friends').doc(docId).set(data);
+  }
+  onProgress({ phase: 14, phaseName: 'Friendship', level: 'success', message: `Created ${friendDocs.length} friendship docs` });
+
+  // Create predefined circles for Alex (Sarah in close_friends)
+  onProgress({ phase: 14, phaseName: 'Friendship', level: 'info', message: 'Creating predefined circles for Alex...' });
+  const alexCircles = getDemoPredefinedCircles(alexUid, DEMO_DISPLAY_NAME, friendUid, DEMO_FRIEND_DISPLAY_NAME);
+  const alexCircleIds = await writeCirclesAndMembers(db, alexCircles);
+  onProgress({ phase: 14, phaseName: 'Friendship', level: 'success', message: `Created ${alexCircleIds.length} circles for Alex` });
+
+  // Create predefined circles for Sarah (Alex in close_friends)
+  onProgress({ phase: 14, phaseName: 'Friendship', level: 'info', message: 'Creating predefined circles for Sarah...' });
+  const sarahCircles = getDemoPredefinedCircles(friendUid, DEMO_FRIEND_DISPLAY_NAME, alexUid, DEMO_DISPLAY_NAME);
+  const sarahCircleIds = await writeCirclesAndMembers(db, sarahCircles);
+  onProgress({ phase: 14, phaseName: 'Friendship', level: 'success', message: `Created ${sarahCircleIds.length} circles for Sarah` });
+
+  onProgress({
+    phase: 14, phaseName: 'Friendship', level: 'success',
+    message: `Friendship complete: ${friendDocs.length} friend docs, ${alexCircleIds.length + sarahCircleIds.length} circles`,
+  });
+}
+
+/** Write circle documents and their member subcollections, returning circle IDs */
+async function writeCirclesAndMembers(
+  db: admin.firestore.Firestore,
+  circleData: ReturnType<typeof getDemoPredefinedCircles>,
+): Promise<string[]> {
+  const circleIds: string[] = [];
+
+  for (let i = 0; i < circleData.circles.length; i++) {
+    const circleRef = db.collection('circles').doc();
+    await circleRef.set(circleData.circles[i].data);
+    circleIds.push(circleRef.id);
+
+    // Write member docs for this circle
+    const circleMembers = circleData.members.filter(m => m.circleIndex === i);
+    for (const member of circleMembers) {
+      const memberDocId = `${circleRef.id}_${member.data.userId}`;
+      await circleRef.collection('members').doc(memberDocId).set({
+        ...member.data,
+        circleId: circleRef.id,
+      });
+    }
+  }
+
+  return circleIds;
+}
+
+// ---------------------------------------------------------------------------
+// Phase 15: Seed Friend Posts
+// ---------------------------------------------------------------------------
+
+export async function seedFriendPosts(
+  db: admin.firestore.Firestore,
+  alexUid: string,
+  friendUid: string,
+  onProgress: ProgressCallback,
+): Promise<number> {
+  const posts = getDemoFriendLifeFeedPosts(friendUid, alexUid);
+  onProgress({ phase: 15, phaseName: 'Friend Posts', level: 'info', message: `Writing ${posts.length} life feed posts for Sarah...` });
+
+  const ids = await writeBatch(db, 'lifeFeedPosts', posts, 500);
+
+  for (let i = 0; i < posts.length; i++) {
+    onProgress({
+      phase: 15, phaseName: 'Friend Posts', level: 'info',
+      message: `  ${posts[i].emoji} [${posts[i].category}] ${posts[i].title}`,
+    });
+  }
+
+  onProgress({ phase: 15, phaseName: 'Friend Posts', level: 'success', message: `Seeded ${ids.length} friend life feed posts` });
+  return ids.length;
+}
+
+// ---------------------------------------------------------------------------
+// Phase 16: Seed Social Engagement
+// ---------------------------------------------------------------------------
+
+export async function seedSocialEngagement(
+  db: admin.firestore.Firestore,
+  alexUid: string,
+  friendUid: string,
+  onProgress: ProgressCallback,
+): Promise<void> {
+  onProgress({ phase: 16, phaseName: 'Social', level: 'info', message: 'Adding social engagement (likes, comments, views)...' });
+
+  const engagement = getDemoSocialEngagement(alexUid, friendUid);
+  const FieldValue = admin.firestore.FieldValue;
+
+  // Sarah's engagement on Alex's posts
+  const alexPostsSnap = await db.collection('lifeFeedPosts')
+    .where('userId', '==', alexUid)
+    .orderBy('publishedAt', 'desc')
+    .limit(10)
+    .get();
+
+  const alexPostDocs = alexPostsSnap.docs;
+  let sarahActions = 0;
+
+  for (const action of engagement.sarahOnAlex) {
+    if (action.postIndex >= alexPostDocs.length) continue;
+    const postRef = alexPostDocs[action.postIndex].ref;
+    const updates: Record<string, any> = {};
+
+    if (action.like) {
+      updates.likedBy = FieldValue.arrayUnion(action.like);
+      updates.likeCount = FieldValue.increment(1);
+      sarahActions++;
+    }
+    if (action.comment) {
+      updates.comments = FieldValue.arrayUnion(action.comment);
+      updates.commentCount = FieldValue.increment(1);
+      sarahActions++;
+    }
+
+    if (Object.keys(updates).length > 0) {
+      await postRef.update(updates);
+    }
+  }
+  onProgress({ phase: 16, phaseName: 'Social', level: 'info', message: `Sarah → Alex's posts: ${sarahActions} actions` });
+
+  // Alex's engagement on Sarah's posts
+  const sarahPostsSnap = await db.collection('lifeFeedPosts')
+    .where('userId', '==', friendUid)
+    .orderBy('publishedAt', 'desc')
+    .limit(10)
+    .get();
+
+  const sarahPostDocs = sarahPostsSnap.docs;
+  let alexActions = 0;
+
+  for (const action of engagement.alexOnSarah) {
+    if (action.postIndex >= sarahPostDocs.length) continue;
+    const postRef = sarahPostDocs[action.postIndex].ref;
+    const updates: Record<string, any> = {};
+
+    if (action.view) {
+      updates.viewedBy = FieldValue.arrayUnion(action.view);
+      updates.viewCount = FieldValue.increment(1);
+      alexActions++;
+    }
+    if (action.like) {
+      updates.likedBy = FieldValue.arrayUnion(action.like);
+      updates.likeCount = FieldValue.increment(1);
+      alexActions++;
+    }
+
+    if (Object.keys(updates).length > 0) {
+      await postRef.update(updates);
+    }
+  }
+  onProgress({ phase: 16, phaseName: 'Social', level: 'info', message: `Alex → Sarah's posts: ${alexActions} actions` });
+
+  onProgress({
+    phase: 16, phaseName: 'Social', level: 'success',
+    message: `Social engagement complete: ${sarahActions + alexActions} total actions`,
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Get Demo Status
 // ---------------------------------------------------------------------------
 
@@ -780,6 +1095,28 @@ export async function getDemoStatus(
 
   const percentage = totalDocs > 0 ? Math.round((withEmbedding / totalDocs) * 100) : 0;
 
+  // Check friend status
+  let friendExists = false;
+  let friendUid: string | undefined;
+  let friendDisplayName: string | undefined;
+  let friendLifeFeedCount = 0;
+  let circleCount = 0;
+
+  try {
+    const friendUser = await auth.getUserByEmail(DEMO_FRIEND_EMAIL);
+    friendExists = true;
+    friendUid = friendUser.uid;
+    friendDisplayName = friendUser.displayName || undefined;
+
+    const friendPostsSnap = await db.collection('lifeFeedPosts').where('userId', '==', friendUid).get();
+    friendLifeFeedCount = friendPostsSnap.size;
+
+    const circlesSnap = await db.collection('circles').where('ownerUserId', '==', uid).get();
+    circleCount = circlesSnap.size;
+  } catch {
+    // Friend doesn't exist — that's fine
+  }
+
   return {
     exists: true,
     uid,
@@ -788,6 +1125,11 @@ export async function getDemoStatus(
     counts,
     embeddingStatus: { total: totalDocs, completed: withEmbedding, percentage },
     lifeFeedCount: counts['lifeFeedPosts'] || 0,
+    friendExists,
+    friendUid,
+    friendDisplayName,
+    friendLifeFeedCount,
+    circleCount,
   };
 }
 
