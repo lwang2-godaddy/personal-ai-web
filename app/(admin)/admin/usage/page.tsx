@@ -102,7 +102,13 @@ interface FeatureBreakdown {
   webCalls: number;
 }
 
-const COLORS = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#22c55e', '#14b8a6', '#06b6d4', '#3b82f6', '#6366f1', '#8b5cf6'];
+const COLORS = [
+  '#ef4444', '#f97316', '#f59e0b', '#84cc16', '#22c55e',
+  '#14b8a6', '#06b6d4', '#3b82f6', '#6366f1', '#8b5cf6',
+  '#ec4899', '#d946ef', '#0ea5e9', '#10b981', '#a855f7',
+  '#f43f5e', '#e879f9', '#2dd4bf', '#fbbf24', '#818cf8',
+  '#fb923c', '#34d399', '#c084fc', '#38bdf8', '#a3e635',
+];
 
 // Legacy labels for backwards compatibility (not in ServiceOperations.ts)
 const LEGACY_OPERATION_LABELS: Record<string, string> = {
@@ -333,6 +339,7 @@ export default function AdminUsageAnalyticsPage() {
   }));
 
   const topUsersChartData = topUsers.map((user) => ({
+    userId: user.userId,
     name: user.displayName || (user.email ? user.email.split('@')[0] : user.userId.substring(0, 8)),
     cost: user.totalCost,
     apiCalls: user.totalApiCalls,
@@ -1283,7 +1290,16 @@ export default function AdminUsageAnalyticsPage() {
         <div className="bg-white rounded-lg shadow-md p-6">
           <h2 className="text-xl font-bold text-gray-900 mb-4">Top 10 Users by Cost</h2>
           <ResponsiveContainer width="100%" height={400}>
-            <BarChart data={topUsersChartData} layout="vertical">
+            <BarChart
+              data={topUsersChartData}
+              layout="vertical"
+              onClick={(data: any) => {
+                if (data?.activePayload?.[0]?.payload?.userId) {
+                  window.location.href = `/admin/users/${data.activePayload[0].payload.userId}`;
+                }
+              }}
+              style={{ cursor: 'pointer' }}
+            >
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis type="number" />
               <YAxis dataKey="name" type="category" width={150} />
@@ -1292,6 +1308,49 @@ export default function AdminUsageAnalyticsPage() {
               <Bar dataKey="cost" fill="#ef4444" name="Total Cost ($)" />
             </BarChart>
           </ResponsiveContainer>
+          <p className="text-xs text-gray-500 mt-2 text-center">Click a bar to view detailed per-user breakdown</p>
+
+          {/* All Users Table */}
+          <div className="mt-6 overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b text-left text-gray-600">
+                  <th className="py-2 px-3">#</th>
+                  <th className="py-2 px-3">User</th>
+                  <th className="py-2 px-3 text-right">Cost</th>
+                  <th className="py-2 px-3 text-right">API Calls</th>
+                  <th className="py-2 px-3 text-right">Tokens</th>
+                  <th className="py-2 px-3"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {topUsers.map((user, index) => (
+                  <tr key={user.userId} className="border-b hover:bg-gray-50">
+                    <td className="py-2 px-3 text-gray-500">{index + 1}</td>
+                    <td className="py-2 px-3">
+                      <div className="font-medium text-gray-900">
+                        {user.displayName || user.email?.split('@')[0] || user.userId.substring(0, 8)}
+                      </div>
+                      {user.email && (
+                        <div className="text-xs text-gray-500">{user.email}</div>
+                      )}
+                    </td>
+                    <td className="py-2 px-3 text-right font-mono">${user.totalCost.toFixed(4)}</td>
+                    <td className="py-2 px-3 text-right">{user.totalApiCalls.toLocaleString()}</td>
+                    <td className="py-2 px-3 text-right">{(user.totalTokens ?? 0).toLocaleString()}</td>
+                    <td className="py-2 px-3">
+                      <Link
+                        href={`/admin/users/${user.userId}`}
+                        className="text-blue-600 hover:text-blue-800 text-xs font-medium"
+                      >
+                        Details →
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
