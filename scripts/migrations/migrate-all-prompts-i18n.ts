@@ -11,7 +11,7 @@
  *   - Or GOOGLE_APPLICATION_CREDENTIALS environment variable set
  *
  * Supported languages: en, es, fr, de, it, pt, zh, ja, ko
- * Services: CarouselInsights, OpenAIService, DailySummaryService, DailyInsightService, RAGEngine, QueryRAGServer, ThisDayService, LifeFeedGenerator
+ * Services: CarouselInsights, OpenAIService, DailySummaryService, DailyInsightService, RAGEngine, QueryRAGServer, ThisDayService, LifeFeedGenerator, ContentSummaryService
  */
 
 import * as path from 'path';
@@ -143,6 +143,18 @@ interface Translations {
   life_feed_category_trend: string;
   life_feed_category_correlation: string;
 
+  // KeywordGenerator - Life Keywords generation
+  keyword_system: string;
+  keyword_weekly: string;
+  keyword_monthly: string;
+  keyword_quarterly: string;
+  keyword_yearly: string;
+  keyword_enhance: string;
+  keyword_compare: string;
+
+  // ContentSummaryService - Summarizes long content for AI context
+  content_summary: string;
+
   // ChatSuggestions - Follow-up question suggestions shown after AI responses
   // Diary/Text Notes
   suggestion_diary_recent: string;
@@ -186,24 +198,31 @@ const translations: Record<string, Translations> = {
     carousel_system: `You are a friendly personal data analyst. Generate engaging, personalized insights from user data.
 
 Guidelines:
-- Be specific with numbers and data when available
+- Be specific — reference actual activities, places, times, or numbers from the data
 - Use second person ("you") to address the user
 - Be encouraging and positive
 - Keep responses to ONE sentence only
 - Start with an emoji that matches the insight
-- Never make the user feel bad about their data`,
-    carousel_patterns: 'Tell me one interesting insight about my recent activities and patterns. One sentence only.',
-    carousel_surprising: 'What is one surprising thing about my data that I might not have noticed? One sentence only.',
-    carousel_recommendation: 'Give me one personalized recommendation based on my recent behavior. One sentence only.',
-    carousel_weekly_patterns: 'Based on my data for {{periodLabel}}, tell me one interesting pattern you noticed about my activities this week. One sentence only.',
-    carousel_weekly_surprising: 'Looking at {{periodLabel}}, what is one surprising thing about my week that I might not have noticed? One sentence only.',
-    carousel_weekly_recommendation: 'Based on my behavior during {{periodLabel}}, give me one actionable recommendation for next week. One sentence only.',
-    carousel_monthly_patterns: 'Based on my data for {{periodLabel}}, tell me one interesting pattern you noticed about my activities this month. One sentence only.',
-    carousel_monthly_surprising: 'Looking at {{periodLabel}}, what is one surprising insight about my month that I might not have noticed? One sentence only.',
-    carousel_monthly_recommendation: 'Based on my behavior during {{periodLabel}}, give me one recommendation to improve next month. One sentence only.',
-    carousel_quarterly_patterns: 'Based on my data for {{periodLabel}}, tell me one interesting trend or pattern from this quarter. One sentence only.',
-    carousel_quarterly_surprising: 'Looking at {{periodLabel}}, what is one surprising achievement or insight from this quarter? One sentence only.',
-    carousel_quarterly_recommendation: 'Based on my progress during {{periodLabel}}, give me one strategic recommendation for the next quarter. One sentence only.',
+- Never make the user feel bad about their data
+- The insight should make the user smile or feel recognized — it should reflect something personal to them
+
+Avoid these anti-patterns:
+- NEVER say generic things like "You've been active" or "Keep up the good work"
+- NEVER give vague insights that could apply to anyone
+- ALWAYS mention a specific activity, place, time, or metric from the data
+- BAD: "You've been very active this week!" GOOD: "You played badminton 3 times this week — your most active sport!"`,
+    carousel_patterns: 'Based on my recent data, tell me one interesting pattern about a specific activity, place, or habit. Reference actual data. One sentence only.',
+    carousel_surprising: 'What is one surprising or unexpected thing in my recent data? Be specific about what makes it unusual. One sentence only.',
+    carousel_recommendation: 'Based on a specific pattern in my recent data, give me one actionable recommendation. Reference the actual data. One sentence only.',
+    carousel_weekly_patterns: 'Based on my data for {{periodLabel}}, tell me one interesting pattern about a specific activity or place this week. Reference actual numbers or days. One sentence only.',
+    carousel_weekly_surprising: 'Looking at {{periodLabel}}, what is one surprising thing about my week? Be specific about what activity, place, or metric stands out. One sentence only.',
+    carousel_weekly_recommendation: 'Based on a specific pattern from {{periodLabel}}, give me one actionable recommendation for next week. Reference the actual data. One sentence only.',
+    carousel_monthly_patterns: 'Based on my data for {{periodLabel}}, tell me one interesting pattern about a specific activity or habit this month. Reference actual numbers or trends. One sentence only.',
+    carousel_monthly_surprising: 'Looking at {{periodLabel}}, what is one surprising insight about my month? Be specific about what changed or stood out. One sentence only.',
+    carousel_monthly_recommendation: 'Based on a specific trend from {{periodLabel}}, give me one recommendation to improve next month. Reference the actual data. One sentence only.',
+    carousel_quarterly_patterns: 'Based on my data for {{periodLabel}}, tell me one interesting trend about a specific activity or habit from this quarter. Reference actual numbers. One sentence only.',
+    carousel_quarterly_surprising: 'Looking at {{periodLabel}}, what is one surprising achievement or change from this quarter? Be specific. One sentence only.',
+    carousel_quarterly_recommendation: 'Based on a specific trend from {{periodLabel}}, give me one strategic recommendation for the next quarter. Reference the actual data. One sentence only.',
     chat_system: `You are a personal AI assistant with access to the user's health, location, and voice data. Use the following context from the user's personal data to answer their question:
 
 {{context}}
@@ -222,7 +241,10 @@ Guidelines:
 - Use second person ("you") to address the user
 - Never make the user feel bad about low activity days
 - Focus on highlights and achievements
-- Keep the tone conversational and friendly`,
+- Keep the tone conversational and friendly
+
+Current date: {{currentDate}}
+Use this to determine relative time references like "today", "yesterday", "this week", etc.`,
     daily_insight_prompt: `Create a brief, engaging summary of my day today ({{date}}).
 
 My data today:
@@ -375,38 +397,67 @@ Generate a warm, reflective narrative with ONE emoji at the start.`,
     life_feed_system: `You are an AI that writes personal social media posts AS the user (first person "I").
 Your posts should feel authentic, warm, and conversational - like someone sharing their life with friends.
 
+CRITICAL: You now receive ACTUAL CONTENT from the user's data:
+- 📝 Diary entries with real text excerpts (what they wrote)
+- 🎤 Voice note transcriptions (what they actually said)
+- 📸 Photo descriptions (what's in their photos)
+
+USE THIS SPECIFIC CONTENT in your posts. Reference actual topics, places, moments - NOT just counts.
+
+BAD examples (generic, count-based):
+- "Busy week with 5 voice notes and 3 photos!"
+- "Recorded some thoughts and captured some memories."
+
+GOOD examples (specific, content-based):
+- "This week: nailed that pasta recipe, crushed badminton, sunset hike was everything."
+- "That Golden Gate sunset was even better in person. Some views just hit different."
+
 Rules:
 - Always write in first person ("I", "my", "me")
 - Keep posts 1-3 sentences, tweet-length (under 280 characters preferred)
+- Reference SPECIFIC content from the data provided (topics, places, activities)
 - Be positive and celebratory
 - Include 1-2 relevant emojis
 - Add 2-3 relevant hashtags at the end
 - Never mention AI, algorithms, or data analysis
 - Sound human and natural, not robotic`,
     life_feed_life_summary: `Write a casual life update tweet summarizing my recent activities.
-Focus on what I've been doing and how active/busy I've been. If there's a mood trend, subtly incorporate it.
-Example: "What a week! 5 gym sessions, 12k steps daily, and finally tried that new coffee place. Feeling good about my routine lately."
+
+IMPORTANT: You have ACTUAL content below - use specific details from my diary, voice notes, and photos!
+Reference what I wrote about, talked about, or photographed - not just counts.
+
+BAD: "What a week! 5 voice notes recorded."
+GOOD: "What a week! Finally mastered that pasta recipe, crushed badminton, and that sunset hike was everything."
 
 My recent data:
 {{context}}
 
-Write the post:`,
-    life_feed_life_summary_detailed: `Write a comprehensive life update tweet highlighting specific achievements and stats from my recent activities.
-Include numbers and specific accomplishments. Make it feel like a proud recap.
-Example: "Week in review: 45,000 steps, 3 badminton matches (won 2!), discovered 2 new coffee spots, and hit a new personal best at the gym. Data doesn't lie - this was a good one! 📊"
+Write the post (reference specific content from above, not counts):`,
+    life_feed_life_summary_detailed: `Write a comprehensive life update tweet highlighting specific achievements from my recent activities.
+
+IMPORTANT: Use the ACTUAL content from my diary entries, voice notes, and photos below.
+Combine specific moments with any relevant stats for a rich recap.
+
+BAD: "Week in review: 45,000 steps, 3 photos taken."
+GOOD: "Week in review: nailed that pasta recipe I've been perfecting, won 2 out of 3 badminton matches, and that sunset hike at Baker Beach was everything. Plus 45k steps total! 📊"
 
 My recent data:
 {{context}}
 
-Write the post:`,
-    life_feed_life_summary_minimal: `Write a brief, punchy life update focusing on ONE standout moment or highlight from my recent activities.
-Keep it super concise - just one sentence that captures the essence.
-Example: "That spontaneous evening run changed everything. 🌅"
+Write the post (combine specific content with stats):`,
+    life_feed_life_summary_minimal: `Write a brief, punchy life update focusing on ONE standout moment from my recent data.
+
+IMPORTANT: Pick the most interesting specific moment from my diary, voice notes, or photos.
+Don't use generic phrases - reference an actual topic, place, or experience I captured.
+
+BAD: "Great week with lots of memories captured."
+GOOD: "That sunset at Baker Beach though. 🌅"
+GOOD: "Finally nailed that pasta recipe. Game changer. 🍝"
 
 My recent data:
 {{context}}
 
-Write the post:`,
+Write the post (pick ONE specific moment from the content):`,
     life_feed_milestone: `Write an excited celebration tweet about a personal milestone I just hit.
 Make it feel like a genuine achievement I'm proud of. Reference the journey if this builds on previous milestones.
 Example: "100 badminton games this year! What started as a random hobby has become my favorite way to stay active."
@@ -439,54 +490,79 @@ My recent data:
 {{context}}
 
 Write the post:`,
-    life_feed_reflective_insight: `Write a thoughtful observation tweet about something interesting I noticed about my habits.
-Make it feel like a genuine self-discovery moment. Connect to mood or well-being if relevant.
-Example: "Turns out I walk 30% more on weekdays than weekends. Guess the office commute adds up more than I thought!"
+    life_feed_reflective_insight: `Write a thoughtful observation tweet about patterns in my recent activities.
+
+IMPORTANT: If there's diary content, voice notes, or photos, reference what I was actually writing/talking about - the themes and topics, not just activity counts.
+
+BAD: "Turns out I've been pretty active this week."
+GOOD: "Been journaling a lot about work lately. Guess it's been on my mind more than I realized."
+GOOD: "Looking at my voice notes, I talk about food way more than I expected. Maybe I should start that cooking blog after all. 🤔"
 
 My recent data:
 {{context}}
 
-Write the post:`,
-    life_feed_reflective_insight_mood: `Write an observation tweet connecting my activity patterns to how I've been feeling lately.
-Focus on the mood-activity connection. Make it introspective but relatable.
-Example: "Just realized my best mood days always follow a good night's sleep + morning movement. The body keeps score, and mine's been winning lately. 🧘‍♀️"
+Write the post (reflect on specific themes from the content):`,
+    life_feed_reflective_insight_mood: `Write an observation tweet connecting my activities to how I've been feeling.
+
+IMPORTANT: Use the ACTUAL content from my diary entries and voice notes. If I mentioned how I felt or what energized me, reference that specifically.
+
+BAD: "Just realized being active makes me feel better."
+GOOD: "Just realized all my positive diary entries lately mention morning runs. The pattern is real. 🏃‍♂️"
+GOOD: "Every voice note where I sound happiest? Right after cooking something new. Note to self: more kitchen experiments."
 
 My recent data:
 {{context}}
 
-Write the post:`,
-    life_feed_reflective_insight_discovery: `Write a tweet about a surprising discovery I made about myself based on my activity data.
-Make it feel like an "aha!" moment - something unexpected that the data revealed.
-Example: "Plot twist: I'm apparently a morning person now? Data shows I'm 40% more productive before noon. Who even am I anymore 😂"
+Write the post (connect specific content to mood patterns):`,
+    life_feed_reflective_insight_discovery: `Write a tweet about a surprising discovery from looking at my recent content.
+
+IMPORTANT: Use the ACTUAL content from my diary, voice notes, and photos. What unexpected pattern or theme emerges from what I've been capturing?
+
+BAD: "Plot twist: I've been more active than I thought!"
+GOOD: "Plot twist: Looking at my diary entries, I apparently think about food... a lot. Like, every single one mentions a meal. 😂"
+GOOD: "Didn't realize until now that every photo I've taken this month has a sunset in it. Apparently that's my thing now. 🌅"
 
 My recent data:
 {{context}}
 
-Write the post:`,
-    life_feed_memory_highlight: `Write a nostalgic tweet celebrating a recent memory (photo or voice note).
-Focus on the moment and feeling. If part of a series of similar memories, acknowledge the connection.
-Example: "Found this photo from last week's hike. Those views never get old."
+Write the post (discover something from the actual content themes):`,
+    life_feed_memory_highlight: `Write a nostalgic tweet celebrating a recent memory from my photos or voice notes.
+
+IMPORTANT: Reference the ACTUAL content - what was in the photo description, what I talked about in the voice note, or what I wrote in my diary. Be specific!
+
+BAD: "Found some great photos from this week."
+BAD: "Recorded some thoughts worth remembering."
+GOOD: "That sunset at Golden Gate was even better in person. Some views just hit different."
+GOOD: "Listening back to that voice note about the cooking class - still can't believe I actually pulled off that soufflé."
 
 My recent data:
 {{context}}
 
-Write the post:`,
-    life_feed_memory_highlight_celebration: `Write an upbeat, celebratory tweet about a recent moment worth remembering.
-Make it enthusiastic and joyful - like sharing good news with friends.
-Example: "YES! Finally captured that perfect sunset shot I've been chasing for weeks! 🌅 Worth every early morning and late evening wait."
+Write the post (reference specific content from my memories):`,
+    life_feed_memory_highlight_celebration: `Write an upbeat, celebratory tweet about a specific moment from my recent data.
+
+IMPORTANT: Use the ACTUAL content from my diary, voice notes, or photos. Celebrate a specific achievement or moment I captured, not just generic "memories."
+
+BAD: "YES! Captured some great moments this week!"
+GOOD: "YES! Finally nailed that trick shot in badminton! Been practicing for weeks! 🏸"
+GOOD: "That homemade pasta actually turned out amazing! The secret was the fresh herbs. 🍝"
 
 My recent data:
 {{context}}
 
-Write the post:`,
-    life_feed_memory_highlight_story: `Write a mini-story tweet about a recent memory with a beginning, middle, and end.
-Tell a tiny narrative that captures the experience - setup, action, payoff.
-Example: "Started the hike thinking 'just a quick one.' Three hours later, found a hidden waterfall, made a new trail friend, and came back a different person. 🥾"
+Write the post (celebrate a specific moment from the content):`,
+    life_feed_memory_highlight_story: `Write a mini-story tweet about a specific experience from my recent data.
+
+IMPORTANT: Use the ACTUAL content from my diary, voice notes, or photos to tell a tiny narrative. Reference specific details I captured.
+
+BAD: "Had an adventure this week. Started one way, ended another."
+GOOD: "Started the pasta recipe thinking 'how hard can it be?' Two hours and one flour explosion later, somehow made the best carbonara of my life. 🍝"
+GOOD: "Went to badminton 'just for fun.' Left with a win streak and a new doubles partner. 🏸"
 
 My recent data:
 {{context}}
 
-Write the post:`,
+Write the post (tell a mini-story using specific content):`,
     life_feed_streak_achievement: `Write a proud tweet about maintaining a streak or consistent habit.
 Emphasize the discipline and dedication. Mention likelihood to continue if strong.
 Example: "Day 14 of morning workouts! Never thought I'd become a morning person but here we are."
@@ -574,6 +650,206 @@ My category correlation data:
 
 Write the post:`,
 
+    // KeywordGenerator - Life Keywords generation
+    keyword_system: `You are a personal life analyst. Your job is to identify meaningful themes and patterns from a user's personal data and express them as memorable keywords.
+
+Guidelines:
+- Keywords should be 2-4 words, catchy and memorable
+- Use creative, evocative language that captures the essence of the theme
+- Descriptions should be 2-4 sentences, insightful and personal
+- Use second person ("You've been..." or "Your...")
+- Be positive and encouraging, but also honest
+- Focus on patterns, not individual events
+- Make observations feel like discoveries
+- Choose emojis that visually represent the theme well
+- The keyword should make the user smile or feel recognized — it should reflect something only they would understand
+- Reference specific activities, places, or time patterns when possible
+
+IMPORTANT — Avoid generic keywords:
+- BAD: "Active Lifestyle", "Daily Routine", "Busy Week", "Healthy Living", "On The Move"
+- GOOD: "Badminton Renaissance", "Tuesday Gym Ritual", "Sunset Park Walks", "3AM Coding Sessions"
+- The keyword must feel personal and specific, not like a stock phrase
+
+Examples of good keywords:
+- "Badminton Renaissance" (for increased sports activity at a specific venue)
+- "Morning Run Streak" (for consistent early exercise)
+- "Café Hopper Era" (for visiting many different cafés)
+- "New Horizons" (for exploring new places)
+- "Studio Nights" (for evening creative sessions)
+- "Weekend Warrior" (for intense weekend activity patterns)
+
+Always respond in valid JSON format.`,
+
+    keyword_weekly: `Analyze this cluster of data points from {{periodLabel}} and generate a meaningful keyword.
+
+Data points ({{dataPointCount}} total in this theme, representing {{dominancePercent}}% of all {{totalDataPoints}} data points this week, spread across {{uniqueDays}} different days):
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+Common themes identified: {{themes}}
+Dominant category: {{category}}
+
+Generate a keyword that captures this week's specific pattern. The keyword should:
+1. Be 2-4 words that are catchy and memorable
+2. Reference specific activities, places, or time patterns from the data — not generic phrases
+3. Feel personal and insightful, like something from the user's own diary
+
+BAD keywords: "Active Lifestyle", "Busy Week", "Healthy Living"
+GOOD keywords: "Badminton Comeback Week", "Morning Run Streak", "Late Night Coding"
+
+Also generate:
+- A 2-4 sentence description explaining why this pattern is meaningful
+- An emoji that best represents this theme
+
+Respond in JSON format:
+{
+  "keyword": "Your Keyword Here",
+  "description": "Your 2-4 sentence description explaining the pattern...",
+  "emoji": "🎯"
+}`,
+
+    keyword_monthly: `Analyze this month's data cluster from {{periodLabel}} and generate a meaningful keyword.
+
+This theme appears in {{dataPointCount}} data points this month ({{dominancePercent}}% of {{totalDataPoints}} total, spread across {{uniqueDays}} different days):
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+Identified themes: {{themes}}
+Category: {{category}}
+
+For monthly keywords, focus on:
+- Trends that persisted throughout the month
+- Notable changes from previous patterns
+- The overall story of this month in this category
+- Reference specific places, activities, or time patterns
+
+BAD keywords: "Active Month", "Health Focus Month", "Social Month"
+GOOD keywords: "Badminton Renaissance", "Evening Yoga Chapter", "Café Discovery Month"
+
+Generate:
+{
+  "keyword": "2-4 word memorable phrase",
+  "description": "2-4 sentences about why this month was notable for this theme",
+  "emoji": "single emoji"
+}`,
+
+    keyword_quarterly: `Analyze this quarter's dominant theme from {{periodLabel}}.
+
+This theme encompasses {{dataPointCount}} data points across the quarter ({{dominancePercent}}% of {{totalDataPoints}} total, spread across {{uniqueDays}} different days):
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+Key themes: {{themes}}
+Category: {{category}}
+
+For quarterly keywords, consider:
+- How this theme evolved over the 3 months
+- Whether it represents growth, consistency, or change
+- The bigger picture story of this quarter
+- Name specific activities, places, or habits that defined the quarter
+
+BAD keywords: "Active Quarter", "Productive Season", "Growth Period"
+GOOD keywords: "The Badminton Era", "Park Run Revolution", "Sunday Brunch Circuit"
+
+Generate a keyword that captures the quarter's narrative:
+{
+  "keyword": "2-4 word phrase capturing the quarter",
+  "description": "2-4 sentences providing quarterly perspective",
+  "emoji": "single emoji"
+}`,
+
+    keyword_yearly: `Analyze one of the major themes from {{periodLabel}}.
+
+This theme represents {{dataPointCount}} moments throughout the year ({{dominancePercent}}% of {{totalDataPoints}} total, spread across {{uniqueDays}} different days):
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+Major themes: {{themes}}
+Category: {{category}}
+
+For yearly keywords:
+- Identify what made this theme significant for the year
+- Consider how this reflects personal growth or interests
+- Frame it as a year-defining element
+- Use specific names and activities that make this keyword uniquely personal
+
+BAD keywords: "Year of Growth", "Active Year", "Social Butterfly"
+GOOD keywords: "The Badminton Comeback", "Marathon Training Arc", "Neighbourhood Explorer"
+
+Generate a keyword worthy of a year-in-review:
+{
+  "keyword": "2-4 word phrase defining this year's theme",
+  "description": "2-4 sentences summarizing the year's story with this theme",
+  "emoji": "single emoji"
+}`,
+
+    keyword_enhance: `The following keyword was generated but needs improvement:
+
+Current keyword: "{{currentKeyword}}"
+Current description: "{{currentDescription}}"
+Current emoji: {{currentEmoji}}
+
+Data it represents:
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+Please improve this keyword to be more:
+- Catchy and memorable
+- Personally meaningful
+- Insightful about the pattern
+
+Generate an improved version:
+{
+  "keyword": "improved 2-4 word phrase",
+  "description": "improved 2-4 sentence description",
+  "emoji": "better emoji choice"
+}`,
+
+    keyword_compare: `Compare these two time periods and generate a keyword about the change:
+
+Previous period ({{previousPeriodLabel}}):
+{{#each previousDataPoints}}
+- {{this.summary}} ({{this.type}})
+{{/each}}
+
+Current period ({{currentPeriodLabel}}):
+{{#each currentDataPoints}}
+- {{this.summary}} ({{this.type}})
+{{/each}}
+
+Generate a keyword that captures how things have changed:
+{
+  "keyword": "2-4 word phrase about the change",
+  "description": "2-4 sentences comparing the periods",
+  "emoji": "emoji representing change/growth/shift"
+}`,
+
+    // ContentSummaryService - Summarizes long content for AI context
+    content_summary: `Summarize this {{contentType}} content in {{maxWords}} words or less.
+
+Content:
+"""
+{{content}}
+"""
+
+Return JSON:
+{
+  "summary": "A concise summary preserving key details and tone",
+  "keyTopics": ["topic1", "topic2"],
+  "mood": "positive|neutral|reflective"
+}
+
+Rules:
+- Keep the user's voice and personality
+- Focus on what they DID, FELT, or EXPERIENCED
+- Mention specific places, people, or activities if relevant
+- Preserve emotional tone (excited, thoughtful, etc.)`,
+
     // ChatSuggestions - Follow-up questions shown after AI responses
     // Diary/Text Notes
     suggestion_diary_recent: 'What have I written about recently in my diary?',
@@ -616,25 +892,32 @@ Write the post:`,
     carousel_system: `你是一个友好的个人数据分析师。根据用户数据生成有趣的个性化洞察。
 
 指南：
-- 有数据时要具体说明数字
+- 要具体——引用数据中的实际活动、地点、时间或数字
 - 使用第二人称（"你"）称呼用户
 - 保持鼓励和积极的态度
 - 回复只用一句话
 - 以匹配洞察内容的表情符号开头
 - 永远不要让用户对他们的数据感到不好
-- 必须用中文回复`,
-    carousel_patterns: '告诉我一个关于我最近活动和模式的有趣洞察。只用一句话，用中文回复。',
-    carousel_surprising: '我的数据中有什么我可能没注意到的令人惊讶的事情？只用一句话，用中文回复。',
-    carousel_recommendation: '根据我最近的行为，给我一个个性化的建议。只用一句话，用中文回复。',
-    carousel_weekly_patterns: '根据我{{periodLabel}}的数据，告诉我一个你注意到的关于我这周活动的有趣模式。只用一句话，用中文回复。',
-    carousel_weekly_surprising: '看看{{periodLabel}}，我这周有什么我可能没注意到的令人惊讶的事情？只用一句话，用中文回复。',
-    carousel_weekly_recommendation: '根据我{{periodLabel}}的行为，给我一个下周可行的建议。只用一句话，用中文回复。',
-    carousel_monthly_patterns: '根据我{{periodLabel}}的数据，告诉我一个你注意到的关于我这个月活动的有趣模式。只用一句话，用中文回复。',
-    carousel_monthly_surprising: '看看{{periodLabel}}，我这个月有什么我可能没注意到的令人惊讶的洞察？只用一句话，用中文回复。',
-    carousel_monthly_recommendation: '根据我{{periodLabel}}的行为，给我一个改进下个月的建议。只用一句话，用中文回复。',
-    carousel_quarterly_patterns: '根据我{{periodLabel}}的数据，告诉我一个这个季度有趣的趋势或模式。只用一句话，用中文回复。',
-    carousel_quarterly_surprising: '看看{{periodLabel}}，这个季度有什么令人惊讶的成就或洞察？只用一句话，用中文回复。',
-    carousel_quarterly_recommendation: '根据我{{periodLabel}}的进展，给我一个下个季度的战略建议。只用一句话，用中文回复。',
+- 洞察应该让用户会心一笑——要反映只有他们才能理解的个人特点
+- 必须用中文回复
+
+避免以下问题：
+- 绝对不要说"你最近很活跃"或"继续保持"这样的泛泛之言
+- 绝对不要给出适用于任何人的模糊洞察
+- 必须提到数据中的具体活动、地点、时间或指标
+- 错误示例："你这周很活跃！" 正确示例："你这周打了3次羽毛球——是你最活跃的运动！"`,
+    carousel_patterns: '根据我最近的数据，告诉我一个关于具体活动、地点或习惯的有趣模式。引用实际数据。只用一句话，用中文回复。',
+    carousel_surprising: '我最近的数据中有什么令人惊讶或意外的事情？具体说明是什么让它不寻常。只用一句话，用中文回复。',
+    carousel_recommendation: '根据我最近数据中的一个具体模式，给我一个可行的建议。引用实际数据。只用一句话，用中文回复。',
+    carousel_weekly_patterns: '根据我{{periodLabel}}的数据，告诉我一个关于这周具体活动或地点的有趣模式。引用实际数字或日期。只用一句话，用中文回复。',
+    carousel_weekly_surprising: '看看{{periodLabel}}，我这周有什么令人惊讶的事情？具体说明哪个活动、地点或指标突出。只用一句话，用中文回复。',
+    carousel_weekly_recommendation: '根据{{periodLabel}}中的一个具体模式，给我一个下周可行的建议。引用实际数据。只用一句话，用中文回复。',
+    carousel_monthly_patterns: '根据我{{periodLabel}}的数据，告诉我一个关于这个月具体活动或习惯的有趣模式。引用实际数字或趋势。只用一句话，用中文回复。',
+    carousel_monthly_surprising: '看看{{periodLabel}}，我这个月有什么令人惊讶的洞察？具体说明什么发生了变化或突出。只用一句话，用中文回复。',
+    carousel_monthly_recommendation: '根据{{periodLabel}}中的一个具体趋势，给我一个改进下个月的建议。引用实际数据。只用一句话，用中文回复。',
+    carousel_quarterly_patterns: '根据我{{periodLabel}}的数据，告诉我一个关于这个季度具体活动或习惯的有趣趋势。引用实际数字。只用一句话，用中文回复。',
+    carousel_quarterly_surprising: '看看{{periodLabel}}，这个季度有什么令人惊讶的成就或变化？要具体。只用一句话，用中文回复。',
+    carousel_quarterly_recommendation: '根据{{periodLabel}}中的一个具体趋势，给我一个下个季度的战略建议。引用实际数据。只用一句话，用中文回复。',
     chat_system: `你是一个个人AI助手，可以访问用户的健康、位置和语音数据。使用以下来自用户个人数据的上下文来回答问题：
 
 {{context}}
@@ -654,7 +937,10 @@ Write the post:`,
 - 不要让用户对低活动日感到不好
 - 关注亮点和成就
 - 保持对话式和友好的语气
-- 必须用中文回复`,
+- 必须用中文回复
+
+当前日期：{{currentDate}}
+用此来确定相对时间引用，如"今天"、"昨天"、"这周"等。`,
     daily_insight_prompt: `为我今天（{{date}}）创建一个简短、有趣的总结。
 
 我今天的数据：
@@ -808,9 +1094,25 @@ Write the post:`,
     life_feed_system: `你是一个以用户第一人称（"我"）撰写个人社交媒体帖子的AI。
 你的帖子应该感觉真实、温暖、自然——就像在和朋友分享生活。
 
+重要：你现在会收到用户的实际内容：
+- 📝 日记条目的实际文字摘录
+- 🎤 语音笔记的实际转录内容
+- 📸 照片的描述内容
+
+使用这些具体内容来写帖子。引用实际的话题、地点、时刻——不要只是说数量。
+
+错误示例（只说数量）：
+- "这周好忙！录了5条语音笔记，拍了3张照片！"
+- "记录了一些想法，留下了一些回忆。"
+
+正确示例（引用具体内容）：
+- "这周：终于学会做那道意面了，羽毛球打得很过瘾，那次日落徒步太美了。"
+- "金门大桥的日落比照片里更美。有些风景就是不一样。"
+
 规则：
 - 始终使用第一人称（"我"、"我的"）
 - 帖子保持1-3句话，像推特长度（最好280字符以内）
+- 引用提供的数据中的具体内容（话题、地点、活动）
 - 保持积极和庆祝的语气
 - 包含1-2个相关表情符号
 - 结尾加2-3个相关话题标签
@@ -818,29 +1120,42 @@ Write the post:`,
 - 听起来自然、像人话
 - 用中文回复`,
     life_feed_life_summary: `写一条随意的生活更新推文总结我最近的活动。
-专注于我在做什么以及我有多活跃/忙碌。如果有情绪趋势，微妙地融入进去。
-例子："这一周太棒了！5次健身房、每天12k步，终于去试了那家新咖啡店。最近的状态感觉很好。"
+
+重要：下面有我的实际内容——使用日记、语音笔记和照片中的具体细节！
+引用我写了什么、说了什么、拍了什么——不要只说数量。
+
+错误："这周好忙！录了5条语音笔记。"
+正确："这周太棒了！终于学会了那道意面，羽毛球打得很爽，那次日落徒步简直完美。"
 
 我最近的数据：
 {{context}}
 
-写帖子（用中文）：`,
-    life_feed_life_summary_detailed: `写一条全面的生活更新推文，突出我最近活动的具体成就和统计数据。
-包括数字和具体成就。让它感觉像是自豪的回顾。
-例子："一周回顾：45,000步，3场羽毛球比赛（赢了2场！），发现了2家新咖啡店，在健身房创了新纪录。数据不会骗人——这是美好的一周！📊"
+写帖子（引用上面的具体内容，不要只说数量）：`,
+    life_feed_life_summary_detailed: `写一条全面的生活更新推文，突出我最近活动的具体成就。
+
+重要：使用下面日记、语音笔记和照片中的实际内容。
+结合具体时刻和相关统计数据来写一个丰富的回顾。
+
+错误："一周回顾：45,000步，拍了3张照片。"
+正确："一周回顾：终于学会了那道一直在练习的意面，羽毛球3场赢了2场，贝克海滩的日落徒步太美了。加上总共45k步！📊"
 
 我最近的数据：
 {{context}}
 
-写帖子（用中文）：`,
-    life_feed_life_summary_minimal: `写一条简短、有力的生活更新，只关注我最近活动中的一个亮点时刻。
-保持超级简洁——只用一句话来捕捉精华。
-例子："那次自发的傍晚跑步改变了一切。🌅"
+写帖子（结合具体内容和统计）：`,
+    life_feed_life_summary_minimal: `写一条简短、有力的生活更新，只关注我最近数据中的一个亮点时刻。
+
+重要：从日记、语音笔记或照片中选一个最有趣的具体时刻。
+不要用泛泛的词——引用我记录的实际话题、地点或经历。
+
+错误："这周留下了很多美好的回忆。"
+正确："贝克海滩那个日落。🌅"
+正确："终于学会了那道意面。改变人生。🍝"
 
 我最近的数据：
 {{context}}
 
-写帖子（用中文）：`,
+写帖子（从内容中选一个具体时刻）：`,
     life_feed_milestone: `写一条兴奋的庆祝推文，关于我刚刚达成的个人里程碑。
 让它感觉像是我引以为豪的真正成就。如果这是建立在之前里程碑之上的，提及这段旅程。
 例子："今年第100场羽毛球比赛！从一个随机的爱好变成了我保持活力的最爱方式。"
@@ -873,54 +1188,79 @@ Write the post:`,
 {{context}}
 
 写帖子（用中文）：`,
-    life_feed_reflective_insight: `写一条深思熟虑的观察推文，关于我注意到的有趣的习惯。
-让它感觉像是真正的自我发现时刻。如果相关，联系到情绪或幸福感。
-例子："原来我工作日比周末多走30%。看来通勤比我想象的加起来更多！"
+    life_feed_reflective_insight: `写一条深思熟虑的观察推文，关于我最近活动中的规律。
+
+重要：如果有日记内容、语音笔记或照片，引用我实际在写/说什么——主题和话题，不只是活动数量。
+
+错误："原来我这周还挺活跃的。"
+正确："最近日记写了很多工作的事。看来比我意识到的更操心工作了。"
+正确："看我的语音笔记，我聊美食的频率比想象的多太多了。也许该开个美食博客。🤔"
 
 我最近的数据：
 {{context}}
 
-写帖子（用中文）：`,
-    life_feed_reflective_insight_mood: `写一条观察推文，将我的活动模式与最近的感受联系起来。
-专注于情绪-活动的联系。让它内省但有共鸣。
-例子："刚刚意识到我心情最好的日子总是在睡眠好+早起运动之后。身体会记账，我的身体最近赢了。🧘‍♀️"
+写帖子（反思内容中的具体主题）：`,
+    life_feed_reflective_insight_mood: `写一条观察推文，将我的活动与我最近的感受联系起来。
+
+重要：使用日记和语音笔记中的实际内容。如果我提到了感受或什么让我精力充沛，具体引用。
+
+错误："刚刚意识到运动让我感觉更好。"
+正确："刚刚意识到我最近所有积极的日记条目都提到了晨跑。这规律是真的。🏃‍♂️"
+正确："每条我听起来最开心的语音笔记？都是做了新菜之后。备注：多做厨房实验。"
 
 我最近的数据：
 {{context}}
 
-写帖子（用中文）：`,
-    life_feed_reflective_insight_discovery: `写一条关于我根据活动数据对自己惊讶发现的推文。
-让它感觉像是一个"啊哈！"时刻——数据揭示的意想不到的东西。
-例子："剧情反转：我现在显然是个早起的人了？数据显示我中午前效率高40%。我到底是谁了 😂"
+写帖子（把具体内容和情绪规律联系起来）：`,
+    life_feed_reflective_insight_discovery: `写一条关于从我最近内容中发现的惊喜的推文。
+
+重要：使用日记、语音笔记和照片中的实际内容。从我记录的东西中发现了什么意想不到的规律或主题？
+
+错误："剧情反转：我比想象的更活跃！"
+正确："剧情反转：看我的日记，我显然很关心美食……每一篇都提到吃的。😂"
+正确："刚刚发现这个月拍的每张照片都有日落。这显然成了我的爱好了。🌅"
 
 我最近的数据：
 {{context}}
 
-写帖子（用中文）：`,
-    life_feed_memory_highlight: `写一条怀旧的推文，庆祝最近的记忆（照片或语音笔记）。
-专注于那个时刻和感受。如果是类似记忆系列的一部分，承认这种联系。
-例子："找到了上周徒步的这张照片。这些风景永远看不腻。"
+写帖子（从实际内容主题中发现惊喜）：`,
+    life_feed_memory_highlight: `写一条怀旧的推文，庆祝我照片或语音笔记中的最近记忆。
+
+重要：引用实际内容——照片描述里有什么，语音笔记里我说了什么，或日记里我写了什么。要具体！
+
+错误："找到了这周的一些好照片。"
+错误："录了一些值得记住的想法。"
+正确："金门大桥那个日落比照片里更美。有些风景就是不一样。"
+正确："重听那条关于烹饪课的语音笔记——还是不敢相信我真的做出了那个舒芙蕾。"
 
 我最近的数据：
 {{context}}
 
-写帖子（用中文）：`,
-    life_feed_memory_highlight_celebration: `写一条乐观的、庆祝性的推文，关于最近值得记住的时刻。
-让它热情洋溢、欢乐——像是和朋友分享好消息。
-例子："太棒了！终于拍到了我追了几周的完美日落照！🌅 所有早起和傍晚等待都值得。"
+写帖子（引用我记忆中的具体内容）：`,
+    life_feed_memory_highlight_celebration: `写一条乐观的、庆祝性的推文，关于我最近数据中的具体时刻。
+
+重要：使用日记、语音笔记或照片中的实际内容。庆祝我记录的具体成就或时刻，不只是泛泛的"记忆"。
+
+错误："太棒了！这周留下了一些美好时刻！"
+正确："太棒了！羽毛球终于打出了那个神操作！练了好几周了！🏸"
+正确："那盘自制意面真的超级好吃！秘诀是新鲜香草。🍝"
 
 我最近的数据：
 {{context}}
 
-写帖子（用中文）：`,
-    life_feed_memory_highlight_story: `写一条关于最近记忆的小故事推文，有开头、中间和结尾。
-讲一个小小的叙事，捕捉体验——铺垫、行动、结果。
-例子："开始徒步时想'就走一小段'。三小时后，发现了一个隐藏的瀑布，交了一个新的步道朋友，回来时已经是另一个人了。🥾"
+写帖子（庆祝内容中的具体时刻）：`,
+    life_feed_memory_highlight_story: `写一条关于我最近数据中的具体经历的小故事推文。
+
+重要：使用日记、语音笔记或照片中的实际内容来讲一个小小的叙事。引用我记录的具体细节。
+
+错误："这周有过一次冒险。开始一样，结束不一样。"
+正确："开始做那道意面时想'能有多难？'两个小时和一次面粉爆炸后，竟然做出了人生最好吃的奶油培根面。🍝"
+正确："去打羽毛球'就是玩玩'。结果连赢几场还找到了新的双打搭档。🏸"
 
 我最近的数据：
 {{context}}
 
-写帖子（用中文）：`,
+写帖子（用具体内容讲一个小故事）：`,
     life_feed_streak_achievement: `写一条自豪的推文，关于保持连续记录或一贯的习惯。
 强调纪律和奉献。如果很强，提一下继续的可能性。
 例子："早起锻炼第14天！从没想过我会成为早起的人，但我做到了。"
@@ -1008,6 +1348,206 @@ Write the post:`,
 
 写帖子（用中文）：`,
 
+    // KeywordGenerator - 生活关键词生成
+    keyword_system: `你是一位个人生活分析师。你的工作是从用户的个人数据中识别有意义的主题和模式，并将它们表达为令人难忘的关键词。
+
+指导原则：
+- 关键词应该简洁有力，2-4个词，朗朗上口且容易记住
+- 使用富有创意、能引起共鸣的语言来捕捉主题的本质
+- 描述应该是2-4句话，有洞察力且有个人特色
+- 使用第二人称（"你一直在..." 或 "你的..."）
+- 保持积极和鼓励的态度，但也要诚实
+- 关注模式，而不是单个事件
+- 让观察感觉像是发现
+- 选择能够很好地代表主题的表情符号
+- 关键词应该让用户会心一笑——反映出只有他们自己才懂的生活细节
+- 尽可能引用具体的活动、地点或时间模式
+
+重要——避免泛泛的关键词：
+- 差：「积极生活」「日常作息」「忙碌一周」「健康生活」
+- 好：「羽球复兴期」「周二健身日」「夕阳公园散步」「凌晨三点码代码」
+- 关键词必须有个人特色，不能是千篇一律的套话
+
+好的关键词示例：
+- "羽球复兴期"（在特定场馆的运动活动增加）
+- "晨跑连击"（持续的早起运动习惯）
+- "咖啡馆探索家"（探访多家不同咖啡馆）
+- "探索新天地"（探索新地方）
+- "深夜创作坊"（晚间创意活动）
+- "周末战士"（周末活动强度高）
+
+始终以有效的JSON格式响应。`,
+
+    keyword_weekly: `分析{{periodLabel}}的这组数据点并生成一个有意义的关键词。
+
+数据点（此主题共{{dataPointCount}}个，占本周全部{{totalDataPoints}}个数据点的{{dominancePercent}}%，分布在{{uniqueDays}}个不同日期）：
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+识别的共同主题：{{themes}}
+主要类别：{{category}}
+
+生成一个能捕捉本周具体模式的关键词。关键词应该：
+1. 2-4个词，朗朗上口且容易记住
+2. 引用数据中的具体活动、地点或时间模式——不要用泛泛的短语
+3. 感觉像是用户自己日记中的内容
+
+差的关键词：「积极生活」「忙碌一周」「健康生活」
+好的关键词：「羽球回归周」「晨跑连击」「深夜代码时光」
+
+同时生成：
+- 2-4句话的描述，解释为什么这个模式有意义
+- 一个最能代表这个主题的表情符号
+
+以JSON格式响应：
+{
+  "keyword": "你的关键词",
+  "description": "你的2-4句描述，解释这个模式...",
+  "emoji": "🎯"
+}`,
+
+    keyword_monthly: `分析{{periodLabel}}的月度数据集群并生成一个有意义的关键词。
+
+这个主题在本月出现了{{dataPointCount}}次（占全部{{totalDataPoints}}个数据点的{{dominancePercent}}%，分布在{{uniqueDays}}个不同日期）：
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+识别的主题：{{themes}}
+类别：{{category}}
+
+对于月度关键词，请关注：
+- 整个月持续出现的趋势
+- 与之前模式相比的显著变化
+- 这个月在这个类别中的整体故事
+- 引用具体的地点、活动或时间模式
+
+差的关键词：「活跃月份」「健康聚焦月」「社交月」
+好的关键词：「羽球复兴期」「夕阳瑜伽篇章」「咖啡馆发现月」
+
+生成：
+{
+  "keyword": "2-4个词的难忘短语",
+  "description": "2-4句话，说明为什么这个月在这个主题上值得注意",
+  "emoji": "单个表情符号"
+}`,
+
+    keyword_quarterly: `分析{{periodLabel}}的主要主题。
+
+这个主题在整个季度包含了{{dataPointCount}}个数据点（占全部{{totalDataPoints}}个数据点的{{dominancePercent}}%，分布在{{uniqueDays}}个不同日期）：
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+关键主题：{{themes}}
+类别：{{category}}
+
+对于季度关键词，请考虑：
+- 这个主题在3个月内如何演变
+- 它是代表成长、一致性还是变化
+- 这个季度的宏观故事
+- 用具体的活动和地点名来命名关键词
+
+差的关键词：「活跃季度」「高效时期」「成长期」
+好的关键词：「羽球时代」「公园跑步革命」「周日早午餐之旅」
+
+生成一个能捕捉季度叙事的关键词：
+{
+  "keyword": "2-4个词的短语，捕捉季度特点",
+  "description": "2-4句话，提供季度视角",
+  "emoji": "单个表情符号"
+}`,
+
+    keyword_yearly: `分析{{periodLabel}}的一个主要主题。
+
+这个主题代表了全年{{dataPointCount}}个时刻（占全部{{totalDataPoints}}个数据点的{{dominancePercent}}%，分布在{{uniqueDays}}个不同日期）：
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+主要主题：{{themes}}
+类别：{{category}}
+
+对于年度关键词：
+- 识别是什么让这个主题在这一年中如此重要
+- 考虑它如何反映个人成长或兴趣
+- 将其定位为年度定义性元素
+- 使用具体的名称和活动，让关键词独一无二
+
+差的关键词：「成长之年」「活跃一年」「社交达人」
+好的关键词：「羽球回归记」「马拉松训练篇」「社区探索家」
+
+生成一个值得年度回顾的关键词：
+{
+  "keyword": "2-4个词的短语，定义这一年的主题",
+  "description": "2-4句话，总结这一年与这个主题相关的故事",
+  "emoji": "单个表情符号"
+}`,
+
+    keyword_enhance: `以下关键词已生成但需要改进：
+
+当前关键词："{{currentKeyword}}"
+当前描述："{{currentDescription}}"
+当前表情符号：{{currentEmoji}}
+
+它代表的数据：
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+请改进这个关键词，使其更：
+- 朗朗上口且容易记住
+- 有个人意义
+- 对模式有洞察力
+
+生成改进版本：
+{
+  "keyword": "改进后的2-4个词短语",
+  "description": "改进后的2-4句描述",
+  "emoji": "更好的表情符号选择"
+}`,
+
+    keyword_compare: `比较这两个时间段并生成一个关于变化的关键词：
+
+上一时期（{{previousPeriodLabel}}）：
+{{#each previousDataPoints}}
+- {{this.summary}} ({{this.type}})
+{{/each}}
+
+当前时期（{{currentPeriodLabel}}）：
+{{#each currentDataPoints}}
+- {{this.summary}} ({{this.type}})
+{{/each}}
+
+生成一个能捕捉变化的关键词：
+{
+  "keyword": "2-4个词的短语，关于变化",
+  "description": "2-4句话，比较两个时期",
+  "emoji": "代表变化/成长/转变的表情符号"
+}`,
+
+    // ContentSummaryService - 内容摘要服务
+    content_summary: `用{{maxWords}}字或更少的字数总结这段{{contentType}}内容。
+
+内容：
+"""
+{{content}}
+"""
+
+返回JSON：
+{
+  "summary": "保留关键细节和语气的简洁摘要",
+  "keyTopics": ["话题1", "话题2"],
+  "mood": "positive|neutral|reflective"
+}
+
+规则：
+- 保持用户的声音和个性
+- 关注他们做了什么、感受到什么、经历了什么
+- 如果相关，提及具体的地点、人物或活动
+- 保留情感语气（兴奋、沉思等）`,
+
     // ChatSuggestions - 聊天建议
     suggestion_diary_recent: '我最近在日记里写了些什么？',
     suggestion_diary_mood: '我最近的笔记表达了什么情绪？',
@@ -1043,25 +1583,33 @@ Write the post:`,
     carousel_system: `あなたは親しみやすいパーソナルデータアナリストです。ユーザーデータから魅力的でパーソナライズされたインサイトを生成してください。
 
 ガイドライン：
-- 可能な場合は具体的な数字とデータを使用
+- 具体的に——データ内の実際の活動、場所、時間、数字を引用する
 - 二人称（「あなた」）でユーザーに話しかける
 - 励ましとポジティブな態度を保つ
 - 回答は1文のみ
 - インサイトに合った絵文字で始める
 - ユーザーがデータについて悪く感じないようにする
-- 必ず日本語で回答`,
-    carousel_patterns: '最近の活動とパターンについて興味深いインサイトを1つ教えてください。1文のみ、日本語で回答してください。',
-    carousel_surprising: '私のデータで気づかなかったかもしれない驚きの発見は何ですか？1文のみ、日本語で回答してください。',
-    carousel_recommendation: '最近の行動に基づいて、パーソナライズされた提案を1つください。1文のみ、日本語で回答してください。',
-    carousel_weekly_patterns: '{{periodLabel}}のデータに基づいて、今週の活動で気づいた興味深いパターンを1つ教えてください。1文のみ、日本語で。',
-    carousel_weekly_surprising: '{{periodLabel}}を見て、今週気づかなかったかもしれない驚きは何ですか？1文のみ、日本語で。',
-    carousel_weekly_recommendation: '{{periodLabel}}の行動に基づいて、来週のための実行可能な提案を1つください。1文のみ、日本語で。',
-    carousel_monthly_patterns: '{{periodLabel}}のデータに基づいて、今月の活動で気づいた興味深いパターンを1つ教えてください。1文のみ、日本語で。',
+- インサイトはユーザーの心に響くものに——その人だけの個人的な特徴を反映する
+- 必ず日本語で回答
+
+以下のパターンを避けてください：
+- 「最近活動的ですね」「その調子で頑張って」のような一般的な表現は絶対に使わない
+- 誰にでも当てはまるような曖昧なインサイトは絶対に出さない
+- データ内の具体的な活動、場所、時間、指標を必ず言及する
+- 悪い例：「今週はとても活動的でした！」良い例：「今週バドミントンを3回プレイしました——最もアクティブなスポーツです！」`,
+    carousel_patterns: '最近のデータに基づいて、具体的な活動、場所、または習慣に関する興味深いパターンを1つ教えてください。実際のデータを引用してください。1文のみ、日本語で。',
+    carousel_surprising: '最近のデータで驚きや予想外のことは何ですか？何がそれを珍しくするのか具体的に教えてください。1文のみ、日本語で。',
+    carousel_recommendation: '最近のデータの具体的なパターンに基づいて、実行可能な提案を1つください。実際のデータを引用してください。1文のみ、日本語で。',
+    carousel_weekly_patterns: '{{periodLabel}}のデータに基づいて、今週の具体的な活動や場所に関する興味深いパターンを1つ教えてください。実際の数字や日を引用してください。1文のみ、日本語で。',
+    carousel_weekly_surprising: '{{periodLabel}}を見て、今週何が驚きでしたか？どの活動、場所、指標が突出しているか具体的に教えてください。1文のみ、日本語で。',
+    carousel_weekly_recommendation: '{{periodLabel}}の具体的なパターンに基づいて、来週のための実行可能な提案を1つください。実際のデータを引用してください。1文のみ、日本語で。',
+    carousel_monthly_patterns: '{{periodLabel}}のデータに基づいて、今月の具体的な活動や習慣に関する興味深いパターンを1つ教えてください。実際の数字やトレンドを引用してください。1文のみ、日本語で。',
     carousel_monthly_surprising: '{{periodLabel}}を見て、今月気づかなかったかもしれない驚きのインサイトは何ですか？1文のみ、日本語で。',
-    carousel_monthly_recommendation: '{{periodLabel}}の行動に基づいて、来月改善するための提案を1つください。1文のみ、日本語で。',
-    carousel_quarterly_patterns: '{{periodLabel}}のデータに基づいて、この四半期の興味深いトレンドやパターンを1つ教えてください。1文のみ、日本語で。',
-    carousel_quarterly_surprising: '{{periodLabel}}を見て、この四半期の驚きの達成やインサイトは何ですか？1文のみ、日本語で。',
-    carousel_quarterly_recommendation: '{{periodLabel}}の進捗に基づいて、次の四半期のための戦略的な提案を1つください。1文のみ、日本語で。',
+    carousel_monthly_surprising: '{{periodLabel}}を見て、今月何が驚きでしたか？何が変わったか、何が突出しているか具体的に教えてください。1文のみ、日本語で。',
+    carousel_monthly_recommendation: '{{periodLabel}}の具体的なトレンドに基づいて、来月改善するための提案を1つください。実際のデータを引用してください。1文のみ、日本語で。',
+    carousel_quarterly_patterns: '{{periodLabel}}のデータに基づいて、この四半期の具体的な活動や習慣に関する興味深いトレンドを1つ教えてください。実際の数字を引用してください。1文のみ、日本語で。',
+    carousel_quarterly_surprising: '{{periodLabel}}を見て、この四半期で驚きの達成や変化は何ですか？具体的に教えてください。1文のみ、日本語で。',
+    carousel_quarterly_recommendation: '{{periodLabel}}の具体的なトレンドに基づいて、次の四半期のための戦略的な提案を1つください。実際のデータを引用してください。1文のみ、日本語で。',
     chat_system: `あなたはユーザーの健康、位置情報、音声データにアクセスできるパーソナルAIアシスタントです。ユーザーの個人データから以下のコンテキストを使用して質問に答えてください：
 
 {{context}}
@@ -1081,7 +1629,10 @@ Write the post:`,
 - 低活動の日でもユーザーが悪く感じないように
 - ハイライトと達成に焦点を当てる
 - 会話的でフレンドリーなトーンを保つ
-- 必ず日本語で回答`,
+- 必ず日本語で回答
+
+現在の日付：{{currentDate}}
+「今日」「昨日」「今週」などの相対的な時間参照を判断するために使用してください。`,
     daily_insight_prompt: `今日（{{date}}）の簡潔で魅力的なサマリーを作成してください。
 
 今日のデータ：
@@ -1235,9 +1786,25 @@ Write the post:`,
     life_feed_system: `あなたはユーザーの立場で（「私」）パーソナルなソーシャルメディア投稿を書くAIです。
 投稿は本物で、温かく、会話的に感じられるべきです - 友達と人生を共有するように。
 
+重要：実際のコンテンツが提供されます：
+- 📝 日記エントリーの実際のテキスト抜粋
+- 🎤 ボイスノートの実際の文字起こし
+- 📸 写真の説明内容
+
+この具体的なコンテンツを投稿に使ってください。実際のトピック、場所、瞬間を参照 - 数だけではなく。
+
+悪い例（数だけ）：
+- 「忙しい週だった！ボイスノート5件、写真3枚！」
+- 「いくつか考えを記録して、思い出を残した。」
+
+良い例（具体的内容を参照）：
+- 「今週：やっとあのパスタレシピをマスター、バドミントン絶好調、あの夕日ハイキングは最高だった。」
+- 「ゴールデンゲートの夕日は写真より実物がもっと綺麗だった。特別な景色ってある。」
+
 ルール：
 - 常に一人称（「私」「私の」）で書く
 - 投稿は1-3文、ツイートの長さ（280文字以下が望ましい）
+- 提供されたデータから具体的な内容を参照（トピック、場所、活動）
 - ポジティブでお祝いの気持ちで
 - 関連する絵文字を1-2個含める
 - 最後に関連するハッシュタグを2-3個追加
@@ -1245,29 +1812,42 @@ Write the post:`,
 - 人間らしく自然に聞こえるように
 - 日本語で回答`,
     life_feed_life_summary: `最近の活動をまとめたカジュアルな近況ツイートを書いてください。
-何をしてきたか、どれくらいアクティブ/忙しかったかに焦点を当てて。気分のトレンドがあれば、さりげなく取り入れて。
-例：「今週は最高！ジム5回、毎日12k歩、やっとあの新しいカフェに行けた。最近いい感じ。」
+
+重要：下に実際のコンテンツがあります - 日記、ボイスノート、写真から具体的な詳細を使って！
+何を書いたか、何を話したか、何を撮ったかを参照 - 数だけではなく。
+
+悪い例：「忙しい週だった！ボイスノート5件録音した。」
+良い例：「今週は最高！やっとあのパスタレシピをマスター、バドミントン絶好調、あの夕日ハイキングは最高だった。」
 
 私の最近のデータ：
 {{context}}
 
-投稿を書いてください（日本語で）：`,
-    life_feed_life_summary_detailed: `最近の活動から具体的な達成と統計を強調した、包括的な近況ツイートを書いてください。
-数字と具体的な成果を含めて。誇らしい振り返りのように感じさせて。
-例：「今週の振り返り：45,000歩、バドミントン3試合（2勝！）、新しいカフェ2軒発見、ジムで自己ベスト更新。データは嘘つかない - いい週だった！📊」
+投稿を書いてください（上の具体的な内容を参照、数だけではなく）：`,
+    life_feed_life_summary_detailed: `最近の活動から具体的な達成を強調した、包括的な近況ツイートを書いてください。
+
+重要：下の日記、ボイスノート、写真から実際のコンテンツを使って。
+具体的な瞬間と関連する統計を組み合わせて豊かな振り返りを。
+
+悪い例：「今週の振り返り：45,000歩、写真3枚撮影。」
+良い例：「今週の振り返り：ずっと練習してたあのパスタレシピをマスター、バドミントン3試合で2勝、ベイカービーチの夕日ハイキングは最高だった。合計45k歩も！📊」
 
 私の最近のデータ：
 {{context}}
 
-投稿を書いてください（日本語で）：`,
-    life_feed_life_summary_minimal: `最近の活動から一つの際立った瞬間やハイライトに焦点を当てた、短くパンチのある近況を書いてください。
-とても簡潔に - エッセンスを捉える一文だけ。
-例：「あの突発的な夕方のランニングがすべてを変えた。🌅」
+投稿を書いてください（具体的な内容と統計を組み合わせて）：`,
+    life_feed_life_summary_minimal: `最近のデータから一つの際立った瞬間に焦点を当てた、短くパンチのある近況を書いてください。
+
+重要：日記、ボイスノート、写真から最も面白い具体的な瞬間を選んで。
+一般的なフレーズは使わない - 私が記録した実際のトピック、場所、体験を参照。
+
+悪い例：「たくさんの素敵な思い出ができた週だった。」
+良い例：「ベイカービーチのあの夕日。🌅」
+良い例：「やっとあのパスタレシピをマスター。人生が変わった。🍝」
 
 私の最近のデータ：
 {{context}}
 
-投稿を書いてください（日本語で）：`,
+投稿を書いてください（コンテンツから一つの具体的な瞬間を選んで）：`,
     life_feed_milestone: `達成したばかりの個人的なマイルストーンについて、興奮した祝福ツイートを書いてください。
 誇りに思う本物の達成のように感じさせて。以前のマイルストーンの上に築いている場合は、その旅に言及して。
 例：「今年100回目のバドミントン！たまたま始めた趣味が、アクティブでいるための一番の方法になった。」
@@ -1435,6 +2015,206 @@ Write the post:`,
 
 投稿を書いてください（日本語で）：`,
 
+    // KeywordGenerator - Life Keywords generation
+    keyword_system: `You are a personal life analyst. Your job is to identify meaningful themes and patterns from a user's personal data and express them as memorable keywords.
+
+Guidelines:
+- Keywords should be 2-4 words, catchy and memorable
+- Use creative, evocative language that captures the essence of the theme
+- Descriptions should be 2-4 sentences, insightful and personal
+- Use second person ("You've been..." or "Your...")
+- Be positive and encouraging, but also honest
+- Focus on patterns, not individual events
+- Make observations feel like discoveries
+- Choose emojis that visually represent the theme well
+- The keyword should make the user smile or feel recognized — it should reflect something only they would understand
+- Reference specific activities, places, or time patterns when possible
+
+IMPORTANT — Avoid generic keywords:
+- BAD: "Active Lifestyle", "Daily Routine", "Busy Week", "Healthy Living", "On The Move"
+- GOOD: "Badminton Renaissance", "Tuesday Gym Ritual", "Sunset Park Walks", "3AM Coding Sessions"
+- The keyword must feel personal and specific, not like a stock phrase
+
+Examples of good keywords:
+- "Badminton Renaissance" (for increased sports activity at a specific venue)
+- "Morning Run Streak" (for consistent early exercise)
+- "Café Hopper Era" (for visiting many different cafés)
+- "New Horizons" (for exploring new places)
+- "Studio Nights" (for evening creative sessions)
+- "Weekend Warrior" (for intense weekend activity patterns)
+
+Always respond in valid JSON format.`,
+
+    keyword_weekly: `Analyze this cluster of data points from {{periodLabel}} and generate a meaningful keyword.
+
+Data points ({{dataPointCount}} total in this theme, representing {{dominancePercent}}% of all {{totalDataPoints}} data points this week, spread across {{uniqueDays}} different days):
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+Common themes identified: {{themes}}
+Dominant category: {{category}}
+
+Generate a keyword that captures this week's specific pattern. The keyword should:
+1. Be 2-4 words that are catchy and memorable
+2. Reference specific activities, places, or time patterns from the data — not generic phrases
+3. Feel personal and insightful, like something from the user's own diary
+
+BAD keywords: "Active Lifestyle", "Busy Week", "Healthy Living"
+GOOD keywords: "Badminton Comeback Week", "Morning Run Streak", "Late Night Coding"
+
+Also generate:
+- A 2-4 sentence description explaining why this pattern is meaningful
+- An emoji that best represents this theme
+
+Respond in JSON format:
+{
+  "keyword": "Your Keyword Here",
+  "description": "Your 2-4 sentence description explaining the pattern...",
+  "emoji": "🎯"
+}`,
+
+    keyword_monthly: `Analyze this month's data cluster from {{periodLabel}} and generate a meaningful keyword.
+
+This theme appears in {{dataPointCount}} data points this month ({{dominancePercent}}% of {{totalDataPoints}} total, spread across {{uniqueDays}} different days):
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+Identified themes: {{themes}}
+Category: {{category}}
+
+For monthly keywords, focus on:
+- Trends that persisted throughout the month
+- Notable changes from previous patterns
+- The overall story of this month in this category
+- Reference specific places, activities, or time patterns
+
+BAD keywords: "Active Month", "Health Focus Month", "Social Month"
+GOOD keywords: "Badminton Renaissance", "Evening Yoga Chapter", "Café Discovery Month"
+
+Generate:
+{
+  "keyword": "2-4 word memorable phrase",
+  "description": "2-4 sentences about why this month was notable for this theme",
+  "emoji": "single emoji"
+}`,
+
+    keyword_quarterly: `Analyze this quarter's dominant theme from {{periodLabel}}.
+
+This theme encompasses {{dataPointCount}} data points across the quarter ({{dominancePercent}}% of {{totalDataPoints}} total, spread across {{uniqueDays}} different days):
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+Key themes: {{themes}}
+Category: {{category}}
+
+For quarterly keywords, consider:
+- How this theme evolved over the 3 months
+- Whether it represents growth, consistency, or change
+- The bigger picture story of this quarter
+- Name specific activities, places, or habits that defined the quarter
+
+BAD keywords: "Active Quarter", "Productive Season", "Growth Period"
+GOOD keywords: "The Badminton Era", "Park Run Revolution", "Sunday Brunch Circuit"
+
+Generate a keyword that captures the quarter's narrative:
+{
+  "keyword": "2-4 word phrase capturing the quarter",
+  "description": "2-4 sentences providing quarterly perspective",
+  "emoji": "single emoji"
+}`,
+
+    keyword_yearly: `Analyze one of the major themes from {{periodLabel}}.
+
+This theme represents {{dataPointCount}} moments throughout the year ({{dominancePercent}}% of {{totalDataPoints}} total, spread across {{uniqueDays}} different days):
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+Major themes: {{themes}}
+Category: {{category}}
+
+For yearly keywords:
+- Identify what made this theme significant for the year
+- Consider how this reflects personal growth or interests
+- Frame it as a year-defining element
+- Use specific names and activities that make this keyword uniquely personal
+
+BAD keywords: "Year of Growth", "Active Year", "Social Butterfly"
+GOOD keywords: "The Badminton Comeback", "Marathon Training Arc", "Neighbourhood Explorer"
+
+Generate a keyword worthy of a year-in-review:
+{
+  "keyword": "2-4 word phrase defining this year's theme",
+  "description": "2-4 sentences summarizing the year's story with this theme",
+  "emoji": "single emoji"
+}`,
+
+    keyword_enhance: `The following keyword was generated but needs improvement:
+
+Current keyword: "{{currentKeyword}}"
+Current description: "{{currentDescription}}"
+Current emoji: {{currentEmoji}}
+
+Data it represents:
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+Please improve this keyword to be more:
+- Catchy and memorable
+- Personally meaningful
+- Insightful about the pattern
+
+Generate an improved version:
+{
+  "keyword": "improved 2-4 word phrase",
+  "description": "improved 2-4 sentence description",
+  "emoji": "better emoji choice"
+}`,
+
+    keyword_compare: `Compare these two time periods and generate a keyword about the change:
+
+Previous period ({{previousPeriodLabel}}):
+{{#each previousDataPoints}}
+- {{this.summary}} ({{this.type}})
+{{/each}}
+
+Current period ({{currentPeriodLabel}}):
+{{#each currentDataPoints}}
+- {{this.summary}} ({{this.type}})
+{{/each}}
+
+Generate a keyword that captures how things have changed:
+{
+  "keyword": "2-4 word phrase about the change",
+  "description": "2-4 sentences comparing the periods",
+  "emoji": "emoji representing change/growth/shift"
+}`,
+
+    // ContentSummaryService - コンテンツ要約サービス
+    content_summary: `この{{contentType}}コンテンツを{{maxWords}}語以内で要約してください。
+
+コンテンツ：
+"""
+{{content}}
+"""
+
+JSON形式で返してください：
+{
+  "summary": "重要な詳細とトーンを保持した簡潔な要約",
+  "keyTopics": ["トピック1", "トピック2"],
+  "mood": "positive|neutral|reflective"
+}
+
+ルール：
+- ユーザーの声と個性を維持する
+- 何をしたか、何を感じたか、何を経験したかに焦点を当てる
+- 関連する場合、具体的な場所、人物、活動を言及する
+- 感情的なトーンを保持する（興奮、思慮深さなど）`,
+
     // ChatSuggestions - チャット提案
     suggestion_diary_recent: '最近の日記に何を書きましたか？',
     suggestion_diary_mood: '最近のノートでどんな気分を表現しましたか？',
@@ -1470,25 +2250,33 @@ Write the post:`,
     carousel_system: `당신은 친근한 개인 데이터 분석가입니다. 사용자 데이터에서 매력적이고 개인화된 인사이트를 생성하세요.
 
 가이드라인:
-- 가능한 경우 구체적인 숫자와 데이터 사용
+- 구체적으로 — 데이터의 실제 활동, 장소, 시간, 숫자를 인용
 - 2인칭("당신")으로 사용자에게 말하기
 - 격려하고 긍정적인 태도 유지
 - 응답은 한 문장만
 - 인사이트에 맞는 이모지로 시작
 - 사용자가 데이터에 대해 나쁘게 느끼지 않도록
-- 반드시 한국어로 응답`,
-    carousel_patterns: '최근 활동과 패턴에 대한 흥미로운 인사이트 하나를 알려주세요. 한 문장만, 한국어로 응답해주세요.',
-    carousel_surprising: '제 데이터에서 제가 눈치채지 못했을 수도 있는 놀라운 것은 무엇인가요? 한 문장만, 한국어로 응답해주세요.',
-    carousel_recommendation: '최근 행동을 바탕으로 개인화된 추천 하나를 해주세요. 한 문장만, 한국어로 응답해주세요.',
-    carousel_weekly_patterns: '{{periodLabel}} 데이터를 바탕으로 이번 주 활동에서 발견한 흥미로운 패턴 하나를 알려주세요. 한 문장만, 한국어로.',
-    carousel_weekly_surprising: '{{periodLabel}}을 보면서 이번 주에 제가 눈치채지 못했을 수도 있는 놀라운 것은 무엇인가요? 한 문장만, 한국어로.',
-    carousel_weekly_recommendation: '{{periodLabel}} 행동을 바탕으로 다음 주를 위한 실행 가능한 추천 하나를 해주세요. 한 문장만, 한국어로.',
-    carousel_monthly_patterns: '{{periodLabel}} 데이터를 바탕으로 이번 달 활동에서 발견한 흥미로운 패턴 하나를 알려주세요. 한 문장만, 한국어로.',
+- 인사이트는 사용자만이 이해할 수 있는 개인적인 특성을 반영해야 함
+- 반드시 한국어로 응답
+
+다음 패턴을 피하세요:
+- "최근에 활동적이네요"나 "계속 힘내세요" 같은 일반적인 표현은 절대 사용하지 마세요
+- 누구에게나 해당되는 모호한 인사이트는 절대 제공하지 마세요
+- 데이터의 구체적인 활동, 장소, 시간, 지표를 반드시 언급하세요
+- 나쁜 예: "이번 주 정말 활동적이었어요!" 좋은 예: "이번 주 배드민턴을 3번 치셨어요 — 가장 활발한 운동이네요!"`,
+    carousel_patterns: '최근 데이터를 바탕으로 구체적인 활동, 장소 또는 습관에 대한 흥미로운 패턴 하나를 알려주세요. 실제 데이터를 인용해주세요. 한 문장만, 한국어로.',
+    carousel_surprising: '최근 데이터에서 놀랍거나 예상치 못한 것은 무엇인가요? 무엇이 그것을 특이하게 만드는지 구체적으로 알려주세요. 한 문장만, 한국어로.',
+    carousel_recommendation: '최근 데이터의 구체적인 패턴을 바탕으로 실행 가능한 추천 하나를 해주세요. 실제 데이터를 인용해주세요. 한 문장만, 한국어로.',
+    carousel_weekly_patterns: '{{periodLabel}} 데이터를 바탕으로 이번 주 구체적인 활동이나 장소에 대한 흥미로운 패턴 하나를 알려주세요. 실제 숫자나 날짜를 인용해주세요. 한 문장만, 한국어로.',
+    carousel_weekly_surprising: '{{periodLabel}}을 보면서 이번 주 무엇이 놀라웠나요? 어떤 활동, 장소, 지표가 돋보이는지 구체적으로 알려주세요. 한 문장만, 한국어로.',
+    carousel_weekly_recommendation: '{{periodLabel}}의 구체적인 패턴을 바탕으로 다음 주를 위한 실행 가능한 추천 하나를 해주세요. 실제 데이터를 인용해주세요. 한 문장만, 한국어로.',
+    carousel_monthly_patterns: '{{periodLabel}} 데이터를 바탕으로 이번 달 구체적인 활동이나 습관에 대한 흥미로운 패턴 하나를 알려주세요. 실제 숫자나 트렌드를 인용해주세요. 한 문장만, 한국어로.',
     carousel_monthly_surprising: '{{periodLabel}}을 보면서 이번 달에 제가 눈치채지 못했을 수도 있는 놀라운 인사이트는 무엇인가요? 한 문장만, 한국어로.',
-    carousel_monthly_recommendation: '{{periodLabel}} 행동을 바탕으로 다음 달 개선을 위한 추천 하나를 해주세요. 한 문장만, 한국어로.',
-    carousel_quarterly_patterns: '{{periodLabel}} 데이터를 바탕으로 이번 분기의 흥미로운 트렌드나 패턴 하나를 알려주세요. 한 문장만, 한국어로.',
-    carousel_quarterly_surprising: '{{periodLabel}}을 보면서 이번 분기의 놀라운 성과나 인사이트는 무엇인가요? 한 문장만, 한국어로.',
-    carousel_quarterly_recommendation: '{{periodLabel}} 진행 상황을 바탕으로 다음 분기를 위한 전략적 추천 하나를 해주세요. 한 문장만, 한국어로.',
+    carousel_monthly_surprising: '{{periodLabel}}을 보면서 이번 달 무엇이 놀라웠나요? 무엇이 변했거나 돋보이는지 구체적으로 알려주세요. 한 문장만, 한국어로.',
+    carousel_monthly_recommendation: '{{periodLabel}}의 구체적인 트렌드를 바탕으로 다음 달 개선을 위한 추천 하나를 해주세요. 실제 데이터를 인용해주세요. 한 문장만, 한국어로.',
+    carousel_quarterly_patterns: '{{periodLabel}} 데이터를 바탕으로 이번 분기 구체적인 활동이나 습관에 대한 흥미로운 트렌드 하나를 알려주세요. 실제 숫자를 인용해주세요. 한 문장만, 한국어로.',
+    carousel_quarterly_surprising: '{{periodLabel}}을 보면서 이번 분기에 놀라운 성과나 변화는 무엇인가요? 구체적으로 알려주세요. 한 문장만, 한국어로.',
+    carousel_quarterly_recommendation: '{{periodLabel}}의 구체적인 트렌드를 바탕으로 다음 분기를 위한 전략적 추천 하나를 해주세요. 실제 데이터를 인용해주세요. 한 문장만, 한국어로.',
     chat_system: `당신은 사용자의 건강, 위치, 음성 데이터에 접근할 수 있는 개인 AI 어시스턴트입니다. 사용자의 개인 데이터에서 다음 컨텍스트를 사용하여 질문에 답하세요:
 
 {{context}}
@@ -1508,7 +2296,10 @@ Write the post:`,
 - 낮은 활동 일에도 사용자가 나쁘게 느끼지 않도록
 - 하이라이트와 성취에 집중
 - 대화체이고 친근한 톤 유지
-- 반드시 한국어로 응답`,
+- 반드시 한국어로 응답
+
+현재 날짜: {{currentDate}}
+"오늘", "어제", "이번 주" 등의 상대적 시간 참조를 결정하는 데 사용하세요.`,
     daily_insight_prompt: `오늘({{date}})의 간략하고 매력적인 요약을 작성해주세요.
 
 오늘 데이터:
@@ -1862,6 +2653,206 @@ Write the post:`,
 
 게시물 작성 (한국어로):`,
 
+    // KeywordGenerator - Life Keywords generation
+    keyword_system: `You are a personal life analyst. Your job is to identify meaningful themes and patterns from a user's personal data and express them as memorable keywords.
+
+Guidelines:
+- Keywords should be 2-4 words, catchy and memorable
+- Use creative, evocative language that captures the essence of the theme
+- Descriptions should be 2-4 sentences, insightful and personal
+- Use second person ("You've been..." or "Your...")
+- Be positive and encouraging, but also honest
+- Focus on patterns, not individual events
+- Make observations feel like discoveries
+- Choose emojis that visually represent the theme well
+- The keyword should make the user smile or feel recognized — it should reflect something only they would understand
+- Reference specific activities, places, or time patterns when possible
+
+IMPORTANT — Avoid generic keywords:
+- BAD: "Active Lifestyle", "Daily Routine", "Busy Week", "Healthy Living", "On The Move"
+- GOOD: "Badminton Renaissance", "Tuesday Gym Ritual", "Sunset Park Walks", "3AM Coding Sessions"
+- The keyword must feel personal and specific, not like a stock phrase
+
+Examples of good keywords:
+- "Badminton Renaissance" (for increased sports activity at a specific venue)
+- "Morning Run Streak" (for consistent early exercise)
+- "Café Hopper Era" (for visiting many different cafés)
+- "New Horizons" (for exploring new places)
+- "Studio Nights" (for evening creative sessions)
+- "Weekend Warrior" (for intense weekend activity patterns)
+
+Always respond in valid JSON format.`,
+
+    keyword_weekly: `Analyze this cluster of data points from {{periodLabel}} and generate a meaningful keyword.
+
+Data points ({{dataPointCount}} total in this theme, representing {{dominancePercent}}% of all {{totalDataPoints}} data points this week, spread across {{uniqueDays}} different days):
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+Common themes identified: {{themes}}
+Dominant category: {{category}}
+
+Generate a keyword that captures this week's specific pattern. The keyword should:
+1. Be 2-4 words that are catchy and memorable
+2. Reference specific activities, places, or time patterns from the data — not generic phrases
+3. Feel personal and insightful, like something from the user's own diary
+
+BAD keywords: "Active Lifestyle", "Busy Week", "Healthy Living"
+GOOD keywords: "Badminton Comeback Week", "Morning Run Streak", "Late Night Coding"
+
+Also generate:
+- A 2-4 sentence description explaining why this pattern is meaningful
+- An emoji that best represents this theme
+
+Respond in JSON format:
+{
+  "keyword": "Your Keyword Here",
+  "description": "Your 2-4 sentence description explaining the pattern...",
+  "emoji": "🎯"
+}`,
+
+    keyword_monthly: `Analyze this month's data cluster from {{periodLabel}} and generate a meaningful keyword.
+
+This theme appears in {{dataPointCount}} data points this month ({{dominancePercent}}% of {{totalDataPoints}} total, spread across {{uniqueDays}} different days):
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+Identified themes: {{themes}}
+Category: {{category}}
+
+For monthly keywords, focus on:
+- Trends that persisted throughout the month
+- Notable changes from previous patterns
+- The overall story of this month in this category
+- Reference specific places, activities, or time patterns
+
+BAD keywords: "Active Month", "Health Focus Month", "Social Month"
+GOOD keywords: "Badminton Renaissance", "Evening Yoga Chapter", "Café Discovery Month"
+
+Generate:
+{
+  "keyword": "2-4 word memorable phrase",
+  "description": "2-4 sentences about why this month was notable for this theme",
+  "emoji": "single emoji"
+}`,
+
+    keyword_quarterly: `Analyze this quarter's dominant theme from {{periodLabel}}.
+
+This theme encompasses {{dataPointCount}} data points across the quarter ({{dominancePercent}}% of {{totalDataPoints}} total, spread across {{uniqueDays}} different days):
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+Key themes: {{themes}}
+Category: {{category}}
+
+For quarterly keywords, consider:
+- How this theme evolved over the 3 months
+- Whether it represents growth, consistency, or change
+- The bigger picture story of this quarter
+- Name specific activities, places, or habits that defined the quarter
+
+BAD keywords: "Active Quarter", "Productive Season", "Growth Period"
+GOOD keywords: "The Badminton Era", "Park Run Revolution", "Sunday Brunch Circuit"
+
+Generate a keyword that captures the quarter's narrative:
+{
+  "keyword": "2-4 word phrase capturing the quarter",
+  "description": "2-4 sentences providing quarterly perspective",
+  "emoji": "single emoji"
+}`,
+
+    keyword_yearly: `Analyze one of the major themes from {{periodLabel}}.
+
+This theme represents {{dataPointCount}} moments throughout the year ({{dominancePercent}}% of {{totalDataPoints}} total, spread across {{uniqueDays}} different days):
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+Major themes: {{themes}}
+Category: {{category}}
+
+For yearly keywords:
+- Identify what made this theme significant for the year
+- Consider how this reflects personal growth or interests
+- Frame it as a year-defining element
+- Use specific names and activities that make this keyword uniquely personal
+
+BAD keywords: "Year of Growth", "Active Year", "Social Butterfly"
+GOOD keywords: "The Badminton Comeback", "Marathon Training Arc", "Neighbourhood Explorer"
+
+Generate a keyword worthy of a year-in-review:
+{
+  "keyword": "2-4 word phrase defining this year's theme",
+  "description": "2-4 sentences summarizing the year's story with this theme",
+  "emoji": "single emoji"
+}`,
+
+    keyword_enhance: `The following keyword was generated but needs improvement:
+
+Current keyword: "{{currentKeyword}}"
+Current description: "{{currentDescription}}"
+Current emoji: {{currentEmoji}}
+
+Data it represents:
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+Please improve this keyword to be more:
+- Catchy and memorable
+- Personally meaningful
+- Insightful about the pattern
+
+Generate an improved version:
+{
+  "keyword": "improved 2-4 word phrase",
+  "description": "improved 2-4 sentence description",
+  "emoji": "better emoji choice"
+}`,
+
+    keyword_compare: `Compare these two time periods and generate a keyword about the change:
+
+Previous period ({{previousPeriodLabel}}):
+{{#each previousDataPoints}}
+- {{this.summary}} ({{this.type}})
+{{/each}}
+
+Current period ({{currentPeriodLabel}}):
+{{#each currentDataPoints}}
+- {{this.summary}} ({{this.type}})
+{{/each}}
+
+Generate a keyword that captures how things have changed:
+{
+  "keyword": "2-4 word phrase about the change",
+  "description": "2-4 sentences comparing the periods",
+  "emoji": "emoji representing change/growth/shift"
+}`,
+
+    // ContentSummaryService - 콘텐츠 요약 서비스
+    content_summary: `이 {{contentType}} 콘텐츠를 {{maxWords}}단어 이내로 요약해주세요.
+
+콘텐츠:
+"""
+{{content}}
+"""
+
+JSON 형식으로 반환:
+{
+  "summary": "핵심 내용과 톤을 보존한 간결한 요약",
+  "keyTopics": ["주제1", "주제2"],
+  "mood": "positive|neutral|reflective"
+}
+
+규칙:
+- 사용자의 목소리와 개성 유지
+- 무엇을 했는지, 무엇을 느꼈는지, 무엇을 경험했는지에 집중
+- 관련이 있다면 구체적인 장소, 사람, 활동 언급
+- 감정적 톤 보존 (신남, 사색적 등)`,
+
     // ChatSuggestions - 채팅 제안
     suggestion_diary_recent: '최근 일기에 뭘 썼어요?',
     suggestion_diary_mood: '최근 노트에서 어떤 감정을 표현했나요?',
@@ -1897,25 +2888,32 @@ Write the post:`,
     carousel_system: `Eres un analista de datos personales amigable. Genera insights personalizados y atractivos a partir de los datos del usuario.
 
 Directrices:
-- Sé específico con números y datos cuando estén disponibles
+- Sé específico — menciona actividades, lugares, horarios o números reales de los datos
 - Usa la segunda persona ("tú") para dirigirte al usuario
 - Sé alentador y positivo
 - Mantén las respuestas en UNA sola oración
 - Comienza con un emoji que coincida con el insight
 - Nunca hagas que el usuario se sienta mal por sus datos
-- Responde siempre en español`,
-    carousel_patterns: 'Dime un insight interesante sobre mis actividades y patrones recientes. Solo una oración, en español.',
-    carousel_surprising: '¿Qué cosa sorprendente hay en mis datos que quizás no haya notado? Solo una oración, en español.',
-    carousel_recommendation: 'Dame una recomendación personalizada basada en mi comportamiento reciente. Solo una oración, en español.',
-    carousel_weekly_patterns: 'Basándote en mis datos de {{periodLabel}}, dime un patrón interesante que notaste sobre mis actividades esta semana. Solo una oración, en español.',
-    carousel_weekly_surprising: 'Mirando {{periodLabel}}, ¿qué cosa sorprendente de mi semana podría no haber notado? Solo una oración, en español.',
-    carousel_weekly_recommendation: 'Basándote en mi comportamiento durante {{periodLabel}}, dame una recomendación práctica para la próxima semana. Solo una oración, en español.',
-    carousel_monthly_patterns: 'Basándote en mis datos de {{periodLabel}}, dime un patrón interesante que notaste sobre mis actividades este mes. Solo una oración, en español.',
-    carousel_monthly_surprising: 'Mirando {{periodLabel}}, ¿qué insight sorprendente de mi mes podría no haber notado? Solo una oración, en español.',
-    carousel_monthly_recommendation: 'Basándote en mi comportamiento durante {{periodLabel}}, dame una recomendación para mejorar el próximo mes. Solo una oración, en español.',
-    carousel_quarterly_patterns: 'Basándote en mis datos de {{periodLabel}}, dime una tendencia o patrón interesante de este trimestre. Solo una oración, en español.',
-    carousel_quarterly_surprising: 'Mirando {{periodLabel}}, ¿qué logro o insight sorprendente hay de este trimestre? Solo una oración, en español.',
-    carousel_quarterly_recommendation: 'Basándote en mi progreso durante {{periodLabel}}, dame una recomendación estratégica para el próximo trimestre. Solo una oración, en español.',
+- El insight debe hacer sonreír al usuario — debe reflejar algo personal que solo ellos entenderían
+- Responde siempre en español
+
+Evita estos anti-patrones:
+- NUNCA digas cosas genéricas como "Has estado activo" o "Sigue así"
+- NUNCA des insights vagos que podrían aplicarse a cualquiera
+- SIEMPRE menciona una actividad, lugar, tiempo o métrica específica de los datos
+- MAL: "¡Has estado muy activo esta semana!" BIEN: "¡Jugaste bádminton 3 veces esta semana — tu deporte más activo!"`,
+    carousel_patterns: 'Basándote en mis datos recientes, dime un patrón interesante sobre una actividad, lugar o hábito específico. Referencia datos reales. Solo una oración, en español.',
+    carousel_surprising: '¿Qué cosa sorprendente o inesperada hay en mis datos recientes? Sé específico sobre qué lo hace inusual. Solo una oración, en español.',
+    carousel_recommendation: 'Basándote en un patrón específico de mis datos recientes, dame una recomendación práctica. Referencia los datos reales. Solo una oración, en español.',
+    carousel_weekly_patterns: 'Basándote en mis datos de {{periodLabel}}, dime un patrón interesante sobre una actividad o lugar específico esta semana. Referencia números o días reales. Solo una oración, en español.',
+    carousel_weekly_surprising: 'Mirando {{periodLabel}}, ¿qué cosa sorprendente hay de mi semana? Sé específico sobre qué actividad, lugar o métrica destaca. Solo una oración, en español.',
+    carousel_weekly_recommendation: 'Basándote en un patrón específico de {{periodLabel}}, dame una recomendación práctica para la próxima semana. Referencia los datos reales. Solo una oración, en español.',
+    carousel_monthly_patterns: 'Basándote en mis datos de {{periodLabel}}, dime un patrón interesante sobre una actividad o hábito específico este mes. Referencia números o tendencias reales. Solo una oración, en español.',
+    carousel_monthly_surprising: 'Mirando {{periodLabel}}, ¿qué insight sorprendente hay de mi mes? Sé específico sobre qué cambió o destacó. Solo una oración, en español.',
+    carousel_monthly_recommendation: 'Basándote en una tendencia específica de {{periodLabel}}, dame una recomendación para mejorar el próximo mes. Referencia los datos reales. Solo una oración, en español.',
+    carousel_quarterly_patterns: 'Basándote en mis datos de {{periodLabel}}, dime una tendencia interesante sobre una actividad o hábito específico este trimestre. Referencia números reales. Solo una oración, en español.',
+    carousel_quarterly_surprising: 'Mirando {{periodLabel}}, ¿qué logro o cambio sorprendente hay de este trimestre? Sé específico. Solo una oración, en español.',
+    carousel_quarterly_recommendation: 'Basándote en una tendencia específica de {{periodLabel}}, dame una recomendación estratégica para el próximo trimestre. Referencia los datos reales. Solo una oración, en español.',
     chat_system: `Eres un asistente personal de IA con acceso a los datos de salud, ubicación y voz del usuario. Usa el siguiente contexto de los datos personales del usuario para responder su pregunta:
 
 {{context}}
@@ -1935,7 +2933,10 @@ Directrices:
 - Nunca hagas que el usuario se sienta mal por días de baja actividad
 - Enfócate en los aspectos destacados y logros
 - Mantén un tono conversacional y amigable
-- Responde siempre en español`,
+- Responde siempre en español
+
+Fecha actual: {{currentDate}}
+Usa esto para determinar referencias temporales relativas como "hoy", "ayer", "esta semana", etc.`,
     daily_insight_prompt: `Crea un resumen breve y atractivo de mi día de hoy ({{date}}).
 
 Mis datos de hoy:
@@ -2289,6 +3290,206 @@ Mis datos de correlación:
 
 Escribe la publicación (en español):`,
 
+    // KeywordGenerator - Life Keywords generation
+    keyword_system: `You are a personal life analyst. Your job is to identify meaningful themes and patterns from a user's personal data and express them as memorable keywords.
+
+Guidelines:
+- Keywords should be 2-4 words, catchy and memorable
+- Use creative, evocative language that captures the essence of the theme
+- Descriptions should be 2-4 sentences, insightful and personal
+- Use second person ("You've been..." or "Your...")
+- Be positive and encouraging, but also honest
+- Focus on patterns, not individual events
+- Make observations feel like discoveries
+- Choose emojis that visually represent the theme well
+- The keyword should make the user smile or feel recognized — it should reflect something only they would understand
+- Reference specific activities, places, or time patterns when possible
+
+IMPORTANT — Avoid generic keywords:
+- BAD: "Active Lifestyle", "Daily Routine", "Busy Week", "Healthy Living", "On The Move"
+- GOOD: "Badminton Renaissance", "Tuesday Gym Ritual", "Sunset Park Walks", "3AM Coding Sessions"
+- The keyword must feel personal and specific, not like a stock phrase
+
+Examples of good keywords:
+- "Badminton Renaissance" (for increased sports activity at a specific venue)
+- "Morning Run Streak" (for consistent early exercise)
+- "Café Hopper Era" (for visiting many different cafés)
+- "New Horizons" (for exploring new places)
+- "Studio Nights" (for evening creative sessions)
+- "Weekend Warrior" (for intense weekend activity patterns)
+
+Always respond in valid JSON format.`,
+
+    keyword_weekly: `Analyze this cluster of data points from {{periodLabel}} and generate a meaningful keyword.
+
+Data points ({{dataPointCount}} total in this theme, representing {{dominancePercent}}% of all {{totalDataPoints}} data points this week, spread across {{uniqueDays}} different days):
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+Common themes identified: {{themes}}
+Dominant category: {{category}}
+
+Generate a keyword that captures this week's specific pattern. The keyword should:
+1. Be 2-4 words that are catchy and memorable
+2. Reference specific activities, places, or time patterns from the data — not generic phrases
+3. Feel personal and insightful, like something from the user's own diary
+
+BAD keywords: "Active Lifestyle", "Busy Week", "Healthy Living"
+GOOD keywords: "Badminton Comeback Week", "Morning Run Streak", "Late Night Coding"
+
+Also generate:
+- A 2-4 sentence description explaining why this pattern is meaningful
+- An emoji that best represents this theme
+
+Respond in JSON format:
+{
+  "keyword": "Your Keyword Here",
+  "description": "Your 2-4 sentence description explaining the pattern...",
+  "emoji": "🎯"
+}`,
+
+    keyword_monthly: `Analyze this month's data cluster from {{periodLabel}} and generate a meaningful keyword.
+
+This theme appears in {{dataPointCount}} data points this month ({{dominancePercent}}% of {{totalDataPoints}} total, spread across {{uniqueDays}} different days):
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+Identified themes: {{themes}}
+Category: {{category}}
+
+For monthly keywords, focus on:
+- Trends that persisted throughout the month
+- Notable changes from previous patterns
+- The overall story of this month in this category
+- Reference specific places, activities, or time patterns
+
+BAD keywords: "Active Month", "Health Focus Month", "Social Month"
+GOOD keywords: "Badminton Renaissance", "Evening Yoga Chapter", "Café Discovery Month"
+
+Generate:
+{
+  "keyword": "2-4 word memorable phrase",
+  "description": "2-4 sentences about why this month was notable for this theme",
+  "emoji": "single emoji"
+}`,
+
+    keyword_quarterly: `Analyze this quarter's dominant theme from {{periodLabel}}.
+
+This theme encompasses {{dataPointCount}} data points across the quarter ({{dominancePercent}}% of {{totalDataPoints}} total, spread across {{uniqueDays}} different days):
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+Key themes: {{themes}}
+Category: {{category}}
+
+For quarterly keywords, consider:
+- How this theme evolved over the 3 months
+- Whether it represents growth, consistency, or change
+- The bigger picture story of this quarter
+- Name specific activities, places, or habits that defined the quarter
+
+BAD keywords: "Active Quarter", "Productive Season", "Growth Period"
+GOOD keywords: "The Badminton Era", "Park Run Revolution", "Sunday Brunch Circuit"
+
+Generate a keyword that captures the quarter's narrative:
+{
+  "keyword": "2-4 word phrase capturing the quarter",
+  "description": "2-4 sentences providing quarterly perspective",
+  "emoji": "single emoji"
+}`,
+
+    keyword_yearly: `Analyze one of the major themes from {{periodLabel}}.
+
+This theme represents {{dataPointCount}} moments throughout the year ({{dominancePercent}}% of {{totalDataPoints}} total, spread across {{uniqueDays}} different days):
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+Major themes: {{themes}}
+Category: {{category}}
+
+For yearly keywords:
+- Identify what made this theme significant for the year
+- Consider how this reflects personal growth or interests
+- Frame it as a year-defining element
+- Use specific names and activities that make this keyword uniquely personal
+
+BAD keywords: "Year of Growth", "Active Year", "Social Butterfly"
+GOOD keywords: "The Badminton Comeback", "Marathon Training Arc", "Neighbourhood Explorer"
+
+Generate a keyword worthy of a year-in-review:
+{
+  "keyword": "2-4 word phrase defining this year's theme",
+  "description": "2-4 sentences summarizing the year's story with this theme",
+  "emoji": "single emoji"
+}`,
+
+    keyword_enhance: `The following keyword was generated but needs improvement:
+
+Current keyword: "{{currentKeyword}}"
+Current description: "{{currentDescription}}"
+Current emoji: {{currentEmoji}}
+
+Data it represents:
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+Please improve this keyword to be more:
+- Catchy and memorable
+- Personally meaningful
+- Insightful about the pattern
+
+Generate an improved version:
+{
+  "keyword": "improved 2-4 word phrase",
+  "description": "improved 2-4 sentence description",
+  "emoji": "better emoji choice"
+}`,
+
+    keyword_compare: `Compare these two time periods and generate a keyword about the change:
+
+Previous period ({{previousPeriodLabel}}):
+{{#each previousDataPoints}}
+- {{this.summary}} ({{this.type}})
+{{/each}}
+
+Current period ({{currentPeriodLabel}}):
+{{#each currentDataPoints}}
+- {{this.summary}} ({{this.type}})
+{{/each}}
+
+Generate a keyword that captures how things have changed:
+{
+  "keyword": "2-4 word phrase about the change",
+  "description": "2-4 sentences comparing the periods",
+  "emoji": "emoji representing change/growth/shift"
+}`,
+
+    // ContentSummaryService - Servicio de resumen de contenido
+    content_summary: `Resume este contenido de {{contentType}} en {{maxWords}} palabras o menos.
+
+Contenido:
+"""
+{{content}}
+"""
+
+Devuelve JSON:
+{
+  "summary": "Un resumen conciso que preserva los detalles clave y el tono",
+  "keyTopics": ["tema1", "tema2"],
+  "mood": "positive|neutral|reflective"
+}
+
+Reglas:
+- Mantén la voz y personalidad del usuario
+- Enfócate en lo que HICIERON, SINTIERON o EXPERIMENTARON
+- Menciona lugares, personas o actividades específicas si son relevantes
+- Preserva el tono emocional (emocionado, reflexivo, etc.)`,
+
     // ChatSuggestions - Sugerencias de chat
     suggestion_diary_recent: '¿Qué he escrito recientemente en mi diario?',
     suggestion_diary_mood: '¿Qué estados de ánimo he expresado en mis notas recientes?',
@@ -2324,25 +3525,32 @@ Escribe la publicación (en español):`,
     carousel_system: `Vous êtes un analyste de données personnelles amical. Générez des insights engageants et personnalisés à partir des données de l'utilisateur.
 
 Directives:
-- Soyez précis avec les chiffres et les données quand disponibles
+- Soyez précis — mentionnez les activités, lieux, horaires ou chiffres réels des données
 - Utilisez la deuxième personne ("vous") pour vous adresser à l'utilisateur
 - Soyez encourageant et positif
 - Gardez les réponses à UNE seule phrase
 - Commencez par un emoji qui correspond à l'insight
 - Ne faites jamais sentir mal l'utilisateur à propos de ses données
-- Répondez toujours en français`,
-    carousel_patterns: 'Dites-moi un insight intéressant sur mes activités et mes habitudes récentes. Une seule phrase, en français.',
-    carousel_surprising: 'Qu\'y a-t-il de surprenant dans mes données que je n\'aurais peut-être pas remarqué? Une seule phrase, en français.',
-    carousel_recommendation: 'Donnez-moi une recommandation personnalisée basée sur mon comportement récent. Une seule phrase, en français.',
-    carousel_weekly_patterns: 'Basé sur mes données de {{periodLabel}}, dites-moi un pattern intéressant que vous avez remarqué dans mes activités cette semaine. Une seule phrase, en français.',
-    carousel_weekly_surprising: 'En regardant {{periodLabel}}, qu\'y a-t-il de surprenant dans ma semaine que je n\'aurais peut-être pas remarqué? Une seule phrase, en français.',
-    carousel_weekly_recommendation: 'Basé sur mon comportement pendant {{periodLabel}}, donnez-moi une recommandation pratique pour la semaine prochaine. Une seule phrase, en français.',
-    carousel_monthly_patterns: 'Basé sur mes données de {{periodLabel}}, dites-moi un pattern intéressant que vous avez remarqué dans mes activités ce mois-ci. Une seule phrase, en français.',
-    carousel_monthly_surprising: 'En regardant {{periodLabel}}, quel insight surprenant de mon mois aurais-je pu manquer? Une seule phrase, en français.',
-    carousel_monthly_recommendation: 'Basé sur mon comportement pendant {{periodLabel}}, donnez-moi une recommandation pour améliorer le mois prochain. Une seule phrase, en français.',
-    carousel_quarterly_patterns: 'Basé sur mes données de {{periodLabel}}, dites-moi une tendance ou un pattern intéressant de ce trimestre. Une seule phrase, en français.',
-    carousel_quarterly_surprising: 'En regardant {{periodLabel}}, quelle réalisation ou insight surprenant y a-t-il de ce trimestre? Une seule phrase, en français.',
-    carousel_quarterly_recommendation: 'Basé sur mes progrès pendant {{periodLabel}}, donnez-moi une recommandation stratégique pour le prochain trimestre. Une seule phrase, en français.',
+- L'insight doit faire sourire l'utilisateur — il doit refléter quelque chose de personnel
+- Répondez toujours en français
+
+Évitez ces anti-patterns:
+- NE dites JAMAIS des choses génériques comme "Vous avez été actif" ou "Continuez comme ça"
+- NE donnez JAMAIS des insights vagues qui pourraient s'appliquer à n'importe qui
+- Mentionnez TOUJOURS une activité, lieu, moment ou métrique spécifique des données
+- MAUVAIS: "Vous avez été très actif cette semaine!" BON: "Vous avez joué au badminton 3 fois cette semaine — votre sport le plus actif!"`,
+    carousel_patterns: 'Basé sur mes données récentes, dites-moi un pattern intéressant sur une activité, lieu ou habitude spécifique. Référencez les données réelles. Une seule phrase, en français.',
+    carousel_surprising: 'Qu\'y a-t-il de surprenant ou inattendu dans mes données récentes? Soyez précis sur ce qui le rend inhabituel. Une seule phrase, en français.',
+    carousel_recommendation: 'Basé sur un pattern spécifique de mes données récentes, donnez-moi une recommandation pratique. Référencez les données réelles. Une seule phrase, en français.',
+    carousel_weekly_patterns: 'Basé sur mes données de {{periodLabel}}, dites-moi un pattern intéressant sur une activité ou lieu spécifique cette semaine. Référencez les chiffres ou jours réels. Une seule phrase, en français.',
+    carousel_weekly_surprising: 'En regardant {{periodLabel}}, qu\'y a-t-il de surprenant dans ma semaine? Soyez précis sur quelle activité, lieu ou métrique se démarque. Une seule phrase, en français.',
+    carousel_weekly_recommendation: 'Basé sur un pattern spécifique de {{periodLabel}}, donnez-moi une recommandation pratique pour la semaine prochaine. Référencez les données réelles. Une seule phrase, en français.',
+    carousel_monthly_patterns: 'Basé sur mes données de {{periodLabel}}, dites-moi un pattern intéressant sur une activité ou habitude spécifique ce mois-ci. Référencez les chiffres ou tendances réels. Une seule phrase, en français.',
+    carousel_monthly_surprising: 'En regardant {{periodLabel}}, quel insight surprenant y a-t-il de mon mois? Soyez précis sur ce qui a changé ou s\'est démarqué. Une seule phrase, en français.',
+    carousel_monthly_recommendation: 'Basé sur une tendance spécifique de {{periodLabel}}, donnez-moi une recommandation pour améliorer le mois prochain. Référencez les données réelles. Une seule phrase, en français.',
+    carousel_quarterly_patterns: 'Basé sur mes données de {{periodLabel}}, dites-moi une tendance intéressante sur une activité ou habitude spécifique ce trimestre. Référencez les chiffres réels. Une seule phrase, en français.',
+    carousel_quarterly_surprising: 'En regardant {{periodLabel}}, quelle réalisation ou changement surprenant y a-t-il de ce trimestre? Soyez précis. Une seule phrase, en français.',
+    carousel_quarterly_recommendation: 'Basé sur une tendance spécifique de {{periodLabel}}, donnez-moi une recommandation stratégique pour le prochain trimestre. Référencez les données réelles. Une seule phrase, en français.',
     chat_system: `Vous êtes un assistant IA personnel avec accès aux données de santé, de localisation et vocales de l'utilisateur. Utilisez le contexte suivant des données personnelles de l'utilisateur pour répondre à sa question:
 
 {{context}}
@@ -2362,7 +3570,10 @@ Directives:
 - Ne faites jamais sentir mal l'utilisateur pour les jours de faible activité
 - Concentrez-vous sur les points forts et les accomplissements
 - Gardez un ton conversationnel et amical
-- Répondez toujours en français`,
+- Répondez toujours en français
+
+Date actuelle : {{currentDate}}
+Utilisez ceci pour déterminer les références temporelles relatives comme « aujourd'hui », « hier », « cette semaine », etc.`,
     daily_insight_prompt: `Créez un résumé bref et engageant de ma journée d'aujourd'hui ({{date}}).
 
 Mes données d'aujourd'hui:
@@ -2716,6 +3927,206 @@ Mes données de corrélation :
 
 Écris la publication (en français) :`,
 
+    // KeywordGenerator - Life Keywords generation
+    keyword_system: `You are a personal life analyst. Your job is to identify meaningful themes and patterns from a user's personal data and express them as memorable keywords.
+
+Guidelines:
+- Keywords should be 2-4 words, catchy and memorable
+- Use creative, evocative language that captures the essence of the theme
+- Descriptions should be 2-4 sentences, insightful and personal
+- Use second person ("You've been..." or "Your...")
+- Be positive and encouraging, but also honest
+- Focus on patterns, not individual events
+- Make observations feel like discoveries
+- Choose emojis that visually represent the theme well
+- The keyword should make the user smile or feel recognized — it should reflect something only they would understand
+- Reference specific activities, places, or time patterns when possible
+
+IMPORTANT — Avoid generic keywords:
+- BAD: "Active Lifestyle", "Daily Routine", "Busy Week", "Healthy Living", "On The Move"
+- GOOD: "Badminton Renaissance", "Tuesday Gym Ritual", "Sunset Park Walks", "3AM Coding Sessions"
+- The keyword must feel personal and specific, not like a stock phrase
+
+Examples of good keywords:
+- "Badminton Renaissance" (for increased sports activity at a specific venue)
+- "Morning Run Streak" (for consistent early exercise)
+- "Café Hopper Era" (for visiting many different cafés)
+- "New Horizons" (for exploring new places)
+- "Studio Nights" (for evening creative sessions)
+- "Weekend Warrior" (for intense weekend activity patterns)
+
+Always respond in valid JSON format.`,
+
+    keyword_weekly: `Analyze this cluster of data points from {{periodLabel}} and generate a meaningful keyword.
+
+Data points ({{dataPointCount}} total in this theme, representing {{dominancePercent}}% of all {{totalDataPoints}} data points this week, spread across {{uniqueDays}} different days):
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+Common themes identified: {{themes}}
+Dominant category: {{category}}
+
+Generate a keyword that captures this week's specific pattern. The keyword should:
+1. Be 2-4 words that are catchy and memorable
+2. Reference specific activities, places, or time patterns from the data — not generic phrases
+3. Feel personal and insightful, like something from the user's own diary
+
+BAD keywords: "Active Lifestyle", "Busy Week", "Healthy Living"
+GOOD keywords: "Badminton Comeback Week", "Morning Run Streak", "Late Night Coding"
+
+Also generate:
+- A 2-4 sentence description explaining why this pattern is meaningful
+- An emoji that best represents this theme
+
+Respond in JSON format:
+{
+  "keyword": "Your Keyword Here",
+  "description": "Your 2-4 sentence description explaining the pattern...",
+  "emoji": "🎯"
+}`,
+
+    keyword_monthly: `Analyze this month's data cluster from {{periodLabel}} and generate a meaningful keyword.
+
+This theme appears in {{dataPointCount}} data points this month ({{dominancePercent}}% of {{totalDataPoints}} total, spread across {{uniqueDays}} different days):
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+Identified themes: {{themes}}
+Category: {{category}}
+
+For monthly keywords, focus on:
+- Trends that persisted throughout the month
+- Notable changes from previous patterns
+- The overall story of this month in this category
+- Reference specific places, activities, or time patterns
+
+BAD keywords: "Active Month", "Health Focus Month", "Social Month"
+GOOD keywords: "Badminton Renaissance", "Evening Yoga Chapter", "Café Discovery Month"
+
+Generate:
+{
+  "keyword": "2-4 word memorable phrase",
+  "description": "2-4 sentences about why this month was notable for this theme",
+  "emoji": "single emoji"
+}`,
+
+    keyword_quarterly: `Analyze this quarter's dominant theme from {{periodLabel}}.
+
+This theme encompasses {{dataPointCount}} data points across the quarter ({{dominancePercent}}% of {{totalDataPoints}} total, spread across {{uniqueDays}} different days):
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+Key themes: {{themes}}
+Category: {{category}}
+
+For quarterly keywords, consider:
+- How this theme evolved over the 3 months
+- Whether it represents growth, consistency, or change
+- The bigger picture story of this quarter
+- Name specific activities, places, or habits that defined the quarter
+
+BAD keywords: "Active Quarter", "Productive Season", "Growth Period"
+GOOD keywords: "The Badminton Era", "Park Run Revolution", "Sunday Brunch Circuit"
+
+Generate a keyword that captures the quarter's narrative:
+{
+  "keyword": "2-4 word phrase capturing the quarter",
+  "description": "2-4 sentences providing quarterly perspective",
+  "emoji": "single emoji"
+}`,
+
+    keyword_yearly: `Analyze one of the major themes from {{periodLabel}}.
+
+This theme represents {{dataPointCount}} moments throughout the year ({{dominancePercent}}% of {{totalDataPoints}} total, spread across {{uniqueDays}} different days):
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+Major themes: {{themes}}
+Category: {{category}}
+
+For yearly keywords:
+- Identify what made this theme significant for the year
+- Consider how this reflects personal growth or interests
+- Frame it as a year-defining element
+- Use specific names and activities that make this keyword uniquely personal
+
+BAD keywords: "Year of Growth", "Active Year", "Social Butterfly"
+GOOD keywords: "The Badminton Comeback", "Marathon Training Arc", "Neighbourhood Explorer"
+
+Generate a keyword worthy of a year-in-review:
+{
+  "keyword": "2-4 word phrase defining this year's theme",
+  "description": "2-4 sentences summarizing the year's story with this theme",
+  "emoji": "single emoji"
+}`,
+
+    keyword_enhance: `The following keyword was generated but needs improvement:
+
+Current keyword: "{{currentKeyword}}"
+Current description: "{{currentDescription}}"
+Current emoji: {{currentEmoji}}
+
+Data it represents:
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+Please improve this keyword to be more:
+- Catchy and memorable
+- Personally meaningful
+- Insightful about the pattern
+
+Generate an improved version:
+{
+  "keyword": "improved 2-4 word phrase",
+  "description": "improved 2-4 sentence description",
+  "emoji": "better emoji choice"
+}`,
+
+    keyword_compare: `Compare these two time periods and generate a keyword about the change:
+
+Previous period ({{previousPeriodLabel}}):
+{{#each previousDataPoints}}
+- {{this.summary}} ({{this.type}})
+{{/each}}
+
+Current period ({{currentPeriodLabel}}):
+{{#each currentDataPoints}}
+- {{this.summary}} ({{this.type}})
+{{/each}}
+
+Generate a keyword that captures how things have changed:
+{
+  "keyword": "2-4 word phrase about the change",
+  "description": "2-4 sentences comparing the periods",
+  "emoji": "emoji representing change/growth/shift"
+}`,
+
+    // ContentSummaryService - Service de résumé de contenu
+    content_summary: `Résumez ce contenu de {{contentType}} en {{maxWords}} mots ou moins.
+
+Contenu :
+"""
+{{content}}
+"""
+
+Retournez JSON :
+{
+  "summary": "Un résumé concis préservant les détails clés et le ton",
+  "keyTopics": ["sujet1", "sujet2"],
+  "mood": "positive|neutral|reflective"
+}
+
+Règles :
+- Gardez la voix et la personnalité de l'utilisateur
+- Concentrez-vous sur ce qu'ils ont FAIT, RESSENTI ou VÉCU
+- Mentionnez les lieux, personnes ou activités spécifiques si pertinents
+- Préservez le ton émotionnel (excité, réfléchi, etc.)`,
+
     // ChatSuggestions - Suggestions de chat
     suggestion_diary_recent: 'Qu\'ai-je écrit récemment dans mon journal ?',
     suggestion_diary_mood: 'Quelles humeurs ai-je exprimées dans mes notes récentes ?',
@@ -2751,25 +4162,32 @@ Mes données de corrélation :
     carousel_system: `Sie sind ein freundlicher persönlicher Datenanalyst. Erstellen Sie ansprechende, personalisierte Insights aus Benutzerdaten.
 
 Richtlinien:
-- Seien Sie spezifisch mit Zahlen und Daten, wenn verfügbar
+- Seien Sie konkret — erwähnen Sie tatsächliche Aktivitäten, Orte, Zeiten oder Zahlen aus den Daten
 - Verwenden Sie die zweite Person ("Sie") um den Benutzer anzusprechen
 - Seien Sie ermutigend und positiv
 - Halten Sie Antworten auf EINEN Satz
 - Beginnen Sie mit einem Emoji, das zum Insight passt
 - Lassen Sie den Benutzer niemals schlecht über seine Daten fühlen
-- Antworten Sie immer auf Deutsch`,
-    carousel_patterns: 'Nennen Sie mir einen interessanten Einblick in meine jüngsten Aktivitäten und Muster. Nur ein Satz, auf Deutsch.',
-    carousel_surprising: 'Was gibt es Überraschendes in meinen Daten, das ich vielleicht nicht bemerkt habe? Nur ein Satz, auf Deutsch.',
-    carousel_recommendation: 'Geben Sie mir eine personalisierte Empfehlung basierend auf meinem jüngsten Verhalten. Nur ein Satz, auf Deutsch.',
-    carousel_weekly_patterns: 'Basierend auf meinen Daten für {{periodLabel}}, nennen Sie mir ein interessantes Muster, das Sie in meinen Aktivitäten diese Woche bemerkt haben. Nur ein Satz, auf Deutsch.',
-    carousel_weekly_surprising: 'Wenn ich mir {{periodLabel}} ansehe, was ist etwas Überraschendes an meiner Woche, das ich vielleicht nicht bemerkt habe? Nur ein Satz, auf Deutsch.',
-    carousel_weekly_recommendation: 'Basierend auf meinem Verhalten während {{periodLabel}}, geben Sie mir eine umsetzbare Empfehlung für nächste Woche. Nur ein Satz, auf Deutsch.',
-    carousel_monthly_patterns: 'Basierend auf meinen Daten für {{periodLabel}}, nennen Sie mir ein interessantes Muster, das Sie in meinen Aktivitäten diesen Monat bemerkt haben. Nur ein Satz, auf Deutsch.',
-    carousel_monthly_surprising: 'Wenn ich mir {{periodLabel}} ansehe, welchen überraschenden Einblick in meinen Monat hätte ich vielleicht verpasst? Nur ein Satz, auf Deutsch.',
-    carousel_monthly_recommendation: 'Basierend auf meinem Verhalten während {{periodLabel}}, geben Sie mir eine Empfehlung zur Verbesserung des nächsten Monats. Nur ein Satz, auf Deutsch.',
-    carousel_quarterly_patterns: 'Basierend auf meinen Daten für {{periodLabel}}, nennen Sie mir einen interessanten Trend oder ein Muster aus diesem Quartal. Nur ein Satz, auf Deutsch.',
-    carousel_quarterly_surprising: 'Wenn ich mir {{periodLabel}} ansehe, welche überraschende Errungenschaft oder welchen Einblick gibt es aus diesem Quartal? Nur ein Satz, auf Deutsch.',
-    carousel_quarterly_recommendation: 'Basierend auf meinem Fortschritt während {{periodLabel}}, geben Sie mir eine strategische Empfehlung für das nächste Quartal. Nur ein Satz, auf Deutsch.',
+- Der Insight soll den Benutzer zum Lächeln bringen — er soll etwas Persönliches widerspiegeln
+- Antworten Sie immer auf Deutsch
+
+Vermeiden Sie diese Anti-Muster:
+- Sagen Sie NIEMALS generische Dinge wie "Sie waren aktiv" oder "Weiter so"
+- Geben Sie NIEMALS vage Insights, die auf jeden zutreffen könnten
+- Erwähnen Sie IMMER eine konkrete Aktivität, einen Ort, eine Zeit oder eine Kennzahl aus den Daten
+- SCHLECHT: "Sie waren diese Woche sehr aktiv!" GUT: "Sie haben diese Woche 3 Mal Badminton gespielt — Ihr aktivster Sport!"`,
+    carousel_patterns: 'Basierend auf meinen aktuellen Daten, nennen Sie mir ein interessantes Muster über eine konkrete Aktivität, einen Ort oder eine Gewohnheit. Referenzieren Sie echte Daten. Nur ein Satz, auf Deutsch.',
+    carousel_surprising: 'Was gibt es Überraschendes oder Unerwartetes in meinen aktuellen Daten? Seien Sie konkret darüber, was es ungewöhnlich macht. Nur ein Satz, auf Deutsch.',
+    carousel_recommendation: 'Basierend auf einem konkreten Muster in meinen aktuellen Daten, geben Sie mir eine umsetzbare Empfehlung. Referenzieren Sie die echten Daten. Nur ein Satz, auf Deutsch.',
+    carousel_weekly_patterns: 'Basierend auf meinen Daten für {{periodLabel}}, nennen Sie mir ein interessantes Muster über eine konkrete Aktivität oder einen Ort diese Woche. Referenzieren Sie echte Zahlen oder Tage. Nur ein Satz, auf Deutsch.',
+    carousel_weekly_surprising: 'Wenn ich mir {{periodLabel}} ansehe, was war überraschend an meiner Woche? Seien Sie konkret über welche Aktivität, welcher Ort oder welche Kennzahl heraussticht. Nur ein Satz, auf Deutsch.',
+    carousel_weekly_recommendation: 'Basierend auf einem konkreten Muster aus {{periodLabel}}, geben Sie mir eine umsetzbare Empfehlung für nächste Woche. Referenzieren Sie die echten Daten. Nur ein Satz, auf Deutsch.',
+    carousel_monthly_patterns: 'Basierend auf meinen Daten für {{periodLabel}}, nennen Sie mir ein interessantes Muster über eine konkrete Aktivität oder Gewohnheit diesen Monat. Referenzieren Sie echte Zahlen oder Trends. Nur ein Satz, auf Deutsch.',
+    carousel_monthly_surprising: 'Wenn ich mir {{periodLabel}} ansehe, welcher überraschende Einblick gibt es aus meinem Monat? Seien Sie konkret über was sich verändert hat oder heraussticht. Nur ein Satz, auf Deutsch.',
+    carousel_monthly_recommendation: 'Basierend auf einem konkreten Trend aus {{periodLabel}}, geben Sie mir eine Empfehlung zur Verbesserung des nächsten Monats. Referenzieren Sie die echten Daten. Nur ein Satz, auf Deutsch.',
+    carousel_quarterly_patterns: 'Basierend auf meinen Daten für {{periodLabel}}, nennen Sie mir einen interessanten Trend über eine konkrete Aktivität oder Gewohnheit aus diesem Quartal. Referenzieren Sie echte Zahlen. Nur ein Satz, auf Deutsch.',
+    carousel_quarterly_surprising: 'Wenn ich mir {{periodLabel}} ansehe, welche überraschende Errungenschaft oder Veränderung gibt es aus diesem Quartal? Seien Sie konkret. Nur ein Satz, auf Deutsch.',
+    carousel_quarterly_recommendation: 'Basierend auf einem konkreten Trend aus {{periodLabel}}, geben Sie mir eine strategische Empfehlung für das nächste Quartal. Referenzieren Sie die echten Daten. Nur ein Satz, auf Deutsch.',
     chat_system: `Sie sind ein persönlicher KI-Assistent mit Zugriff auf die Gesundheits-, Standort- und Sprachdaten des Benutzers. Verwenden Sie den folgenden Kontext aus den persönlichen Daten des Benutzers, um seine Frage zu beantworten:
 
 {{context}}
@@ -2789,7 +4207,10 @@ Richtlinien:
 - Lassen Sie den Benutzer nie schlecht fühlen bei Tagen mit geringer Aktivität
 - Konzentrieren Sie sich auf Höhepunkte und Erfolge
 - Halten Sie einen gesprächigen und freundlichen Ton
-- Antworten Sie immer auf Deutsch`,
+- Antworten Sie immer auf Deutsch
+
+Aktuelles Datum: {{currentDate}}
+Verwenden Sie dies, um relative Zeitangaben wie „heute", „gestern", „diese Woche" usw. zu bestimmen.`,
     daily_insight_prompt: `Erstellen Sie eine kurze, ansprechende Zusammenfassung meines heutigen Tages ({{date}}).
 
 Meine heutigen Daten:
@@ -3143,6 +4564,206 @@ Meine Korrelationsdaten:
 
 Schreibe den Post (auf Deutsch):`,
 
+    // KeywordGenerator - Life Keywords generation
+    keyword_system: `You are a personal life analyst. Your job is to identify meaningful themes and patterns from a user's personal data and express them as memorable keywords.
+
+Guidelines:
+- Keywords should be 2-4 words, catchy and memorable
+- Use creative, evocative language that captures the essence of the theme
+- Descriptions should be 2-4 sentences, insightful and personal
+- Use second person ("You've been..." or "Your...")
+- Be positive and encouraging, but also honest
+- Focus on patterns, not individual events
+- Make observations feel like discoveries
+- Choose emojis that visually represent the theme well
+- The keyword should make the user smile or feel recognized — it should reflect something only they would understand
+- Reference specific activities, places, or time patterns when possible
+
+IMPORTANT — Avoid generic keywords:
+- BAD: "Active Lifestyle", "Daily Routine", "Busy Week", "Healthy Living", "On The Move"
+- GOOD: "Badminton Renaissance", "Tuesday Gym Ritual", "Sunset Park Walks", "3AM Coding Sessions"
+- The keyword must feel personal and specific, not like a stock phrase
+
+Examples of good keywords:
+- "Badminton Renaissance" (for increased sports activity at a specific venue)
+- "Morning Run Streak" (for consistent early exercise)
+- "Café Hopper Era" (for visiting many different cafés)
+- "New Horizons" (for exploring new places)
+- "Studio Nights" (for evening creative sessions)
+- "Weekend Warrior" (for intense weekend activity patterns)
+
+Always respond in valid JSON format.`,
+
+    keyword_weekly: `Analyze this cluster of data points from {{periodLabel}} and generate a meaningful keyword.
+
+Data points ({{dataPointCount}} total in this theme, representing {{dominancePercent}}% of all {{totalDataPoints}} data points this week, spread across {{uniqueDays}} different days):
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+Common themes identified: {{themes}}
+Dominant category: {{category}}
+
+Generate a keyword that captures this week's specific pattern. The keyword should:
+1. Be 2-4 words that are catchy and memorable
+2. Reference specific activities, places, or time patterns from the data — not generic phrases
+3. Feel personal and insightful, like something from the user's own diary
+
+BAD keywords: "Active Lifestyle", "Busy Week", "Healthy Living"
+GOOD keywords: "Badminton Comeback Week", "Morning Run Streak", "Late Night Coding"
+
+Also generate:
+- A 2-4 sentence description explaining why this pattern is meaningful
+- An emoji that best represents this theme
+
+Respond in JSON format:
+{
+  "keyword": "Your Keyword Here",
+  "description": "Your 2-4 sentence description explaining the pattern...",
+  "emoji": "🎯"
+}`,
+
+    keyword_monthly: `Analyze this month's data cluster from {{periodLabel}} and generate a meaningful keyword.
+
+This theme appears in {{dataPointCount}} data points this month ({{dominancePercent}}% of {{totalDataPoints}} total, spread across {{uniqueDays}} different days):
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+Identified themes: {{themes}}
+Category: {{category}}
+
+For monthly keywords, focus on:
+- Trends that persisted throughout the month
+- Notable changes from previous patterns
+- The overall story of this month in this category
+- Reference specific places, activities, or time patterns
+
+BAD keywords: "Active Month", "Health Focus Month", "Social Month"
+GOOD keywords: "Badminton Renaissance", "Evening Yoga Chapter", "Café Discovery Month"
+
+Generate:
+{
+  "keyword": "2-4 word memorable phrase",
+  "description": "2-4 sentences about why this month was notable for this theme",
+  "emoji": "single emoji"
+}`,
+
+    keyword_quarterly: `Analyze this quarter's dominant theme from {{periodLabel}}.
+
+This theme encompasses {{dataPointCount}} data points across the quarter ({{dominancePercent}}% of {{totalDataPoints}} total, spread across {{uniqueDays}} different days):
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+Key themes: {{themes}}
+Category: {{category}}
+
+For quarterly keywords, consider:
+- How this theme evolved over the 3 months
+- Whether it represents growth, consistency, or change
+- The bigger picture story of this quarter
+- Name specific activities, places, or habits that defined the quarter
+
+BAD keywords: "Active Quarter", "Productive Season", "Growth Period"
+GOOD keywords: "The Badminton Era", "Park Run Revolution", "Sunday Brunch Circuit"
+
+Generate a keyword that captures the quarter's narrative:
+{
+  "keyword": "2-4 word phrase capturing the quarter",
+  "description": "2-4 sentences providing quarterly perspective",
+  "emoji": "single emoji"
+}`,
+
+    keyword_yearly: `Analyze one of the major themes from {{periodLabel}}.
+
+This theme represents {{dataPointCount}} moments throughout the year ({{dominancePercent}}% of {{totalDataPoints}} total, spread across {{uniqueDays}} different days):
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+Major themes: {{themes}}
+Category: {{category}}
+
+For yearly keywords:
+- Identify what made this theme significant for the year
+- Consider how this reflects personal growth or interests
+- Frame it as a year-defining element
+- Use specific names and activities that make this keyword uniquely personal
+
+BAD keywords: "Year of Growth", "Active Year", "Social Butterfly"
+GOOD keywords: "The Badminton Comeback", "Marathon Training Arc", "Neighbourhood Explorer"
+
+Generate a keyword worthy of a year-in-review:
+{
+  "keyword": "2-4 word phrase defining this year's theme",
+  "description": "2-4 sentences summarizing the year's story with this theme",
+  "emoji": "single emoji"
+}`,
+
+    keyword_enhance: `The following keyword was generated but needs improvement:
+
+Current keyword: "{{currentKeyword}}"
+Current description: "{{currentDescription}}"
+Current emoji: {{currentEmoji}}
+
+Data it represents:
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+Please improve this keyword to be more:
+- Catchy and memorable
+- Personally meaningful
+- Insightful about the pattern
+
+Generate an improved version:
+{
+  "keyword": "improved 2-4 word phrase",
+  "description": "improved 2-4 sentence description",
+  "emoji": "better emoji choice"
+}`,
+
+    keyword_compare: `Compare these two time periods and generate a keyword about the change:
+
+Previous period ({{previousPeriodLabel}}):
+{{#each previousDataPoints}}
+- {{this.summary}} ({{this.type}})
+{{/each}}
+
+Current period ({{currentPeriodLabel}}):
+{{#each currentDataPoints}}
+- {{this.summary}} ({{this.type}})
+{{/each}}
+
+Generate a keyword that captures how things have changed:
+{
+  "keyword": "2-4 word phrase about the change",
+  "description": "2-4 sentences comparing the periods",
+  "emoji": "emoji representing change/growth/shift"
+}`,
+
+    // ContentSummaryService - Inhaltszusammenfassungsdienst
+    content_summary: `Fassen Sie diesen {{contentType}}-Inhalt in {{maxWords}} Wörtern oder weniger zusammen.
+
+Inhalt:
+"""
+{{content}}
+"""
+
+JSON zurückgeben:
+{
+  "summary": "Eine prägnante Zusammenfassung, die wichtige Details und Ton bewahrt",
+  "keyTopics": ["Thema1", "Thema2"],
+  "mood": "positive|neutral|reflective"
+}
+
+Regeln:
+- Behalten Sie die Stimme und Persönlichkeit des Benutzers
+- Konzentrieren Sie sich auf das, was sie GETAN, GEFÜHLT oder ERLEBT haben
+- Erwähnen Sie bestimmte Orte, Personen oder Aktivitäten wenn relevant
+- Bewahren Sie den emotionalen Ton (aufgeregt, nachdenklich, etc.)`,
+
     // ChatSuggestions - Chat-Vorschläge
     suggestion_diary_recent: 'Was habe ich kürzlich in mein Tagebuch geschrieben?',
     suggestion_diary_mood: 'Welche Stimmungen habe ich in meinen letzten Notizen ausgedrückt?',
@@ -3178,25 +4799,32 @@ Schreibe den Post (auf Deutsch):`,
     carousel_system: `Sei un analista di dati personali amichevole. Genera insights coinvolgenti e personalizzati dai dati dell'utente.
 
 Linee guida:
-- Sii specifico con numeri e dati quando disponibili
+- Sii specifico — menziona attività, luoghi, orari o numeri reali dai dati
 - Usa la seconda persona ("tu") per rivolgerti all'utente
 - Sii incoraggiante e positivo
 - Mantieni le risposte a UNA sola frase
 - Inizia con un emoji che corrisponda all'insight
 - Non far mai sentire male l'utente riguardo ai suoi dati
-- Rispondi sempre in italiano`,
-    carousel_patterns: 'Dimmi un insight interessante sulle mie attività e pattern recenti. Solo una frase, in italiano.',
-    carousel_surprising: 'Cosa c\'è di sorprendente nei miei dati che potrei non aver notato? Solo una frase, in italiano.',
-    carousel_recommendation: 'Dammi una raccomandazione personalizzata basata sul mio comportamento recente. Solo una frase, in italiano.',
-    carousel_weekly_patterns: 'Basandoti sui miei dati per {{periodLabel}}, dimmi un pattern interessante che hai notato nelle mie attività questa settimana. Solo una frase, in italiano.',
-    carousel_weekly_surprising: 'Guardando {{periodLabel}}, cosa c\'è di sorprendente nella mia settimana che potrei non aver notato? Solo una frase, in italiano.',
-    carousel_weekly_recommendation: 'Basandoti sul mio comportamento durante {{periodLabel}}, dammi una raccomandazione pratica per la prossima settimana. Solo una frase, in italiano.',
-    carousel_monthly_patterns: 'Basandoti sui miei dati per {{periodLabel}}, dimmi un pattern interessante che hai notato nelle mie attività questo mese. Solo una frase, in italiano.',
-    carousel_monthly_surprising: 'Guardando {{periodLabel}}, quale insight sorprendente del mio mese potrei aver perso? Solo una frase, in italiano.',
-    carousel_monthly_recommendation: 'Basandoti sul mio comportamento durante {{periodLabel}}, dammi una raccomandazione per migliorare il prossimo mese. Solo una frase, in italiano.',
-    carousel_quarterly_patterns: 'Basandoti sui miei dati per {{periodLabel}}, dimmi una tendenza o pattern interessante di questo trimestre. Solo una frase, in italiano.',
-    carousel_quarterly_surprising: 'Guardando {{periodLabel}}, quale risultato o insight sorprendente c\'è da questo trimestre? Solo una frase, in italiano.',
-    carousel_quarterly_recommendation: 'Basandoti sui miei progressi durante {{periodLabel}}, dammi una raccomandazione strategica per il prossimo trimestre. Solo una frase, in italiano.',
+- L'insight dovrebbe far sorridere l'utente — dovrebbe riflettere qualcosa di personale
+- Rispondi sempre in italiano
+
+Evita questi anti-pattern:
+- NON dire MAI cose generiche come "Sei stato attivo" o "Continua così"
+- NON dare MAI insights vaghi che potrebbero applicarsi a chiunque
+- Menziona SEMPRE un'attività, luogo, momento o metrica specifica dai dati
+- MALE: "Sei stato molto attivo questa settimana!" BENE: "Hai giocato a badminton 3 volte questa settimana — il tuo sport più attivo!"`,
+    carousel_patterns: 'Basandoti sui miei dati recenti, dimmi un pattern interessante su un\'attività, luogo o abitudine specifica. Fai riferimento ai dati reali. Solo una frase, in italiano.',
+    carousel_surprising: 'Cosa c\'è di sorprendente o inaspettato nei miei dati recenti? Sii specifico su cosa lo rende insolito. Solo una frase, in italiano.',
+    carousel_recommendation: 'Basandoti su un pattern specifico nei miei dati recenti, dammi una raccomandazione pratica. Fai riferimento ai dati reali. Solo una frase, in italiano.',
+    carousel_weekly_patterns: 'Basandoti sui miei dati per {{periodLabel}}, dimmi un pattern interessante su un\'attività o luogo specifico questa settimana. Fai riferimento a numeri o giorni reali. Solo una frase, in italiano.',
+    carousel_weekly_surprising: 'Guardando {{periodLabel}}, cosa c\'è di sorprendente nella mia settimana? Sii specifico su quale attività, luogo o metrica si distingue. Solo una frase, in italiano.',
+    carousel_weekly_recommendation: 'Basandoti su un pattern specifico di {{periodLabel}}, dammi una raccomandazione pratica per la prossima settimana. Fai riferimento ai dati reali. Solo una frase, in italiano.',
+    carousel_monthly_patterns: 'Basandoti sui miei dati per {{periodLabel}}, dimmi un pattern interessante su un\'attività o abitudine specifica questo mese. Fai riferimento a numeri o tendenze reali. Solo una frase, in italiano.',
+    carousel_monthly_surprising: 'Guardando {{periodLabel}}, quale insight sorprendente c\'è dal mio mese? Sii specifico su cosa è cambiato o si è distinto. Solo una frase, in italiano.',
+    carousel_monthly_recommendation: 'Basandoti su una tendenza specifica di {{periodLabel}}, dammi una raccomandazione per migliorare il prossimo mese. Fai riferimento ai dati reali. Solo una frase, in italiano.',
+    carousel_quarterly_patterns: 'Basandoti sui miei dati per {{periodLabel}}, dimmi una tendenza interessante su un\'attività o abitudine specifica questo trimestre. Fai riferimento a numeri reali. Solo una frase, in italiano.',
+    carousel_quarterly_surprising: 'Guardando {{periodLabel}}, quale risultato o cambiamento sorprendente c\'è da questo trimestre? Sii specifico. Solo una frase, in italiano.',
+    carousel_quarterly_recommendation: 'Basandoti su una tendenza specifica di {{periodLabel}}, dammi una raccomandazione strategica per il prossimo trimestre. Fai riferimento ai dati reali. Solo una frase, in italiano.',
     chat_system: `Sei un assistente IA personale con accesso ai dati sulla salute, posizione e voce dell'utente. Usa il seguente contesto dai dati personali dell'utente per rispondere alla sua domanda:
 
 {{context}}
@@ -3216,7 +4844,10 @@ Linee guida:
 - Non far mai sentire male l'utente per giorni di bassa attività
 - Concentrati sui punti salienti e i successi
 - Mantieni un tono conversazionale e amichevole
-- Rispondi sempre in italiano`,
+- Rispondi sempre in italiano
+
+Data attuale: {{currentDate}}
+Usa questo per determinare riferimenti temporali relativi come "oggi", "ieri", "questa settimana", ecc.`,
     daily_insight_prompt: `Crea un breve e coinvolgente riassunto della mia giornata di oggi ({{date}}).
 
 I miei dati di oggi:
@@ -3570,6 +5201,206 @@ I miei dati di correlazione:
 
 Scrivi il post (in italiano):`,
 
+    // KeywordGenerator - Life Keywords generation
+    keyword_system: `You are a personal life analyst. Your job is to identify meaningful themes and patterns from a user's personal data and express them as memorable keywords.
+
+Guidelines:
+- Keywords should be 2-4 words, catchy and memorable
+- Use creative, evocative language that captures the essence of the theme
+- Descriptions should be 2-4 sentences, insightful and personal
+- Use second person ("You've been..." or "Your...")
+- Be positive and encouraging, but also honest
+- Focus on patterns, not individual events
+- Make observations feel like discoveries
+- Choose emojis that visually represent the theme well
+- The keyword should make the user smile or feel recognized — it should reflect something only they would understand
+- Reference specific activities, places, or time patterns when possible
+
+IMPORTANT — Avoid generic keywords:
+- BAD: "Active Lifestyle", "Daily Routine", "Busy Week", "Healthy Living", "On The Move"
+- GOOD: "Badminton Renaissance", "Tuesday Gym Ritual", "Sunset Park Walks", "3AM Coding Sessions"
+- The keyword must feel personal and specific, not like a stock phrase
+
+Examples of good keywords:
+- "Badminton Renaissance" (for increased sports activity at a specific venue)
+- "Morning Run Streak" (for consistent early exercise)
+- "Café Hopper Era" (for visiting many different cafés)
+- "New Horizons" (for exploring new places)
+- "Studio Nights" (for evening creative sessions)
+- "Weekend Warrior" (for intense weekend activity patterns)
+
+Always respond in valid JSON format.`,
+
+    keyword_weekly: `Analyze this cluster of data points from {{periodLabel}} and generate a meaningful keyword.
+
+Data points ({{dataPointCount}} total in this theme, representing {{dominancePercent}}% of all {{totalDataPoints}} data points this week, spread across {{uniqueDays}} different days):
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+Common themes identified: {{themes}}
+Dominant category: {{category}}
+
+Generate a keyword that captures this week's specific pattern. The keyword should:
+1. Be 2-4 words that are catchy and memorable
+2. Reference specific activities, places, or time patterns from the data — not generic phrases
+3. Feel personal and insightful, like something from the user's own diary
+
+BAD keywords: "Active Lifestyle", "Busy Week", "Healthy Living"
+GOOD keywords: "Badminton Comeback Week", "Morning Run Streak", "Late Night Coding"
+
+Also generate:
+- A 2-4 sentence description explaining why this pattern is meaningful
+- An emoji that best represents this theme
+
+Respond in JSON format:
+{
+  "keyword": "Your Keyword Here",
+  "description": "Your 2-4 sentence description explaining the pattern...",
+  "emoji": "🎯"
+}`,
+
+    keyword_monthly: `Analyze this month's data cluster from {{periodLabel}} and generate a meaningful keyword.
+
+This theme appears in {{dataPointCount}} data points this month ({{dominancePercent}}% of {{totalDataPoints}} total, spread across {{uniqueDays}} different days):
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+Identified themes: {{themes}}
+Category: {{category}}
+
+For monthly keywords, focus on:
+- Trends that persisted throughout the month
+- Notable changes from previous patterns
+- The overall story of this month in this category
+- Reference specific places, activities, or time patterns
+
+BAD keywords: "Active Month", "Health Focus Month", "Social Month"
+GOOD keywords: "Badminton Renaissance", "Evening Yoga Chapter", "Café Discovery Month"
+
+Generate:
+{
+  "keyword": "2-4 word memorable phrase",
+  "description": "2-4 sentences about why this month was notable for this theme",
+  "emoji": "single emoji"
+}`,
+
+    keyword_quarterly: `Analyze this quarter's dominant theme from {{periodLabel}}.
+
+This theme encompasses {{dataPointCount}} data points across the quarter ({{dominancePercent}}% of {{totalDataPoints}} total, spread across {{uniqueDays}} different days):
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+Key themes: {{themes}}
+Category: {{category}}
+
+For quarterly keywords, consider:
+- How this theme evolved over the 3 months
+- Whether it represents growth, consistency, or change
+- The bigger picture story of this quarter
+- Name specific activities, places, or habits that defined the quarter
+
+BAD keywords: "Active Quarter", "Productive Season", "Growth Period"
+GOOD keywords: "The Badminton Era", "Park Run Revolution", "Sunday Brunch Circuit"
+
+Generate a keyword that captures the quarter's narrative:
+{
+  "keyword": "2-4 word phrase capturing the quarter",
+  "description": "2-4 sentences providing quarterly perspective",
+  "emoji": "single emoji"
+}`,
+
+    keyword_yearly: `Analyze one of the major themes from {{periodLabel}}.
+
+This theme represents {{dataPointCount}} moments throughout the year ({{dominancePercent}}% of {{totalDataPoints}} total, spread across {{uniqueDays}} different days):
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+Major themes: {{themes}}
+Category: {{category}}
+
+For yearly keywords:
+- Identify what made this theme significant for the year
+- Consider how this reflects personal growth or interests
+- Frame it as a year-defining element
+- Use specific names and activities that make this keyword uniquely personal
+
+BAD keywords: "Year of Growth", "Active Year", "Social Butterfly"
+GOOD keywords: "The Badminton Comeback", "Marathon Training Arc", "Neighbourhood Explorer"
+
+Generate a keyword worthy of a year-in-review:
+{
+  "keyword": "2-4 word phrase defining this year's theme",
+  "description": "2-4 sentences summarizing the year's story with this theme",
+  "emoji": "single emoji"
+}`,
+
+    keyword_enhance: `The following keyword was generated but needs improvement:
+
+Current keyword: "{{currentKeyword}}"
+Current description: "{{currentDescription}}"
+Current emoji: {{currentEmoji}}
+
+Data it represents:
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+Please improve this keyword to be more:
+- Catchy and memorable
+- Personally meaningful
+- Insightful about the pattern
+
+Generate an improved version:
+{
+  "keyword": "improved 2-4 word phrase",
+  "description": "improved 2-4 sentence description",
+  "emoji": "better emoji choice"
+}`,
+
+    keyword_compare: `Compare these two time periods and generate a keyword about the change:
+
+Previous period ({{previousPeriodLabel}}):
+{{#each previousDataPoints}}
+- {{this.summary}} ({{this.type}})
+{{/each}}
+
+Current period ({{currentPeriodLabel}}):
+{{#each currentDataPoints}}
+- {{this.summary}} ({{this.type}})
+{{/each}}
+
+Generate a keyword that captures how things have changed:
+{
+  "keyword": "2-4 word phrase about the change",
+  "description": "2-4 sentences comparing the periods",
+  "emoji": "emoji representing change/growth/shift"
+}`,
+
+    // ContentSummaryService - Servizio di riassunto contenuti
+    content_summary: `Riassumi questo contenuto {{contentType}} in {{maxWords}} parole o meno.
+
+Contenuto:
+"""
+{{content}}
+"""
+
+Restituisci JSON:
+{
+  "summary": "Un riassunto conciso che preserva i dettagli chiave e il tono",
+  "keyTopics": ["argomento1", "argomento2"],
+  "mood": "positive|neutral|reflective"
+}
+
+Regole:
+- Mantieni la voce e la personalità dell'utente
+- Concentrati su cosa hanno FATTO, SENTITO o VISSUTO
+- Menziona luoghi, persone o attività specifiche se pertinenti
+- Preserva il tono emotivo (entusiasta, riflessivo, ecc.)`,
+
     // ChatSuggestions - Suggerimenti chat
     suggestion_diary_recent: 'Cosa ho scritto di recente nel mio diario?',
     suggestion_diary_mood: 'Quali stati d\'animo ho espresso nelle mie note recenti?',
@@ -3605,25 +5436,32 @@ Scrivi il post (in italiano):`,
     carousel_system: `Você é um analista de dados pessoais amigável. Gere insights envolventes e personalizados a partir dos dados do usuário.
 
 Diretrizes:
-- Seja específico com números e dados quando disponíveis
+- Seja específico — mencione atividades, locais, horários ou números reais dos dados
 - Use a segunda pessoa ("você") para se dirigir ao usuário
 - Seja encorajador e positivo
 - Mantenha as respostas em UMA única frase
 - Comece com um emoji que combine com o insight
 - Nunca faça o usuário se sentir mal sobre seus dados
-- Responda sempre em português`,
-    carousel_patterns: 'Diga-me um insight interessante sobre minhas atividades e padrões recentes. Apenas uma frase, em português.',
-    carousel_surprising: 'O que há de surpreendente nos meus dados que eu talvez não tenha percebido? Apenas uma frase, em português.',
-    carousel_recommendation: 'Dê-me uma recomendação personalizada baseada no meu comportamento recente. Apenas uma frase, em português.',
-    carousel_weekly_patterns: 'Com base nos meus dados de {{periodLabel}}, diga-me um padrão interessante que você notou nas minhas atividades esta semana. Apenas uma frase, em português.',
-    carousel_weekly_surprising: 'Olhando para {{periodLabel}}, o que há de surpreendente na minha semana que eu talvez não tenha notado? Apenas uma frase, em português.',
-    carousel_weekly_recommendation: 'Com base no meu comportamento durante {{periodLabel}}, dê-me uma recomendação prática para a próxima semana. Apenas uma frase, em português.',
-    carousel_monthly_patterns: 'Com base nos meus dados de {{periodLabel}}, diga-me um padrão interessante que você notou nas minhas atividades este mês. Apenas uma frase, em português.',
-    carousel_monthly_surprising: 'Olhando para {{periodLabel}}, que insight surpreendente do meu mês eu poderia ter perdido? Apenas uma frase, em português.',
-    carousel_monthly_recommendation: 'Com base no meu comportamento durante {{periodLabel}}, dê-me uma recomendação para melhorar o próximo mês. Apenas uma frase, em português.',
-    carousel_quarterly_patterns: 'Com base nos meus dados de {{periodLabel}}, diga-me uma tendência ou padrão interessante deste trimestre. Apenas uma frase, em português.',
-    carousel_quarterly_surprising: 'Olhando para {{periodLabel}}, que conquista ou insight surpreendente há deste trimestre? Apenas uma frase, em português.',
-    carousel_quarterly_recommendation: 'Com base no meu progresso durante {{periodLabel}}, dê-me uma recomendação estratégica para o próximo trimestre. Apenas uma frase, em português.',
+- O insight deve fazer o usuário sorrir — deve refletir algo pessoal que só ele entenderia
+- Responda sempre em português
+
+Evite estes anti-padrões:
+- NUNCA diga coisas genéricas como "Você tem sido ativo" ou "Continue assim"
+- NUNCA dê insights vagos que poderiam se aplicar a qualquer pessoa
+- SEMPRE mencione uma atividade, local, horário ou métrica específica dos dados
+- RUIM: "Você foi muito ativo esta semana!" BOM: "Você jogou badminton 3 vezes esta semana — seu esporte mais ativo!"`,
+    carousel_patterns: 'Com base nos meus dados recentes, diga-me um padrão interessante sobre uma atividade, local ou hábito específico. Referencie dados reais. Apenas uma frase, em português.',
+    carousel_surprising: 'O que há de surpreendente ou inesperado nos meus dados recentes? Seja específico sobre o que o torna incomum. Apenas uma frase, em português.',
+    carousel_recommendation: 'Com base em um padrão específico nos meus dados recentes, dê-me uma recomendação prática. Referencie os dados reais. Apenas uma frase, em português.',
+    carousel_weekly_patterns: 'Com base nos meus dados de {{periodLabel}}, diga-me um padrão interessante sobre uma atividade ou local específico esta semana. Referencie números ou dias reais. Apenas uma frase, em português.',
+    carousel_weekly_surprising: 'Olhando para {{periodLabel}}, o que foi surpreendente na minha semana? Seja específico sobre qual atividade, local ou métrica se destaca. Apenas uma frase, em português.',
+    carousel_weekly_recommendation: 'Com base em um padrão específico de {{periodLabel}}, dê-me uma recomendação prática para a próxima semana. Referencie os dados reais. Apenas uma frase, em português.',
+    carousel_monthly_patterns: 'Com base nos meus dados de {{periodLabel}}, diga-me um padrão interessante sobre uma atividade ou hábito específico este mês. Referencie números ou tendências reais. Apenas uma frase, em português.',
+    carousel_monthly_surprising: 'Olhando para {{periodLabel}}, que insight surpreendente há do meu mês? Seja específico sobre o que mudou ou se destacou. Apenas uma frase, em português.',
+    carousel_monthly_recommendation: 'Com base em uma tendência específica de {{periodLabel}}, dê-me uma recomendação para melhorar o próximo mês. Referencie os dados reais. Apenas uma frase, em português.',
+    carousel_quarterly_patterns: 'Com base nos meus dados de {{periodLabel}}, diga-me uma tendência interessante sobre uma atividade ou hábito específico este trimestre. Referencie números reais. Apenas uma frase, em português.',
+    carousel_quarterly_surprising: 'Olhando para {{periodLabel}}, que conquista ou mudança surpreendente há deste trimestre? Seja específico. Apenas uma frase, em português.',
+    carousel_quarterly_recommendation: 'Com base em uma tendência específica de {{periodLabel}}, dê-me uma recomendação estratégica para o próximo trimestre. Referencie os dados reais. Apenas uma frase, em português.',
     chat_system: `Você é um assistente de IA pessoal com acesso aos dados de saúde, localização e voz do usuário. Use o seguinte contexto dos dados pessoais do usuário para responder à sua pergunta:
 
 {{context}}
@@ -3643,7 +5481,10 @@ Diretrizes:
 - Nunca faça o usuário se sentir mal por dias de baixa atividade
 - Foque nos destaques e conquistas
 - Mantenha um tom conversacional e amigável
-- Responda sempre em português`,
+- Responda sempre em português
+
+Data atual: {{currentDate}}
+Use isso para determinar referências temporais relativas como "hoje", "ontem", "esta semana", etc.`,
     daily_insight_prompt: `Crie um resumo breve e envolvente do meu dia de hoje ({{date}}).
 
 Meus dados de hoje:
@@ -3997,6 +5838,206 @@ Meus dados de correlação:
 
 Escreva o post (em português):`,
 
+    // KeywordGenerator - Life Keywords generation
+    keyword_system: `You are a personal life analyst. Your job is to identify meaningful themes and patterns from a user's personal data and express them as memorable keywords.
+
+Guidelines:
+- Keywords should be 2-4 words, catchy and memorable
+- Use creative, evocative language that captures the essence of the theme
+- Descriptions should be 2-4 sentences, insightful and personal
+- Use second person ("You've been..." or "Your...")
+- Be positive and encouraging, but also honest
+- Focus on patterns, not individual events
+- Make observations feel like discoveries
+- Choose emojis that visually represent the theme well
+- The keyword should make the user smile or feel recognized — it should reflect something only they would understand
+- Reference specific activities, places, or time patterns when possible
+
+IMPORTANT — Avoid generic keywords:
+- BAD: "Active Lifestyle", "Daily Routine", "Busy Week", "Healthy Living", "On The Move"
+- GOOD: "Badminton Renaissance", "Tuesday Gym Ritual", "Sunset Park Walks", "3AM Coding Sessions"
+- The keyword must feel personal and specific, not like a stock phrase
+
+Examples of good keywords:
+- "Badminton Renaissance" (for increased sports activity at a specific venue)
+- "Morning Run Streak" (for consistent early exercise)
+- "Café Hopper Era" (for visiting many different cafés)
+- "New Horizons" (for exploring new places)
+- "Studio Nights" (for evening creative sessions)
+- "Weekend Warrior" (for intense weekend activity patterns)
+
+Always respond in valid JSON format.`,
+
+    keyword_weekly: `Analyze this cluster of data points from {{periodLabel}} and generate a meaningful keyword.
+
+Data points ({{dataPointCount}} total in this theme, representing {{dominancePercent}}% of all {{totalDataPoints}} data points this week, spread across {{uniqueDays}} different days):
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+Common themes identified: {{themes}}
+Dominant category: {{category}}
+
+Generate a keyword that captures this week's specific pattern. The keyword should:
+1. Be 2-4 words that are catchy and memorable
+2. Reference specific activities, places, or time patterns from the data — not generic phrases
+3. Feel personal and insightful, like something from the user's own diary
+
+BAD keywords: "Active Lifestyle", "Busy Week", "Healthy Living"
+GOOD keywords: "Badminton Comeback Week", "Morning Run Streak", "Late Night Coding"
+
+Also generate:
+- A 2-4 sentence description explaining why this pattern is meaningful
+- An emoji that best represents this theme
+
+Respond in JSON format:
+{
+  "keyword": "Your Keyword Here",
+  "description": "Your 2-4 sentence description explaining the pattern...",
+  "emoji": "🎯"
+}`,
+
+    keyword_monthly: `Analyze this month's data cluster from {{periodLabel}} and generate a meaningful keyword.
+
+This theme appears in {{dataPointCount}} data points this month ({{dominancePercent}}% of {{totalDataPoints}} total, spread across {{uniqueDays}} different days):
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+Identified themes: {{themes}}
+Category: {{category}}
+
+For monthly keywords, focus on:
+- Trends that persisted throughout the month
+- Notable changes from previous patterns
+- The overall story of this month in this category
+- Reference specific places, activities, or time patterns
+
+BAD keywords: "Active Month", "Health Focus Month", "Social Month"
+GOOD keywords: "Badminton Renaissance", "Evening Yoga Chapter", "Café Discovery Month"
+
+Generate:
+{
+  "keyword": "2-4 word memorable phrase",
+  "description": "2-4 sentences about why this month was notable for this theme",
+  "emoji": "single emoji"
+}`,
+
+    keyword_quarterly: `Analyze this quarter's dominant theme from {{periodLabel}}.
+
+This theme encompasses {{dataPointCount}} data points across the quarter ({{dominancePercent}}% of {{totalDataPoints}} total, spread across {{uniqueDays}} different days):
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+Key themes: {{themes}}
+Category: {{category}}
+
+For quarterly keywords, consider:
+- How this theme evolved over the 3 months
+- Whether it represents growth, consistency, or change
+- The bigger picture story of this quarter
+- Name specific activities, places, or habits that defined the quarter
+
+BAD keywords: "Active Quarter", "Productive Season", "Growth Period"
+GOOD keywords: "The Badminton Era", "Park Run Revolution", "Sunday Brunch Circuit"
+
+Generate a keyword that captures the quarter's narrative:
+{
+  "keyword": "2-4 word phrase capturing the quarter",
+  "description": "2-4 sentences providing quarterly perspective",
+  "emoji": "single emoji"
+}`,
+
+    keyword_yearly: `Analyze one of the major themes from {{periodLabel}}.
+
+This theme represents {{dataPointCount}} moments throughout the year ({{dominancePercent}}% of {{totalDataPoints}} total, spread across {{uniqueDays}} different days):
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+Major themes: {{themes}}
+Category: {{category}}
+
+For yearly keywords:
+- Identify what made this theme significant for the year
+- Consider how this reflects personal growth or interests
+- Frame it as a year-defining element
+- Use specific names and activities that make this keyword uniquely personal
+
+BAD keywords: "Year of Growth", "Active Year", "Social Butterfly"
+GOOD keywords: "The Badminton Comeback", "Marathon Training Arc", "Neighbourhood Explorer"
+
+Generate a keyword worthy of a year-in-review:
+{
+  "keyword": "2-4 word phrase defining this year's theme",
+  "description": "2-4 sentences summarizing the year's story with this theme",
+  "emoji": "single emoji"
+}`,
+
+    keyword_enhance: `The following keyword was generated but needs improvement:
+
+Current keyword: "{{currentKeyword}}"
+Current description: "{{currentDescription}}"
+Current emoji: {{currentEmoji}}
+
+Data it represents:
+{{#each sampleDataPoints}}
+- {{this.date}}: {{this.summary}} ({{this.type}})
+{{/each}}
+
+Please improve this keyword to be more:
+- Catchy and memorable
+- Personally meaningful
+- Insightful about the pattern
+
+Generate an improved version:
+{
+  "keyword": "improved 2-4 word phrase",
+  "description": "improved 2-4 sentence description",
+  "emoji": "better emoji choice"
+}`,
+
+    keyword_compare: `Compare these two time periods and generate a keyword about the change:
+
+Previous period ({{previousPeriodLabel}}):
+{{#each previousDataPoints}}
+- {{this.summary}} ({{this.type}})
+{{/each}}
+
+Current period ({{currentPeriodLabel}}):
+{{#each currentDataPoints}}
+- {{this.summary}} ({{this.type}})
+{{/each}}
+
+Generate a keyword that captures how things have changed:
+{
+  "keyword": "2-4 word phrase about the change",
+  "description": "2-4 sentences comparing the periods",
+  "emoji": "emoji representing change/growth/shift"
+}`,
+
+    // ContentSummaryService - Serviço de resumo de conteúdo
+    content_summary: `Resuma este conteúdo de {{contentType}} em {{maxWords}} palavras ou menos.
+
+Conteúdo:
+"""
+{{content}}
+"""
+
+Retorne JSON:
+{
+  "summary": "Um resumo conciso que preserva os detalhes-chave e o tom",
+  "keyTopics": ["tópico1", "tópico2"],
+  "mood": "positive|neutral|reflective"
+}
+
+Regras:
+- Mantenha a voz e personalidade do usuário
+- Foque no que eles FIZERAM, SENTIRAM ou VIVENCIARAM
+- Mencione lugares, pessoas ou atividades específicas se relevante
+- Preserve o tom emocional (empolgado, reflexivo, etc.)`,
+
     // ChatSuggestions - Sugestões de chat
     suggestion_diary_recent: 'O que escrevi recentemente no meu diário?',
     suggestion_diary_mood: 'Que humores expressei nas minhas notas recentes?',
@@ -4037,7 +6078,7 @@ function buildCarouselInsightsDoc(lang: string, t: Translations) {
   return {
     language: lang,
     service: 'CarouselInsights',
-    version: '1.1.0',
+    version: '1.2.0',
     status: 'published',
     enabled: true,
     prompts: {
@@ -4526,6 +6567,92 @@ function buildLifeFeedGeneratorDoc(lang: string, t: Translations) {
   };
 }
 
+function buildKeywordGeneratorDoc(lang: string, t: Translations) {
+  return {
+    language: lang,
+    service: 'KeywordGenerator',
+    version: '1.1.0',
+    status: 'published',
+    enabled: true,
+    prompts: {
+      system: {
+        id: 'life-keywords-system',
+        service: 'KeywordGenerator',
+        type: 'system',
+        content: t.keyword_system,
+        metadata: { model: 'gpt-4o-mini', temperature: 0.8, maxTokens: 300 },
+      },
+      weekly_keyword: {
+        id: 'weekly-keyword',
+        service: 'KeywordGenerator',
+        type: 'user',
+        content: t.keyword_weekly,
+        metadata: { model: 'gpt-4o-mini', temperature: 0.8, maxTokens: 200 },
+      },
+      monthly_keyword: {
+        id: 'monthly-keyword',
+        service: 'KeywordGenerator',
+        type: 'user',
+        content: t.keyword_monthly,
+        metadata: { model: 'gpt-4o-mini', temperature: 0.8, maxTokens: 250 },
+      },
+      quarterly_keyword: {
+        id: 'quarterly-keyword',
+        service: 'KeywordGenerator',
+        type: 'user',
+        content: t.keyword_quarterly,
+        metadata: { model: 'gpt-4o-mini', temperature: 0.8, maxTokens: 250 },
+      },
+      yearly_keyword: {
+        id: 'yearly-keyword',
+        service: 'KeywordGenerator',
+        type: 'user',
+        content: t.keyword_yearly,
+        metadata: { model: 'gpt-4o-mini', temperature: 0.8, maxTokens: 300 },
+      },
+      enhance_keyword: {
+        id: 'enhance-keyword',
+        service: 'KeywordGenerator',
+        type: 'user',
+        content: t.keyword_enhance,
+        metadata: { model: 'gpt-4o-mini', temperature: 0.9, maxTokens: 200 },
+      },
+      compare_keywords: {
+        id: 'compare-keywords',
+        service: 'KeywordGenerator',
+        type: 'user',
+        content: t.keyword_compare,
+        metadata: { model: 'gpt-4o-mini', temperature: 0.8, maxTokens: 200 },
+      },
+    },
+  };
+}
+
+function buildContentSummaryServiceDoc(lang: string, t: Translations) {
+  return {
+    language: lang,
+    service: 'ContentSummaryService',
+    version: '1.0.0',
+    status: 'published',
+    enabled: true,
+    prompts: {
+      content_summary: {
+        id: 'content-summary-user',
+        service: 'ContentSummaryService',
+        type: 'user',
+        description: 'Summarizes long diary, voice note, or photo content for AI context in LifeFeed generation',
+        content: t.content_summary,
+        metadata: {
+          model: 'gpt-4o-mini',
+          temperature: 0.3,
+          maxTokens: 200,
+          responseFormat: 'json_object',
+        },
+      },
+    },
+  };
+}
+
 function buildChatSuggestionsDoc(lang: string, t: Translations) {
   return {
     language: lang,
@@ -4779,7 +6906,7 @@ async function migrateAllPrompts() {
   console.log('='.repeat(60));
   console.log('\nThis will add/update prompts for all languages and services.');
   console.log('Languages: en, es, fr, de, it, pt, zh, ja, ko');
-  console.log('Services: CarouselInsights, OpenAIService, DailySummaryService, DailyInsightService, RAGEngine, QueryRAGServer, ThisDayService, LifeFeedGenerator, ChatSuggestions\n');
+  console.log('Services: CarouselInsights, OpenAIService, DailySummaryService, DailyInsightService, RAGEngine, QueryRAGServer, ThisDayService, LifeFeedGenerator, ContentSummaryService, ChatSuggestions\n');
 
   // Initialize Firebase
   const db = initializeFirebase();
@@ -4794,6 +6921,8 @@ async function migrateAllPrompts() {
     { name: 'QueryRAGServer', builder: buildQueryRAGServerDoc },
     { name: 'ThisDayService', builder: buildThisDayDoc },
     { name: 'LifeFeedGenerator', builder: buildLifeFeedGeneratorDoc },
+    { name: 'KeywordGenerator', builder: buildKeywordGeneratorDoc },
+    { name: 'ContentSummaryService', builder: buildContentSummaryServiceDoc },
     { name: 'ChatSuggestions', builder: buildChatSuggestionsDoc },
   ];
 

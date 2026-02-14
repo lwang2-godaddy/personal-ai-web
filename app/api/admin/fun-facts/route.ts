@@ -58,8 +58,11 @@ export async function GET(request: NextRequest) {
       periodType?: string;
       periodStart?: string;
       periodEnd?: string;
+      periodLabel?: string;
       generatedAt?: string;
       expiresAt?: string;
+      viewed?: boolean;
+      hidden?: boolean;
     }
 
     const results: FunFactResult[] = [];
@@ -107,6 +110,8 @@ export async function GET(request: NextRequest) {
           dataPointCount: data.dataPoints?.length || 0,
           generatedAt: data.generatedAt,
           expiresAt: data.expiresAt,
+          viewed: data.viewed ?? false,
+          hidden: data.hidden ?? false,
         });
       });
     }
@@ -150,7 +155,10 @@ export async function GET(request: NextRequest) {
           periodStart: data.periodStart,
           periodEnd: data.periodEnd,
           dataPointCount: data.dataPointCount || 0,
+          periodLabel: data.periodLabel,
           generatedAt: data.generatedAt,
+          viewed: data.viewed ?? false,
+          hidden: data.hidden ?? false,
         });
       });
     }

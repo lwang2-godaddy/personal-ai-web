@@ -48,6 +48,9 @@ export interface FunFact {
   periodType?: string;
   periodStart?: string;
   periodEnd?: string;
+  periodLabel?: string;
   generatedAt?: string;
   expiresAt?: string;
+  viewed?: boolean;
+  hidden?: boolean;
 }

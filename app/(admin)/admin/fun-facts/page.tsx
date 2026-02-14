@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import {
   useAdminDataViewer,
@@ -11,7 +11,7 @@ import {
   EmptyState,
 } from '@/components/admin/shared';
 import type { FunFact } from '@/components/admin/shared';
-import { FunFactCard, FunFactDetailModal } from '@/components/admin/fun-facts';
+import { FunFactCard, FunFactDetailModal, FunFactAlgorithmReference } from '@/components/admin/fun-facts';
 
 // ============================================================================
 // Constants
@@ -25,22 +25,58 @@ const CATEGORIES = [
   { value: 'social', label: 'Social' },
   { value: 'productivity', label: 'Productivity' },
   { value: 'general', label: 'General' },
+  { value: 'pattern', label: 'Pattern' },
+  { value: 'statistic', label: 'Statistic' },
+  { value: 'achievement', label: 'Achievement' },
 ];
 
-const TYPES = [
-  { value: '', label: 'All Types' },
-  { value: 'comparison', label: 'Comparison' },
-  { value: 'streak', label: 'Streak' },
-  { value: 'record', label: 'Record' },
-  { value: 'pattern', label: 'Pattern' },
-  { value: 'milestone', label: 'Milestone' },
+const PERIOD_TYPES = [
+  { value: '', label: 'All Periods' },
+  { value: 'weekly', label: 'Weekly' },
+  { value: 'monthly', label: 'Monthly' },
+  { value: 'quarterly', label: 'Quarterly' },
+  { value: 'yearly', label: 'Yearly' },
 ];
 
 const SOURCE_OPTIONS = [
   { value: '', label: 'All Sources' },
   { value: 'fun_facts', label: 'Template-based (fun_facts)' },
-  { value: 'funFacts', label: 'AI Legacy (funFacts)' },
+  { value: 'funFacts', label: 'AI-generated (funFacts)' },
 ];
+
+const VISIBILITY_OPTIONS = [
+  { value: '', label: 'All' },
+  { value: 'viewed', label: 'Viewed Only' },
+  { value: 'hidden', label: 'Hidden Only' },
+];
+
+// ============================================================================
+// Types
+// ============================================================================
+
+interface ExecutionData {
+  id: string;
+  userId: string;
+  service: string;
+  promptId: string;
+  language: string;
+  promptVersion: string;
+  promptSource: string;
+  model: string;
+  temperature: number;
+  maxTokens: number;
+  inputSummary: string;
+  inputTokens: number;
+  outputSummary: string;
+  outputTokens: number;
+  totalTokens: number;
+  estimatedCostUSD: number;
+  latencyMs: number;
+  success: boolean;
+  errorMessage?: string;
+  executedAt: string;
+  metadata?: Record<string, unknown>;
+}
 
 // ============================================================================
 // Main Page Component
@@ -49,8 +85,14 @@ const SOURCE_OPTIONS = [
 export default function FunFactsViewerPage() {
   // Filters (page-specific state)
   const [categoryFilter, setCategoryFilter] = useState('');
-  const [typeFilter, setTypeFilter] = useState('');
   const [sourceFilter, setSourceFilter] = useState('');
+  const [periodTypeFilter, setPeriodTypeFilter] = useState('');
+  const [visibilityFilter, setVisibilityFilter] = useState('');
+
+  // Execution data state
+  const [executionData, setExecutionData] = useState<ExecutionData | null>(null);
+  const [loadingExecution, setLoadingExecution] = useState(false);
+  const executionCacheRef = useRef<Record<string, ExecutionData | null>>({});
 
   // Shared data viewer hook
   const {
@@ -78,24 +120,75 @@ export default function FunFactsViewerPage() {
     responseKey: 'facts',
     params: {
       category: categoryFilter,
-      type: typeFilter,
       source: sourceFilter,
     },
   });
+
+  // Client-side filtering for period type and visibility (not supported by API)
+  const filteredFacts = facts.filter((f) => {
+    if (periodTypeFilter && f.periodType !== periodTypeFilter) return false;
+    if (visibilityFilter === 'viewed' && !f.viewed) return false;
+    if (visibilityFilter === 'hidden' && !f.hidden) return false;
+    return true;
+  });
+
+  // Fetch execution data for a fact
+  const fetchExecutionData = useCallback(async (factId: string) => {
+    // Check cache first
+    if (factId in executionCacheRef.current) {
+      setExecutionData(executionCacheRef.current[factId]);
+      return;
+    }
+
+    setLoadingExecution(true);
+    setExecutionData(null);
+
+    try {
+      const response = await fetch(`/api/admin/fun-facts/${encodeURIComponent(factId)}`);
+      if (response.ok) {
+        const data = await response.json();
+        const exec = data.execution || null;
+        executionCacheRef.current[factId] = exec;
+        setExecutionData(exec);
+      } else {
+        executionCacheRef.current[factId] = null;
+        setExecutionData(null);
+      }
+    } catch {
+      executionCacheRef.current[factId] = null;
+      setExecutionData(null);
+    } finally {
+      setLoadingExecution(false);
+    }
+  }, []);
+
+  // Enhanced view details handler
+  const handleViewFactDetails = useCallback((factId: string) => {
+    handleViewDetails(factId);
+    // If we're opening (not closing), fetch execution data for AI facts
+    if (selectedItemId !== factId) {
+      const fact = facts.find((f) => f.id === factId);
+      if (fact && fact.source === 'funFacts') {
+        fetchExecutionData(factId);
+      }
+    }
+  }, [handleViewDetails, selectedItemId, fetchExecutionData, facts]);
 
   // ============================================================================
   // Stats
   // ============================================================================
 
   const avgConfidence =
-    facts.length > 0
-      ? facts.reduce((sum, f) => sum + (f.confidence || 0), 0) / facts.length
+    filteredFacts.length > 0
+      ? filteredFacts.reduce((sum, f) => sum + (f.confidence || 0), 0) / filteredFacts.length
       : 0;
 
-  const templateCount = facts.filter((f) => f.source === 'fun_facts').length;
-  const legacyCount = facts.filter((f) => f.source === 'funFacts').length;
+  const templateCount = filteredFacts.filter((f) => f.source === 'fun_facts').length;
+  const aiCount = filteredFacts.filter((f) => f.source === 'funFacts').length;
+  const viewedCount = filteredFacts.filter((f) => f.viewed).length;
+  const hiddenCount = filteredFacts.filter((f) => f.hidden).length;
 
-  const categoryBreakdown = facts.reduce<Record<string, number>>((acc, f) => {
+  const categoryBreakdown = filteredFacts.reduce<Record<string, number>>((acc, f) => {
     const cat = f.category || 'unknown';
     acc[cat] = (acc[cat] || 0) + 1;
     return acc;
@@ -131,6 +224,9 @@ export default function FunFactsViewerPage() {
         </button>
       </div>
 
+      {/* Algorithm Reference */}
+      <FunFactAlgorithmReference />
+
       {/* User Selector */}
       <UserSelector
         users={users}
@@ -147,7 +243,7 @@ export default function FunFactsViewerPage() {
 
       {/* Filters */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1 uppercase">Category</label>
             <select
@@ -161,14 +257,14 @@ export default function FunFactsViewerPage() {
             </select>
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1 uppercase">Fact Type</label>
+            <label className="block text-xs font-medium text-gray-500 mb-1 uppercase">Period Type</label>
             <select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
+              value={periodTypeFilter}
+              onChange={(e) => setPeriodTypeFilter(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 focus:ring-2 focus:ring-red-500 focus:border-red-500"
             >
-              {TYPES.map((t) => (
-                <option key={t.value} value={t.value}>{t.label}</option>
+              {PERIOD_TYPES.map((p) => (
+                <option key={p.value} value={p.value}>{p.label}</option>
               ))}
             </select>
           </div>
@@ -184,21 +280,35 @@ export default function FunFactsViewerPage() {
               ))}
             </select>
           </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1 uppercase">Visibility</label>
+            <select
+              value={visibilityFilter}
+              onChange={(e) => setVisibilityFilter(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 focus:ring-2 focus:ring-red-500 focus:border-red-500"
+            >
+              {VISIBILITY_OPTIONS.map((v) => (
+                <option key={v.value} value={v.value}>{v.label}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {/* Quick Stats */}
-        {facts.length > 0 && (
+        {filteredFacts.length > 0 && (
           <div className="flex flex-wrap items-center gap-4 mt-4 pt-4 border-t border-gray-100 text-sm">
             <span className="text-gray-500">
-              Showing <span className="font-medium text-gray-900">{facts.length}</span> of{' '}
+              Showing <span className="font-medium text-gray-900">{filteredFacts.length}</span> of{' '}
               <span className="font-medium text-gray-900">{totalCount}</span> facts
             </span>
             <span className="text-gray-300">|</span>
             <span className="text-green-600">{templateCount} template</span>
-            <span className="text-purple-600">{legacyCount} AI legacy</span>
+            <span className="text-purple-600">{aiCount} AI</span>
             <span className="text-gray-600">
               Avg Confidence: {(avgConfidence * 100).toFixed(0)}%
             </span>
+            <span className="text-green-600">{viewedCount} viewed</span>
+            {hiddenCount > 0 && <span className="text-red-600">{hiddenCount} hidden</span>}
             {Object.entries(categoryBreakdown).slice(0, 3).map(([cat, count]) => (
               <span key={cat} className="text-gray-500">{cat}: {count}</span>
             ))}
@@ -216,28 +326,28 @@ export default function FunFactsViewerPage() {
       {/* Facts Grid */}
       {!loading && !error && selectedUserId && (
         <>
-          {facts.length === 0 ? (
+          {filteredFacts.length === 0 ? (
             <EmptyState
               message="No fun facts found matching the current filters."
               hint="Try adjusting your filters or selecting a different source."
             />
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {facts.map((fact) => (
+              {filteredFacts.map((fact) => (
                 <FunFactCard
                   key={fact.id}
                   fact={fact}
                   isSelected={selectedItemId === fact.id}
-                  onViewDetails={() => handleViewDetails(fact.id)}
+                  onViewDetails={() => handleViewFactDetails(fact.id)}
                 />
               ))}
             </div>
           )}
 
-          {facts.length > 0 && (
+          {filteredFacts.length > 0 && (
             <PaginationControls
               currentPage={currentPage}
-              itemCount={facts.length}
+              itemCount={filteredFacts.length}
               hasMore={hasMore}
               itemLabel="facts"
               onPrevPage={handlePrevPage}
@@ -248,10 +358,12 @@ export default function FunFactsViewerPage() {
       )}
 
       {/* Detail Modal */}
-      {selectedItemId && facts.find((f) => f.id === selectedItemId) && (
+      {selectedItemId && filteredFacts.find((f) => f.id === selectedItemId) && (
         <FunFactDetailModal
-          fact={facts.find((f) => f.id === selectedItemId)!}
+          fact={filteredFacts.find((f) => f.id === selectedItemId)!}
           onClose={() => handleViewDetails(selectedItemId)}
+          execution={executionData}
+          loadingExecution={loadingExecution}
         />
       )}
     </div>

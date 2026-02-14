@@ -17,6 +17,10 @@ const CATEGORIES: Record<string, { label: string; color: string }> = {
   social: { label: 'Social', color: '#E91E63' },
   productivity: { label: 'Productivity', color: '#3F51B5' },
   general: { label: 'General', color: '#607D8B' },
+  pattern: { label: 'Pattern', color: '#9C27B0' },
+  statistic: { label: 'Statistic', color: '#00BCD4' },
+  achievement: { label: 'Achievement', color: '#FF9800' },
+  milestone: { label: 'Milestone', color: '#795548' },
 };
 
 const TYPES: Record<string, { label: string; icon: string }> = {
@@ -25,6 +29,16 @@ const TYPES: Record<string, { label: string; icon: string }> = {
   record: { label: 'Record', icon: '🏆' },
   pattern: { label: 'Pattern', icon: '🔄' },
   milestone: { label: 'Milestone', icon: '🎯' },
+  patterns: { label: 'Patterns', icon: '📊' },
+  surprising: { label: 'Surprising', icon: '✨' },
+  recommendation: { label: 'Recommendation', icon: '💡' },
+};
+
+const PERIOD_LABELS: Record<string, string> = {
+  weekly: 'Weekly',
+  monthly: 'Monthly',
+  quarterly: 'Quarterly',
+  yearly: 'Yearly',
 };
 
 function getCategoryMeta(category: string | undefined) {
@@ -39,7 +53,7 @@ function getTypeMeta(type: string | undefined) {
 
 export default function FunFactCard({ fact, onViewDetails, isSelected }: FunFactCardProps) {
   const catMeta = getCategoryMeta(fact.category);
-  const typeMeta = getTypeMeta(fact.type);
+  const typeMeta = getTypeMeta(fact.insightType || fact.type);
   const expired = isExpired(fact.expiresAt);
 
   return (
@@ -48,7 +62,7 @@ export default function FunFactCard({ fact, onViewDetails, isSelected }: FunFact
         isSelected
           ? 'border-red-400 ring-2 ring-red-100'
           : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
-      } ${expired ? 'opacity-60' : ''}`}
+      } ${expired ? 'opacity-60' : ''} ${fact.hidden ? 'opacity-60' : ''}`}
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-3 mb-2">
@@ -62,6 +76,11 @@ export default function FunFactCard({ fact, onViewDetails, isSelected }: FunFact
           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
             {typeMeta.icon} {typeMeta.label}
           </span>
+          {fact.periodType && (
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
+              {PERIOD_LABELS[fact.periodType] || fact.periodType}
+            </span>
+          )}
           <span
             className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
               fact.source === 'fun_facts'
@@ -69,7 +88,7 @@ export default function FunFactCard({ fact, onViewDetails, isSelected }: FunFact
                 : 'bg-purple-100 text-purple-700'
             }`}
           >
-            {fact.source === 'fun_facts' ? 'Template' : 'AI Legacy'}
+            {fact.source === 'fun_facts' ? 'Template' : 'AI'}
           </span>
           {expired && (
             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">
@@ -98,10 +117,15 @@ export default function FunFactCard({ fact, onViewDetails, isSelected }: FunFact
         {fact.dataPointCount !== undefined && fact.dataPointCount > 0 && (
           <span>{fact.dataPointCount} data points</span>
         )}
-        {fact.periodType && <span>{fact.periodType}</span>}
         {fact.expiresAt && !expired && (
           <span>Expires: {formatDateShort(fact.expiresAt)}</span>
         )}
+      </div>
+
+      {/* Status indicators */}
+      <div className="flex items-center gap-3 text-xs text-gray-400 mb-3">
+        <span>{fact.viewed ? '✓ Viewed' : '○ Not viewed'}</span>
+        {fact.hidden && <span>🚫 Hidden</span>}
       </div>
 
       {/* View button */}
