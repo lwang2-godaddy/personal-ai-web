@@ -56,6 +56,8 @@ export const ADMIN_NAVIGATION: NavGroup[] = [
       { href: '/admin/insights', label: 'Insights', icon: '💡' },
       { href: '/admin/life-feed', label: 'Life Feed Viewer', icon: '📰' },
       { href: '/admin/memory-builder', label: 'Memory Builder', icon: '🧠' },
+      { href: '/admin/life-keywords', label: 'Life Keywords', icon: '🔑' },
+      { href: '/admin/fun-facts', label: 'Fun Facts', icon: '🎲' },
       { href: '/admin/vocabulary', label: 'Vocabulary', icon: '📚' },
       { href: '/admin/notifications', label: 'Notifications', icon: '🔔' },
       { href: '/admin/voice-categories', label: 'Voice Categories', icon: '🎤' },
