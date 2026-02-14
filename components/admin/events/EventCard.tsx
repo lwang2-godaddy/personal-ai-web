@@ -152,14 +152,26 @@ export default function EventCard({ event, onViewDetails, isSelected }: EventCar
         </p>
       )}
 
+      {/* Confirmation badge */}
+      {event.userConfirmed && event.status === 'confirmed' ? (
+        <div className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-green-100 text-green-700 border border-green-200 mb-2">
+          ✓ Confirmed
+        </div>
+      ) : event.status === 'cancelled' ? (
+        <div className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-red-100 text-red-600 border border-red-200 mb-2">
+          ✕ Cancelled
+        </div>
+      ) : !event.userConfirmed && ['draft', 'pending'].includes(event.status) ? (
+        <div className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-amber-100 text-amber-700 border border-amber-200 mb-2">
+          ⏳ Awaiting confirmation
+        </div>
+      ) : null}
+
       {/* Metrics row */}
       <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
         <span>Confidence: {Math.round((event.confidence || 0) * 100)}%</span>
         {event.embeddingId && (
           <span className="text-green-600">Embedded</span>
-        )}
-        {event.userConfirmed && (
-          <span className="text-blue-600">Confirmed</span>
         )}
         {event.participants && event.participants.length > 0 && (
           <span>{event.participants.length} participant{event.participants.length > 1 ? 's' : ''}</span>

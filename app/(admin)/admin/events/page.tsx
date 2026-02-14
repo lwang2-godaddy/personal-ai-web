@@ -47,6 +47,13 @@ const SOURCE_TYPES = [
   { value: 'manual', label: 'Manual' },
 ];
 
+const CONFIRMATION_STATUSES = [
+  { value: '', label: 'All Confirmation' },
+  { value: 'awaiting', label: 'Awaiting Confirmation' },
+  { value: 'confirmed', label: 'Toast Confirmed' },
+  { value: 'cancelled', label: 'Cancelled' },
+];
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -84,6 +91,7 @@ export default function EventsViewerPage() {
   const [typeFilter, setTypeFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [sourceTypeFilter, setSourceTypeFilter] = useState('');
+  const [confirmationFilter, setConfirmationFilter] = useState('');
 
   // Execution data state
   const [executionData, setExecutionData] = useState<ExecutionData | null>(null);
@@ -118,6 +126,7 @@ export default function EventsViewerPage() {
       type: typeFilter,
       status: statusFilter,
       sourceType: sourceTypeFilter,
+      confirmationStatus: confirmationFilter,
     },
   });
 
@@ -177,6 +186,17 @@ export default function EventsViewerPage() {
     return acc;
   }, {});
 
+  // Confirmation stats
+  const awaitingCount = events.filter(
+    (e) => !e.userConfirmed && ['draft', 'pending'].includes(e.status)
+  ).length;
+  const confirmedByUserCount = events.filter((e) => e.userConfirmed).length;
+  const cancelledCount = events.filter((e) => e.status === 'cancelled').length;
+  const totalExtracted = awaitingCount + confirmedByUserCount + cancelledCount;
+  const confirmationRate = totalExtracted > 0
+    ? Math.round((confirmedByUserCount / totalExtracted) * 100)
+    : 0;
+
   // ============================================================================
   // Render
   // ============================================================================
@@ -226,7 +246,7 @@ export default function EventsViewerPage() {
 
       {/* Filters */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1 uppercase">Event Type</label>
             <select
@@ -263,6 +283,18 @@ export default function EventsViewerPage() {
               ))}
             </select>
           </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1 uppercase">Confirmation</label>
+            <select
+              value={confirmationFilter}
+              onChange={(e) => setConfirmationFilter(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 focus:ring-2 focus:ring-red-500 focus:border-red-500"
+            >
+              {CONFIRMATION_STATUSES.map((s) => (
+                <option key={s.value} value={s.value}>{s.label}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {/* Quick Stats */}
@@ -277,12 +309,13 @@ export default function EventsViewerPage() {
               Avg Confidence: {(avgConfidence * 100).toFixed(0)}%
             </span>
             <span className="text-green-600">{embeddedCount} embedded</span>
-            {Object.entries(typeBreakdown).slice(0, 3).map(([type, count]) => (
-              <span key={type} className="text-gray-500">{type}: {count}</span>
-            ))}
-            {Object.entries(statusBreakdown).slice(0, 3).map(([st, count]) => (
-              <span key={st} className="text-gray-500">{st}: {count}</span>
-            ))}
+            <span className="text-gray-300">|</span>
+            <span className="text-blue-600">{confirmedByUserCount} confirmed</span>
+            <span className="text-amber-600">{awaitingCount} awaiting</span>
+            <span className="text-gray-500">{cancelledCount} cancelled</span>
+            {totalExtracted > 0 && (
+              <span className="text-emerald-600">Rate: {confirmationRate}%</span>
+            )}
           </div>
         )}
       </div>

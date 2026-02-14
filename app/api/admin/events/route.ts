@@ -30,6 +30,7 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get('type');
     const status = searchParams.get('status');
     const sourceType = searchParams.get('sourceType');
+    const confirmationStatus = searchParams.get('confirmationStatus');
     const limit = parseInt(searchParams.get('limit') || '20', 10);
     const startAfter = searchParams.get('startAfter');
 
@@ -106,6 +107,15 @@ export async function GET(request: NextRequest) {
       events = events.filter((e) => e.sourceType === sourceType);
     }
 
+    // Filter by confirmation status in memory (avoids additional compound indexes)
+    if (confirmationStatus === 'awaiting') {
+      events = events.filter((e) => !e.userConfirmed && ['draft', 'pending'].includes(e.status));
+    } else if (confirmationStatus === 'confirmed') {
+      events = events.filter((e) => e.userConfirmed);
+    } else if (confirmationStatus === 'cancelled') {
+      events = events.filter((e) => e.status === 'cancelled');
+    }
+
     // Get total count
     const countQuery = db
       .collection('events')
@@ -121,11 +131,28 @@ export async function GET(request: NextRequest) {
       byStatus[e.status] = (byStatus[e.status] || 0) + 1;
     });
 
+    // Confirmation stats
+    const awaitingCount = events.filter(
+      (e) => !e.userConfirmed && ['draft', 'pending'].includes(e.status)
+    ).length;
+    const confirmedCount = events.filter((e) => e.userConfirmed).length;
+    const cancelledCount = events.filter((e) => e.status === 'cancelled').length;
+    const totalForRate = awaitingCount + confirmedCount + cancelledCount;
+    const confirmationRate = totalForRate > 0
+      ? Math.round((confirmedCount / totalForRate) * 100)
+      : 0;
+
     return NextResponse.json({
       events,
       hasMore: hasMore && events.length > 0,
       totalCount,
       stats: { byType, byStatus },
+      confirmationStats: {
+        awaitingCount,
+        confirmedCount,
+        cancelledCount,
+        confirmationRate,
+      },
     });
   } catch (error: unknown) {
     console.error('[Admin Events API] Error:', error);
