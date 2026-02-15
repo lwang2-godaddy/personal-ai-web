@@ -446,7 +446,8 @@ Rules:
 - Include 1-2 relevant emojis
 - Add 2-3 relevant hashtags at the end
 - Never mention AI, algorithms, or data analysis
-- Sound human and natural, not robotic`,
+- Sound human and natural, not robotic
+- CRITICAL: ONLY reference activities, locations, events, and experiences that are EXPLICITLY mentioned in the provided data. NEVER invent, assume, or fabricate details not present in the data. If the data only shows step counts with no diary/voice/photo content, only talk about steps or walking - do not make up where the user went or what they did.`,
     life_feed_life_summary: `Write a casual life update tweet summarizing my recent activities.
 
 IMPORTANT: You have ACTUAL content below - use specific details from my diary, voice notes, and photos!
@@ -1156,6 +1157,7 @@ Rules:
 - 结尾加2-3个相关话题标签
 - 绝不提及AI、算法或数据分析
 - 听起来自然、像人话
+- 关键：只引用数据中明确提到的活动、地点、事件和经历。绝不编造、假设或虚构数据中没有的内容。如果数据只有步数而没有日记/语音/照片内容，只谈论步数或走路——不要编造用户去了哪里或做了什么。
 - 用中文回复`,
     life_feed_life_summary: `写一条随意的生活更新推文总结我最近的活动。
 
@@ -1859,6 +1861,7 @@ Rules:
 - 最後に関連するハッシュタグを2-3個追加
 - AI、アルゴリズム、データ分析について言及しない
 - 人間らしく自然に聞こえるように
+- 重要：データに明示的に記載されている活動、場所、イベント、体験のみを参照すること。データにない内容を創作、推測、捏造しないこと。歩数データのみで日記/音声/写真がない場合は、歩数や散歩についてのみ書く — ユーザーがどこに行ったか何をしたかを作り上げないこと。
 - 日本語で回答`,
     life_feed_life_summary: `最近の活動をまとめたカジュアルな近況ツイートを書いてください。
 
@@ -2521,6 +2524,7 @@ JSON形式で返してください：
 - 마지막에 관련 해시태그 2-3개 추가
 - AI, 알고리즘, 데이터 분석 언급 금지
 - 인간적이고 자연스럽게 들리도록
+- 중요: 제공된 데이터에 명시적으로 언급된 활동, 장소, 이벤트, 경험만 참조할 것. 데이터에 없는 내용을 창작, 추측, 날조하지 말 것. 일기/음성/사진 없이 걸음 수만 있는 경우, 걸음 수나 걷기에 대해서만 쓸 것 — 사용자가 어디에 갔는지 무엇을 했는지 지어내지 말 것.
 - 한국어로 응답`,
     life_feed_life_summary: `최근 활동을 요약한 캐주얼한 근황 트윗을 작성해주세요.
 무엇을 해왔는지, 얼마나 활동적/바빴는지에 초점을 맞춰요. 기분 트렌드가 있다면 은근히 포함해요.
@@ -3170,6 +3174,7 @@ Reglas:
 - Agrega 2-3 hashtags relevantes al final
 - Nunca menciones IA, algoritmos o análisis de datos
 - Suena humano y natural, no robótico
+- CRÍTICO: SOLO referencia actividades, lugares, eventos y experiencias que estén EXPLÍCITAMENTE mencionados en los datos proporcionados. NUNCA inventes, asumas o fabriques detalles que no estén en los datos. Si solo hay conteo de pasos sin contenido de diario/voz/fotos, solo habla de pasos o caminar - no inventes a dónde fue el usuario o qué hizo.
 - En español`,
     life_feed_life_summary: `Escribe un tweet casual actualizando sobre mis actividades recientes.
 Enfócate en lo que he estado haciendo y qué tan activo/ocupado he estado. Si hay una tendencia de ánimo, incorpórala sutilmente.
@@ -3819,6 +3824,7 @@ Règles:
 - Ajoutez 2-3 hashtags pertinents à la fin
 - Ne mentionnez jamais l'IA, les algorithmes ou l'analyse de données
 - Sonnez humain et naturel, pas robotique
+- CRITIQUE : Référencez UNIQUEMENT les activités, lieux, événements et expériences EXPLICITEMENT mentionnés dans les données fournies. N'inventez, ne supposez et ne fabriquez JAMAIS de détails absents des données. Si seuls des comptages de pas sont fournis sans contenu journal/voix/photos, ne parlez que de pas ou de marche - n'inventez pas où l'utilisateur est allé ni ce qu'il a fait.
 - En français`,
     life_feed_life_summary: `Écrivez un tweet décontracté résumant mes activités récentes.
 Concentrez-vous sur ce que j'ai fait et mon niveau d'activité. S'il y a une tendance d'humeur, incorporez-la subtilement.
@@ -4468,6 +4474,7 @@ Regeln:
 - Fügen Sie am Ende 2-3 relevante Hashtags hinzu
 - Erwähnen Sie niemals KI, Algorithmen oder Datenanalyse
 - Klingen Sie menschlich und natürlich, nicht roboterhaft
+- KRITISCH: Beziehen Sie sich NUR auf Aktivitäten, Orte, Ereignisse und Erfahrungen, die EXPLIZIT in den bereitgestellten Daten erwähnt werden. Erfinden, vermuten oder fabrizieren Sie NIEMALS Details, die nicht in den Daten stehen. Wenn nur Schrittzahlen ohne Tagebuch-/Sprach-/Fotoinhalte vorhanden sind, sprechen Sie nur über Schritte oder Gehen - erfinden Sie nicht, wohin der Benutzer ging oder was er tat.
 - Auf Deutsch`,
     life_feed_life_summary: `Schreiben Sie einen lockeren Update-Tweet, der meine letzten Aktivitäten zusammenfasst.
 Konzentrieren Sie sich darauf, was ich gemacht habe und wie aktiv/beschäftigt ich war. Wenn es einen Stimmungstrend gibt, bauen Sie ihn subtil ein.
@@ -5117,6 +5124,7 @@ Regole:
 - Aggiungi 2-3 hashtag pertinenti alla fine
 - Non menzionare mai IA, algoritmi o analisi dati
 - Suona umano e naturale, non robotico
+- CRITICO: Fai riferimento SOLO ad attività, luoghi, eventi ed esperienze ESPLICITAMENTE menzionati nei dati forniti. NON inventare, supporre o fabbricare MAI dettagli non presenti nei dati. Se sono disponibili solo conteggi di passi senza contenuti diario/voce/foto, parla solo di passi o camminate - non inventare dove è andato l'utente o cosa ha fatto.
 - In italiano`,
     life_feed_life_summary: `Scrivi un tweet casual di aggiornamento che riassume le mie attività recenti.
 Concentrati su cosa ho fatto e quanto sono stato attivo/impegnato. Se c'è una tendenza dell'umore, incorporala sottilmente.
@@ -5766,6 +5774,7 @@ Regras:
 - Adicione 2-3 hashtags relevantes no final
 - Nunca mencione IA, algoritmos ou análise de dados
 - Soe humano e natural, não robótico
+- CRÍTICO: Referencie APENAS atividades, locais, eventos e experiências EXPLICITAMENTE mencionados nos dados fornecidos. NUNCA invente, assuma ou fabrique detalhes não presentes nos dados. Se houver apenas contagens de passos sem conteúdo de diário/voz/fotos, fale apenas sobre passos ou caminhada - não invente para onde o usuário foi ou o que fez.
 - Em português`,
     life_feed_life_summary: `Escreva um tweet casual de atualização resumindo minhas atividades recentes.
 Foque no que tenho feito e quão ativo/ocupado estive. Se há uma tendência de humor, incorpore sutilmente.

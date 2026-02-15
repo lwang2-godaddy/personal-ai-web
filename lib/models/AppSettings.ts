@@ -40,6 +40,12 @@ export interface AppSettings {
   // RAG Configuration
   ragMinScore?: number; // Minimum similarity score threshold for RAG queries (0.0-1.0, default 0.5)
   ragTopK?: number; // Number of results to retrieve from Pinecone (default 10)
+
+  // Voice Conversation
+  enableVoiceConversation?: boolean; // Enable/disable the voice conversation feature
+  voiceConversationAutoLoopDelayMs?: number; // Delay in ms before auto-looping back to listening after TTS finishes (default 500)
+  enableAutoLanguageMatch?: boolean; // AI responds in the same language the user speaks
+  defaultTtsProvider?: 'openai' | 'native'; // Default TTS provider for new users (default 'openai')
 }
 
 /**
@@ -100,6 +106,12 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   // RAG Configuration
   ragMinScore: 0.5, // 50% minimum similarity threshold
   ragTopK: 10, // Retrieve top 10 results from Pinecone
+
+  // Voice Conversation
+  enableVoiceConversation: true, // Enabled by default
+  voiceConversationAutoLoopDelayMs: 500, // 500ms delay before auto-loop
+  enableAutoLanguageMatch: true, // Match user's spoken language
+  defaultTtsProvider: 'openai', // OpenAI TTS by default
 };
 
 /**
@@ -200,6 +212,20 @@ export function validateAppSettings(settings: Partial<AppSettings>): {
     (settings.ragTopK < 1 || settings.ragTopK > 100)
   ) {
     errors.push('RAG topK must be between 1 and 100');
+  }
+
+  // Validate Voice Conversation configuration
+  if (
+    settings.voiceConversationAutoLoopDelayMs !== undefined &&
+    (settings.voiceConversationAutoLoopDelayMs < 0 || settings.voiceConversationAutoLoopDelayMs > 5000)
+  ) {
+    errors.push('Voice conversation auto-loop delay must be between 0 and 5000 ms');
+  }
+  if (
+    settings.defaultTtsProvider !== undefined &&
+    !['openai', 'native'].includes(settings.defaultTtsProvider)
+  ) {
+    errors.push('Default TTS provider must be "openai" or "native"');
   }
 
   return {

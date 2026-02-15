@@ -48,7 +48,7 @@ export default function AdminDashboardPage() {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600">Loading dashboard...</p>
         </div>
       </div>
@@ -148,7 +148,7 @@ export default function AdminDashboardPage() {
           {/* Manage Users */}
           <Link
             href="/admin/users"
-            className="block bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow border border-gray-200 hover:border-red-300"
+            className="block bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow border border-gray-200 hover:border-indigo-300"
           >
             <div className="flex items-center space-x-4">
               <div className="text-5xl">👥</div>
@@ -159,7 +159,7 @@ export default function AdminDashboardPage() {
                 </p>
               </div>
             </div>
-            <div className="mt-4 text-red-600 font-medium text-sm flex items-center">
+            <div className="mt-4 text-indigo-600 font-medium text-sm flex items-center">
               Go to Users →
             </div>
           </Link>
@@ -167,7 +167,7 @@ export default function AdminDashboardPage() {
           {/* Usage Analytics */}
           <Link
             href="/admin/usage"
-            className="block bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow border border-gray-200 hover:border-red-300"
+            className="block bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow border border-gray-200 hover:border-indigo-300"
           >
             <div className="flex items-center space-x-4">
               <div className="text-5xl">📈</div>
@@ -178,7 +178,7 @@ export default function AdminDashboardPage() {
                 </p>
               </div>
             </div>
-            <div className="mt-4 text-red-600 font-medium text-sm flex items-center">
+            <div className="mt-4 text-indigo-600 font-medium text-sm flex items-center">
               View Analytics →
             </div>
           </Link>
@@ -186,7 +186,7 @@ export default function AdminDashboardPage() {
           {/* Subscription Plans */}
           <Link
             href="/admin/subscriptions"
-            className="block bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow border border-gray-200 hover:border-red-300"
+            className="block bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow border border-gray-200 hover:border-indigo-300"
           >
             <div className="flex items-center space-x-4">
               <div className="text-5xl">💳</div>
@@ -197,7 +197,7 @@ export default function AdminDashboardPage() {
                 </p>
               </div>
             </div>
-            <div className="mt-4 text-red-600 font-medium text-sm flex items-center">
+            <div className="mt-4 text-indigo-600 font-medium text-sm flex items-center">
               Manage Plans →
             </div>
           </Link>
@@ -205,7 +205,7 @@ export default function AdminDashboardPage() {
           {/* AI Models Configuration */}
           <Link
             href="/admin/ai-models"
-            className="block bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow border border-gray-200 hover:border-red-300"
+            className="block bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow border border-gray-200 hover:border-indigo-300"
           >
             <div className="flex items-center space-x-4">
               <div className="text-5xl">🤖</div>
@@ -216,7 +216,7 @@ export default function AdminDashboardPage() {
                 </p>
               </div>
             </div>
-            <div className="mt-4 text-red-600 font-medium text-sm flex items-center">
+            <div className="mt-4 text-indigo-600 font-medium text-sm flex items-center">
               Configure Models →
             </div>
           </Link>
@@ -232,7 +232,7 @@ export default function AdminDashboardPage() {
             href="https://platform.openai.com/settings/organization/usage"
             target="_blank"
             rel="noopener noreferrer"
-            className="block bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow border border-gray-200 hover:border-red-300"
+            className="block bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow border border-gray-200 hover:border-indigo-300"
           >
             <div className="flex items-center space-x-4">
               <div className="text-4xl">🤖</div>
@@ -249,7 +249,7 @@ export default function AdminDashboardPage() {
             href="https://console.firebase.google.com/project/personalaiapp-90131"
             target="_blank"
             rel="noopener noreferrer"
-            className="block bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow border border-gray-200 hover:border-red-300"
+            className="block bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow border border-gray-200 hover:border-indigo-300"
           >
             <div className="flex items-center space-x-4">
               <div className="text-4xl">🔥</div>
@@ -266,7 +266,7 @@ export default function AdminDashboardPage() {
             href="https://app.pinecone.io"
             target="_blank"
             rel="noopener noreferrer"
-            className="block bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow border border-gray-200 hover:border-red-300"
+            className="block bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow border border-gray-200 hover:border-indigo-300"
           >
             <div className="flex items-center space-x-4">
               <div className="text-4xl">🌲</div>
@@ -283,7 +283,7 @@ export default function AdminDashboardPage() {
             href="https://vercel.com/dashboard"
             target="_blank"
             rel="noopener noreferrer"
-            className="block bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow border border-gray-200 hover:border-red-300"
+            className="block bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow border border-gray-200 hover:border-indigo-300"
           >
             <div className="flex items-center space-x-4">
               <div className="text-4xl">▲</div>
@@ -300,7 +300,7 @@ export default function AdminDashboardPage() {
             href="https://console.cloud.google.com"
             target="_blank"
             rel="noopener noreferrer"
-            className="block bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow border border-gray-200 hover:border-red-300"
+            className="block bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow border border-gray-200 hover:border-indigo-300"
           >
             <div className="flex items-center space-x-4">
               <div className="text-4xl">☁️</div>
@@ -317,7 +317,7 @@ export default function AdminDashboardPage() {
             href="https://platform.openai.com/api-keys"
             target="_blank"
             rel="noopener noreferrer"
-            className="block bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow border border-gray-200 hover:border-red-300"
+            className="block bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow border border-gray-200 hover:border-indigo-300"
           >
             <div className="flex items-center space-x-4">
               <div className="text-4xl">🔑</div>

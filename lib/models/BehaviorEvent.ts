@@ -359,6 +359,7 @@ export const TRACKED_SCREENS = {
   adminDocs: 'admin_docs',
   adminDemoData: 'admin_demo_data',
   adminTesting: 'admin_testing',
+  adminPerformance: 'admin_performance',
 
   // Mobile (for cross-platform compatibility)
   home: 'home',

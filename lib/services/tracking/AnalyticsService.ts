@@ -74,9 +74,9 @@ export class AnalyticsService {
   logPageView(pageName: string, pageClass?: string): void {
     if (!this.analytics) return;
     try {
-      logEvent(this.analytics, 'screen_view', {
-        screen_name: pageName,
-        screen_class: pageClass || pageName,
+      logEvent(this.analytics, 'page_view', {
+        page_title: pageName,
+        page_location: typeof window !== 'undefined' ? window.location.href : '',
       });
     } catch (error) {
       console.warn('[Analytics] Failed to log page view:', error);
@@ -92,7 +92,7 @@ export class AnalyticsService {
       const sanitizedName = eventName
         .replace(/[^a-zA-Z0-9_]/g, '_')
         .substring(0, 40);
-      logEvent(this.analytics, sanitizedName, params);
+      logEvent(this.analytics, sanitizedName as string & {}, params);
     } catch (error) {
       console.warn('[Analytics] Failed to log event:', error);
     }
