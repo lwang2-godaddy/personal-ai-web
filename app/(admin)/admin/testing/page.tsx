@@ -68,7 +68,7 @@ const INTEGRATION_TESTS = [
   { file: 'vocabulary-memory-integration.test.ts', keyword: 'vocabulary', type: 'Standard' },
 ];
 
-type TabId = 'maestro' | 'integration';
+type TabId = 'maestro' | 'integration' | 'performance';
 
 // ---------------------------------------------------------------------------
 // Collection label map
@@ -427,6 +427,142 @@ export default function AdminTestingPage() {
   };
 
   // ---------------------------------------------------------------------------
+  // Tab: Performance Baseline
+  // ---------------------------------------------------------------------------
+
+  const renderPerformanceTab = () => (
+    <div className="space-y-6">
+      {/* Info Banner */}
+      <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+        <div className="flex items-start gap-3">
+          <div className="text-purple-500 text-xl">&#9881;</div>
+          <div>
+            <h3 className="text-sm font-semibold text-purple-900 mb-1">Performance Baseline Data</h3>
+            <p className="text-sm text-purple-700">
+              Generates ~630 synthetic performance metrics across 7 days for 3 test users,
+              covering all 6 metric types (startup, transitions, scroll FPS, component renders,
+              JS thread FPS, API latency), then computes daily aggregates.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Test Users */}
+      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+        <h3 className="text-sm font-semibold text-gray-700 mb-2">Synthetic User IDs</h3>
+        <p className="text-xs text-gray-500 mb-2">
+          These are fake IDs written to the <code className="bg-gray-100 px-1 rounded">userId</code> field on each metric document.
+          No real Firebase Auth accounts are created — the admin performance dashboard reads all metrics without filtering by user.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <span className="font-mono text-xs bg-white border border-gray-200 rounded px-2 py-1 text-gray-700">e2e-perf-user-1</span>
+          <span className="font-mono text-xs bg-white border border-gray-200 rounded px-2 py-1 text-gray-700">e2e-perf-user-2</span>
+          <span className="font-mono text-xs bg-white border border-gray-200 rounded px-2 py-1 text-gray-700">e2e-perf-user-3</span>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div>
+        <h2 className="text-lg font-bold text-gray-900 mb-4">Actions</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <DemoActionButton
+            title="Seed Performance Data"
+            description="Generate synthetic metrics and daily aggregates for 7 days"
+            icon="&#128200;"
+            apiEndpoint="/api/admin/e2e/performance/seed"
+            variant="primary"
+            onProgress={handleProgress}
+            onComplete={handleOperationComplete}
+            confirmMessage="This will write ~630 synthetic performance metrics and 7 aggregate documents. Continue?"
+          />
+          <DemoActionButton
+            title="Cleanup Performance Data"
+            description="Delete all seeded performance metrics and aggregates"
+            icon="&#128465;"
+            apiEndpoint="/api/admin/e2e/performance/cleanup"
+            variant="danger"
+            onProgress={handleProgress}
+            onComplete={handleOperationComplete}
+            confirmMessage="This will permanently delete all seeded performance data. Continue?"
+          />
+        </div>
+      </div>
+
+      {/* Metric Types Reference */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h2 className="text-lg font-bold text-gray-900 mb-4">Metric Types (6)</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-200">
+                <th className="text-left py-2 pr-4 text-gray-500 font-medium">Type</th>
+                <th className="text-left py-2 pr-4 text-gray-500 font-medium">Count/Day</th>
+                <th className="text-left py-2 pr-4 text-gray-500 font-medium">Base Value</th>
+                <th className="text-left py-2 text-gray-500 font-medium">Patterns</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="border-b border-gray-100">
+                <td className="py-2 pr-4 font-mono text-gray-700">app_startup</td>
+                <td className="py-2 pr-4 text-gray-600">2-3</td>
+                <td className="py-2 pr-4 text-gray-600">1200ms</td>
+                <td className="py-2 text-gray-600">Morning slower, weekend slower</td>
+              </tr>
+              <tr className="border-b border-gray-100">
+                <td className="py-2 pr-4 font-mono text-gray-700">screen_transition</td>
+                <td className="py-2 pr-4 text-gray-600">8-12</td>
+                <td className="py-2 pr-4 text-gray-600">80-250ms</td>
+                <td className="py-2 text-gray-600">Varies by screen (Home=120, LifeFeed=250)</td>
+              </tr>
+              <tr className="border-b border-gray-100">
+                <td className="py-2 pr-4 font-mono text-gray-700">scroll_fps</td>
+                <td className="py-2 pr-4 text-gray-600">4-6</td>
+                <td className="py-2 pr-4 text-gray-600">55 FPS</td>
+                <td className="py-2 text-gray-600">LifeFeed -5fps, 10% frame drops</td>
+              </tr>
+              <tr className="border-b border-gray-100">
+                <td className="py-2 pr-4 font-mono text-gray-700">component_render</td>
+                <td className="py-2 pr-4 text-gray-600">4-6</td>
+                <td className="py-2 pr-4 text-gray-600">8-30ms</td>
+                <td className="py-2 text-gray-600">HealthChart=25ms, 15% slow renders</td>
+              </tr>
+              <tr className="border-b border-gray-100">
+                <td className="py-2 pr-4 font-mono text-gray-700">js_thread_fps</td>
+                <td className="py-2 pr-4 text-gray-600">2-3</td>
+                <td className="py-2 pr-4 text-gray-600">56 FPS</td>
+                <td className="py-2 text-gray-600">8% chance of dips</td>
+              </tr>
+              <tr className="border-b border-gray-100">
+                <td className="py-2 pr-4 font-mono text-gray-700">api_response_time</td>
+                <td className="py-2 pr-4 text-gray-600">5-8</td>
+                <td className="py-2 pr-4 text-gray-600">180-1200ms</td>
+                <td className="py-2 text-gray-600">queryRAG=800ms, 10% slow, 5% errors</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Link to dashboard */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="flex items-start gap-3">
+          <div className="text-blue-500 text-xl">&#8505;</div>
+          <div>
+            <h3 className="text-sm font-semibold text-blue-900 mb-1">View Results</h3>
+            <p className="text-sm text-blue-700">
+              After seeding, view the data on the{' '}
+              <a href="/admin/performance" className="underline font-medium hover:text-blue-900">
+                Performance Dashboard
+              </a>
+              . Select the last 7 days and click &quot;Load Data&quot; to see all 6 metric tabs populated.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // ---------------------------------------------------------------------------
   // Render
   // ---------------------------------------------------------------------------
 
@@ -469,11 +605,23 @@ export default function AdminTestingPage() {
               {INTEGRATION_TESTS.length}
             </span>
           </button>
+          <button
+            onClick={() => setActiveTab('performance')}
+            className={`py-3 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'performance'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Performance
+          </button>
         </nav>
       </div>
 
       {/* Tab Content */}
-      {activeTab === 'maestro' ? renderMaestroTab() : renderIntegrationTab()}
+      {activeTab === 'maestro' && renderMaestroTab()}
+      {activeTab === 'integration' && renderIntegrationTab()}
+      {activeTab === 'performance' && renderPerformanceTab()}
 
       {/* Progress Log (shared) */}
       <DemoProgressLog
