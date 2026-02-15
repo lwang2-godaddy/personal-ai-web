@@ -21,6 +21,7 @@ export interface NavGroup {
  */
 export const STANDALONE_NAV_ITEMS: NavItem[] = [
   { href: '/admin', label: 'Overview', icon: '📊' },
+  { href: '/admin/alerts', label: 'Alerts', icon: '🚨' },
 ];
 
 /**
@@ -35,6 +36,7 @@ export const ADMIN_NAVIGATION: NavGroup[] = [
       { href: '/admin/users', label: 'Users', icon: '👥' },
       { href: '/admin/subscriptions', label: 'Subscriptions', icon: '💳' },
       { href: '/admin/app-settings', label: 'App Settings', icon: '⚙️' },
+      { href: '/admin/user-content', label: 'User Content', icon: '📋' },
     ],
   },
   {
@@ -43,7 +45,6 @@ export const ADMIN_NAVIGATION: NavGroup[] = [
     icon: '📈',
     items: [
       { href: '/admin/usage', label: 'Usage Analytics', icon: '📈' },
-      { href: '/admin/usage/alerts', label: 'Cost Alerts', icon: '🚨' },
       { href: '/admin/behavior', label: 'Behavior', icon: '🎯' },
     ],
   },
@@ -60,9 +61,18 @@ export const ADMIN_NAVIGATION: NavGroup[] = [
       { href: '/admin/life-keywords', label: 'Life Keywords', icon: '🔑' },
       { href: '/admin/fun-facts', label: 'Fun Facts', icon: '🎲' },
       { href: '/admin/events', label: 'Events', icon: '📅' },
+      { href: '/admin/event-config', label: 'Event Config', icon: '⚙️' },
       { href: '/admin/vocabulary', label: 'Vocabulary', icon: '📚' },
       { href: '/admin/notifications', label: 'Notifications', icon: '🔔' },
       { href: '/admin/voice-categories', label: 'Voice Categories', icon: '🎤' },
+    ],
+  },
+  {
+    id: 'social',
+    label: 'Social',
+    icon: '🏆',
+    items: [
+      { href: '/admin/challenges', label: 'Challenges', icon: '🏆' },
     ],
   },
   {

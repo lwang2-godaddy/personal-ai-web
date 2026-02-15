@@ -352,6 +352,7 @@ export const TRACKED_SCREENS = {
   adminPromptDetail: 'admin_prompt_detail',
   adminVoiceCategories: 'admin_voice_categories',
   adminAppSettings: 'admin_app_settings',
+  adminEventConfig: 'admin_event_config',
   adminMigrations: 'admin_migrations',
   adminMigrationDetail: 'admin_migration_detail',
   adminExploreQuestions: 'admin_explore_questions',
