@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { apiGet } from '@/lib/api/client';
 import { useAppSelector } from '@/lib/store/hooks';
+import { GeneratePanel } from '@/components/admin/shared';
 import { PostCard, PostDetailModal, AlgorithmReference } from '@/components/admin/life-feed';
 
 // ============================================================================
@@ -479,6 +480,14 @@ export default function LifeFeedViewerPage() {
           )}
         </div>
       </div>
+
+      {/* Generate Panel */}
+      <GeneratePanel
+        endpoint="/api/admin/life-feed"
+        buttonLabel="Generate Life Feed"
+        userId={selectedUserId}
+        onSuccess={handleRefresh}
+      />
 
       {/* Filters */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">

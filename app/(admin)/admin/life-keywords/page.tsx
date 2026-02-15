@@ -9,6 +9,7 @@ import {
   ErrorMessage,
   LoadingSpinner,
   EmptyState,
+  GeneratePanel,
 } from '@/components/admin/shared';
 import type { LifeKeyword } from '@/components/admin/shared';
 import { KeywordCard, KeywordDetailModal, KeywordAlgorithmReference } from '@/components/admin/life-keywords';
@@ -84,6 +85,9 @@ export default function LifeKeywordsViewerPage() {
   const [categoryFilter, setCategoryFilter] = useState('');
   const [periodTypeFilter, setPeriodTypeFilter] = useState('');
   const [visibilityFilter, setVisibilityFilter] = useState('');
+
+  // Generate panel state
+  const [genPeriodType, setGenPeriodType] = useState('weekly');
 
   // Execution data state
   const [executionData, setExecutionData] = useState<ExecutionData | null>(null);
@@ -223,6 +227,27 @@ export default function LifeKeywordsViewerPage() {
         totalCount={totalCount}
         countLabel="total keywords"
       />
+
+      {/* Generate Panel */}
+      <GeneratePanel
+        endpoint="/api/admin/life-keywords"
+        buttonLabel="Generate Keywords"
+        userId={selectedUserId}
+        extraParams={{ periodType: genPeriodType }}
+        onSuccess={handleRefresh}
+      >
+        <div>
+          <label className="block text-xs font-medium text-gray-500 mb-1 uppercase">Period Type</label>
+          <select
+            value={genPeriodType}
+            onChange={(e) => setGenPeriodType(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+          >
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+          </select>
+        </div>
+      </GeneratePanel>
 
       {/* Filters */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">

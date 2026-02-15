@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/middleware/auth';
 import { getAdminFirestore } from '@/lib/api/firebase/admin';
+import { callCloudFunctionAsUser } from '@/lib/services/admin/cloudFunctionCaller';
+
+export const maxDuration = 300;
 
 /**
  * GET /api/admin/fun-facts
@@ -103,5 +106,41 @@ export async function GET(request: NextRequest) {
     const message =
       error instanceof Error ? error.message : 'Failed to fetch fun facts';
     return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+/**
+ * POST /api/admin/fun-facts
+ * Trigger fun fact generation for a user via manualGenerateFunFacts Cloud Function
+ *
+ * Body:
+ * - userId: string (required)
+ * - periodTypes: string[] (optional, default ['weekly','monthly','quarterly','yearly'])
+ * - language: string (optional, default 'en')
+ */
+export async function POST(request: NextRequest) {
+  try {
+    const { response: authResponse } = await requireAdmin(request);
+    if (authResponse) return authResponse;
+
+    const body = await request.json();
+    const { userId, periodTypes, language } = body;
+
+    if (!userId) {
+      return NextResponse.json({ error: 'userId is required' }, { status: 400 });
+    }
+
+    const result = await callCloudFunctionAsUser(userId, 'manualGenerateFunFacts', {
+      userId,
+      periodTypes: periodTypes || ['weekly', 'monthly', 'quarterly', 'yearly'],
+      language: language || 'en',
+    });
+
+    return NextResponse.json(result);
+  } catch (error: unknown) {
+    console.error('[Admin Fun Facts API] POST Error:', error);
+    const message =
+      error instanceof Error ? error.message : 'Failed to generate fun facts';
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }

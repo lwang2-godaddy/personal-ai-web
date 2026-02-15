@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/middleware/auth';
 import { getAdminFirestore } from '@/lib/api/firebase/admin';
+import { callCloudFunctionAsUser } from '@/lib/services/admin/cloudFunctionCaller';
+
+export const maxDuration = 300;
 
 /**
  * GET /api/admin/life-feed
@@ -135,5 +138,35 @@ export async function GET(request: NextRequest) {
     const message =
       error instanceof Error ? error.message : 'Failed to fetch life feed posts';
     return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+/**
+ * POST /api/admin/life-feed
+ * Trigger life feed generation for a user via generateLifeFeedNow Cloud Function
+ *
+ * Body:
+ * - userId: string (required)
+ */
+export async function POST(request: NextRequest) {
+  try {
+    const { response: authResponse } = await requireAdmin(request);
+    if (authResponse) return authResponse;
+
+    const body = await request.json();
+    const { userId } = body;
+
+    if (!userId) {
+      return NextResponse.json({ error: 'userId is required' }, { status: 400 });
+    }
+
+    const result = await callCloudFunctionAsUser(userId, 'generateLifeFeedNow', {});
+
+    return NextResponse.json(result);
+  } catch (error: unknown) {
+    console.error('[Admin Life Feed API] POST Error:', error);
+    const message =
+      error instanceof Error ? error.message : 'Failed to generate life feed';
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }

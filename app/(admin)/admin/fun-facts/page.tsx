@@ -9,6 +9,7 @@ import {
   ErrorMessage,
   LoadingSpinner,
   EmptyState,
+  GeneratePanel,
 } from '@/components/admin/shared';
 import type { FunFact } from '@/components/admin/shared';
 import { FunFactCard, FunFactDetailModal, FunFactAlgorithmReference } from '@/components/admin/fun-facts';
@@ -94,6 +95,9 @@ export default function FunFactsViewerPage() {
   const [periodTypeFilter, setPeriodTypeFilter] = useState('');
   const [insightTypeFilter, setInsightTypeFilter] = useState('');
   const [visibilityFilter, setVisibilityFilter] = useState('');
+
+  // Generate panel state
+  const [genPeriodTypes, setGenPeriodTypes] = useState<string[]>(['weekly', 'monthly', 'quarterly', 'yearly']);
 
   // Execution data state
   const [executionData, setExecutionData] = useState<ExecutionData | null>(null);
@@ -250,6 +254,36 @@ export default function FunFactsViewerPage() {
         totalCount={totalCount}
         countLabel="total facts"
       />
+
+      {/* Generate Panel */}
+      <GeneratePanel
+        endpoint="/api/admin/fun-facts"
+        buttonLabel="Generate Fun Facts"
+        userId={selectedUserId}
+        extraParams={{ periodTypes: genPeriodTypes }}
+        onSuccess={handleRefresh}
+      >
+        <div>
+          <label className="block text-xs font-medium text-gray-500 mb-2 uppercase">Period Types</label>
+          <div className="flex flex-wrap gap-3">
+            {['weekly', 'monthly', 'quarterly', 'yearly'].map((pt) => (
+              <label key={pt} className="inline-flex items-center gap-1.5 text-sm text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={genPeriodTypes.includes(pt)}
+                  onChange={(e) => {
+                    setGenPeriodTypes((prev) =>
+                      e.target.checked ? [...prev, pt] : prev.filter((p) => p !== pt)
+                    );
+                  }}
+                  className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                />
+                {pt.charAt(0).toUpperCase() + pt.slice(1)}
+              </label>
+            ))}
+          </div>
+        </div>
+      </GeneratePanel>
 
       {/* Filters */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
