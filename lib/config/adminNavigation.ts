@@ -46,6 +46,7 @@ export const ADMIN_NAVIGATION: NavGroup[] = [
     items: [
       { href: '/admin/usage', label: 'Usage Analytics', icon: '📈' },
       { href: '/admin/behavior', label: 'Behavior', icon: '🎯' },
+      { href: '/admin/performance', label: 'Performance', icon: '⚡' },
     ],
   },
   {
@@ -74,6 +75,7 @@ export const ADMIN_NAVIGATION: NavGroup[] = [
     icon: '🏆',
     items: [
       { href: '/admin/challenges', label: 'Challenges', icon: '🏆' },
+      { href: '/admin/engagement', label: 'Engagement', icon: '🎮' },
     ],
   },
   {
