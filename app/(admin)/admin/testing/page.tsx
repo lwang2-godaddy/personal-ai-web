@@ -523,8 +523,8 @@ export default function AdminTestingPage() {
               <tr className="border-b border-gray-100">
                 <td className="py-2 pr-4 font-mono text-gray-700">component_render</td>
                 <td className="py-2 pr-4 text-gray-600">4-6</td>
-                <td className="py-2 pr-4 text-gray-600">8-30ms</td>
-                <td className="py-2 text-gray-600">HealthChart=25ms, 15% slow renders</td>
+                <td className="py-2 pr-4 text-gray-600">6-22ms</td>
+                <td className="py-2 text-gray-600">LifeFeedPostCard=22ms, 15% slow renders</td>
               </tr>
               <tr className="border-b border-gray-100">
                 <td className="py-2 pr-4 font-mono text-gray-700">js_thread_fps</td>

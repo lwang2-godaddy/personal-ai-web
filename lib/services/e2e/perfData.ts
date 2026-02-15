@@ -15,7 +15,7 @@ export const PERF_USER_IDS = ['e2e-perf-user-1', 'e2e-perf-user-2', 'e2e-perf-us
 
 export const PERF_SCREENS = ['Home', 'Chat', 'LifeFeed', 'DiaryList', 'Settings'];
 
-export const PERF_COMPONENTS = ['LifeFeedCard', 'DiaryEntry', 'ChatBubble', 'HealthChart', 'LocationMap'];
+export const PERF_COMPONENTS = ['StatsFeedCard', 'DiaryFeedCard', 'PhotoFeedCard', 'VoiceNoteFeedCard', 'LifeFeedPostCard'];
 
 export const PERF_ENDPOINTS = ['queryRAG', 'getDashboard', 'getDiary', 'transcribeVoice', 'uploadPhoto'];
 
@@ -88,11 +88,11 @@ const SCREEN_SCROLL_FPS_BASE: Record<string, number> = {
 };
 
 const COMPONENT_RENDER_BASE: Record<string, number> = {
-  LifeFeedCard: 18,
-  DiaryEntry: 12,
-  ChatBubble: 8,
-  HealthChart: 25,
-  LocationMap: 30,
+  StatsFeedCard: 6,
+  DiaryFeedCard: 14,
+  PhotoFeedCard: 16,
+  VoiceNoteFeedCard: 18,
+  LifeFeedPostCard: 22,
 };
 
 const ENDPOINT_LATENCY_BASE: Record<string, number> = {
@@ -202,6 +202,15 @@ function generateScrollFps(userId: string, dateStr: string, dayOffset: number, s
   return metrics;
 }
 
+/** Map each profiled component to its actual screen */
+const COMPONENT_SCREEN_MAP: Record<string, string> = {
+  StatsFeedCard: 'HomeFeed',
+  DiaryFeedCard: 'HomeFeed',
+  PhotoFeedCard: 'HomeFeed',
+  VoiceNoteFeedCard: 'HomeFeed',
+  LifeFeedPostCard: 'LifeFeed',
+};
+
 function generateComponentRender(userId: string, dateStr: string, dayOffset: number, seed: number): RawMetric[] {
   const count = 4 + Math.floor(seededRandom(seed) * 3); // 4-6
   const metrics: RawMetric[] = [];
@@ -209,7 +218,7 @@ function generateComponentRender(userId: string, dateStr: string, dayOffset: num
   for (let i = 0; i < count; i++) {
     const s = seed * 400 + i;
     const component = pick(PERF_COMPONENTS, s);
-    const screen = pick(PERF_SCREENS, s + 1);
+    const screen = COMPONENT_SCREEN_MAP[component] || 'HomeFeed';
     const base = COMPONENT_RENDER_BASE[component];
     const isSlow = seededRandom(s + 2) < 0.15; // 15% chance of slow render
     const multiplier = isSlow ? rangeValue(3, 8, s + 3) : rangeValue(0.5, 2, s + 3);

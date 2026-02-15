@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { apiGet, apiPost } from '@/lib/api/client';
+import { apiGet, apiPost, apiDelete } from '@/lib/api/client';
 import { useTrackPage } from '@/lib/hooks/useTrackPage';
 import { TRACKED_SCREENS } from '@/lib/models/BehaviorEvent';
 import type {
@@ -59,6 +59,11 @@ export default function PerformanceDashboardPage() {
   const [rawMetricType, setRawMetricType] = useState<string>('');
   const [backfillDate, setBackfillDate] = useState('');
   const [backfillLoading, setBackfillLoading] = useState(false);
+  const [availableUsers, setAvailableUsers] = useState<string[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [purgeAge, setPurgeAge] = useState<number>(90);
+  const [purgeLoading, setPurgeLoading] = useState(false);
+  const [purgeResult, setPurgeResult] = useState<string | null>(null);
 
   // Set default date range
   useEffect(() => {
@@ -67,6 +72,30 @@ export default function PerformanceDashboardPage() {
     setEndDate(today.toISOString().split('T')[0]);
     setStartDate(sevenDaysAgo.toISOString().split('T')[0]);
   }, []);
+
+  // Fetch distinct user IDs for the dropdown
+  const fetchUsers = async (start: string, end: string) => {
+    try {
+      setUsersLoading(true);
+      const params = new URLSearchParams({ startDate: start, endDate: end, mode: 'users' });
+      const result = await apiGet<{ userIds: string[] }>(
+        `/api/admin/performance?${params.toString()}`
+      );
+      setAvailableUsers(result.userIds || []);
+    } catch {
+      setAvailableUsers([]);
+    } finally {
+      setUsersLoading(false);
+    }
+  };
+
+  // Fetch users when dates are set initially
+  useEffect(() => {
+    if (startDate && endDate) {
+      fetchUsers(startDate, endDate);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startDate, endDate]);
 
   const handleQuickRange = (days: number) => {
     const today = new Date();
@@ -118,6 +147,27 @@ export default function PerformanceDashboardPage() {
       alert(`Backfill failed: ${err.message}`);
     } finally {
       setBackfillLoading(false);
+    }
+  };
+
+  const handlePurge = async () => {
+    if (!purgeAge || purgeAge < 1) return;
+    const cutoff = new Date(Date.now() - purgeAge * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    if (!confirm(`Delete all raw performance metrics older than ${purgeAge} days (before ${cutoff})?\n\nAggregates will be preserved. This cannot be undone.`)) {
+      return;
+    }
+    try {
+      setPurgeLoading(true);
+      setPurgeResult(null);
+      const result = await apiDelete<{ success: boolean; message: string; deleted: number }>(
+        '/api/admin/performance',
+        { olderThanDays: purgeAge }
+      );
+      setPurgeResult(result.message);
+    } catch (err: any) {
+      setPurgeResult(`Purge failed: ${err.message}`);
+    } finally {
+      setPurgeLoading(false);
     }
   };
 
@@ -243,7 +293,9 @@ export default function PerformanceDashboardPage() {
           </p>
           {userIdFilter.trim() && dataLoaded && (
             <p className="text-xs text-orange-600 mt-1 font-medium">
-              Filtered by user: <span className="font-mono">{userIdFilter.trim()}</span> (aggregated on-the-fly from raw metrics)
+              Filtered by user: <span className="font-mono">{userIdFilter.trim()}</span>
+              {userIdFilter.startsWith('e2e-perf-') ? ' (test data)' : ' (real data)'}
+              {' — '}aggregated on-the-fly from raw metrics
             </p>
           )}
         </div>
@@ -296,25 +348,19 @@ export default function PerformanceDashboardPage() {
 
           {/* User ID filter */}
           <div>
-            <label className="block text-xs text-gray-500 mb-1">User ID (optional)</label>
-            <div className="flex gap-1">
-              <input
-                type="text"
-                value={userIdFilter}
-                onChange={(e) => { setUserIdFilter(e.target.value); setDataLoaded(false); }}
-                placeholder="All users"
-                className="px-3 py-2 border border-gray-300 rounded-md text-sm w-44"
-              />
-              {userIdFilter && (
-                <button
-                  onClick={() => { setUserIdFilter(''); setDataLoaded(false); }}
-                  className="px-2 py-2 text-xs text-gray-400 hover:text-gray-600"
-                  title="Clear filter"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
+            <label className="block text-xs text-gray-500 mb-1">User {usersLoading ? '(loading...)' : `(${availableUsers.length} found)`}</label>
+            <select
+              value={userIdFilter}
+              onChange={(e) => { setUserIdFilter(e.target.value); setDataLoaded(false); }}
+              className="px-3 py-2 border border-gray-300 rounded-md text-sm w-56"
+            >
+              <option value="">All users</option>
+              {availableUsers.map((uid) => (
+                <option key={uid} value={uid}>
+                  {uid.startsWith('e2e-perf-') ? `${uid} (test)` : uid.length > 20 ? `${uid.slice(0, 8)}...${uid.slice(-8)}` : uid}
+                </option>
+              ))}
+            </select>
           </div>
 
           <button
@@ -809,6 +855,48 @@ export default function PerformanceDashboardPage() {
         </div>
       </div>
 
+      {/* ============================================================ */}
+      {/* PURGE SECTION (always visible) */}
+      {/* ============================================================ */}
+      <div className="bg-gradient-to-r from-red-50 to-orange-50 border border-red-200 rounded-lg p-5">
+        <div className="flex items-start gap-3">
+          <span className="text-2xl">{'🗑️'}</span>
+          <div className="flex-1">
+            <h3 className="text-red-800 font-semibold mb-2">Purge Raw Metrics (Retention)</h3>
+            <p className="text-red-700 text-sm mb-3">
+              Delete raw performance metrics older than the specified number of days.
+              Daily aggregates are preserved for long-term trend analysis.
+            </p>
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-gray-600">Older than</span>
+              <select
+                value={purgeAge}
+                onChange={(e) => setPurgeAge(Number(e.target.value))}
+                className="px-3 py-2 border border-red-300 rounded-md text-sm"
+              >
+                <option value={7}>7 days</option>
+                <option value={30}>30 days</option>
+                <option value={60}>60 days</option>
+                <option value={90}>90 days</option>
+                <option value={180}>180 days</option>
+              </select>
+              <button
+                onClick={handlePurge}
+                disabled={purgeLoading}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 text-sm font-medium"
+              >
+                {purgeLoading ? 'Purging...' : 'Purge'}
+              </button>
+            </div>
+            {purgeResult && (
+              <p className={`text-sm mt-2 ${purgeResult.startsWith('Purge failed') ? 'text-red-600' : 'text-green-700'}`}>
+                {purgeResult}
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Info Section */}
       <div className="bg-gradient-to-r from-gray-50 to-slate-50 border border-gray-200 rounded-lg p-5">
         <div className="flex items-start gap-3">
@@ -822,6 +910,45 @@ export default function PerformanceDashboardPage() {
               <li><strong>JS Thread FPS</strong> = Continuous JS thread frame rate (10% of sessions sampled)</li>
               <li><strong>API Latency</strong> = HTTP requests and Firebase callable function response times</li>
               <li><strong>Slow Renders</strong> = React component renders exceeding 16ms (one frame budget)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* Phase 1 Optimization Notes */}
+      <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-lg p-5">
+        <div className="flex items-start gap-3">
+          <span className="text-2xl">{'⚡'}</span>
+          <div className="flex-1">
+            <h3 className="text-gray-800 font-semibold mb-2">Phase 1 Optimizations (Deployed)</h3>
+            <ul className="text-gray-700 text-sm space-y-1">
+              <li><strong>Console Stripping</strong> — All console.* calls removed in production builds (babel-plugin-transform-remove-console)</li>
+              <li><strong>React.memo</strong> — 5 feed card components memoized with custom comparators to prevent unnecessary re-renders</li>
+              <li><strong>FlatList Tuning</strong> — removeClippedSubviews, windowSize, maxToRenderPerBatch on DiaryList, LifeFeed, Chat screens</li>
+              <li><strong>Deferred Service Init</strong> — Analytics/monitoring services deferred 5s after app startup; non-critical services run in parallel</li>
+            </ul>
+
+            <h4 className="text-gray-800 font-semibold mt-4 mb-1">{'🔍'} React Profiler — Temporary (Remove After Validation)</h4>
+            <p className="text-gray-600 text-sm mb-2">
+              React.Profiler wrappers are active on 5 components to measure render frequency and duration.
+              They have minimal overhead (one function call per render, early-return for {'<'}16ms) but are <strong>not recommended
+              for long-term production use</strong>. Once you confirm the optimizations are working (fewer Slow Renders events,
+              stable Scroll FPS), remove the Profiler wrappers and keep only React.memo.
+            </p>
+            <ul className="text-gray-700 text-sm space-y-1 ml-4">
+              <li>{'•'} <code className="bg-gray-100 px-1 rounded text-xs">StatsFeedCard.tsx</code> — HomeFeed</li>
+              <li>{'•'} <code className="bg-gray-100 px-1 rounded text-xs">DiaryFeedCard.tsx</code> — HomeFeed</li>
+              <li>{'•'} <code className="bg-gray-100 px-1 rounded text-xs">PhotoFeedCard.tsx</code> — HomeFeed</li>
+              <li>{'•'} <code className="bg-gray-100 px-1 rounded text-xs">VoiceNoteFeedCard.tsx</code> — HomeFeed</li>
+              <li>{'•'} <code className="bg-gray-100 px-1 rounded text-xs">LifeFeedPostCard.tsx</code> — LifeFeed</li>
+            </ul>
+
+            <h4 className="text-gray-800 font-semibold mt-4 mb-1">{'📊'} What to Look For</h4>
+            <ul className="text-gray-700 text-sm space-y-1">
+              <li><strong>app_startup</strong> p50/p95 — Should decrease 20-30% (console stripping + deferred init)</li>
+              <li><strong>scroll_fps</strong> avgFps — Should trend toward 60fps (FlatList tuning)</li>
+              <li><strong>component_render</strong> event count — Fewer events = React.memo is working</li>
+              <li><strong>screen_transition</strong> p95 — Should decrease (FlatList tuning + deferred init)</li>
             </ul>
           </div>
         </div>

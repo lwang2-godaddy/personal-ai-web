@@ -14,6 +14,10 @@
  * POST /api/admin/performance
  * Trigger manual aggregation for a specific date (backfill)
  * Body: { date: 'YYYY-MM-DD' }
+ *
+ * DELETE /api/admin/performance
+ * Purge raw metrics older than N days (keeps aggregates)
+ * Body: { olderThanDays: number }
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -39,6 +43,24 @@ export async function GET(request: NextRequest): Promise<NextResponse<Performanc
     const userId = searchParams.get('userId');
 
     const db = getAdminFirestore();
+
+    // Return distinct user IDs for the user filter dropdown
+    if (mode === 'users') {
+      const snapshot = await db.collection('performanceMetrics')
+        .where('timestamp', '>=', startDate + 'T00:00:00.000Z')
+        .where('timestamp', '<=', endDate + 'T23:59:59.999Z')
+        .orderBy('timestamp', 'desc')
+        .limit(2000)
+        .get();
+
+      const userIds = new Set<string>();
+      snapshot.docs.forEach(doc => {
+        const uid = doc.data().userId;
+        if (uid) userIds.add(uid);
+      });
+
+      return NextResponse.json({ userIds: Array.from(userIds).sort() } as any);
+    }
 
     if (mode === 'raw') {
       // Return raw metrics for debugging
@@ -178,5 +200,57 @@ export async function POST(request: NextRequest): Promise<NextResponse<{ success
   } catch (error: any) {
     console.error('[Performance API] POST Error:', error);
     return NextResponse.json({ error: error.message || 'Failed to aggregate' }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: NextRequest): Promise<NextResponse<{ success: boolean; message: string; deleted: number } | { error: string }>> {
+  const { user, response: authResponse } = await requireAdmin(request);
+  if (authResponse) return authResponse as NextResponse<{ error: string }>;
+
+  try {
+    const body = await request.json();
+    const { olderThanDays } = body;
+
+    if (!olderThanDays || typeof olderThanDays !== 'number' || olderThanDays < 1) {
+      return NextResponse.json({ error: 'olderThanDays must be a positive number' }, { status: 400 });
+    }
+
+    const db = getAdminFirestore();
+    const cutoffDate = new Date(Date.now() - olderThanDays * 24 * 60 * 60 * 1000);
+    const cutoffStr = cutoffDate.toISOString();
+
+    let totalDeleted = 0;
+    let hasMore = true;
+
+    // Delete in batches of 500 (Firestore batch limit)
+    while (hasMore) {
+      const snapshot = await db.collection('performanceMetrics')
+        .where('timestamp', '<', cutoffStr)
+        .limit(500)
+        .get();
+
+      if (snapshot.empty) {
+        hasMore = false;
+        break;
+      }
+
+      const batch = db.batch();
+      snapshot.docs.forEach(doc => batch.delete(doc.ref));
+      await batch.commit();
+      totalDeleted += snapshot.size;
+
+      if (snapshot.size < 500) {
+        hasMore = false;
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      deleted: totalDeleted,
+      message: `Purged ${totalDeleted} raw metrics older than ${olderThanDays} days (before ${cutoffDate.toISOString().split('T')[0]}). Aggregates preserved.`,
+    });
+  } catch (error: any) {
+    console.error('[Performance API] DELETE Error:', error);
+    return NextResponse.json({ error: error.message || 'Failed to purge metrics' }, { status: 500 });
   }
 }
