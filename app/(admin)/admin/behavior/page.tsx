@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { apiGet } from '@/lib/api/client';
 import { useAppSelector } from '@/lib/store/hooks';
-import type { BehaviorOverview } from '@/lib/models/BehaviorEvent';
+import type { BehaviorOverview, PostHogOverview } from '@/lib/models/BehaviorEvent';
 import { useTrackPage, useTrackFeature } from '@/lib/hooks/useTrackPage';
 import { TRACKED_SCREENS, TRACKED_FEATURES } from '@/lib/models/BehaviorEvent';
 import {
@@ -115,7 +115,7 @@ const SCREEN_CATEGORIES: Record<string, { label: string; screens: string[] }> = 
   },
 };
 
-type TabType = 'overview' | 'screens' | 'features';
+type TabType = 'overview' | 'screens' | 'features' | 'providers';
 
 /**
  * Admin Behavior Analytics Dashboard
@@ -132,6 +132,11 @@ export default function AdminBehaviorAnalyticsPage() {
   const [error, setError] = useState<string | null>(null);
   const [dataLoaded, setDataLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('overview');
+
+  // PostHog state
+  const [posthogData, setPosthogData] = useState<PostHogOverview | null>(null);
+  const [posthogLoading, setPosthogLoading] = useState(false);
+  const [posthogError, setPosthogError] = useState<string | null>(null);
 
   // Date range states
   const [startDate, setStartDate] = useState('');
@@ -213,6 +218,22 @@ export default function AdminBehaviorAnalyticsPage() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const fetchPosthogData = async () => {
+    if (!startDate || !endDate) return;
+    try {
+      setPosthogLoading(true);
+      setPosthogError(null);
+      const params = new URLSearchParams({ startDate, endDate });
+      const data = await apiGet<PostHogOverview>(`/api/admin/behavior/posthog?${params.toString()}`);
+      setPosthogData(data);
+    } catch (err: any) {
+      console.error('Failed to fetch PostHog data:', err);
+      setPosthogError(err.message || 'Failed to load PostHog data');
+    } finally {
+      setPosthogLoading(false);
+    }
   };
 
   // Format duration in human-readable format
@@ -368,8 +389,8 @@ export default function AdminBehaviorAnalyticsPage() {
         </div>
       </div>
 
-      {/* Initial State - Show before data is loaded */}
-      {!dataLoaded && !loading && !error && (
+      {/* Initial State - Show before data is loaded (but not on Providers tab) */}
+      {!dataLoaded && !loading && !error && activeTab !== 'providers' && (
         <div className="bg-white rounded-lg shadow-md p-12 text-center">
           <div className="text-6xl mb-4">📊</div>
           <h3 className="text-xl font-semibold text-gray-900 mb-2">Ready to Analyze Behavior Data</h3>
@@ -379,6 +400,179 @@ export default function AdminBehaviorAnalyticsPage() {
           <p className="text-sm text-gray-500">
             This page tracks screen views, feature usage, and session data across mobile and web platforms.
           </p>
+          <button
+            onClick={() => {
+              setActiveTab('providers');
+              if (!posthogData && !posthogLoading) {
+                fetchPosthogData();
+              }
+            }}
+            className="mt-4 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-sm text-gray-700"
+          >
+            View Analytics Providers →
+          </button>
+        </div>
+      )}
+
+      {/* Providers Tab (accessible without loading Firestore data) */}
+      {!dataLoaded && !loading && activeTab === 'providers' && (
+        <div className="space-y-6">
+          {/* Tab bar for navigation back */}
+          <div className="bg-white rounded-lg shadow-md overflow-hidden">
+            <div className="border-b border-gray-200">
+              <nav className="flex -mb-px">
+                <button
+                  onClick={() => setActiveTab('overview')}
+                  className="px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                >
+                  Overview
+                </button>
+                <button
+                  onClick={() => setActiveTab('screens')}
+                  className="px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                >
+                  Screens
+                </button>
+                <button
+                  onClick={() => setActiveTab('features')}
+                  className="px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                >
+                  Features
+                </button>
+                <button
+                  className="px-6 py-4 text-sm font-medium border-b-2 border-red-500 text-red-600"
+                >
+                  Providers
+                </button>
+              </nav>
+            </div>
+          </div>
+
+          {/* Provider Status Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-green-500">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-2.5 h-2.5 bg-green-500 rounded-full"></span>
+                <span className="font-semibold text-gray-900 text-sm">Firestore</span>
+              </div>
+              <p className="text-gray-600 text-xs mb-3">Primary source. Load data above to see Overview, Screens, and Features.</p>
+              <span className="inline-block text-xs bg-green-100 text-green-700 px-2 py-1 rounded">Active</span>
+            </div>
+            <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-blue-500">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-2.5 h-2.5 bg-yellow-500 rounded-full"></span>
+                <span className="font-semibold text-gray-900 text-sm">Firebase Analytics</span>
+              </div>
+              <p className="text-gray-600 text-xs mb-3">Funnels, retention, audiences. 24-48h data delay.</p>
+              <a href="https://console.firebase.google.com/project/personalaiapp-90131/analytics" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 text-xs font-medium">Open Console →</a>
+            </div>
+            <div className={`bg-white rounded-lg shadow-md p-4 border-l-4 ${posthogData?.configured ? 'border-purple-500' : posthogData === null ? 'border-purple-300' : 'border-gray-300'}`}>
+              <div className="flex items-center gap-2 mb-2">
+                <span className={`w-2.5 h-2.5 rounded-full ${posthogData?.configured ? 'bg-green-500' : posthogData === null ? 'bg-yellow-400 animate-pulse' : 'bg-gray-400'}`}></span>
+                <span className="font-semibold text-gray-900 text-sm">PostHog</span>
+              </div>
+              <p className="text-gray-600 text-xs mb-3">Session replays, real-time events, feature flags.</p>
+              {posthogData?.configured ? (
+                <a href="https://us.posthog.com" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-purple-600 hover:text-purple-800 text-xs font-medium">Open Dashboard →</a>
+              ) : posthogData === null ? (
+                <span className="inline-block text-xs bg-purple-100 text-purple-600 px-2 py-1 rounded">{posthogLoading ? 'Checking...' : 'Loading...'}</span>
+              ) : (
+                <span className="inline-block text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">API key not set</span>
+              )}
+            </div>
+            <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-orange-500">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-2.5 h-2.5 bg-yellow-500 rounded-full"></span>
+                <span className="font-semibold text-gray-900 text-sm">Crashlytics</span>
+              </div>
+              <p className="text-gray-600 text-xs mb-3">Crash reports and non-fatal errors. Mobile only.</p>
+              <a href="https://console.firebase.google.com/project/personalaiapp-90131/crashlytics" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-orange-600 hover:text-orange-800 text-xs font-medium">Open Console →</a>
+            </div>
+          </div>
+
+          {/* PostHog Loading/Error/Data */}
+          {posthogLoading && (
+            <div className="bg-white rounded-lg shadow-md p-8 text-center">
+              <div className="w-10 h-10 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+              <p className="text-gray-600 text-sm">Loading PostHog data...</p>
+            </div>
+          )}
+          {posthogError && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-red-600 text-sm">{posthogError}</p>
+              <button onClick={fetchPosthogData} className="mt-2 px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700">Retry</button>
+            </div>
+          )}
+          {posthogData && !posthogData.configured && (
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h3 className="text-lg font-bold text-gray-900 mb-3">PostHog Setup Required</h3>
+              <p className="text-gray-600 text-sm mb-4">To see PostHog data here, you need a Personal API Key. The project API key (phx_...) is ingestion-only.</p>
+              <div className="bg-gray-50 rounded-lg p-4">
+                <pre className="text-sm text-gray-700 whitespace-pre-wrap font-mono">{posthogData.setupGuide}</pre>
+              </div>
+            </div>
+          )}
+          {posthogData && posthogData.configured && !posthogLoading && (
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-gray-900">PostHog Event Overview</h3>
+                <button onClick={fetchPosthogData} className="px-3 py-1.5 text-xs border border-gray-300 rounded-md hover:bg-gray-50">Refresh</button>
+              </div>
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
+                  <p className="text-sm text-purple-700">Total Events</p>
+                  <p className="text-2xl font-bold text-purple-900">{posthogData.totalEvents.toLocaleString()}</p>
+                </div>
+                <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
+                  <p className="text-sm text-purple-700">Unique Users</p>
+                  <p className="text-2xl font-bold text-purple-900">{posthogData.uniqueUsers.toLocaleString()}</p>
+                </div>
+              </div>
+              {posthogData.topEvents.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-700 mb-2">Top Events</h4>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Event</th>
+                          <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Count</th>
+                          <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Unique Users</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {posthogData.topEvents.map((item, idx) => (
+                          <tr key={idx} className="hover:bg-gray-50">
+                            <td className="px-4 py-2 text-sm text-gray-900 font-mono">{item.event}</td>
+                            <td className="px-4 py-2 text-sm text-gray-600 text-right">{item.count.toLocaleString()}</td>
+                            <td className="px-4 py-2 text-sm text-gray-600 text-right">{item.uniqueUsers.toLocaleString()}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Firebase Analytics Card */}
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Firebase Analytics (GA4)</h3>
+            <p className="text-gray-600 text-sm mb-4">Funnel analysis, retention cohorts, audience segmentation. 24-48h data delay.</p>
+            <div className="flex flex-wrap gap-3">
+              <a href="https://console.firebase.google.com/project/personalaiapp-90131/analytics/app/overview" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium">Analytics Overview →</a>
+              <a href="https://console.firebase.google.com/project/personalaiapp-90131/analytics/app/events" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 px-4 py-2 border border-blue-300 text-blue-700 rounded-md hover:bg-blue-50 text-sm font-medium">Events →</a>
+              <a href="https://console.firebase.google.com/project/personalaiapp-90131/analytics/app/retention" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 px-4 py-2 border border-blue-300 text-blue-700 rounded-md hover:bg-blue-50 text-sm font-medium">Retention →</a>
+            </div>
+          </div>
+
+          {/* Crashlytics Card */}
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Firebase Crashlytics</h3>
+            <p className="text-gray-600 text-sm mb-4">Crash-free rates, non-fatal errors from critical services, ANR events. Mobile only.</p>
+            <a href="https://console.firebase.google.com/project/personalaiapp-90131/crashlytics" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 text-sm font-medium">Open Crashlytics →</a>
+          </div>
         </div>
       )}
 
@@ -440,6 +634,21 @@ export default function AdminBehaviorAnalyticsPage() {
                   }`}
                 >
                   Features
+                </button>
+                <button
+                  onClick={() => {
+                    setActiveTab('providers');
+                    if (!posthogData && !posthogLoading) {
+                      fetchPosthogData();
+                    }
+                  }}
+                  className={`px-6 py-4 text-sm font-medium border-b-2 ${
+                    activeTab === 'providers'
+                      ? 'border-red-500 text-red-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  Providers
                 </button>
               </nav>
             </div>
@@ -746,6 +955,295 @@ export default function AdminBehaviorAnalyticsPage() {
               </div>
             </div>
           )}
+
+          {/* Providers Tab */}
+          {activeTab === 'providers' && (
+            <div className="space-y-6">
+              {/* Provider Status Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                {/* Firestore */}
+                <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-green-500">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="w-2.5 h-2.5 bg-green-500 rounded-full"></span>
+                    <span className="font-semibold text-gray-900 text-sm">Firestore</span>
+                  </div>
+                  <p className="text-gray-600 text-xs mb-3">
+                    Primary source. Powers Overview, Screens, and Features tabs.
+                  </p>
+                  <span className="inline-block text-xs bg-green-100 text-green-700 px-2 py-1 rounded">Active</span>
+                </div>
+
+                {/* Firebase Analytics */}
+                <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-blue-500">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="w-2.5 h-2.5 bg-yellow-500 rounded-full"></span>
+                    <span className="font-semibold text-gray-900 text-sm">Firebase Analytics</span>
+                  </div>
+                  <p className="text-gray-600 text-xs mb-3">
+                    Funnels, retention, audiences. 24-48h data delay.
+                  </p>
+                  <a
+                    href="https://console.firebase.google.com/project/personalaiapp-90131/analytics"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 text-xs font-medium"
+                  >
+                    Open Console →
+                  </a>
+                </div>
+
+                {/* PostHog */}
+                <div className={`bg-white rounded-lg shadow-md p-4 border-l-4 ${posthogData?.configured ? 'border-purple-500' : posthogData === null ? 'border-purple-300' : 'border-gray-300'}`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className={`w-2.5 h-2.5 rounded-full ${posthogData?.configured ? 'bg-green-500' : posthogData === null ? 'bg-yellow-400 animate-pulse' : 'bg-gray-400'}`}></span>
+                    <span className="font-semibold text-gray-900 text-sm">PostHog</span>
+                  </div>
+                  <p className="text-gray-600 text-xs mb-3">
+                    Session replays, real-time events, feature flags.
+                  </p>
+                  {posthogData?.configured ? (
+                    <a
+                      href="https://us.posthog.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-purple-600 hover:text-purple-800 text-xs font-medium"
+                    >
+                      Open Dashboard →
+                    </a>
+                  ) : posthogData === null ? (
+                    <span className="inline-block text-xs bg-purple-100 text-purple-600 px-2 py-1 rounded">{posthogLoading ? 'Checking...' : 'Loading...'}</span>
+                  ) : (
+                    <span className="inline-block text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">API key not set</span>
+                  )}
+                </div>
+
+                {/* Crashlytics */}
+                <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-orange-500">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="w-2.5 h-2.5 bg-yellow-500 rounded-full"></span>
+                    <span className="font-semibold text-gray-900 text-sm">Crashlytics</span>
+                  </div>
+                  <p className="text-gray-600 text-xs mb-3">
+                    Crash reports and non-fatal errors. Mobile only.
+                  </p>
+                  <a
+                    href="https://console.firebase.google.com/project/personalaiapp-90131/crashlytics"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-orange-600 hover:text-orange-800 text-xs font-medium"
+                  >
+                    Open Console →
+                  </a>
+                </div>
+              </div>
+
+              {/* PostHog Section */}
+              {posthogLoading && (
+                <div className="bg-white rounded-lg shadow-md p-8 text-center">
+                  <div className="w-10 h-10 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+                  <p className="text-gray-600 text-sm">Loading PostHog data...</p>
+                </div>
+              )}
+
+              {posthogError && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <p className="text-red-600 text-sm">{posthogError}</p>
+                  <button
+                    onClick={fetchPosthogData}
+                    className="mt-2 px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700"
+                  >
+                    Retry
+                  </button>
+                </div>
+              )}
+
+              {posthogData && !posthogData.configured && (
+                <div className="bg-white rounded-lg shadow-md p-6">
+                  <h3 className="text-lg font-bold text-gray-900 mb-3">PostHog Setup Required</h3>
+                  <p className="text-gray-600 text-sm mb-4">
+                    To see PostHog data here, you need to add a Personal API Key. The project API key (phx_...) is ingestion-only and cannot query data.
+                  </p>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <pre className="text-sm text-gray-700 whitespace-pre-wrap font-mono">{posthogData.setupGuide}</pre>
+                  </div>
+                </div>
+              )}
+
+              {posthogData && posthogData.configured && !posthogLoading && (
+                <>
+                  {/* PostHog Summary */}
+                  <div className="bg-white rounded-lg shadow-md p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-bold text-gray-900">PostHog Event Overview</h3>
+                      <button
+                        onClick={fetchPosthogData}
+                        className="px-3 py-1.5 text-xs border border-gray-300 rounded-md hover:bg-gray-50"
+                      >
+                        Refresh
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 mb-6">
+                      <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
+                        <p className="text-sm text-purple-700">Total Events</p>
+                        <p className="text-2xl font-bold text-purple-900">{posthogData.totalEvents.toLocaleString()}</p>
+                      </div>
+                      <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
+                        <p className="text-sm text-purple-700">Unique Users</p>
+                        <p className="text-2xl font-bold text-purple-900">{posthogData.uniqueUsers.toLocaleString()}</p>
+                      </div>
+                    </div>
+
+                    {/* Top Events Table */}
+                    {posthogData.topEvents.length > 0 && (
+                      <div>
+                        <h4 className="text-sm font-semibold text-gray-700 mb-2">Top Events (custom only, excluding $pageview etc.)</h4>
+                        <div className="overflow-x-auto">
+                          <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-gray-50">
+                              <tr>
+                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Event</th>
+                                <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Count</th>
+                                <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Unique Users</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-200">
+                              {posthogData.topEvents.map((item, idx) => (
+                                <tr key={idx} className="hover:bg-gray-50">
+                                  <td className="px-4 py-2 text-sm text-gray-900 font-mono">{item.event}</td>
+                                  <td className="px-4 py-2 text-sm text-gray-600 text-right">{item.count.toLocaleString()}</td>
+                                  <td className="px-4 py-2 text-sm text-gray-600 text-right">{item.uniqueUsers.toLocaleString()}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* PostHog Daily Trend */}
+                  {posthogData.dailyTrend.length > 0 && (
+                    <div className="bg-white rounded-lg shadow-md p-6">
+                      <h3 className="text-lg font-bold text-gray-900 mb-4">PostHog Daily Events</h3>
+                      <ResponsiveContainer width="100%" height={250}>
+                        <BarChart
+                          data={posthogData.dailyTrend.map((d) => ({
+                            date: new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                            events: d.events,
+                            uniqueUsers: d.uniqueUsers,
+                          }))}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="date" />
+                          <YAxis yAxisId="left" />
+                          <YAxis yAxisId="right" orientation="right" />
+                          <Tooltip />
+                          <Legend />
+                          <Bar yAxisId="left" dataKey="events" fill="#8b5cf6" name="Events" />
+                          <Bar yAxisId="right" dataKey="uniqueUsers" fill="#a78bfa" name="Unique Users" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+
+                  {/* Data Cross-Check */}
+                  <div className="bg-white rounded-lg shadow-md p-6">
+                    <h3 className="text-lg font-bold text-gray-900 mb-3">Data Cross-Check</h3>
+                    <p className="text-gray-600 text-xs mb-4">
+                      Compare event counts between Firestore and PostHog to verify the analytics bridge is working.
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                        <p className="text-xs text-green-700 mb-1">Firestore Events</p>
+                        <p className="text-xl font-bold text-green-900">
+                          {(behaviorData.totalScreenViews + behaviorData.totalFeatureUses).toLocaleString()}
+                        </p>
+                        <p className="text-xs text-green-600 mt-1">screen views + feature uses</p>
+                      </div>
+                      <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
+                        <p className="text-xs text-purple-700 mb-1">PostHog Events</p>
+                        <p className="text-xl font-bold text-purple-900">
+                          {posthogData.totalEvents.toLocaleString()}
+                        </p>
+                        <p className="text-xs text-purple-600 mt-1">custom events (excl. $pageview)</p>
+                      </div>
+                      <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <p className="text-xs text-gray-700 mb-1">Difference</p>
+                        {(() => {
+                          const firestoreTotal = behaviorData.totalScreenViews + behaviorData.totalFeatureUses;
+                          const diff = posthogData.totalEvents - firestoreTotal;
+                          const pct = firestoreTotal > 0 ? ((diff / firestoreTotal) * 100).toFixed(1) : '0';
+                          return (
+                            <>
+                              <p className="text-xl font-bold text-gray-900">
+                                {diff > 0 ? '+' : ''}{diff.toLocaleString()}
+                              </p>
+                              <p className="text-xs text-gray-600 mt-1">{pct}% variance</p>
+                            </>
+                          );
+                        })()}
+                      </div>
+                    </div>
+                    <p className="text-gray-500 text-xs mt-3">
+                      Note: Counts may differ because PostHog includes events not tracked in Firestore (e.g., session events), and Firestore includes session_start/session_end events not forwarded to PostHog.
+                    </p>
+                  </div>
+                </>
+              )}
+
+              {/* Firebase Analytics Card */}
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <h3 className="text-lg font-bold text-gray-900 mb-2">Firebase Analytics (GA4)</h3>
+                <p className="text-gray-600 text-sm mb-4">
+                  Firebase Analytics provides funnel analysis, retention cohorts, audience segmentation, and conversion tracking.
+                  Data has a 24-48 hour delay before appearing in the console.
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  <a
+                    href="https://console.firebase.google.com/project/personalaiapp-90131/analytics/app/overview"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
+                  >
+                    Analytics Overview →
+                  </a>
+                  <a
+                    href="https://console.firebase.google.com/project/personalaiapp-90131/analytics/app/events"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 px-4 py-2 border border-blue-300 text-blue-700 rounded-md hover:bg-blue-50 text-sm font-medium"
+                  >
+                    Events →
+                  </a>
+                  <a
+                    href="https://console.firebase.google.com/project/personalaiapp-90131/analytics/app/retention"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 px-4 py-2 border border-blue-300 text-blue-700 rounded-md hover:bg-blue-50 text-sm font-medium"
+                  >
+                    Retention →
+                  </a>
+                </div>
+              </div>
+
+              {/* Crashlytics Card */}
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <h3 className="text-lg font-bold text-gray-900 mb-2">Firebase Crashlytics</h3>
+                <p className="text-gray-600 text-sm mb-4">
+                  Crashlytics reports crash-free rates, non-fatal errors from critical services (RAG, sync, embedding),
+                  and ANR (Application Not Responding) events. Mobile only — no public API for embedding data here.
+                </p>
+                <a
+                  href="https://console.firebase.google.com/project/personalaiapp-90131/crashlytics"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 text-sm font-medium"
+                >
+                  Open Crashlytics →
+                </a>
+              </div>
+            </div>
+          )}
         </>
       )}
 
@@ -757,67 +1255,6 @@ export default function AdminBehaviorAnalyticsPage() {
           <p className="text-gray-500 text-sm mt-2">Behavior tracking data will appear here once users start using the app with tracking enabled</p>
         </div>
       )}
-
-      {/* Analytics Providers Section */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Analytics Providers</h2>
-        <p className="text-gray-600 text-sm mb-4">
-          Behavior events are tracked via a bridge pattern and forwarded to all connected providers automatically.
-        </p>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Firestore (Custom) */}
-          <div className="border border-gray-200 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-              <span className="font-semibold text-gray-900">Firestore (Custom)</span>
-            </div>
-            <p className="text-gray-600 text-xs mb-3">
-              Primary data source for this dashboard. Stores raw events and sessions in Firestore collections.
-            </p>
-            <span className="inline-block text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
-              Source for this page
-            </span>
-          </div>
-
-          {/* Firebase Analytics */}
-          <div className="border border-gray-200 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-              <span className="font-semibold text-gray-900">Firebase Analytics</span>
-            </div>
-            <p className="text-gray-600 text-xs mb-3">
-              Google Analytics integration for funnels, retention, and audience insights. Data appears after ~24h.
-            </p>
-            <a
-              href="https://console.firebase.google.com/project/personalaiapp-90131/analytics"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 text-xs font-medium"
-            >
-              Open Firebase Console →
-            </a>
-          </div>
-
-          {/* PostHog */}
-          <div className="border border-gray-200 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
-              <span className="font-semibold text-gray-900">PostHog</span>
-            </div>
-            <p className="text-gray-600 text-xs mb-3">
-              Product analytics with session replays (web), feature flags, and real-time event stream.
-            </p>
-            <a
-              href="https://us.posthog.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-purple-600 hover:text-purple-800 text-xs font-medium"
-            >
-              Open PostHog Dashboard →
-            </a>
-          </div>
-        </div>
-      </div>
 
       {/* Info Section */}
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-5">

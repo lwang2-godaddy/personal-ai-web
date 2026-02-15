@@ -238,6 +238,18 @@ export interface UserBehaviorSummary {
   engagementScore: number;
 }
 
+/**
+ * PostHog analytics overview from PostHog API
+ */
+export interface PostHogOverview {
+  totalEvents: number;
+  uniqueUsers: number;
+  topEvents: Array<{ event: string; count: number; uniqueUsers: number }>;
+  dailyTrend: Array<{ date: string; events: number; uniqueUsers: number }>;
+  configured: boolean; // false if API key not set
+  setupGuide?: string; // instructions if not configured
+}
+
 // ============================================================================
 // API Request/Response Types
 // ============================================================================
