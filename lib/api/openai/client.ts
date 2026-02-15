@@ -105,13 +105,28 @@ export class OpenAIService {
   /**
    * Generate embeddings in batch
    */
-  async generateEmbeddingsBatch(texts: string[]): Promise<number[][]> {
+  async generateEmbeddingsBatch(
+    texts: string[],
+    userId?: string,
+    endpoint?: string
+  ): Promise<number[][]> {
     try {
       const response = await this.client.embeddings.create({
         model: 'text-embedding-3-small',
         input: texts,
         dimensions: 1536, // Match Pinecone index dimension
       });
+
+      // Track usage if userId provided
+      if (userId && typeof window === 'undefined') {
+        try {
+          const tokens = response.usage?.total_tokens || texts.reduce((sum, t) => sum + Math.ceil(t.length / 4), 0);
+          const UsageTracker = (await import('@/lib/services/usage/UsageTracker')).default;
+          await UsageTracker.trackEmbedding(userId, tokens, endpoint || 'embedding_batch');
+        } catch (trackingError) {
+          console.error('[OpenAI] Batch embedding usage tracking FAILED:', trackingError);
+        }
+      }
 
       return response.data.map((item) => item.embedding);
     } catch (error) {
@@ -173,14 +188,15 @@ export class OpenAIService {
         input: text,
       });
 
-      // Track usage if userId provided (TTS charged per character)
-      // TODO: Implement TTS usage tracking when trackTTS method is added to UsageTracker
-      // if (userId && typeof window === 'undefined') {
-      //   const characters = text.length;
-      //   const cost = (characters / 1_000_000) * 15.0;
-      //   const UsageTracker = (await import('@/lib/services/usage/UsageTracker')).default;
-      //   await UsageTracker.trackTTS(userId, characters, 'tts-1', { voice });
-      // }
+      // Track TTS usage (charged per character)
+      if (userId && typeof window === 'undefined') {
+        try {
+          const UsageTracker = (await import('@/lib/services/usage/UsageTracker')).default;
+          await UsageTracker.trackTTS(userId, text.length, endpoint || 'tts');
+        } catch (trackingError) {
+          console.error('[OpenAI] TTS usage tracking FAILED:', trackingError);
+        }
+      }
 
       // Convert response to Blob for web playback
       const arrayBuffer = await response.arrayBuffer();

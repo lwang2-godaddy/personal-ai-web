@@ -9,6 +9,7 @@ import {
   calculateEmbeddingCost,
   calculateChatCost,
   calculateTranscriptionCost,
+  calculateTTSCost,
   calculatePineconeQueryCost,
   calculatePineconeUpsertCost,
   calculatePineconeDeleteCost,
@@ -121,6 +122,31 @@ class UsageTracker {
     console.log(
       `[UsageTracker] Transcription: ${durationSeconds}s, $${cost.toFixed(6)} for user ${userId}`
     );
+  }
+
+  /**
+   * Track OpenAI TTS (Text-to-Speech) usage
+   */
+  async trackTTS(
+    userId: string,
+    characters: number,
+    endpoint: string,
+    metadata?: Record<string, any>
+  ): Promise<void> {
+    const cost = calculateTTSCost(characters);
+
+    await this.logUsageEvent({
+      userId,
+      operation: 'tts',
+      provider: 'openai',
+      model: 'tts-1',
+      totalTokens: characters, // Using totalTokens field to store character count
+      estimatedCostUSD: cost,
+      endpoint,
+      metadata,
+    });
+
+    console.log(`[UsageTracker] TTS: ${characters} chars, $${cost.toFixed(6)} for user ${userId}`);
   }
 
   /**
