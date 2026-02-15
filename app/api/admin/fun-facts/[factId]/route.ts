@@ -6,13 +6,12 @@ import { getAdminFirestore } from '@/lib/api/firebase/admin';
  * GET /api/admin/fun-facts/[factId]
  * Get a single fun fact with its matched prompt execution (heuristic match).
  *
- * Fun facts from `funFacts` collection use CarouselInsights service.
- * Fun facts from `fun_facts` collection are template-based (no execution data).
+ * All facts are in the `funFacts` collection (AI-generated via CarouselInsights).
  *
- * Heuristic match for AI facts:
+ * Heuristic match for execution data:
  * - service == 'CarouselInsights'
  * - userId == fact.userId
- * - metadata.periodType or promptId contains periodType
+ * - promptId contains periodType and/or insightType
  * - executedAt closest to fact.generatedAt (within 60s window)
  */
 export async function GET(
@@ -31,51 +30,25 @@ export async function GET(
 
     const db = getAdminFirestore();
 
-    // Determine collection from prefixed ID
-    let collection: string;
-    let docId: string;
-
-    if (factId.startsWith('funFacts:')) {
-      collection = 'funFacts';
-      docId = factId.replace('funFacts:', '');
-    } else if (factId.startsWith('fun_facts:')) {
-      collection = 'fun_facts';
-      docId = factId.replace('fun_facts:', '');
-    } else {
-      // Try funFacts first, then fun_facts
-      collection = 'funFacts';
-      docId = factId;
-    }
-
-    // Get the fact
-    const factDoc = await db.collection(collection).doc(docId).get();
+    // Get the fact from funFacts collection
+    const docId = factId.startsWith('funFacts:') ? factId.replace('funFacts:', '') : factId;
+    const factDoc = await db.collection('funFacts').doc(docId).get();
 
     if (!factDoc.exists) {
-      // Try the other collection if first didn't work
-      const altCollection = collection === 'funFacts' ? 'fun_facts' : 'funFacts';
-      const altDoc = await db.collection(altCollection).doc(docId).get();
-      if (!altDoc.exists) {
-        return NextResponse.json({ error: 'Fun fact not found' }, { status: 404 });
-      }
-      // Found in alt collection
-      const factData = altDoc.data()!;
-      return NextResponse.json({
-        fact: { id: altDoc.id, source: altCollection, ...factData },
-        execution: null,
-      });
+      return NextResponse.json({ error: 'Fun fact not found' }, { status: 404 });
     }
 
     const factData = factDoc.data()!;
     const fact = {
       id: factDoc.id,
-      source: collection,
+      source: 'funFacts',
       ...factData,
     };
 
-    // Only AI-generated facts (funFacts collection) have execution data
+    // Find matching execution record
     let execution = null;
 
-    if (collection === 'funFacts' && factData.userId) {
+    if (factData.userId) {
       const generatedAt = factData.generatedAt;
 
       if (generatedAt) {
@@ -104,10 +77,10 @@ export async function GET(
           }
 
           if (factTime > 0) {
-            type MatchResult = { doc: FirebaseFirestore.QueryDocumentSnapshot; timeDiff: number };
-            let bestMatch: MatchResult | null = null;
+            let bestMatchDoc: FirebaseFirestore.QueryDocumentSnapshot | null = null;
+            let bestMatchTimeDiff = Infinity;
 
-            snapshot.docs.forEach((doc) => {
+            for (const doc of snapshot.docs) {
               const execData = doc.data();
               const metadata = execData.metadata || {};
 
@@ -138,20 +111,18 @@ export async function GET(
                 if (execTime > 0) {
                   const timeDiff = Math.abs(factTime - execTime);
                   // Within 60 second window
-                  if (timeDiff <= 60000) {
-                    if (!bestMatch || timeDiff < bestMatch.timeDiff) {
-                      bestMatch = { doc, timeDiff };
-                    }
+                  if (timeDiff <= 60000 && timeDiff < bestMatchTimeDiff) {
+                    bestMatchDoc = doc;
+                    bestMatchTimeDiff = timeDiff;
                   }
                 }
               }
-            });
+            }
 
-            if (bestMatch) {
-              const matched = bestMatch as MatchResult;
-              const execData = matched.doc.data();
+            if (bestMatchDoc) {
+              const execData = bestMatchDoc.data();
               execution = {
-                id: matched.doc.id,
+                id: bestMatchDoc.id,
                 userId: execData.userId,
                 service: execData.service,
                 promptId: execData.promptId,

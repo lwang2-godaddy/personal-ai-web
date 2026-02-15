@@ -78,7 +78,7 @@ export default function FunFactDetailModal({ fact, onClose, execution, loadingEx
     <DetailModalShell
       icon={fact.emoji || '🎲'}
       title="Fun Fact Details"
-      subtitle={`${catMeta.label} · ${fact.source === 'fun_facts' ? 'Template-based' : 'AI-generated'}`}
+      subtitle={`${catMeta.label} · AI-generated`}
       onClose={onClose}
     >
       {/* Basic Info */}
@@ -113,23 +113,20 @@ export default function FunFactDetailModal({ fact, onClose, execution, loadingEx
               {catMeta.label}
             </span>
             {fact.insightType && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                ['health_stat', 'activity_stat', 'location_stat'].includes(fact.insightType)
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'bg-purple-100 text-purple-700'
+              }`}>
                 {fact.insightType}
               </span>
             )}
-            {fact.type && !fact.insightType && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-700">
-                {fact.type}
-              </span>
-            )}
-            <span
-              className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                fact.source === 'fun_facts'
-                  ? 'bg-green-100 text-green-700'
-                  : 'bg-purple-100 text-purple-700'
-              }`}
-            >
-              {fact.source === 'fun_facts' ? 'Template' : 'AI'}
+            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+              ['health_stat', 'activity_stat', 'location_stat'].includes(fact.insightType || '')
+                ? 'bg-blue-50 text-blue-600'
+                : 'bg-purple-50 text-purple-600'
+            }`}>
+              {['health_stat', 'activity_stat', 'location_stat'].includes(fact.insightType || '') ? 'Data Stat' : 'AI Insight'}
             </span>
           </div>
 
@@ -156,8 +153,8 @@ export default function FunFactDetailModal({ fact, onClose, execution, loadingEx
         </div>
       </div>
 
-      {/* Scores & Metrics (for AI-generated facts) */}
-      {fact.source === 'funFacts' && (
+      {/* Scores & Metrics */}
+      {(
         <div>
           <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
             <span>📊</span> Scores & Metrics
@@ -183,48 +180,8 @@ export default function FunFactDetailModal({ fact, onClose, execution, loadingEx
         </div>
       )}
 
-      {/* Template Details */}
-      {fact.source === 'fun_facts' && fact.templateKey && (
-        <div>
-          <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-            <span>🧩</span> Template Details
-          </h3>
-          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 space-y-3">
-            <div>
-              <p className="text-xs text-gray-500 mb-1">Template Key:</p>
-              <p className="font-mono text-sm text-gray-900 bg-white px-2 py-1 rounded border border-gray-200">
-                {fact.templateKey}
-              </p>
-            </div>
-            {fact.templateValues && Object.keys(fact.templateValues).length > 0 && (
-              <div>
-                <p className="text-xs text-gray-500 mb-1">Template Values:</p>
-                <div className="bg-white rounded border border-gray-200 overflow-hidden">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-gray-100">
-                        <th className="text-left px-3 py-1.5 text-xs text-gray-500 font-medium">Key</th>
-                        <th className="text-left px-3 py-1.5 text-xs text-gray-500 font-medium">Value</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {Object.entries(fact.templateValues).map(([key, value]) => (
-                        <tr key={key} className="border-b border-gray-50">
-                          <td className="px-3 py-1.5 font-mono text-xs text-gray-600">{key}</td>
-                          <td className="px-3 py-1.5 text-gray-900">{String(value)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Generation Info (for AI facts) */}
-      {fact.source === 'funFacts' && (
+      {/* Generation Info */}
+      {(
         <div>
           <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
             <span>🤖</span> Generation Info

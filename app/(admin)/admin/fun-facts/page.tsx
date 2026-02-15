@@ -19,15 +19,17 @@ import { FunFactCard, FunFactDetailModal, FunFactAlgorithmReference } from '@/co
 
 const CATEGORIES = [
   { value: '', label: 'All Categories' },
+  { value: 'pattern', label: 'Pattern' },
+  { value: 'statistic', label: 'Statistic' },
+  { value: 'achievement', label: 'Achievement' },
+  { value: 'comparison', label: 'Comparison' },
+  { value: 'milestone', label: 'Milestone' },
   { value: 'health', label: 'Health' },
   { value: 'activity', label: 'Activity' },
   { value: 'location', label: 'Location' },
   { value: 'social', label: 'Social' },
   { value: 'productivity', label: 'Productivity' },
   { value: 'general', label: 'General' },
-  { value: 'pattern', label: 'Pattern' },
-  { value: 'statistic', label: 'Statistic' },
-  { value: 'achievement', label: 'Achievement' },
 ];
 
 const PERIOD_TYPES = [
@@ -36,6 +38,16 @@ const PERIOD_TYPES = [
   { value: 'monthly', label: 'Monthly' },
   { value: 'quarterly', label: 'Quarterly' },
   { value: 'yearly', label: 'Yearly' },
+];
+
+const INSIGHT_TYPES = [
+  { value: '', label: 'All Insight Types' },
+  { value: 'patterns', label: '📊 Patterns' },
+  { value: 'surprising', label: '✨ Surprising' },
+  { value: 'recommendation', label: '💡 Recommendation' },
+  { value: 'health_stat', label: '📈 Health Stat' },
+  { value: 'activity_stat', label: '🏃 Activity Stat' },
+  { value: 'location_stat', label: '📍 Location Stat' },
 ];
 
 const VISIBILITY_OPTIONS = [
@@ -80,6 +92,7 @@ export default function FunFactsViewerPage() {
   // Filters (page-specific state)
   const [categoryFilter, setCategoryFilter] = useState('');
   const [periodTypeFilter, setPeriodTypeFilter] = useState('');
+  const [insightTypeFilter, setInsightTypeFilter] = useState('');
   const [visibilityFilter, setVisibilityFilter] = useState('');
 
   // Execution data state
@@ -116,9 +129,10 @@ export default function FunFactsViewerPage() {
     },
   });
 
-  // Client-side filtering for period type and visibility (not supported by API)
+  // Client-side filtering for period type, insight type, and visibility (not supported by API)
   const filteredFacts = facts.filter((f) => {
     if (periodTypeFilter && f.periodType !== periodTypeFilter) return false;
+    if (insightTypeFilter && f.insightType !== insightTypeFilter) return false;
     if (visibilityFilter === 'viewed' && !f.viewed) return false;
     if (visibilityFilter === 'hidden' && !f.hidden) return false;
     return true;
@@ -181,6 +195,15 @@ export default function FunFactsViewerPage() {
     return acc;
   }, {});
 
+  const insightBreakdown = filteredFacts.reduce<Record<string, number>>((acc, f) => {
+    const t = f.insightType || 'unknown';
+    acc[t] = (acc[t] || 0) + 1;
+    return acc;
+  }, {});
+
+  const aiInsightCount = (insightBreakdown['patterns'] || 0) + (insightBreakdown['surprising'] || 0) + (insightBreakdown['recommendation'] || 0);
+  const dataStatCount = (insightBreakdown['health_stat'] || 0) + (insightBreakdown['activity_stat'] || 0) + (insightBreakdown['location_stat'] || 0);
+
   // ============================================================================
   // Render
   // ============================================================================
@@ -199,7 +222,7 @@ export default function FunFactsViewerPage() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Fun Facts</h1>
           <p className="mt-1 text-gray-600">
-            Browse AI-generated fun facts powered by hybrid data + AI system
+            Browse AI-generated fun facts (3&ndash;6 per period: insights + data stats)
           </p>
         </div>
         <button
@@ -230,7 +253,7 @@ export default function FunFactsViewerPage() {
 
       {/* Filters */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1 uppercase">Category</label>
             <select
@@ -240,6 +263,18 @@ export default function FunFactsViewerPage() {
             >
               {CATEGORIES.map((c) => (
                 <option key={c.value} value={c.value}>{c.label}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1 uppercase">Insight Type</label>
+            <select
+              value={insightTypeFilter}
+              onChange={(e) => setInsightTypeFilter(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 focus:ring-2 focus:ring-red-500 focus:border-red-500"
+            >
+              {INSIGHT_TYPES.map((t) => (
+                <option key={t.value} value={t.value}>{t.label}</option>
               ))}
             </select>
           </div>
@@ -280,11 +315,10 @@ export default function FunFactsViewerPage() {
             <span className="text-gray-600">
               Avg Confidence: {(avgConfidence * 100).toFixed(0)}%
             </span>
+            {aiInsightCount > 0 && <span className="text-purple-600">{aiInsightCount} AI insights</span>}
+            {dataStatCount > 0 && <span className="text-blue-600">{dataStatCount} data stats</span>}
             <span className="text-green-600">{viewedCount} viewed</span>
             {hiddenCount > 0 && <span className="text-red-600">{hiddenCount} hidden</span>}
-            {Object.entries(categoryBreakdown).slice(0, 3).map(([cat, count]) => (
-              <span key={cat} className="text-gray-500">{cat}: {count}</span>
-            ))}
           </div>
         )}
       </div>

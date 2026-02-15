@@ -34,12 +34,10 @@ export interface LifeKeyword {
 export interface FunFact {
   id: string;
   userId: string;
-  source: 'fun_facts' | 'funFacts';
+  source: 'funFacts';
   text?: string;
   category?: string;
   type?: string;
-  templateKey?: string;
-  templateValues?: Record<string, string | number>;
   confidence?: number;
   emoji?: string;
   dataPoints?: Array<{ type: string; id: string; snippet?: string }>;

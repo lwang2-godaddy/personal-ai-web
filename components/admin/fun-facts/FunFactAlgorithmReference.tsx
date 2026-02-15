@@ -94,15 +94,12 @@ function RAGContextSection() {
         </p>
       </div>
 
-      {/* Two collections note */}
+      {/* Collection note */}
       <div className="bg-amber-50 rounded-lg p-3 border border-amber-200">
         <p className="text-xs text-amber-800">
-          <strong>Note:</strong> Fun facts are stored in <strong>two separate collections</strong>:
+          <strong>Collection:</strong> All facts are stored in <code>funFacts</code> (camelCase).
+          The legacy <code>fun_facts</code> (snake_case) collection is deprecated and no longer written to.
         </p>
-        <ul className="text-xs text-amber-700 mt-1 space-y-1 ml-4 list-disc">
-          <li><code>funFacts</code> &mdash; AI-generated via CarouselInsights (current system)</li>
-          <li><code>fun_facts</code> &mdash; Template-based (legacy system, no execution data)</li>
-        </ul>
       </div>
     </div>
   );
@@ -112,13 +109,14 @@ function GenerationSection() {
   return (
     <div className="pt-4">
       <p className="text-sm text-amber-800 mb-4">
-        For each period, the service generates 3 facts using the <code>CarouselInsights</code> prompt service.
-        Each fact corresponds to a different insight type and uses a specific prompt ID.
+        For each period, the service generates <strong>3&ndash;6 facts</strong> using the <code>CarouselInsights</code> prompt service:
+        3 AI insight facts (always) + up to 3 data-stat facts (when structured data is available).
       </p>
 
-      {/* Step 3: 3 Insight Types */}
+      {/* Step 3a: AI Insight Types (always generated) */}
       <div className="bg-white rounded-lg p-4 border border-amber-100 mb-4">
-        <p className="font-semibold text-amber-900 text-sm mb-3">Step 3: Generate 3 Facts per Period</p>
+        <p className="font-semibold text-amber-900 text-sm mb-1">Step 3a: AI Insight Facts (Always Generated)</p>
+        <p className="text-xs text-amber-600 mb-3">Creative insights from RAG context. Temperature: 0.7</p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
           {[
             { type: 'patterns', emoji: '📊', desc: 'Recurring behaviors and trends', cat: 'pattern', prompt: '{period}_patterns' },
@@ -136,11 +134,43 @@ function GenerationSection() {
             </div>
           ))}
         </div>
-        <div className="bg-amber-50 rounded-md p-2.5 text-xs text-amber-700">
-          <strong>Prompt ID format:</strong> <code>{'{periodType}'}_{'{insightType}'}</code> (e.g., <code>weekly_patterns</code>, <code>monthly_surprising</code>)
-          <br />
-          <strong>Fallback:</strong> If period-specific prompt not found, falls back to <code>insight_{'{insightType}'}</code>
+      </div>
+
+      {/* Step 3b: Data-Stat Types (conditional) */}
+      <div className="bg-white rounded-lg p-4 border border-blue-100 mb-4">
+        <p className="font-semibold text-blue-900 text-sm mb-1">Step 3b: Data-Stat Facts (When Structured Data Available)</p>
+        <p className="text-xs text-blue-600 mb-3">
+          Template-inspired facts using precise stats from Firestore (steps, activities, locations).
+          Only generated when <code>structuredDataContext</code> is provided. Temperature: 0.5
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+          {[
+            { type: 'health_stat', emoji: '📈', desc: 'Step counts, streaks, personal records, week-over-week changes', cat: 'comparison', prompt: '{period}_health_stat' },
+            { type: 'activity_stat', emoji: '🏃', desc: 'Top activities with %, day/time patterns, streaks', cat: 'statistic', prompt: '{period}_activity_stat' },
+            { type: 'location_stat', emoji: '📍', desc: 'Most visited places, visit counts, new discoveries', cat: 'milestone', prompt: '{period}_location_stat' },
+          ].map((item) => (
+            <div key={item.type} className="bg-blue-50 rounded-lg p-3 border border-blue-100">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-lg">{item.emoji}</span>
+                <span className="text-xs font-bold text-blue-800">{item.type}</span>
+              </div>
+              <p className="text-[11px] text-blue-600">{item.desc}</p>
+              <p className="text-[10px] text-blue-500 mt-1 font-mono">Category: {item.cat}</p>
+              <p className="text-[10px] text-blue-500 font-mono">Prompt: {item.prompt}</p>
+            </div>
+          ))}
         </div>
+        <div className="bg-blue-50 rounded-md p-2.5 text-xs text-blue-700">
+          <strong>Structured data</strong> is collected by <code>FunFactGenerator.collectStructuredData()</code> from
+          Firestore: health summaries, activity patterns, location visits, and memory counts.
+        </div>
+      </div>
+
+      {/* Prompt ID format note */}
+      <div className="bg-amber-50 rounded-md p-2.5 text-xs text-amber-700 mb-4">
+        <strong>Prompt ID format:</strong> <code>{'{periodType}'}_{'{insightType}'}</code> (e.g., <code>weekly_patterns</code>, <code>monthly_health_stat</code>)
+        <br />
+        <strong>Fallback:</strong> If period-specific prompt not found, falls back to <code>insight_{'{insightType}'}</code>
       </div>
 
       {/* Step 4: GPT Call */}
@@ -149,16 +179,17 @@ function GenerationSection() {
         <div className="flex flex-col sm:flex-row items-stretch gap-2">
           {[
             { label: 'System prompt', desc: 'CarouselInsights system' },
-            { label: 'RAG context', desc: 'User activities as assistant msg' },
-            { label: 'User prompt', desc: 'Period-specific insight request' },
-            { label: 'GPT-4o-mini', desc: 'temp 0.7, max 100 tokens' },
+            { label: 'Structured data', desc: 'Precise stats (if available)' },
+            { label: 'RAG context', desc: 'User activities from Pinecone' },
+            { label: 'User prompt', desc: 'Period + insight type specific' },
+            { label: 'GPT-4o-mini', desc: 'temp 0.5-0.7, max 100 tokens' },
           ].map((step, i) => (
             <div key={step.label} className="flex-1 flex items-center gap-2">
               <div className="bg-amber-100 rounded-lg p-2.5 flex-1 text-center">
                 <p className="text-xs font-semibold text-amber-900">{step.label}</p>
                 <p className="text-[10px] text-amber-600 mt-0.5">{step.desc}</p>
               </div>
-              {i < 3 && <span className="text-amber-300 font-bold hidden sm:block">&rarr;</span>}
+              {i < 4 && <span className="text-amber-300 font-bold hidden sm:block">&rarr;</span>}
             </div>
           ))}
         </div>
@@ -169,7 +200,7 @@ function GenerationSection() {
           </div>
           <div>
             <span className="text-amber-600">Temperature:</span>
-            <span className="ml-1 text-amber-900">0.7</span>
+            <span className="ml-1 text-amber-900">0.7 (insights) / 0.5 (stats)</span>
           </div>
           <div>
             <span className="text-amber-600">Max tokens:</span>

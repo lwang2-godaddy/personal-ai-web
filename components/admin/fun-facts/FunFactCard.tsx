@@ -32,6 +32,9 @@ const TYPES: Record<string, { label: string; icon: string }> = {
   patterns: { label: 'Patterns', icon: '📊' },
   surprising: { label: 'Surprising', icon: '✨' },
   recommendation: { label: 'Recommendation', icon: '💡' },
+  health_stat: { label: 'Health Stat', icon: '📈' },
+  activity_stat: { label: 'Activity Stat', icon: '🏃' },
+  location_stat: { label: 'Location Stat', icon: '📍' },
 };
 
 const PERIOD_LABELS: Record<string, string> = {
@@ -81,15 +84,15 @@ export default function FunFactCard({ fact, onViewDetails, isSelected }: FunFact
               {PERIOD_LABELS[fact.periodType] || fact.periodType}
             </span>
           )}
-          <span
-            className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-              fact.source === 'fun_facts'
-                ? 'bg-green-100 text-green-700'
-                : 'bg-purple-100 text-purple-700'
-            }`}
-          >
-            {fact.source === 'fun_facts' ? 'Template' : 'AI'}
-          </span>
+          {fact.insightType && ['health_stat', 'activity_stat', 'location_stat'].includes(fact.insightType) ? (
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+              Data Stat
+            </span>
+          ) : (
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
+              AI Insight
+            </span>
+          )}
           {expired && (
             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">
               Expired
