@@ -17,7 +17,7 @@ export const PERF_SCREENS = ['Home', 'Chat', 'LifeFeed', 'DiaryList', 'Settings'
 
 export const PERF_COMPONENTS = ['StatsFeedCard', 'DiaryFeedCard', 'PhotoFeedCard', 'VoiceNoteFeedCard', 'LifeFeedPostCard'];
 
-export const PERF_ENDPOINTS = ['queryRAG', 'getDashboard', 'getDiary', 'transcribeVoice', 'uploadPhoto'];
+export const PERF_ENDPOINTS = ['cf:queryRAG', 'cf:queryRAGStream', 'cf:generateLifeFeedNow', 'cf:generateUnifiedInsightsNow', 'cf:generateAISummary'];
 
 export const PERF_DOC_ID_PREFIX = 'e2e-perf-';
 
@@ -96,11 +96,11 @@ const COMPONENT_RENDER_BASE: Record<string, number> = {
 };
 
 const ENDPOINT_LATENCY_BASE: Record<string, number> = {
-  queryRAG: 800,
-  getDashboard: 250,
-  getDiary: 180,
-  transcribeVoice: 1200,
-  uploadPhoto: 600,
+  'cf:queryRAG': 800,
+  'cf:queryRAGStream': 650,
+  'cf:generateLifeFeedNow': 2200,
+  'cf:generateUnifiedInsightsNow': 3500,
+  'cf:generateAISummary': 1800,
 };
 
 // ---------------------------------------------------------------------------
@@ -284,7 +284,7 @@ function generateApiResponseTime(userId: string, dateStr: string, dayOffset: num
       timestamp: `${dateStr}T${String(9 + Math.floor(i * 12 / count)).padStart(2, '0')}:${String(Math.floor(seededRandom(s + 4) * 60)).padStart(2, '0')}:00.000Z`,
       metricType: 'api_response_time',
       value,
-      metadata: { endpoint, isError, statusCode: isError ? 500 : 200 },
+      metadata: { endpoint, method: 'CALL', status: isError ? 500 : 200, success: !isError },
       platform: seededRandom(s + 5) > 0.5 ? 'ios' : 'android',
       sessionId: `session-${userId}-d${dayOffset}-0`,
       createdAt: `${dateStr}T${String(9 + Math.floor(i * 12 / count)).padStart(2, '0')}:00:00.000Z`,

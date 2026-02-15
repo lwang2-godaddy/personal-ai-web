@@ -953,6 +953,49 @@ export default function PerformanceDashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Phase 2 Optimization Notes */}
+      <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-5">
+        <div className="flex items-start gap-3">
+          <span className="text-2xl">{'🚀'}</span>
+          <div className="flex-1">
+            <h3 className="text-gray-800 font-semibold mb-2">Phase 2 Optimizations (Deployed)</h3>
+            <ul className="text-gray-700 text-sm space-y-1">
+              <li><strong>expo-image Migration</strong> — Replaced React Native Image with expo-image in 4 components for disk caching, progressive loading, and better memory management</li>
+              <li><strong>Brand Header Memoization</strong> — HomeFeedScreen brandHeaderElement wrapped in useMemo (was re-created every render)</li>
+              <li><strong>Batch Dispatches</strong> — Verified: React 19 auto-batches sequential dispatch() calls; no manual batch() needed</li>
+            </ul>
+            <h4 className="text-gray-800 font-semibold mt-4 mb-1">{'📊'} What to Look For</h4>
+            <ul className="text-gray-700 text-sm space-y-1">
+              <li><strong>scroll_fps</strong> on photo-heavy screens — Should improve (expo-image caches to disk, fewer re-downloads)</li>
+              <li><strong>component_render</strong> on HomeFeed — Fewer header re-renders from brandHeaderElement memoization</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* Phase 3 Optimization Notes */}
+      <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-lg p-5">
+        <div className="flex items-start gap-3">
+          <span className="text-2xl">{'📡'}</span>
+          <div className="flex-1">
+            <h3 className="text-gray-800 font-semibold mb-2">Phase 3 Optimizations (Deployed)</h3>
+            <ul className="text-gray-700 text-sm space-y-1">
+              <li><strong>API Latency Instrumentation</strong> — Added <code className="text-xs bg-purple-100 px-1 rounded">instrumentedCallable()</code> wrapper that automatically records timing for all Cloud Function calls</li>
+              <li><strong>7 Services Instrumented</strong> — RAGEngine (queryRAG, queryRAGStream), LifeFeedService (17 calls), KeywordService (4 calls), FunFactsService, DailySummaryService, CircleAIService (3 calls), SocialInteractionService (5 calls)</li>
+              <li><strong>~33 Cloud Function calls</strong> now report api_response_time metrics with endpoint, method, status, and success metadata</li>
+              <li><strong>Graceful Degradation</strong> — If PerfMonitor not initialized yet, calls proceed without timing (no impact on functionality)</li>
+            </ul>
+            <h4 className="text-gray-800 font-semibold mt-4 mb-1">{'📊'} What to Look For</h4>
+            <ul className="text-gray-700 text-sm space-y-1">
+              <li><strong>API Latency tab</strong> — Now populated with real Cloud Function timing data (cf:queryRAG, cf:generateLifeFeedNow, etc.)</li>
+              <li><strong>cf:queryRAG</strong> — Chat response latency; target: p50 &lt; 2s, p95 &lt; 5s</li>
+              <li><strong>cf:generateLifeFeedNow / cf:generateUnifiedInsightsNow</strong> — AI generation latency; expected 2-5s</li>
+              <li><strong>Error rates</strong> — Track success=false entries for reliability monitoring</li>
+            </ul>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
