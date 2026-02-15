@@ -1,25 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/middleware/auth';
 import { getAdminFirestore } from '@/lib/api/firebase/admin';
-import { EXPLORE_SUPPORTED_LANGUAGES, ExploreLanguageCode } from '@/lib/models/ExploreQuestion';
+import { ASK_SUPPORTED_LANGUAGES, AskLanguageCode } from '@/lib/models/AskQuestion';
 
 export const dynamic = 'force-dynamic';
 
 interface CopyRequest {
-  sourceLanguage: ExploreLanguageCode;
+  sourceLanguage: AskLanguageCode;
   questionId: string;
-  targetLanguages: ExploreLanguageCode[];
+  targetLanguages: AskLanguageCode[];
   overwrite: boolean;
 }
 
 interface CopyResult {
-  language: ExploreLanguageCode;
+  language: AskLanguageCode;
   status: 'copied' | 'skipped' | 'error';
   error?: string;
 }
 
 /**
- * POST /api/admin/explore-questions/copy-to-languages
+ * POST /api/admin/ask-questions/copy-to-languages
  *
  * Copies a question from one language to multiple other languages.
  * Useful for syncing questions across all supported languages.
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate source language
-    const validSourceLang = EXPLORE_SUPPORTED_LANGUAGES.find(l => l.code === sourceLanguage);
+    const validSourceLang = ASK_SUPPORTED_LANGUAGES.find(l => l.code === sourceLanguage);
     if (!validSourceLang) {
       return NextResponse.json(
         { error: `Invalid source language: ${sourceLanguage}` },
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
 
     // Validate target languages
     const invalidTargets = targetLanguages.filter(
-      lang => !EXPLORE_SUPPORTED_LANGUAGES.find(l => l.code === lang)
+      lang => !ASK_SUPPORTED_LANGUAGES.find(l => l.code === lang)
     );
     if (invalidTargets.length > 0) {
       return NextResponse.json(

@@ -2,18 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/middleware/auth';
 import { getAdminFirestore } from '@/lib/api/firebase/admin';
 import {
-  ExploreQuestion,
-  ExploreQuestionsConfig,
-  EXPLORE_SUPPORTED_LANGUAGES,
-  EXPLORE_CATEGORIES,
-  validateExploreQuestion,
-  isValidExploreLanguage,
-  ExploreLanguageCode,
-} from '@/lib/models/ExploreQuestion';
+  AskQuestion,
+  AskQuestionsConfig,
+  ASK_SUPPORTED_LANGUAGES,
+  ASK_CATEGORIES,
+  validateAskQuestion,
+  isValidAskLanguage,
+  AskLanguageCode,
+} from '@/lib/models/AskQuestion';
 
 /**
- * GET /api/admin/explore-questions
- * List all explore questions for a language
+ * GET /api/admin/ask-questions
+ * List all ask questions for a language
  *
  * Query params:
  * - language: string (required, e.g., 'en', 'es')
@@ -21,8 +21,8 @@ import {
  * - enabled: boolean (optional, filter by enabled status)
  *
  * Returns:
- * - questions: ExploreQuestion[]
- * - config: ExploreQuestionsConfig | null
+ * - questions: AskQuestion[]
+ * - config: AskQuestionsConfig | null
  * - total: number
  * - languages: LanguageInfo[]
  * - categories: CategoryInfo[]
@@ -34,13 +34,13 @@ export async function GET(request: NextRequest) {
     if (authResponse) return authResponse;
 
     const { searchParams } = new URL(request.url);
-    const language = (searchParams.get('language') || 'en') as ExploreLanguageCode;
+    const language = (searchParams.get('language') || 'en') as AskLanguageCode;
     const category = searchParams.get('category') || undefined;
     const enabledParam = searchParams.get('enabled');
     const enabled = enabledParam !== null ? enabledParam === 'true' : undefined;
 
     // Validate language
-    if (!isValidExploreLanguage(language)) {
+    if (!isValidAskLanguage(language)) {
       return NextResponse.json(
         { error: `Invalid language: ${language}` },
         { status: 400 }
@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
       .get();
 
     const config = configDoc.exists
-      ? (configDoc.data() as ExploreQuestionsConfig)
+      ? (configDoc.data() as AskQuestionsConfig)
       : null;
 
     // Build query for questions
@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
 
     const questionsSnapshot = await questionsQuery.get();
 
-    let questions: ExploreQuestion[] = questionsSnapshot.docs.map((doc) => {
+    let questions: AskQuestion[] = questionsSnapshot.docs.map((doc) => {
       const data = doc.data();
       return {
         id: doc.id,
@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
         createdBy: data.createdBy,
         updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
         updatedBy: data.updatedBy,
-      } as ExploreQuestion;
+      } as AskQuestion;
     });
 
     // Apply filters
@@ -106,26 +106,26 @@ export async function GET(request: NextRequest) {
       questions,
       config,
       total: questions.length,
-      languages: EXPLORE_SUPPORTED_LANGUAGES,
-      categories: EXPLORE_CATEGORIES,
+      languages: ASK_SUPPORTED_LANGUAGES,
+      categories: ASK_CATEGORIES,
     });
   } catch (error: unknown) {
-    console.error('[Admin Explore Questions API] GET Error:', error);
-    const message = error instanceof Error ? error.message : 'Failed to fetch explore questions';
+    console.error('[Admin Ask Questions API] GET Error:', error);
+    const message = error instanceof Error ? error.message : 'Failed to fetch ask questions';
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
 /**
- * POST /api/admin/explore-questions
- * Create a new explore question
+ * POST /api/admin/ask-questions
+ * Create a new ask question
  *
  * Body:
  * - language: string (required)
- * - question: ExploreQuestion (required, without id/timestamps)
+ * - question: AskQuestion (required, without id/timestamps)
  *
  * Returns:
- * - question: ExploreQuestion
+ * - question: AskQuestion
  */
 export async function POST(request: NextRequest) {
   try {
@@ -137,7 +137,7 @@ export async function POST(request: NextRequest) {
     const { language, question } = body;
 
     // Validate language
-    if (!language || !isValidExploreLanguage(language)) {
+    if (!language || !isValidAskLanguage(language)) {
       return NextResponse.json(
         { error: 'Valid language is required' },
         { status: 400 }
@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate question
-    const validation = validateExploreQuestion(question);
+    const validation = validateAskQuestion(question);
     if (!validation.isValid) {
       return NextResponse.json(
         { error: 'Invalid question', details: validation.errors },
@@ -231,8 +231,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ question: newQuestion }, { status: 201 });
   } catch (error: unknown) {
-    console.error('[Admin Explore Questions API] POST Error:', error);
-    const message = error instanceof Error ? error.message : 'Failed to create explore question';
+    console.error('[Admin Ask Questions API] POST Error:', error);
+    const message = error instanceof Error ? error.message : 'Failed to create ask question';
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

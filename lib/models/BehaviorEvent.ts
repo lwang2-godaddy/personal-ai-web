@@ -355,7 +355,7 @@ export const TRACKED_SCREENS = {
   adminEventConfig: 'admin_event_config',
   adminMigrations: 'admin_migrations',
   adminMigrationDetail: 'admin_migration_detail',
-  adminExploreQuestions: 'admin_explore_questions',
+  adminAskQuestions: 'admin_ask_questions',
   adminDocs: 'admin_docs',
   adminDemoData: 'admin_demo_data',
   adminTesting: 'admin_testing',

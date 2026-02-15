@@ -2,25 +2,25 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/middleware/auth';
 import { getAdminFirestore } from '@/lib/api/firebase/admin';
 import {
-  ExploreQuestion,
-  validateExploreQuestion,
-  isValidExploreLanguage,
-  ExploreLanguageCode,
-} from '@/lib/models/ExploreQuestion';
+  AskQuestion,
+  validateAskQuestion,
+  isValidAskLanguage,
+  AskLanguageCode,
+} from '@/lib/models/AskQuestion';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
 /**
- * GET /api/admin/explore-questions/[id]
- * Get a single explore question
+ * GET /api/admin/ask-questions/[id]
+ * Get a single ask question
  *
  * Query params:
  * - language: string (required)
  *
  * Returns:
- * - question: ExploreQuestion
+ * - question: AskQuestion
  */
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
@@ -30,9 +30,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     const { id } = await params;
     const { searchParams } = new URL(request.url);
-    const language = searchParams.get('language') as ExploreLanguageCode;
+    const language = searchParams.get('language') as AskLanguageCode;
 
-    if (!language || !isValidExploreLanguage(language)) {
+    if (!language || !isValidAskLanguage(language)) {
       return NextResponse.json(
         { error: 'Valid language is required' },
         { status: 400 }
@@ -55,7 +55,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     const data = questionDoc.data();
-    const question: ExploreQuestion = {
+    const question: AskQuestion = {
       id: questionDoc.id,
       icon: data?.icon || '❓',
       labelKey: data?.labelKey || '',
@@ -75,22 +75,22 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json({ question });
   } catch (error: unknown) {
-    console.error('[Admin Explore Questions API] GET [id] Error:', error);
+    console.error('[Admin Ask Questions API] GET [id] Error:', error);
     const message = error instanceof Error ? error.message : 'Failed to fetch question';
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
 /**
- * PUT /api/admin/explore-questions/[id]
- * Update an explore question
+ * PUT /api/admin/ask-questions/[id]
+ * Update an ask question
  *
  * Body:
  * - language: string (required)
- * - updates: Partial<ExploreQuestion> (required)
+ * - updates: Partial<AskQuestion> (required)
  *
  * Returns:
- * - question: ExploreQuestion
+ * - question: AskQuestion
  */
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
@@ -102,7 +102,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     const body = await request.json();
     const { language, updates } = body;
 
-    if (!language || !isValidExploreLanguage(language)) {
+    if (!language || !isValidAskLanguage(language)) {
       return NextResponse.json(
         { error: 'Valid language is required' },
         { status: 400 }
@@ -145,7 +145,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     };
 
     // Validate merged question
-    const validation = validateExploreQuestion(mergedQuestion);
+    const validation = validateAskQuestion(mergedQuestion);
     if (!validation.isValid) {
       return NextResponse.json(
         { error: 'Invalid updates', details: validation.errors },
@@ -189,7 +189,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     const updatedDoc = await questionRef.get();
     const updatedData = updatedDoc.data();
 
-    const question: ExploreQuestion = {
+    const question: AskQuestion = {
       id: updatedDoc.id,
       icon: updatedData?.icon || '❓',
       labelKey: updatedData?.labelKey || '',
@@ -209,15 +209,15 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json({ question });
   } catch (error: unknown) {
-    console.error('[Admin Explore Questions API] PUT Error:', error);
+    console.error('[Admin Ask Questions API] PUT Error:', error);
     const message = error instanceof Error ? error.message : 'Failed to update question';
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
 /**
- * DELETE /api/admin/explore-questions/[id]
- * Delete an explore question
+ * DELETE /api/admin/ask-questions/[id]
+ * Delete an ask question
  *
  * Query params:
  * - language: string (required)
@@ -233,9 +233,9 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     const { id } = await params;
     const { searchParams } = new URL(request.url);
-    const language = searchParams.get('language') as ExploreLanguageCode;
+    const language = searchParams.get('language') as AskLanguageCode;
 
-    if (!language || !isValidExploreLanguage(language)) {
+    if (!language || !isValidAskLanguage(language)) {
       return NextResponse.json(
         { error: 'Valid language is required' },
         { status: 400 }
@@ -279,7 +279,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json({ success: true, deletedId: id });
   } catch (error: unknown) {
-    console.error('[Admin Explore Questions API] DELETE Error:', error);
+    console.error('[Admin Ask Questions API] DELETE Error:', error);
     const message = error instanceof Error ? error.message : 'Failed to delete question';
     return NextResponse.json({ error: message }, { status: 500 });
   }

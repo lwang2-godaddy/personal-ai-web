@@ -80,7 +80,7 @@ export const ADMIN_NAVIGATION: NavGroup[] = [
     label: 'Content',
     icon: '📄',
     items: [
-      { href: '/admin/explore-questions', label: 'Explore Questions', icon: '🔍' },
+      { href: '/admin/ask-questions', label: 'Ask Questions', icon: '🔍' },
       { href: '/admin/pricing', label: 'Pricing', icon: '💰' },
     ],
   },

@@ -88,7 +88,7 @@ const SCREEN_CATEGORIES: Record<string, { label: string; screens: string[] }> = 
       TRACKED_SCREENS.adminAppSettings,
       TRACKED_SCREENS.adminMigrations,
       TRACKED_SCREENS.adminMigrationDetail,
-      TRACKED_SCREENS.adminExploreQuestions,
+      TRACKED_SCREENS.adminAskQuestions,
       TRACKED_SCREENS.adminDocs,
     ],
   },

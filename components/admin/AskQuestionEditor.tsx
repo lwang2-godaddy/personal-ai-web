@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import {
-  ExploreQuestion,
-  ExploreCategory,
+  AskQuestion,
+  AskCategory,
   UserDataState,
-  EXPLORE_CATEGORIES,
+  ASK_CATEGORIES,
   USER_DATA_STATES,
   DataRequirements,
-} from '@/lib/models/ExploreQuestion';
+} from '@/lib/models/AskQuestion';
 import EmojiPicker from './EmojiPicker';
 import {
   QUESTION_TEMPLATES,
@@ -17,22 +17,22 @@ import {
   getTemplatesByCategory,
 } from '@/lib/data/questionTemplates';
 
-interface ExploreQuestionEditorProps {
-  question?: ExploreQuestion | null;
+interface AskQuestionEditorProps {
+  question?: AskQuestion | null;
   isOpen: boolean;
   onClose: () => void;
-  onSave: (question: Partial<ExploreQuestion>) => Promise<void>;
+  onSave: (question: Partial<AskQuestion>) => Promise<void>;
   mode: 'create' | 'edit';
 }
 
-export default function ExploreQuestionEditor({
+export default function AskQuestionEditor({
   question,
   isOpen,
   onClose,
   onSave,
   mode,
-}: ExploreQuestionEditorProps) {
-  const [formData, setFormData] = useState<Partial<ExploreQuestion>>({
+}: AskQuestionEditorProps) {
+  const [formData, setFormData] = useState<Partial<AskQuestion>>({
     icon: '❓',
     labelKey: '',
     queryTemplate: '',
@@ -157,7 +157,7 @@ export default function ExploreQuestionEditor({
         finalRequiresData.healthTypes = healthTypes;
       }
 
-      const questionData: Partial<ExploreQuestion> = {
+      const questionData: Partial<AskQuestion> = {
         ...formData,
         variables: variables.length > 0 ? variables : undefined,
         requiresData: Object.keys(finalRequiresData).length > 0 ? finalRequiresData : undefined,
@@ -336,11 +336,11 @@ export default function ExploreQuestionEditor({
               <select
                 value={formData.category}
                 onChange={(e) =>
-                  setFormData({ ...formData, category: e.target.value as ExploreCategory })
+                  setFormData({ ...formData, category: e.target.value as AskCategory })
                 }
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
               >
-                {EXPLORE_CATEGORIES.map((cat) => (
+                {ASK_CATEGORIES.map((cat) => (
                   <option key={cat.id} value={cat.id}>
                     {cat.icon} {cat.name}
                   </option>

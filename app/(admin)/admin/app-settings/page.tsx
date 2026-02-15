@@ -469,10 +469,52 @@ export default function AdminAppSettingsPage() {
             />
           </SettingsSection>
 
-          {/* Explore Chat Configuration Section */}
-          <SettingsSection title="Explore Chat (AI Search)" icon="💬">
+          {/* Voice Conversation Section */}
+          <SettingsSection title="Voice Conversation" icon="📞">
             <p className="text-sm text-gray-600 mb-4 -mt-2">
-              Configure how the AI assistant searches your personal data when answering questions in the Explore tab.
+              Configure the phone-call-style voice conversation feature. Users can have hands-free conversations with the AI assistant.
+            </p>
+            <SettingsToggle
+              label="Enable Voice Conversation"
+              description="Allow users to access the voice conversation feature from the chat screen. When disabled, the call button is hidden."
+              enabled={editedSettings.enableVoiceConversation ?? true}
+              onChange={(enabled) => updateSetting('enableVoiceConversation', enabled)}
+              isEditing={isEditing}
+            />
+            <SettingsToggle
+              label="Auto Language Matching"
+              description="AI responds in the same language the user speaks. When disabled, AI responds in the app's UI language."
+              enabled={editedSettings.enableAutoLanguageMatch ?? true}
+              onChange={(enabled) => updateSetting('enableAutoLanguageMatch', enabled)}
+              isEditing={isEditing}
+            />
+            <SettingsNumberField
+              label="Auto-Loop Delay (ms)"
+              description="Delay in milliseconds after TTS finishes speaking before automatically starting the next recording. Lower = faster conversation, higher = more pause between turns. Recommended: 300-800"
+              value={editedSettings.voiceConversationAutoLoopDelayMs ?? 500}
+              onChange={(v) => updateSetting('voiceConversationAutoLoopDelayMs', v)}
+              isEditing={isEditing}
+              min={0}
+              max={5000}
+              step={100}
+            />
+            <SettingsSelect
+              label="Default TTS Provider"
+              description="Default text-to-speech provider for new users. OpenAI provides higher quality voices with auto language detection. Native uses the device's built-in TTS."
+              value={editedSettings.defaultTtsProvider ?? 'openai'}
+              options={[
+                { value: 'openai', label: 'OpenAI (Recommended)' },
+                { value: 'native', label: 'Native Device TTS' },
+              ]}
+              onChange={(v) => updateSetting('defaultTtsProvider', v)}
+              isEditing={isEditing}
+            />
+          </SettingsSection>
+
+          {/* Ask Chat Configuration Section */}
+          <SettingsSection title="Ask Chat (AI Search)" icon="💬">
+            <p className="text-sm text-gray-600 mb-4 -mt-2">
+              Configure how the AI assistant searches your personal data when answering questions in the Ask tab.
             </p>
             <SettingsNumberField
               label="Minimum Relevance Score"
@@ -647,6 +689,55 @@ interface SettingsNumberFieldProps {
   min?: number;
   max?: number;
   step?: number;
+}
+
+// Settings Select Component
+interface SettingsSelectProps {
+  label: string;
+  description: string;
+  value: string;
+  options: { value: string; label: string }[];
+  onChange: (value: string) => void;
+  isEditing: boolean;
+}
+
+function SettingsSelect({
+  label,
+  description,
+  value,
+  options,
+  onChange,
+  isEditing,
+}: SettingsSelectProps) {
+  const selectedLabel = options.find((o) => o.value === value)?.label || value;
+
+  return (
+    <div className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div className="flex-1">
+          <label className="block text-sm font-medium text-gray-700">{label}</label>
+          <p className="text-xs text-gray-500 mt-0.5">{description}</p>
+        </div>
+        <div className="sm:w-1/2">
+          {isEditing ? (
+            <select
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-red-500 focus:border-red-500"
+            >
+              {options.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <p className="text-sm text-gray-900 text-right">{selectedLabel}</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function SettingsNumberField({

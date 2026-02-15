@@ -1,8 +1,8 @@
 /**
- * ExploreQuestion.ts
+ * AskQuestion.ts
  *
- * TypeScript interfaces for the Explore Questions admin system.
- * Questions are stored in Firestore and displayed on mobile app's Explore/Chat screen.
+ * TypeScript interfaces for the Ask Questions admin system.
+ * Questions are stored in Firestore and displayed on mobile app's Ask/Chat screen.
  *
  * Firestore Structure:
  * - exploreQuestions/{language}/config/settings
@@ -10,9 +10,9 @@
  */
 
 /**
- * Categories for explore questions
+ * Categories for ask questions
  */
-export type ExploreCategory =
+export type AskCategory =
   | 'activity'
   | 'health'
   | 'location'
@@ -45,9 +45,9 @@ export interface DataRequirements {
 }
 
 /**
- * Individual explore question stored in Firestore
+ * Individual ask question stored in Firestore
  */
-export interface ExploreQuestion {
+export interface AskQuestion {
   /** Unique identifier */
   id: string;
 
@@ -67,7 +67,7 @@ export interface ExploreQuestion {
   queryTemplate: string;
 
   /** Category for grouping */
-  category: ExploreCategory;
+  category: AskCategory;
 
   /** Priority for sorting (0-100, higher = shown first) */
   priority: number;
@@ -101,9 +101,9 @@ export interface ExploreQuestion {
 }
 
 /**
- * Configuration for a language's explore questions
+ * Configuration for a language's ask questions
  */
-export interface ExploreQuestionsConfig {
+export interface AskQuestionsConfig {
   /** Semantic version */
   version: string;
 
@@ -121,9 +121,9 @@ export interface ExploreQuestionsConfig {
 }
 
 /**
- * Supported languages for explore questions
+ * Supported languages for ask questions
  */
-export const EXPLORE_SUPPORTED_LANGUAGES = [
+export const ASK_SUPPORTED_LANGUAGES = [
   { code: 'en', name: 'English', nativeName: 'English' },
   { code: 'es', name: 'Spanish', nativeName: 'Español' },
   { code: 'fr', name: 'French', nativeName: 'Français' },
@@ -132,56 +132,56 @@ export const EXPLORE_SUPPORTED_LANGUAGES = [
   { code: 'zh', name: 'Chinese', nativeName: '中文' },
 ] as const;
 
-export type ExploreLanguageCode = (typeof EXPLORE_SUPPORTED_LANGUAGES)[number]['code'];
+export type AskLanguageCode = (typeof ASK_SUPPORTED_LANGUAGES)[number]['code'];
 
 /**
  * Category definitions with metadata
  */
-export const EXPLORE_CATEGORIES = [
+export const ASK_CATEGORIES = [
   {
-    id: 'onboarding' as ExploreCategory,
+    id: 'onboarding' as AskCategory,
     name: 'Onboarding',
     icon: '👋',
     description: 'Questions for new users to get started',
     dataStates: ['NO_DATA'] as UserDataState[],
   },
   {
-    id: 'activity' as ExploreCategory,
+    id: 'activity' as AskCategory,
     name: 'Activities',
     icon: '🏃',
     description: 'Questions about user activities and visits',
     dataStates: ['MINIMAL_DATA', 'PARTIAL_DATA', 'RICH_DATA'] as UserDataState[],
   },
   {
-    id: 'health' as ExploreCategory,
+    id: 'health' as AskCategory,
     name: 'Health',
     icon: '❤️',
     description: 'Questions about health data (steps, sleep, etc.)',
     dataStates: ['MINIMAL_DATA', 'PARTIAL_DATA', 'RICH_DATA'] as UserDataState[],
   },
   {
-    id: 'location' as ExploreCategory,
+    id: 'location' as AskCategory,
     name: 'Location',
     icon: '📍',
     description: 'Questions about places and visits',
     dataStates: ['MINIMAL_DATA', 'PARTIAL_DATA', 'RICH_DATA'] as UserDataState[],
   },
   {
-    id: 'voice' as ExploreCategory,
+    id: 'voice' as AskCategory,
     name: 'Voice Notes',
     icon: '🎙️',
     description: 'Questions about voice note content',
     dataStates: ['MINIMAL_DATA', 'PARTIAL_DATA', 'RICH_DATA'] as UserDataState[],
   },
   {
-    id: 'photo' as ExploreCategory,
+    id: 'photo' as AskCategory,
     name: 'Photos',
     icon: '📸',
     description: 'Questions about photo memories',
     dataStates: ['MINIMAL_DATA', 'PARTIAL_DATA', 'RICH_DATA'] as UserDataState[],
   },
   {
-    id: 'general' as ExploreCategory,
+    id: 'general' as AskCategory,
     name: 'General',
     icon: '📊',
     description: 'General questions about all data',
@@ -218,36 +218,36 @@ export const USER_DATA_STATES = [
 /**
  * API request/response types
  */
-export interface ListExploreQuestionsRequest {
-  language?: ExploreLanguageCode;
-  category?: ExploreCategory;
+export interface ListAskQuestionsRequest {
+  language?: AskLanguageCode;
+  category?: AskCategory;
   enabled?: boolean;
 }
 
-export interface ListExploreQuestionsResponse {
-  questions: ExploreQuestion[];
-  config: ExploreQuestionsConfig | null;
+export interface ListAskQuestionsResponse {
+  questions: AskQuestion[];
+  config: AskQuestionsConfig | null;
   total: number;
-  languages: typeof EXPLORE_SUPPORTED_LANGUAGES;
-  categories: typeof EXPLORE_CATEGORIES;
+  languages: typeof ASK_SUPPORTED_LANGUAGES;
+  categories: typeof ASK_CATEGORIES;
 }
 
-export interface CreateExploreQuestionRequest {
-  language: ExploreLanguageCode;
-  question: Omit<ExploreQuestion, 'id' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy'>;
+export interface CreateAskQuestionRequest {
+  language: AskLanguageCode;
+  question: Omit<AskQuestion, 'id' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy'>;
 }
 
-export interface UpdateExploreQuestionRequest {
-  language: ExploreLanguageCode;
-  updates: Partial<Omit<ExploreQuestion, 'id' | 'createdAt' | 'createdBy'>>;
+export interface UpdateAskQuestionRequest {
+  language: AskLanguageCode;
+  updates: Partial<Omit<AskQuestion, 'id' | 'createdAt' | 'createdBy'>>;
 }
 
-export interface MigrateExploreQuestionsRequest {
-  language: ExploreLanguageCode;
+export interface MigrateAskQuestionsRequest {
+  language: AskLanguageCode;
   overwrite?: boolean;
 }
 
-export interface MigrateExploreQuestionsResponse {
+export interface MigrateAskQuestionsResponse {
   success: boolean;
   migrated: number;
   skipped: number;
@@ -258,8 +258,8 @@ export interface MigrateExploreQuestionsResponse {
  * Default questions for migration from JSON
  * These match the fallback templates in the mobile app
  */
-export const DEFAULT_EXPLORE_QUESTIONS: Record<
-  ExploreLanguageCode,
+export const DEFAULT_ASK_QUESTIONS: Record<
+  AskLanguageCode,
   { labelKey: string; queryKey: string }
 > = {
   en: {
@@ -291,20 +291,20 @@ export const DEFAULT_EXPLORE_QUESTIONS: Record<
 /**
  * Validation helpers
  */
-export function isValidExploreCategory(category: string): category is ExploreCategory {
-  return EXPLORE_CATEGORIES.some((c) => c.id === category);
+export function isValidAskCategory(category: string): category is AskCategory {
+  return ASK_CATEGORIES.some((c) => c.id === category);
 }
 
 export function isValidUserDataState(state: string): state is UserDataState {
   return USER_DATA_STATES.some((s) => s.id === state);
 }
 
-export function isValidExploreLanguage(code: string): code is ExploreLanguageCode {
-  return EXPLORE_SUPPORTED_LANGUAGES.some((l) => l.code === code);
+export function isValidAskLanguage(code: string): code is AskLanguageCode {
+  return ASK_SUPPORTED_LANGUAGES.some((l) => l.code === code);
 }
 
-export function validateExploreQuestion(
-  question: Partial<ExploreQuestion>
+export function validateAskQuestion(
+  question: Partial<AskQuestion>
 ): { isValid: boolean; errors: string[] } {
   const errors: string[] = [];
 
@@ -320,7 +320,7 @@ export function validateExploreQuestion(
     errors.push('Icon is required');
   }
 
-  if (!question.category || !isValidExploreCategory(question.category)) {
+  if (!question.category || !isValidAskCategory(question.category)) {
     errors.push('Valid category is required');
   }
 

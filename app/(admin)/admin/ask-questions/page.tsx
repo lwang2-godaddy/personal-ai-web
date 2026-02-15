@@ -4,15 +4,15 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/api/client';
 import {
-  ExploreQuestion,
-  EXPLORE_SUPPORTED_LANGUAGES,
-  EXPLORE_CATEGORIES,
-  ExploreLanguageCode,
-  ExploreQuestionsConfig,
-  ExploreCategory,
+  AskQuestion,
+  ASK_SUPPORTED_LANGUAGES,
+  ASK_CATEGORIES,
+  AskLanguageCode,
+  AskQuestionsConfig,
+  AskCategory,
   UserDataState,
-} from '@/lib/models/ExploreQuestion';
-import ExploreQuestionEditor from '@/components/admin/ExploreQuestionEditor';
+} from '@/lib/models/AskQuestion';
+import AskQuestionEditor from '@/components/admin/AskQuestionEditor';
 import { useTrackPage } from '@/lib/hooks/useTrackPage';
 import { TRACKED_SCREENS } from '@/lib/models/BehaviorEvent';
 
@@ -21,7 +21,7 @@ import { TRACKED_SCREENS } from '@/lib/models/BehaviorEvent';
  * and what data requirements are needed
  */
 const CATEGORY_DISPLAY_RULES: Record<
-  ExploreCategory,
+  AskCategory,
   {
     dataStates: UserDataState[];
     requirements: string;
@@ -70,11 +70,11 @@ const CATEGORY_DISPLAY_RULES: Record<
 };
 
 interface QuestionsResponse {
-  questions: ExploreQuestion[];
-  config: ExploreQuestionsConfig | null;
+  questions: AskQuestion[];
+  config: AskQuestionsConfig | null;
   total: number;
-  languages: typeof EXPLORE_SUPPORTED_LANGUAGES;
-  categories: typeof EXPLORE_CATEGORIES;
+  languages: typeof ASK_SUPPORTED_LANGUAGES;
+  categories: typeof ASK_CATEGORIES;
 }
 
 interface MigrationResponse {
@@ -91,16 +91,16 @@ interface AllLanguagesMigrationResult {
   byLanguage: { language: string; migrated: number; skipped: number; errors: number }[];
 }
 
-export default function AdminExploreQuestionsPage() {
+export default function AdminAskQuestionsPage() {
   // Track page view
-  useTrackPage(TRACKED_SCREENS.adminExploreQuestions);
+  useTrackPage(TRACKED_SCREENS.adminAskQuestions);
 
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [questions, setQuestions] = useState<ExploreQuestion[]>([]);
-  const [config, setConfig] = useState<ExploreQuestionsConfig | null>(null);
-  const [selectedLanguage, setSelectedLanguage] = useState<ExploreLanguageCode>('en');
+  const [questions, setQuestions] = useState<AskQuestion[]>([]);
+  const [config, setConfig] = useState<AskQuestionsConfig | null>(null);
+  const [selectedLanguage, setSelectedLanguage] = useState<AskLanguageCode>('en');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [migrating, setMigrating] = useState(false);
   const [migrationResult, setMigrationResult] = useState<MigrationResponse | null>(null);
@@ -110,14 +110,14 @@ export default function AdminExploreQuestionsPage() {
   // Editor state
   const [editorOpen, setEditorOpen] = useState(false);
   const [editorMode, setEditorMode] = useState<'create' | 'edit'>('create');
-  const [editingQuestion, setEditingQuestion] = useState<ExploreQuestion | null>(null);
+  const [editingQuestion, setEditingQuestion] = useState<AskQuestion | null>(null);
 
   // Delete confirmation
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
   // Copy to languages
-  const [copyModalQuestion, setCopyModalQuestion] = useState<ExploreQuestion | null>(null);
+  const [copyModalQuestion, setCopyModalQuestion] = useState<AskQuestion | null>(null);
   const [copying, setCopying] = useState(false);
   const [copyResult, setCopyResult] = useState<{
     success: boolean;
@@ -136,7 +136,7 @@ export default function AdminExploreQuestionsPage() {
       setLoading(true);
       setError(null);
 
-      let url = `/api/admin/explore-questions?language=${selectedLanguage}`;
+      let url = `/api/admin/ask-questions?language=${selectedLanguage}`;
       if (selectedCategory) {
         url += `&category=${selectedCategory}`;
       }
@@ -166,7 +166,7 @@ export default function AdminExploreQuestionsPage() {
     setError(null);
 
     try {
-      const response = await apiPost<MigrationResponse>('/api/admin/explore-questions/migrate', {
+      const response = await apiPost<MigrationResponse>('/api/admin/ask-questions/migrate', {
         language: selectedLanguage,
         overwrite: false,
       });
@@ -203,9 +203,9 @@ export default function AdminExploreQuestionsPage() {
     };
 
     try {
-      for (const lang of EXPLORE_SUPPORTED_LANGUAGES) {
+      for (const lang of ASK_SUPPORTED_LANGUAGES) {
         try {
-          const response = await apiPost<MigrationResponse>('/api/admin/explore-questions/migrate', {
+          const response = await apiPost<MigrationResponse>('/api/admin/ask-questions/migrate', {
             language: lang.code,
             overwrite: false,
           });
@@ -248,20 +248,20 @@ export default function AdminExploreQuestionsPage() {
     setEditorOpen(true);
   };
 
-  const handleEditQuestion = (question: ExploreQuestion) => {
+  const handleEditQuestion = (question: AskQuestion) => {
     setEditingQuestion(question);
     setEditorMode('edit');
     setEditorOpen(true);
   };
 
-  const handleSaveQuestion = async (questionData: Partial<ExploreQuestion>) => {
+  const handleSaveQuestion = async (questionData: Partial<AskQuestion>) => {
     if (editorMode === 'create') {
-      await apiPost('/api/admin/explore-questions', {
+      await apiPost('/api/admin/ask-questions', {
         language: selectedLanguage,
         question: questionData,
       });
     } else if (editingQuestion) {
-      await apiPut(`/api/admin/explore-questions/${editingQuestion.id}`, {
+      await apiPut(`/api/admin/ask-questions/${editingQuestion.id}`, {
         language: selectedLanguage,
         updates: questionData,
       });
@@ -272,7 +272,7 @@ export default function AdminExploreQuestionsPage() {
   const handleDeleteQuestion = async (questionId: string) => {
     setDeleting(true);
     try {
-      await apiDelete(`/api/admin/explore-questions/${questionId}?language=${selectedLanguage}`);
+      await apiDelete(`/api/admin/ask-questions/${questionId}?language=${selectedLanguage}`);
       setDeleteConfirmId(null);
       await fetchQuestions();
     } catch (err: unknown) {
@@ -283,9 +283,9 @@ export default function AdminExploreQuestionsPage() {
     }
   };
 
-  const handleToggleEnabled = async (question: ExploreQuestion) => {
+  const handleToggleEnabled = async (question: AskQuestion) => {
     try {
-      await apiPut(`/api/admin/explore-questions/${question.id}`, {
+      await apiPut(`/api/admin/ask-questions/${question.id}`, {
         language: selectedLanguage,
         updates: { enabled: !question.enabled },
       });
@@ -296,8 +296,8 @@ export default function AdminExploreQuestionsPage() {
     }
   };
 
-  const handleDuplicateQuestion = (question: ExploreQuestion) => {
-    const duplicatedData: Partial<ExploreQuestion> = {
+  const handleDuplicateQuestion = (question: AskQuestion) => {
+    const duplicatedData: Partial<AskQuestion> = {
       ...question,
       id: undefined,
       labelKey: `${question.labelKey} (Copy)`,
@@ -306,7 +306,7 @@ export default function AdminExploreQuestionsPage() {
       updatedAt: undefined,
       updatedBy: undefined,
     };
-    setEditingQuestion(duplicatedData as ExploreQuestion);
+    setEditingQuestion(duplicatedData as AskQuestion);
     setEditorMode('create');
     setEditorOpen(true);
   };
@@ -314,7 +314,7 @@ export default function AdminExploreQuestionsPage() {
   const handleCopyToAllLanguages = async (overwrite: boolean = false) => {
     if (!copyModalQuestion) return;
 
-    const targetLanguages = EXPLORE_SUPPORTED_LANGUAGES.filter(
+    const targetLanguages = ASK_SUPPORTED_LANGUAGES.filter(
       (lang) => lang.code !== selectedLanguage
     ).map((lang) => lang.code);
 
@@ -328,7 +328,7 @@ export default function AdminExploreQuestionsPage() {
         skipped: number;
         errors: number;
         results: { language: string; status: string; error?: string }[];
-      }>('/api/admin/explore-questions/copy-to-languages', {
+      }>('/api/admin/ask-questions/copy-to-languages', {
         sourceLanguage: selectedLanguage,
         questionId: copyModalQuestion.id,
         targetLanguages,
@@ -345,7 +345,7 @@ export default function AdminExploreQuestionsPage() {
   };
 
   // Group questions by category for display
-  const questionsByCategory = EXPLORE_CATEGORIES.map((category) => ({
+  const questionsByCategory = ASK_CATEGORIES.map((category) => ({
     ...category,
     questions: questions.filter((q) => q.category === category.id),
   })).filter((cat) => !selectedCategory || cat.id === selectedCategory);
@@ -355,9 +355,9 @@ export default function AdminExploreQuestionsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Explore Questions</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Ask Questions</h1>
           <p className="text-gray-600 mt-1">
-            Manage suggested questions shown on mobile app&apos;s Explore/Chat screen
+            Manage suggested questions shown on mobile app&apos;s Ask/Chat screen
           </p>
         </div>
         <div className="flex items-center space-x-4">
@@ -366,10 +366,10 @@ export default function AdminExploreQuestionsPage() {
             <label className="text-sm font-medium text-gray-700">Language:</label>
             <select
               value={selectedLanguage}
-              onChange={(e) => setSelectedLanguage(e.target.value as ExploreLanguageCode)}
+              onChange={(e) => setSelectedLanguage(e.target.value as AskLanguageCode)}
               className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500"
             >
-              {EXPLORE_SUPPORTED_LANGUAGES.map((lang) => (
+              {ASK_SUPPORTED_LANGUAGES.map((lang) => (
                 <option key={lang.code} value={lang.code}>
                   {lang.nativeName} ({lang.code})
                 </option>
@@ -386,7 +386,7 @@ export default function AdminExploreQuestionsPage() {
               className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500"
             >
               <option value="">All Categories</option>
-              {EXPLORE_CATEGORIES.map((cat) => (
+              {ASK_CATEGORIES.map((cat) => (
                 <option key={cat.id} value={cat.id}>
                   {cat.icon} {cat.name}
                 </option>
@@ -570,7 +570,7 @@ export default function AdminExploreQuestionsPage() {
                 <div>
                   <div className="font-medium text-gray-900">Screen Location</div>
                   <div className="text-sm text-gray-600">
-                    Mobile App → Explore/Chat Tab (empty state)
+                    Mobile App → Ask/Chat Tab (empty state)
                   </div>
                 </div>
               </div>
@@ -657,7 +657,7 @@ export default function AdminExploreQuestionsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {EXPLORE_CATEGORIES.map((cat) => {
+                {ASK_CATEGORIES.map((cat) => {
                   const rules = CATEGORY_DISPLAY_RULES[cat.id];
                   return (
                     <tr key={cat.id} className="hover:bg-gray-50">
@@ -983,7 +983,7 @@ export default function AdminExploreQuestionsPage() {
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Language Status</h3>
         <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
-          {EXPLORE_SUPPORTED_LANGUAGES.map((lang) => (
+          {ASK_SUPPORTED_LANGUAGES.map((lang) => (
             <button
               key={lang.code}
               onClick={() => setSelectedLanguage(lang.code)}
@@ -1004,7 +1004,7 @@ export default function AdminExploreQuestionsPage() {
       <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
         <div className="bg-blue-50 px-4 py-3 border-b border-blue-200">
           <h3 className="font-semibold text-blue-900 flex items-center gap-2">
-            <span>ℹ️</span> How Explore Questions Work
+            <span>ℹ️</span> How Ask Questions Work
           </h3>
         </div>
         <div className="p-4">
@@ -1104,7 +1104,7 @@ export default function AdminExploreQuestionsPage() {
       </div>
 
       {/* Editor Modal */}
-      <ExploreQuestionEditor
+      <AskQuestionEditor
         question={editingQuestion}
         isOpen={editorOpen}
         onClose={() => {
@@ -1144,7 +1144,7 @@ export default function AdminExploreQuestionsPage() {
               <div className="mb-4">
                 <h3 className="text-sm font-medium text-gray-700 mb-2">Target Languages:</h3>
                 <div className="flex flex-wrap gap-2">
-                  {EXPLORE_SUPPORTED_LANGUAGES.filter(lang => lang.code !== selectedLanguage).map((lang) => (
+                  {ASK_SUPPORTED_LANGUAGES.filter(lang => lang.code !== selectedLanguage).map((lang) => (
                     <span
                       key={lang.code}
                       className="px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded-full"

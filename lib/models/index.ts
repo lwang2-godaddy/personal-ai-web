@@ -10,7 +10,7 @@ export * from './TextNote';
 export * from './Event';
 export * from './Circle';
 export * from './ServiceOperations';
-export * from './ExploreQuestion';
+export * from './AskQuestion';
 export * from './BehaviorEvent';
 export * from './VoiceCategory';
 export * from './FriendInvite';

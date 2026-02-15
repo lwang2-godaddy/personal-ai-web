@@ -3,18 +3,18 @@
  * Makes it easy to create common question patterns
  */
 
-import { ExploreCategory, UserDataState, DataRequirements } from '@/lib/models/ExploreQuestion';
+import { AskCategory, UserDataState, DataRequirements } from '@/lib/models/AskQuestion';
 
 export interface QuestionTemplate {
   id: string;
   name: string;
   description: string;
-  category: ExploreCategory;
+  category: AskCategory;
   data: {
     icon: string;
     labelKey: string;
     queryTemplate: string;
-    category: ExploreCategory;
+    category: AskCategory;
     priority: number;
     userDataStates: UserDataState[];
     requiresData?: DataRequirements;

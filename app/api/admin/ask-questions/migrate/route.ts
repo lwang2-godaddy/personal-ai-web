@@ -2,13 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/middleware/auth';
 import { getAdminFirestore } from '@/lib/api/firebase/admin';
 import {
-  ExploreQuestion,
-  ExploreQuestionsConfig,
-  isValidExploreLanguage,
-  ExploreLanguageCode,
-  ExploreCategory,
+  AskQuestion,
+  AskQuestionsConfig,
+  isValidAskLanguage,
+  AskLanguageCode,
+  AskCategory,
   UserDataState,
-} from '@/lib/models/ExploreQuestion';
+} from '@/lib/models/AskQuestion';
 
 /**
  * Default question templates for migration
@@ -19,7 +19,7 @@ interface QuestionTemplate {
   icon: string;
   labelKeyTemplate: string;
   queryKeyTemplate: string;
-  category: ExploreCategory;
+  category: AskCategory;
   priority: number;
   userDataStates: UserDataState[];
   requiresData?: {
@@ -443,7 +443,7 @@ const QUESTION_TEMPLATES: QuestionTemplate[] = [
  * Translation maps for each language
  * These map the template keys to actual translations
  */
-const TRANSLATIONS: Record<ExploreLanguageCode, Record<string, string>> = {
+const TRANSLATIONS: Record<AskLanguageCode, Record<string, string>> = {
   en: {
     onboarding_connect_health: 'Connect Health Data',
     onboarding_enable_location: 'Enable Location Tracking',
@@ -855,7 +855,7 @@ const TRANSLATIONS: Record<ExploreLanguageCode, Record<string, string>> = {
 };
 
 /**
- * POST /api/admin/explore-questions/migrate
+ * POST /api/admin/ask-questions/migrate
  * Migrate default questions to Firestore for a language
  *
  * Body:
@@ -878,14 +878,14 @@ export async function POST(request: NextRequest) {
     const { language, overwrite = false } = body;
 
     // Validate language
-    if (!language || !isValidExploreLanguage(language)) {
+    if (!language || !isValidAskLanguage(language)) {
       return NextResponse.json(
         { error: 'Valid language is required' },
         { status: 400 }
       );
     }
 
-    const translations = TRANSLATIONS[language as ExploreLanguageCode];
+    const translations = TRANSLATIONS[language as AskLanguageCode];
     if (!translations) {
       return NextResponse.json(
         { error: `No translations available for language: ${language}` },
@@ -979,7 +979,7 @@ export async function POST(request: NextRequest) {
       errors,
     });
   } catch (error: unknown) {
-    console.error('[Admin Explore Questions Migrate API] Error:', error);
+    console.error('[Admin Ask Questions Migrate API] Error:', error);
     const message = error instanceof Error ? error.message : 'Failed to migrate questions';
     return NextResponse.json({ error: message }, { status: 500 });
   }
