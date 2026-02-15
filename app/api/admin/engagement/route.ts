@@ -129,6 +129,18 @@ export async function PUT(request: NextRequest) {
               { status: 400 }
             );
           }
+          // Validate and clean translations (optional field)
+          if (prompt.translations && typeof prompt.translations === 'object') {
+            const cleanTranslations: Record<string, string> = {};
+            for (const [lang, text] of Object.entries(prompt.translations)) {
+              if (typeof text === 'string' && text.trim()) {
+                cleanTranslations[lang] = (text as string).trim();
+              }
+            }
+            prompt.translations = Object.keys(cleanTranslations).length > 0 ? cleanTranslations : undefined;
+          } else {
+            delete prompt.translations;
+          }
         }
       }
 
@@ -159,6 +171,18 @@ export async function PUT(request: NextRequest) {
               { error: `Rotating prompt ${i + 1}: xpBonus must be a positive number` },
               { status: 400 }
             );
+          }
+          // Validate and clean translations (optional field)
+          if (prompt.translations && typeof prompt.translations === 'object') {
+            const cleanTranslations: Record<string, string> = {};
+            for (const [lang, text] of Object.entries(prompt.translations)) {
+              if (typeof text === 'string' && text.trim()) {
+                cleanTranslations[lang] = (text as string).trim();
+              }
+            }
+            prompt.translations = Object.keys(cleanTranslations).length > 0 ? cleanTranslations : undefined;
+          } else {
+            delete prompt.translations;
           }
         }
       }
