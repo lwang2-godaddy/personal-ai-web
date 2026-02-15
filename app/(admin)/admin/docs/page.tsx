@@ -181,7 +181,7 @@ export default function DocsPage() {
           onClick={() => setActiveTab('web')}
           className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
             activeTab === 'web'
-              ? 'bg-white text-red-600 shadow'
+              ? 'bg-white text-indigo-600 shadow'
               : 'text-gray-600 hover:text-gray-900'
           }`}
         >
@@ -191,7 +191,7 @@ export default function DocsPage() {
           onClick={() => setActiveTab('mobile')}
           className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
             activeTab === 'mobile'
-              ? 'bg-white text-red-600 shadow'
+              ? 'bg-white text-indigo-600 shadow'
               : 'text-gray-600 hover:text-gray-900'
           }`}
         >
@@ -216,7 +216,7 @@ export default function DocsPage() {
                         onClick={() => loadDoc(item.path)}
                         className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
                           selectedDoc === item.path
-                            ? 'bg-red-50 text-red-700 font-medium'
+                            ? 'bg-indigo-50 text-indigo-700 font-medium'
                             : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                         }`}
                       >
@@ -238,14 +238,14 @@ export default function DocsPage() {
           <div className="bg-white rounded-lg shadow-md border border-gray-200 min-h-[600px]">
             {isLoading ? (
               <div className="flex items-center justify-center h-96">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
               </div>
             ) : error ? (
               <div className="p-6 text-center">
                 <div className="text-red-600 mb-4">{error}</div>
                 <button
                   onClick={() => selectedDoc && loadDoc(selectedDoc)}
-                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
                 >
                   Retry
                 </button>
@@ -253,7 +253,7 @@ export default function DocsPage() {
             ) : selectedDoc ? (
               <div className="p-6">
                 <article
-                  className="prose prose-lg max-w-none text-gray-800 prose-headings:text-gray-900 prose-p:text-gray-700 prose-li:text-gray-700 prose-strong:text-gray-900 prose-a:text-red-600 prose-code:text-red-700 prose-code:bg-gray-100 prose-code:px-1 prose-code:rounded prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-th:text-gray-900 prose-td:text-gray-700 prose-blockquote:text-gray-600 prose-blockquote:border-red-300"
+                  className="prose prose-lg max-w-none text-gray-800 prose-headings:text-gray-900 prose-p:text-gray-700 prose-li:text-gray-700 prose-strong:text-gray-900 prose-a:text-indigo-600 prose-code:text-indigo-700 prose-code:bg-gray-100 prose-code:px-1 prose-code:rounded prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-th:text-gray-900 prose-td:text-gray-700 prose-blockquote:text-gray-600 prose-blockquote:border-indigo-300"
                   dangerouslySetInnerHTML={{ __html: docContent }}
                 />
               </div>
@@ -269,7 +269,7 @@ export default function DocsPage() {
                 <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4 text-left max-w-2xl mx-auto">
                   <button
                     onClick={() => loadDoc('README.md')}
-                    className="p-4 border border-gray-200 rounded-lg hover:border-red-300 hover:bg-red-50 transition-colors"
+                    className="p-4 border border-gray-200 rounded-lg hover:border-indigo-300 hover:bg-indigo-50 transition-colors"
                   >
                     <div className="text-2xl mb-2">🚀</div>
                     <div className="font-medium text-gray-900">Getting Started</div>
@@ -277,7 +277,7 @@ export default function DocsPage() {
                   </button>
                   <button
                     onClick={() => loadDoc('ARCHITECTURE.md')}
-                    className="p-4 border border-gray-200 rounded-lg hover:border-red-300 hover:bg-red-50 transition-colors"
+                    className="p-4 border border-gray-200 rounded-lg hover:border-indigo-300 hover:bg-indigo-50 transition-colors"
                   >
                     <div className="text-2xl mb-2">🏗️</div>
                     <div className="font-medium text-gray-900">Architecture</div>
@@ -285,7 +285,7 @@ export default function DocsPage() {
                   </button>
                   <button
                     onClick={() => loadDoc('API_REFERENCE.md')}
-                    className="p-4 border border-gray-200 rounded-lg hover:border-red-300 hover:bg-red-50 transition-colors"
+                    className="p-4 border border-gray-200 rounded-lg hover:border-indigo-300 hover:bg-indigo-50 transition-colors"
                   >
                     <div className="text-2xl mb-2">🔌</div>
                     <div className="font-medium text-gray-900">API Reference</div>
@@ -293,7 +293,7 @@ export default function DocsPage() {
                   </button>
                   <button
                     onClick={() => loadDoc('features/CHAT_RAG.md')}
-                    className="p-4 border border-gray-200 rounded-lg hover:border-red-300 hover:bg-red-50 transition-colors"
+                    className="p-4 border border-gray-200 rounded-lg hover:border-indigo-300 hover:bg-indigo-50 transition-colors"
                   >
                     <div className="text-2xl mb-2">🤖</div>
                     <div className="font-medium text-gray-900">RAG System</div>

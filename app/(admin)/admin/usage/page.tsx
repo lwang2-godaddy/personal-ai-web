@@ -383,7 +383,7 @@ export default function AdminUsageAnalyticsPage() {
                 setDataLoaded(true);
               }}
               disabled={loading || !startDate || !endDate}
-              className="px-5 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-sm"
+              className="px-5 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-sm"
             >
               {loading ? 'Loading...' : 'Refresh'}
             </button>
@@ -410,7 +410,7 @@ export default function AdminUsageAnalyticsPage() {
               onClick={() => handleQuickRange(days)}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                 activeRange === days
-                  ? 'bg-red-600 text-white shadow-sm'
+                  ? 'bg-indigo-600 text-white shadow-sm'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
@@ -427,7 +427,7 @@ export default function AdminUsageAnalyticsPage() {
               type="date"
               value={startDate}
               onChange={(e) => { setStartDate(e.target.value); setActiveRange(0); }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             />
           </div>
           <div>
@@ -436,7 +436,7 @@ export default function AdminUsageAnalyticsPage() {
               type="date"
               value={endDate}
               onChange={(e) => { setEndDate(e.target.value); setActiveRange(0); }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             />
           </div>
           <div>
@@ -444,7 +444,7 @@ export default function AdminUsageAnalyticsPage() {
             <select
               value={groupBy}
               onChange={(e) => setGroupBy(e.target.value as 'day' | 'month')}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             >
               <option value="day">Day</option>
               <option value="month">Month</option>
@@ -457,7 +457,7 @@ export default function AdminUsageAnalyticsPage() {
       {(loading || authLoading) && (
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
-            <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-gray-600">{authLoading ? 'Checking authentication...' : 'Loading analytics...'}</p>
           </div>
         </div>

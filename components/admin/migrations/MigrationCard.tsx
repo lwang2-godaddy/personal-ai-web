@@ -131,7 +131,7 @@ export default function MigrationCard({
         </button>
         <Link
           href={`/admin/migrations/${migration.id}`}
-          className="flex-1 px-3 py-2 text-sm font-medium text-center text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors"
+          className="flex-1 px-3 py-2 text-sm font-medium text-center text-white bg-indigo-600 rounded-md hover:bg-indigo-700 transition-colors"
         >
           {isCurrentlyRunning ? 'View Progress' : 'Run'}
         </Link>

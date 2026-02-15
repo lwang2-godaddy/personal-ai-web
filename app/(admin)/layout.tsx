@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import AdminGuard from '@/components/admin/AdminGuard';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import { useAuth } from '@/lib/hooks/useAuth';
@@ -10,7 +11,7 @@ import { useTrackingSession } from '@/lib/hooks/useTrackPage';
 
 /**
  * Admin Layout
- * Red-themed layout with collapsible sidebar navigation
+ * Slate/indigo-themed layout with collapsible sidebar navigation
  * Includes admin guard protection and behavior tracking
  */
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -40,7 +41,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         {/* Main content area */}
         <div className="flex-1 flex flex-col min-w-0">
           {/* Top bar */}
-          <header className="bg-red-600 text-white shadow-lg">
+          <header className="bg-slate-900 text-white shadow-lg">
             <div className="px-4 sm:px-6 lg:px-8">
               <div className="flex items-center justify-between h-16">
                 {/* Left side - Hamburger and Title */}
@@ -48,7 +49,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   {/* Mobile hamburger button */}
                   <button
                     onClick={() => setSidebarOpen(true)}
-                    className="p-2 rounded-md hover:bg-red-500 transition-colors md:hidden mr-2"
+                    className="p-2 rounded-md hover:bg-slate-700 transition-colors md:hidden mr-2"
                     aria-label="Open sidebar"
                   >
                     <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -58,7 +59,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
                   {/* Title */}
                   <div className="flex items-center">
-                    <span className="text-2xl font-bold">⚙️</span>
+                    <Image
+                      src="/app-icon.png"
+                      alt="Sircharge"
+                      width={32}
+                      height={32}
+                      className="rounded-md"
+                    />
                     <span className="ml-2 text-xl font-semibold">Admin Panel</span>
                   </div>
                 </div>
@@ -68,13 +75,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   {/* User Info */}
                   <div className="hidden sm:block text-sm">
                     <div className="font-medium">{user?.displayName || user?.email}</div>
-                    <div className="text-red-200 text-xs">Admin</div>
+                    <div className="text-slate-400 text-xs">Admin</div>
                   </div>
 
                   {/* Sign Out Button */}
                   <button
                     onClick={handleSignOut}
-                    className="px-4 py-2 rounded-md text-sm font-medium bg-red-700 hover:bg-red-800 transition-colors"
+                    className="px-4 py-2 rounded-md text-sm font-medium bg-slate-700 hover:bg-slate-600 transition-colors"
                   >
                     Sign Out
                   </button>

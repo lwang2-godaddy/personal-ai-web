@@ -304,7 +304,7 @@ export default function AskQuestionEditor({
                 value={formData.labelKey}
                 onChange={(e) => setFormData({ ...formData, labelKey: e.target.value })}
                 placeholder="e.g., My step counts"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
               />
               <p className="text-xs text-gray-500 mt-1">
                 Supports variables: {'{{activity}}'}, {'{{healthType}}'}
@@ -321,7 +321,7 @@ export default function AskQuestionEditor({
               value={formData.queryTemplate}
               onChange={(e) => setFormData({ ...formData, queryTemplate: e.target.value })}
               placeholder="e.g., What were my step counts this week?"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500 h-24"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 h-24"
             />
             <p className="text-xs text-gray-500 mt-1">
               The actual query sent to the AI when user taps this question
@@ -338,7 +338,7 @@ export default function AskQuestionEditor({
                 onChange={(e) =>
                   setFormData({ ...formData, category: e.target.value as AskCategory })
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
               >
                 {ASK_CATEGORIES.map((cat) => (
                   <option key={cat.id} value={cat.id}>
@@ -361,7 +361,7 @@ export default function AskQuestionEditor({
                 onChange={(e) =>
                   setFormData({ ...formData, priority: parseInt(e.target.value) || 50 })
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
               />
               <p className="text-xs text-gray-500 mt-1">Higher = shown first</p>
             </div>
@@ -377,7 +377,7 @@ export default function AskQuestionEditor({
                 min="0"
                 value={formData.order}
                 onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) || 0 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
               />
             </div>
 
@@ -388,7 +388,7 @@ export default function AskQuestionEditor({
                   type="checkbox"
                   checked={formData.enabled}
                   onChange={(e) => setFormData({ ...formData, enabled: e.target.checked })}
-                  className="w-4 h-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                  className="w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                 />
                 <span className="text-sm font-medium text-gray-700">Enabled</span>
               </label>
@@ -406,7 +406,7 @@ export default function AskQuestionEditor({
                   key={state.id}
                   className={`flex items-start gap-2 p-3 border rounded-lg cursor-pointer transition-colors ${
                     formData.userDataStates?.includes(state.id)
-                      ? 'border-red-500 bg-red-50'
+                      ? 'border-indigo-500 bg-indigo-50'
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
@@ -414,7 +414,7 @@ export default function AskQuestionEditor({
                     type="checkbox"
                     checked={formData.userDataStates?.includes(state.id)}
                     onChange={() => handleUserDataStateToggle(state.id)}
-                    className="mt-1 w-4 h-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                    className="mt-1 w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                   />
                   <div>
                     <div className="font-medium text-sm">{state.name}</div>
@@ -435,7 +435,7 @@ export default function AskQuestionEditor({
               value={variablesInput}
               onChange={(e) => setVariablesInput(e.target.value)}
               placeholder="e.g., activity, healthType"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
             />
             <p className="text-xs text-gray-500 mt-1">
               Comma-separated list of variables used in label/query
@@ -459,7 +459,7 @@ export default function AskQuestionEditor({
                     onChange={(e) =>
                       setRequiresData({ ...requiresData, hasLocationData: e.target.checked })
                     }
-                    className="w-4 h-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                    className="w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                   />
                   <span className="text-sm">Has Location Data</span>
                 </label>
@@ -470,7 +470,7 @@ export default function AskQuestionEditor({
                     onChange={(e) =>
                       setRequiresData({ ...requiresData, hasHealthData: e.target.checked })
                     }
-                    className="w-4 h-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                    className="w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                   />
                   <span className="text-sm">Has Health Data</span>
                 </label>
@@ -481,7 +481,7 @@ export default function AskQuestionEditor({
                     onChange={(e) =>
                       setRequiresData({ ...requiresData, hasVoiceNotes: e.target.checked })
                     }
-                    className="w-4 h-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                    className="w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                   />
                   <span className="text-sm">Has Voice Notes</span>
                 </label>
@@ -492,7 +492,7 @@ export default function AskQuestionEditor({
                     onChange={(e) =>
                       setRequiresData({ ...requiresData, hasPhotoMemories: e.target.checked })
                     }
-                    className="w-4 h-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                    className="w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                   />
                   <span className="text-sm">Has Photo Memories</span>
                 </label>
@@ -512,7 +512,7 @@ export default function AskQuestionEditor({
                     })
                   }
                   placeholder="e.g., 5"
-                  className="w-32 px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500 text-sm"
+                  className="w-32 px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-sm"
                 />
               </div>
 
@@ -524,7 +524,7 @@ export default function AskQuestionEditor({
                   value={healthTypesInput}
                   onChange={(e) => setHealthTypesInput(e.target.value)}
                   placeholder="e.g., steps, sleep, heartRate"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-sm"
                 />
               </div>
             </div>
@@ -558,7 +558,7 @@ export default function AskQuestionEditor({
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {saving ? 'Saving...' : mode === 'create' ? 'Create Question' : 'Save Changes'}
           </button>

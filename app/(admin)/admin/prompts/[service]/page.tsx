@@ -541,7 +541,7 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
       {/* Loading State */}
       {loading ? (
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
         </div>
       ) : !config ? (
         /* Not Migrated State */
@@ -579,7 +579,7 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
                     resetNewPromptForm();
                     setShowNewPromptModal(true);
                   }}
-                  className="px-3 py-1.5 text-xs font-medium bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                  className="px-3 py-1.5 text-xs font-medium bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
                 >
                   + Add
                 </button>
@@ -595,7 +595,7 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
                   <div
                     key={promptId}
                     className={`group relative hover:bg-gray-50 transition-colors ${
-                      selectedPromptId === promptId ? 'bg-red-50 border-l-4 border-red-500' : ''
+                      selectedPromptId === promptId ? 'bg-indigo-50 border-l-4 border-indigo-500' : ''
                     }`}
                   >
                     <button
@@ -829,7 +829,7 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
                   <div className="px-4 pb-4 border-t border-gray-100">
                     {algorithmLoading ? (
                       <div className="py-4 text-center">
-                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-red-600 mx-auto"></div>
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600 mx-auto"></div>
                       </div>
                     ) : algorithmConfig ? (
                       <div className="space-y-4 pt-4">
@@ -1013,7 +1013,7 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
                             className={`flex-1 px-3 py-2 text-xs font-medium rounded-md transition-colors ${
                               algorithmSaving || Object.keys(algorithmEdits).length === 0
                                 ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                : 'bg-red-600 text-white hover:bg-red-700'
+                                : 'bg-indigo-600 text-white hover:bg-indigo-700'
                             }`}
                           >
                             {algorithmSaving ? 'Saving...' : 'Save Changes'}
@@ -1378,7 +1378,7 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
                       <select
                         value={editedModel}
                         onChange={(e) => setEditedModel(e.target.value)}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500 bg-white"
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 bg-white"
                       >
                         <option value="gpt-4o-mini">gpt-4o-mini</option>
                         <option value="gpt-4o">gpt-4o</option>
@@ -1397,7 +1397,7 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
                         step="0.1"
                         value={editedTemperature}
                         onChange={(e) => setEditedTemperature(parseFloat(e.target.value))}
-                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-red-600"
+                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
                       />
                       <div className="flex justify-between text-xs text-gray-400 mt-1">
                         <span>Precise</span>
@@ -1412,7 +1412,7 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
                         max="16000"
                         value={editedMaxTokens}
                         onChange={(e) => setEditedMaxTokens(parseInt(e.target.value) || 1000)}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
                       />
                     </div>
                   </div>
@@ -1432,7 +1432,7 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
                     value={editedContent}
                     onChange={(e) => setEditedContent(e.target.value)}
                     rows={15}
-                    className="w-full font-mono text-sm text-gray-900 bg-white border border-gray-300 rounded-md p-3 focus:ring-red-500 focus:border-red-500"
+                    className="w-full font-mono text-sm text-gray-900 bg-white border border-gray-300 rounded-md p-3 focus:ring-indigo-500 focus:border-indigo-500"
                     placeholder="Enter prompt content..."
                   />
 
@@ -1493,7 +1493,7 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
                             editedMaxTokens === (selectedPrompt.metadata?.maxTokens ?? 1000)
                           )
                             ? 'bg-gray-400 cursor-not-allowed'
-                            : 'bg-red-600 hover:bg-red-700'
+                            : 'bg-indigo-600 hover:bg-indigo-700'
                         }`}
                       >
                         {saving ? 'Saving...' : 'Save Changes'}
@@ -1555,7 +1555,7 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
                 </div>
                 {executionsLoading ? (
                   <div className="p-8 text-center">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-red-600 mx-auto"></div>
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600 mx-auto"></div>
                     <p className="text-sm text-gray-500 mt-2">Loading executions...</p>
                   </div>
                 ) : executions.length === 0 ? (
@@ -1695,7 +1695,7 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
                   value={newPromptId}
                   onChange={(e) => setNewPromptId(e.target.value.toLowerCase().replace(/\s+/g, '_'))}
                   placeholder="e.g., my_new_prompt"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500 font-mono text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm"
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   Unique identifier for this prompt (lowercase, underscores)
@@ -1709,7 +1709,7 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
                   <select
                     value={newPromptType}
                     onChange={(e) => setNewPromptType(e.target.value as 'system' | 'user' | 'function')}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
                   >
                     <option value="system">System</option>
                     <option value="user">User</option>
@@ -1721,7 +1721,7 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
                   <select
                     value={newPromptModel}
                     onChange={(e) => setNewPromptModel(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
                   >
                     <option value="gpt-4o-mini">gpt-4o-mini</option>
                     <option value="gpt-4o">gpt-4o</option>
@@ -1759,7 +1759,7 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
                     max="16000"
                     value={newPromptMaxTokens}
                     onChange={(e) => setNewPromptMaxTokens(parseInt(e.target.value) || 1000)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
                   />
                 </div>
               </div>
@@ -1772,7 +1772,7 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
                   value={newPromptDescription}
                   onChange={(e) => setNewPromptDescription(e.target.value)}
                   placeholder="Brief description of this prompt"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
                 />
               </div>
 
@@ -1786,7 +1786,7 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
                   onChange={(e) => setNewPromptContent(e.target.value)}
                   placeholder="Enter your prompt content here... Use {{variableName}} for Handlebars variables."
                   rows={10}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500 font-mono text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm"
                 />
               </div>
 
@@ -1802,12 +1802,12 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
                         placeholder="name"
                         value={v.name}
                         onChange={(e) => updateVariable(i, 'name', e.target.value)}
-                        className="w-28 px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-red-500 focus:border-red-500 font-mono"
+                        className="w-28 px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-indigo-500 focus:border-indigo-500 font-mono"
                       />
                       <select
                         value={v.type}
                         onChange={(e) => updateVariable(i, 'type', e.target.value)}
-                        className="w-24 px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-red-500 focus:border-red-500"
+                        className="w-24 px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-indigo-500 focus:border-indigo-500"
                       >
                         <option value="string">string</option>
                         <option value="number">number</option>
@@ -1819,14 +1819,14 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
                         placeholder="description"
                         value={v.description}
                         onChange={(e) => updateVariable(i, 'description', e.target.value)}
-                        className="flex-1 px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-red-500 focus:border-red-500"
+                        className="flex-1 px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-indigo-500 focus:border-indigo-500"
                       />
                       <label className="flex items-center gap-1 text-sm whitespace-nowrap">
                         <input
                           type="checkbox"
                           checked={v.required}
                           onChange={(e) => updateVariable(i, 'required', e.target.checked)}
-                          className="w-4 h-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                          className="w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                         />
                         Req
                       </label>
@@ -1869,7 +1869,7 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
                 className={`px-4 py-2 text-sm font-medium text-white rounded-md ${
                   saving || !newPromptId.trim() || !newPromptContent.trim()
                     ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-red-600 hover:bg-red-700'
+                    : 'bg-indigo-600 hover:bg-indigo-700'
                 }`}
               >
                 {saving ? 'Creating...' : 'Create Prompt'}

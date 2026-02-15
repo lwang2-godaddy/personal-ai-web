@@ -181,7 +181,7 @@ export default function CategoriesTab({ onSaving }: CategoriesTabProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -224,7 +224,7 @@ export default function CategoriesTab({ onSaving }: CategoriesTabProps) {
           <button
             onClick={() => setShowCreateModal(true)}
             disabled={saving}
-            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
+            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
           >
             + Add Category
           </button>
@@ -469,7 +469,7 @@ function CategoryEditModal({ category, onSave, onClose, saving }: CategoryEditMo
               type="text"
               value={formData.displayName}
               onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-red-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             />
           </div>
 
@@ -481,7 +481,7 @@ function CategoryEditModal({ category, onSave, onClose, saving }: CategoryEditMo
                 type="text"
                 value={formData.icon}
                 onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 maxLength={4}
               />
             </div>
@@ -498,7 +498,7 @@ function CategoryEditModal({ category, onSave, onClose, saving }: CategoryEditMo
                   type="text"
                   value={formData.color}
                   onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   placeholder="#4CAF50"
                 />
               </div>
@@ -516,7 +516,7 @@ function CategoryEditModal({ category, onSave, onClose, saving }: CategoryEditMo
               onChange={(e) => setFormData({ ...formData, priority: parseInt(e.target.value) || 0 })}
               min={0}
               max={100}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-red-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             />
           </div>
 
@@ -529,7 +529,7 @@ function CategoryEditModal({ category, onSave, onClose, saving }: CategoryEditMo
               value={formData.matchPatterns}
               onChange={(e) => setFormData({ ...formData, matchPatterns: e.target.value })}
               rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-red-500 font-mono text-sm"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm"
               placeholder="gym|workout|exercise&#10;yoga|meditation|mindfulness"
             />
             <p className="text-xs text-gray-500 mt-1">
@@ -546,7 +546,7 @@ function CategoryEditModal({ category, onSave, onClose, saving }: CategoryEditMo
               type="text"
               value={formData.relatedPostTypes}
               onChange={(e) => setFormData({ ...formData, relatedPostTypes: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-red-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               placeholder="health_alert, streak_achievement"
             />
           </div>
@@ -563,7 +563,7 @@ function CategoryEditModal({ category, onSave, onClose, saving }: CategoryEditMo
           <button
             onClick={handleSave}
             disabled={saving}
-            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
+            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
           >
             {saving ? 'Saving...' : 'Save Changes'}
           </button>
@@ -649,7 +649,7 @@ function CategoryCreateModal({ onSave, onClose, saving }: CategoryCreateModalPro
               type="text"
               value={formData.id}
               onChange={(e) => setFormData({ ...formData, id: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-red-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               placeholder="custom_category"
             />
           </div>
@@ -661,7 +661,7 @@ function CategoryCreateModal({ onSave, onClose, saving }: CategoryCreateModalPro
               type="text"
               value={formData.displayName}
               onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-red-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               placeholder="Custom Category"
               required
             />
@@ -675,7 +675,7 @@ function CategoryCreateModal({ onSave, onClose, saving }: CategoryCreateModalPro
                 type="text"
                 value={formData.icon}
                 onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 maxLength={4}
               />
             </div>
@@ -692,7 +692,7 @@ function CategoryCreateModal({ onSave, onClose, saving }: CategoryCreateModalPro
                   type="text"
                   value={formData.color}
                   onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 />
               </div>
             </div>
@@ -709,7 +709,7 @@ function CategoryCreateModal({ onSave, onClose, saving }: CategoryCreateModalPro
               onChange={(e) => setFormData({ ...formData, priority: parseInt(e.target.value) || 0 })}
               min={0}
               max={100}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-red-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             />
           </div>
 
@@ -722,7 +722,7 @@ function CategoryCreateModal({ onSave, onClose, saving }: CategoryCreateModalPro
               value={formData.matchPatterns}
               onChange={(e) => setFormData({ ...formData, matchPatterns: e.target.value })}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-red-500 font-mono text-sm"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm"
               placeholder="keyword1|keyword2|keyword3"
             />
           </div>
@@ -739,7 +739,7 @@ function CategoryCreateModal({ onSave, onClose, saving }: CategoryCreateModalPro
           <button
             onClick={handleSave}
             disabled={saving || !formData.displayName}
-            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
+            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
           >
             {saving ? 'Creating...' : 'Create Category'}
           </button>

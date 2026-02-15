@@ -232,7 +232,7 @@ export default function FunFactsViewerPage() {
         <button
           onClick={handleRefresh}
           disabled={loading || loadingUsers}
-          className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 text-sm"
+          className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 text-sm"
         >
           {loading || loadingUsers ? 'Loading...' : 'Refresh'}
         </button>
@@ -293,7 +293,7 @@ export default function FunFactsViewerPage() {
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 focus:ring-2 focus:ring-red-500 focus:border-red-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             >
               {CATEGORIES.map((c) => (
                 <option key={c.value} value={c.value}>{c.label}</option>
@@ -305,7 +305,7 @@ export default function FunFactsViewerPage() {
             <select
               value={insightTypeFilter}
               onChange={(e) => setInsightTypeFilter(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 focus:ring-2 focus:ring-red-500 focus:border-red-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             >
               {INSIGHT_TYPES.map((t) => (
                 <option key={t.value} value={t.value}>{t.label}</option>
@@ -317,7 +317,7 @@ export default function FunFactsViewerPage() {
             <select
               value={periodTypeFilter}
               onChange={(e) => setPeriodTypeFilter(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 focus:ring-2 focus:ring-red-500 focus:border-red-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             >
               {PERIOD_TYPES.map((p) => (
                 <option key={p.value} value={p.value}>{p.label}</option>
@@ -329,7 +329,7 @@ export default function FunFactsViewerPage() {
             <select
               value={visibilityFilter}
               onChange={(e) => setVisibilityFilter(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 focus:ring-2 focus:ring-red-500 focus:border-red-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             >
               {VISIBILITY_OPTIONS.map((v) => (
                 <option key={v.value} value={v.value}>{v.label}</option>

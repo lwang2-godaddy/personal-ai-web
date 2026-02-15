@@ -263,7 +263,7 @@ export default function AdminPromptsPage() {
             <select
               value={selectedLanguage}
               onChange={(e) => setSelectedLanguage(e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500"
+              className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500"
             >
               {SUPPORTED_LANGUAGES.map(lang => (
                 <option key={lang.code} value={lang.code}>
@@ -421,7 +421,7 @@ export default function AdminPromptsPage() {
       {/* Loading State */}
       {loading ? (
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
         </div>
       ) : (
         <>
@@ -711,7 +711,7 @@ export default function AdminPromptsPage() {
                         {/* Action Button */}
                         <Link
                           href={`/admin/prompts/${service.id}?language=${selectedLanguage}`}
-                          className="block w-full text-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm font-medium"
+                          className="block w-full text-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors text-sm font-medium"
                         >
                           {service.isMigrated ? 'Edit Prompts' : 'Migrate & Edit'}
                         </Link>
@@ -940,7 +940,7 @@ export default function AdminPromptsPage() {
               </div>
 
               {/* Use in Cloud Functions */}
-              <div className="border-l-4 border-red-500 pl-4">
+              <div className="border-l-4 border-indigo-500 pl-4">
                 <h4 className="font-semibold text-gray-900 mb-2">5. Use Prompts in Cloud Functions</h4>
                 <div className="bg-gray-900 text-gray-100 rounded-lg p-3 font-mono text-xs overflow-x-auto">
                   <div className="text-green-400">// In your Cloud Function</div>
@@ -997,7 +997,7 @@ export default function AdminPromptsPage() {
                   onClick={() => setSelectedLanguage(lang.code)}
                   className={`p-3 rounded-lg border text-center transition-colors ${
                     selectedLanguage === lang.code
-                      ? 'border-red-500 bg-red-50 text-red-700'
+                      ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >

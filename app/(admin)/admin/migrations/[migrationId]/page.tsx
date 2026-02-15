@@ -166,7 +166,7 @@ export default function MigrationDetailPage({ params }: PageProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="h-8 w-8 border-4 border-gray-300 border-t-red-600 rounded-full animate-spin" />
+        <div className="h-8 w-8 border-4 border-gray-300 border-t-indigo-600 rounded-full animate-spin" />
         <span className="ml-3 text-gray-600">Loading migration...</span>
       </div>
     );
@@ -393,7 +393,7 @@ export default function MigrationDetailPage({ params }: PageProps) {
               className={`w-full px-4 py-3 text-sm font-medium text-white rounded-md transition-colors ${
                 migration.destructive && !options.dryRun
                   ? 'bg-red-600 hover:bg-red-700'
-                  : 'bg-red-600 hover:bg-red-700'
+                  : 'bg-indigo-600 hover:bg-indigo-700'
               }`}
             >
               {options.dryRun ? 'Start Dry Run' : 'Start Migration'}

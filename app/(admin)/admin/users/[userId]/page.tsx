@@ -417,7 +417,7 @@ export default function AdminUserDetailPage() {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600">Loading user details...</p>
         </div>
       </div>
@@ -431,7 +431,7 @@ export default function AdminUserDetailPage() {
         <p className="text-red-600">{error || 'User not found'}</p>
         <Link
           href="/admin/users"
-          className="mt-4 inline-block px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+          className="mt-4 inline-block px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
         >
           Back to Users
         </Link>
@@ -446,7 +446,7 @@ export default function AdminUserDetailPage() {
         <div>
           <Link
             href="/admin/users"
-            className="text-red-600 hover:text-red-800 font-medium mb-2 inline-block"
+            className="text-indigo-600 hover:text-indigo-800 font-medium mb-2 inline-block"
           >
             Back to Users
           </Link>
@@ -530,7 +530,7 @@ export default function AdminUserDetailPage() {
             <select
               value={selectedTier}
               onChange={(e) => setSelectedTier(e.target.value as 'free' | 'premium' | 'pro')}
-              className="w-48 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              className="w-48 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             >
               <option value="free">Free</option>
               <option value="premium">Premium</option>
@@ -539,7 +539,7 @@ export default function AdminUserDetailPage() {
             <button
               onClick={handleUpdateTier}
               disabled={isEditingSubscription || selectedTier === (subscriptionDetails?.subscription.tier || 'free')}
-              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {isEditingSubscription ? 'Updating...' : 'Update Tier'}
             </button>
@@ -609,7 +609,7 @@ export default function AdminUserDetailPage() {
                 onChange={(e) => setMessagesOverride(e.target.value)}
                 placeholder="Use tier default"
                 min="-1"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
             </div>
             <div>
@@ -620,7 +620,7 @@ export default function AdminUserDetailPage() {
                 onChange={(e) => setPhotosOverride(e.target.value)}
                 placeholder="Use tier default"
                 min="-1"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
             </div>
             <div>
@@ -631,7 +631,7 @@ export default function AdminUserDetailPage() {
                 onChange={(e) => setVoiceOverride(e.target.value)}
                 placeholder="Use tier default"
                 min="-1"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
             </div>
           </div>
@@ -639,7 +639,7 @@ export default function AdminUserDetailPage() {
             <button
               onClick={handleUpdateQuotaOverrides}
               disabled={isEditingQuotas}
-              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 transition-colors"
+              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 transition-colors"
             >
               {isEditingQuotas ? 'Updating...' : 'Update Overrides'}
             </button>
@@ -669,7 +669,7 @@ export default function AdminUserDetailPage() {
                 value={maxTokensPerDay}
                 onChange={(e) => setMaxTokensPerDay(e.target.value)}
                 placeholder="e.g., 100000"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
             </div>
             <div>
@@ -679,7 +679,7 @@ export default function AdminUserDetailPage() {
                 value={maxApiCallsPerDay}
                 onChange={(e) => setMaxApiCallsPerDay(e.target.value)}
                 placeholder="e.g., 1000"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
             </div>
             <div>
@@ -690,7 +690,7 @@ export default function AdminUserDetailPage() {
                 value={maxCostPerMonth}
                 onChange={(e) => setMaxCostPerMonth(e.target.value)}
                 placeholder="e.g., 50.00"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
             </div>
           </div>
@@ -698,7 +698,7 @@ export default function AdminUserDetailPage() {
             <button
               onClick={handleUpdateLimits}
               disabled={isEditingLimits}
-              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {isEditingLimits ? 'Updating...' : 'Update Limits'}
             </button>
@@ -849,7 +849,7 @@ export default function AdminUserDetailPage() {
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="flex items-center justify-center py-8">
             <div className="text-center">
-              <div className="w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+              <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
               <p className="text-gray-600 text-sm">Loading usage analytics...</p>
             </div>
           </div>

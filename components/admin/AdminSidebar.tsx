@@ -116,21 +116,21 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
       <aside
         className={`
           fixed md:static inset-y-0 left-0 z-50
-          w-64 bg-red-700 text-white
+          w-64 bg-slate-800 text-white
           transform transition-transform duration-300 ease-in-out
           ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
           flex flex-col h-screen md:h-auto md:min-h-screen
         `}
       >
         {/* Sidebar header (mobile) */}
-        <div className="flex items-center justify-between p-4 border-b border-red-600 md:hidden">
+        <div className="flex items-center justify-between p-4 border-b border-slate-700 md:hidden">
           <div className="flex items-center">
             <span className="text-xl font-bold">⚙️</span>
             <span className="ml-2 font-semibold">Admin Panel</span>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-md hover:bg-red-600 transition-colors"
+            className="p-2 rounded-md hover:bg-slate-700 transition-colors"
             aria-label="Close sidebar"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -151,8 +151,8 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                 flex items-center px-3 py-2.5 rounded-md text-sm font-medium
                 transition-colors duration-150
                 ${isItemActive(item.href)
-                  ? 'bg-red-800 text-white'
-                  : 'text-red-100 hover:bg-red-600 hover:text-white'
+                  ? 'bg-indigo-600 text-white'
+                  : 'text-slate-300 hover:bg-slate-700 hover:text-white'
                 }
               `}
             >
@@ -162,7 +162,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
           ))}
 
           {/* Divider */}
-          <div className="border-t border-red-600 my-3" />
+          <div className="border-t border-slate-700 my-3" />
 
           {/* Grouped navigation */}
           {ADMIN_NAVIGATION.map((group) => (
@@ -178,7 +178,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
         </nav>
 
         {/* Bottom navigation */}
-        <div className="p-4 border-t border-red-600">
+        <div className="p-4 border-t border-slate-700">
           {BOTTOM_NAV_ITEMS.map((item) => (
             <Link
               key={item.href}
@@ -186,7 +186,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
               onClick={handleNavClick}
               className="
                 flex items-center px-3 py-2.5 rounded-md text-sm font-medium
-                text-red-100 hover:bg-red-600 hover:text-white
+                text-slate-300 hover:bg-slate-700 hover:text-white
                 transition-colors duration-150
               "
             >
@@ -231,8 +231,8 @@ function NavGroupComponent({
           w-full flex items-center justify-between px-3 py-2.5 rounded-md text-sm font-medium
           transition-colors duration-150
           ${hasActiveItem
-            ? 'bg-red-800/50 text-white'
-            : 'text-red-100 hover:bg-red-600 hover:text-white'
+            ? 'bg-indigo-600/20 text-white'
+            : 'text-slate-300 hover:bg-slate-700 hover:text-white'
           }
         `}
       >
@@ -262,8 +262,8 @@ function NavGroupComponent({
                   flex items-center px-3 py-2 rounded-md text-sm
                   transition-colors duration-150
                   ${isActive
-                    ? 'bg-red-800 text-white font-medium'
-                    : 'text-red-200 hover:bg-red-600 hover:text-white'
+                    ? 'bg-indigo-600 text-white font-medium'
+                    : 'text-slate-400 hover:bg-slate-700 hover:text-white'
                   }
                 `}
               >

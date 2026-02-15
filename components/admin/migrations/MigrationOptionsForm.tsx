@@ -61,7 +61,7 @@ export default function MigrationOptionsForm({
                 checked={value ?? schema.default ?? false}
                 onChange={(e) => handleChange(schema.key, e.target.checked)}
                 disabled={disabled}
-                className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
               />
             </div>
             <div className="ml-3">
@@ -94,7 +94,7 @@ export default function MigrationOptionsForm({
               min={schema.min}
               max={schema.max}
               disabled={disabled}
-              className="mt-1 block w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 disabled:bg-gray-100 disabled:text-gray-500"
+              className="mt-1 block w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:text-gray-500"
             />
             {(schema.min !== undefined || schema.max !== undefined) && (
               <p className="text-xs text-gray-400 mt-1">
@@ -121,7 +121,7 @@ export default function MigrationOptionsForm({
               onChange={(e) => handleChange(schema.key, e.target.value)}
               placeholder={`Enter ${schema.label.toLowerCase()}`}
               disabled={disabled}
-              className="mt-1 block w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 disabled:bg-gray-100 disabled:text-gray-500"
+              className="mt-1 block w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:text-gray-500"
             />
           </div>
         );
@@ -141,7 +141,7 @@ export default function MigrationOptionsForm({
               value={value ?? schema.default ?? ''}
               onChange={(e) => handleChange(schema.key, e.target.value)}
               disabled={disabled}
-              className="mt-1 block w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 disabled:bg-gray-100 disabled:text-gray-500"
+              className="mt-1 block w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:text-gray-500"
             >
               {schema.options?.map((opt) => (
                 <option key={opt.value} value={opt.value}>

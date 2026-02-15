@@ -111,7 +111,7 @@ export default function EventCard({ event, onViewDetails, isSelected }: EventCar
     <div
       className={`bg-white rounded-lg shadow-sm border p-4 transition-all ${
         isSelected
-          ? 'border-red-400 shadow-md ring-1 ring-red-200'
+          ? 'border-indigo-400 shadow-md ring-1 ring-indigo-200'
           : 'border-gray-200 hover:shadow-md hover:border-gray-300'
       }`}
     >
@@ -181,7 +181,7 @@ export default function EventCard({ event, onViewDetails, isSelected }: EventCar
       {/* View Details button */}
       <button
         onClick={onViewDetails}
-        className="w-full px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-md hover:bg-red-100 transition-colors"
+        className="w-full px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-md hover:bg-indigo-100 transition-colors"
       >
         {isSelected ? 'Hide Details' : 'View Details'}
       </button>

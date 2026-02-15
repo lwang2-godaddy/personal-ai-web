@@ -20,7 +20,7 @@ interface DemoActionButtonProps {
 }
 
 const VARIANT_STYLES = {
-  primary: 'bg-red-600 hover:bg-red-700 text-white',
+  primary: 'bg-indigo-600 hover:bg-indigo-700 text-white',
   danger: 'bg-orange-600 hover:bg-orange-700 text-white',
   secondary: 'bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300',
 };

@@ -126,7 +126,7 @@ export default function MigrationRunHistory({
                     onResume && (
                       <button
                         onClick={() => onResume(run)}
-                        className="text-red-600 hover:text-red-800"
+                        className="text-indigo-600 hover:text-indigo-800"
                       >
                         Resume
                       </button>

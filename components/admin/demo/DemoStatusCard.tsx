@@ -23,7 +23,7 @@ export default function DemoStatusCard({ status, loading, onRefresh }: DemoStatu
     return (
       <div className="bg-white rounded-lg shadow-md p-6">
         <div className="flex items-center gap-3">
-          <div className="w-6 h-6 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+          <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
           <span className="text-gray-600">Loading demo account status...</span>
         </div>
       </div>
@@ -34,7 +34,7 @@ export default function DemoStatusCard({ status, loading, onRefresh }: DemoStatu
     return (
       <div className="bg-white rounded-lg shadow-md p-6">
         <p className="text-gray-500">Unable to load status.</p>
-        <button onClick={onRefresh} className="mt-2 text-sm text-red-600 hover:underline">
+        <button onClick={onRefresh} className="mt-2 text-sm text-indigo-600 hover:underline">
           Retry
         </button>
       </div>

@@ -39,7 +39,7 @@ export default function UsageTestPage() {
         <button
           onClick={runTest}
           disabled={loading}
-          className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
+          className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
         >
           {loading ? 'Running...' : 'Run Test Again'}
         </button>
@@ -48,7 +48,7 @@ export default function UsageTestPage() {
       {loading && (
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="flex items-center space-x-3">
-            <div className="w-6 h-6 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+            <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
             <span>Running usage tracking test...</span>
           </div>
         </div>

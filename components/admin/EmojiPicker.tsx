@@ -95,7 +95,7 @@ export default function EmojiPicker({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search emoji..."
-          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
           autoFocus
         />
       </div>
@@ -112,7 +112,7 @@ export default function EmojiPicker({
             title={cat.name}
             className={`flex-shrink-0 w-8 h-8 rounded-md flex items-center justify-center text-lg transition-colors ${
               activeCategory === cat.id
-                ? 'bg-red-100 ring-2 ring-red-500'
+                ? 'bg-indigo-100 ring-2 ring-indigo-500'
                 : 'hover:bg-gray-100'
             }`}
           >
@@ -164,7 +164,7 @@ export default function EmojiPicker({
                   title={item.name}
                   className={`w-8 h-8 rounded-md flex items-center justify-center text-xl hover:bg-gray-100 transition-colors ${
                     selectedEmoji === item.emoji
-                      ? 'bg-red-100 ring-2 ring-red-500'
+                      ? 'bg-indigo-100 ring-2 ring-indigo-500'
                       : ''
                   }`}
                 >

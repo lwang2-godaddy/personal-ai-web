@@ -166,7 +166,7 @@ export default function AdminUsersPage() {
   };
 
   const getRoleBadgeColor = (role: string) => {
-    return role === 'admin' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800';
+    return role === 'admin' ? 'bg-indigo-100 text-indigo-800' : 'bg-gray-100 text-gray-800';
   };
 
   const getStatusBadgeColor = (status: string) => {
@@ -218,11 +218,11 @@ export default function AdminUsersPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by email or name..."
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
+            className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
           />
           <button
             type="submit"
-            className="px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors font-medium"
+            className="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors font-medium"
           >
             Search
           </button>
@@ -246,7 +246,7 @@ export default function AdminUsersPage() {
         {loading || authLoading ? (
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
-              <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
               <p className="text-gray-600">{authLoading ? 'Checking authentication...' : 'Loading users...'}</p>
             </div>
           </div>
@@ -255,7 +255,7 @@ export default function AdminUsersPage() {
             <p className="text-red-600">{error}</p>
             <button
               onClick={fetchUsers}
-              className="mt-4 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+              className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
             >
               Retry
             </button>
@@ -377,7 +377,7 @@ export default function AdminUsersPage() {
                       <td className="px-6 py-4 text-right space-x-2">
                         <Link
                           href={`/admin/users/${user.id}`}
-                          className="inline-block px-3 py-1 text-sm text-red-600 hover:text-red-800 font-medium"
+                          className="inline-block px-3 py-1 text-sm text-indigo-600 hover:text-indigo-800 font-medium"
                         >
                           View
                         </Link>

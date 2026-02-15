@@ -352,7 +352,7 @@ export default function AdminBehaviorAnalyticsPage() {
                   setStartDate(e.target.value);
                   setDataLoaded(false);
                 }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
             </div>
             <div>
@@ -364,14 +364,14 @@ export default function AdminBehaviorAnalyticsPage() {
                   setEndDate(e.target.value);
                   setDataLoaded(false);
                 }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
             </div>
             <div className="flex items-end">
               <button
                 onClick={fetchBehaviorData}
                 disabled={loading || !startDate || !endDate}
-                className="w-full px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+                className="w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
               >
                 {loading ? 'Loading...' : dataLoaded ? 'Refresh Data' : 'Load Analytics'}
               </button>
@@ -440,7 +440,7 @@ export default function AdminBehaviorAnalyticsPage() {
                   Features
                 </button>
                 <button
-                  className="px-6 py-4 text-sm font-medium border-b-2 border-red-500 text-red-600"
+                  className="px-6 py-4 text-sm font-medium border-b-2 border-indigo-500 text-indigo-600"
                 >
                   Providers
                 </button>
@@ -580,7 +580,7 @@ export default function AdminBehaviorAnalyticsPage() {
       {loading && (
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
-            <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-gray-600">Loading analytics...</p>
           </div>
         </div>
@@ -609,7 +609,7 @@ export default function AdminBehaviorAnalyticsPage() {
                   onClick={() => setActiveTab('overview')}
                   className={`px-6 py-4 text-sm font-medium border-b-2 ${
                     activeTab === 'overview'
-                      ? 'border-red-500 text-red-600'
+                      ? 'border-indigo-500 text-indigo-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
@@ -619,7 +619,7 @@ export default function AdminBehaviorAnalyticsPage() {
                   onClick={() => setActiveTab('screens')}
                   className={`px-6 py-4 text-sm font-medium border-b-2 ${
                     activeTab === 'screens'
-                      ? 'border-red-500 text-red-600'
+                      ? 'border-indigo-500 text-indigo-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
@@ -629,7 +629,7 @@ export default function AdminBehaviorAnalyticsPage() {
                   onClick={() => setActiveTab('features')}
                   className={`px-6 py-4 text-sm font-medium border-b-2 ${
                     activeTab === 'features'
-                      ? 'border-red-500 text-red-600'
+                      ? 'border-indigo-500 text-indigo-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
@@ -644,7 +644,7 @@ export default function AdminBehaviorAnalyticsPage() {
                   }}
                   className={`px-6 py-4 text-sm font-medium border-b-2 ${
                     activeTab === 'providers'
-                      ? 'border-red-500 text-red-600'
+                      ? 'border-indigo-500 text-indigo-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >

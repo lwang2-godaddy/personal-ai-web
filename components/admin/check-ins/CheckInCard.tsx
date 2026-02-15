@@ -89,7 +89,7 @@ export default function CheckInCard({ checkIn, onViewDetails, isSelected }: Chec
     <div
       className={`bg-white rounded-lg border p-4 transition-all ${
         isSelected
-          ? 'border-red-400 ring-2 ring-red-100'
+          ? 'border-indigo-400 ring-2 ring-indigo-100'
           : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
       }`}
     >
@@ -175,7 +175,7 @@ export default function CheckInCard({ checkIn, onViewDetails, isSelected }: Chec
         onClick={onViewDetails}
         className={`w-full px-3 py-2 text-sm font-medium rounded-md transition-colors ${
           isSelected
-            ? 'bg-red-100 text-red-700 hover:bg-red-200'
+            ? 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
             : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
         }`}
       >

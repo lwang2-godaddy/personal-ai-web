@@ -153,7 +153,7 @@ export default function MigrationsPage() {
           onClick={() => setSelectedCategory('all')}
           className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
             selectedCategory === 'all'
-              ? 'bg-red-600 text-white'
+              ? 'bg-indigo-600 text-white'
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           }`}
         >
@@ -169,7 +169,7 @@ export default function MigrationsPage() {
               onClick={() => setSelectedCategory(cat.id)}
               className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
                 selectedCategory === cat.id
-                  ? 'bg-red-600 text-white'
+                  ? 'bg-indigo-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
@@ -205,7 +205,7 @@ export default function MigrationsPage() {
       {/* Loading */}
       {loading && migrations.length === 0 && (
         <div className="flex items-center justify-center py-12">
-          <div className="h-8 w-8 border-4 border-gray-300 border-t-red-600 rounded-full animate-spin" />
+          <div className="h-8 w-8 border-4 border-gray-300 border-t-indigo-600 rounded-full animate-spin" />
           <span className="ml-3 text-gray-600">Loading migrations...</span>
         </div>
       )}

@@ -224,14 +224,14 @@ function ExtractionPipelineSection() {
 function LifecycleSection() {
   return (
     <div className="pt-4">
-      <p className="text-sm text-red-800 mb-4">
+      <p className="text-sm text-slate-800 mb-4">
         Events follow a multi-stage lifecycle from automatic extraction through user confirmation
         to completion, with smart reminders scheduled based on event type.
       </p>
 
       {/* Lifecycle Flow */}
-      <div className="bg-white rounded-lg p-4 border border-red-100 mb-4">
-        <p className="font-semibold text-red-900 text-sm mb-3">Event Lifecycle Flow</p>
+      <div className="bg-white rounded-lg p-4 border border-slate-100 mb-4">
+        <p className="font-semibold text-slate-900 text-sm mb-3">Event Lifecycle Flow</p>
         <div className="flex flex-col sm:flex-row items-stretch gap-2 mb-4">
           {[
             { label: 'Extracted', desc: 'AI creates event from source', color: 'bg-blue-100 text-blue-900' },
@@ -244,23 +244,23 @@ function LifecycleSection() {
                 <p className="text-xs font-semibold">{step.label}</p>
                 <p className="text-[10px] mt-0.5 opacity-75">{step.desc}</p>
               </div>
-              {i < 3 && <span className="text-red-300 font-bold hidden sm:block">&rarr;</span>}
+              {i < 3 && <span className="text-slate-300 font-bold hidden sm:block">&rarr;</span>}
             </div>
           ))}
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-          <div className="bg-red-50 rounded-lg p-3">
-            <p className="font-semibold text-red-800 mb-1">Status Transitions</p>
-            <ul className="text-red-700 space-y-1 ml-3 list-disc">
+          <div className="bg-slate-50 rounded-lg p-3">
+            <p className="font-semibold text-slate-800 mb-1">Status Transitions</p>
+            <ul className="text-slate-700 space-y-1 ml-3 list-disc">
               <li><code>draft</code> &rarr; <code>confirmed</code> (user confirms low-confidence event)</li>
               <li><code>pending</code> &rarr; <code>confirmed</code> (user confirms high-confidence event)</li>
               <li><code>confirmed</code> &rarr; <code>completed</code> (user marks done)</li>
               <li>Any status &rarr; <code>cancelled</code> (user cancels)</li>
             </ul>
           </div>
-          <div className="bg-red-50 rounded-lg p-3">
-            <p className="font-semibold text-red-800 mb-1">User Modification Flags</p>
-            <ul className="text-red-700 space-y-1 ml-3 list-disc">
+          <div className="bg-slate-50 rounded-lg p-3">
+            <p className="font-semibold text-slate-800 mb-1">User Modification Flags</p>
+            <ul className="text-slate-700 space-y-1 ml-3 list-disc">
               <li><code>userConfirmed</code> &mdash; Set to <code>true</code> when user explicitly confirms</li>
               <li><code>userModified</code> &mdash; Set to <code>true</code> when user edits any field</li>
               <li><code>completedAt</code> &mdash; Timestamp when marked complete</li>
@@ -270,21 +270,21 @@ function LifecycleSection() {
       </div>
 
       {/* Smart Reminders */}
-      <div className="bg-white rounded-lg p-4 border border-red-100 mb-4">
-        <p className="font-semibold text-red-900 text-sm mb-2">Smart Reminder Defaults</p>
-        <p className="text-xs text-red-700 mb-3">
+      <div className="bg-white rounded-lg p-4 border border-slate-100 mb-4">
+        <p className="font-semibold text-slate-900 text-sm mb-2">Smart Reminder Defaults</p>
+        <p className="text-xs text-slate-700 mb-3">
           Each event type has default reminder timings. Reminders are scheduled as push notifications
           via Expo Notifications when an event is created or confirmed.
         </p>
         <div className="overflow-x-auto">
           <table className="w-full text-xs border-collapse">
             <thead>
-              <tr className="border-b border-red-200">
-                <th className="text-left py-1.5 pr-3 text-red-700 font-semibold">Event Type</th>
-                <th className="text-left py-1.5 px-3 text-red-700 font-semibold">Default Reminders</th>
+              <tr className="border-b border-slate-200">
+                <th className="text-left py-1.5 pr-3 text-slate-700 font-semibold">Event Type</th>
+                <th className="text-left py-1.5 px-3 text-slate-700 font-semibold">Default Reminders</th>
               </tr>
             </thead>
-            <tbody className="text-red-800">
+            <tbody className="text-slate-800">
               {[
                 { type: '📅 Appointment', reminders: '1 week, 1 day, 1 hour before' },
                 { type: '👥 Meeting', reminders: '1 day, 1 hour, 15 min before' },
@@ -293,7 +293,7 @@ function LifecycleSection() {
                 { type: '⏰ Reminder', reminders: '1 hour before' },
                 { type: '✅ To-Do', reminders: '1 day, 1 hour before' },
               ].map((row) => (
-                <tr key={row.type} className="border-b border-red-50">
+                <tr key={row.type} className="border-b border-slate-50">
                   <td className="py-1.5 pr-3 font-medium">{row.type}</td>
                   <td className="py-1.5 px-3">{row.reminders}</td>
                 </tr>
@@ -304,9 +304,9 @@ function LifecycleSection() {
       </div>
 
       {/* Firestore Schema */}
-      <div className="bg-white rounded-lg p-4 border border-red-100 mb-4">
-        <p className="font-semibold text-red-900 text-sm mb-2">Firestore Document Schema</p>
-        <p className="text-xs text-red-700 mb-3">
+      <div className="bg-white rounded-lg p-4 border border-slate-100 mb-4">
+        <p className="font-semibold text-slate-900 text-sm mb-2">Firestore Document Schema</p>
+        <p className="text-xs text-slate-700 mb-3">
           Events are stored in the <code>events</code> collection. Each document contains the
           extracted data, source tracking, user modification flags, and embedding status.
         </p>
@@ -318,7 +318,7 @@ function LifecycleSection() {
             'userConfirmed', 'userModified', 'completedAt',
             'embeddingId', 'embeddingCreatedAt', 'createdAt', 'updatedAt',
           ].map((field) => (
-            <span key={field} className="bg-red-50 text-red-700 rounded px-2 py-1 font-mono border border-red-100">
+            <span key={field} className="bg-slate-50 text-slate-700 rounded px-2 py-1 font-mono border border-slate-100">
               {field}
             </span>
           ))}
@@ -326,24 +326,24 @@ function LifecycleSection() {
       </div>
 
       {/* Mobile Integration */}
-      <div className="bg-white rounded-lg p-4 border border-red-100 mb-4">
-        <p className="font-semibold text-red-900 text-sm mb-3">Mobile App Integration</p>
+      <div className="bg-white rounded-lg p-4 border border-slate-100 mb-4">
+        <p className="font-semibold text-slate-900 text-sm mb-3">Mobile App Integration</p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div className="bg-red-50 rounded-lg p-2.5">
-            <p className="text-xs font-bold text-red-700">Home Feed</p>
-            <p className="text-[11px] text-red-600 mt-0.5">
+          <div className="bg-slate-50 rounded-lg p-2.5">
+            <p className="text-xs font-bold text-slate-700">Home Feed</p>
+            <p className="text-[11px] text-slate-600 mt-0.5">
               <code>UpcomingEventsCard</code> shows next 5 upcoming events (pending/confirmed, future datetime)
             </p>
           </div>
-          <div className="bg-red-50 rounded-lg p-2.5">
-            <p className="text-xs font-bold text-red-700">Events List</p>
-            <p className="text-[11px] text-red-600 mt-0.5">
+          <div className="bg-slate-50 rounded-lg p-2.5">
+            <p className="text-xs font-bold text-slate-700">Events List</p>
+            <p className="text-[11px] text-slate-600 mt-0.5">
               Calendar + list view with type filters. Draft events shown in &quot;Pending Review&quot; section
             </p>
           </div>
-          <div className="bg-red-50 rounded-lg p-2.5">
-            <p className="text-xs font-bold text-red-700">Event Detail</p>
-            <p className="text-[11px] text-red-600 mt-0.5">
+          <div className="bg-slate-50 rounded-lg p-2.5">
+            <p className="text-xs font-bold text-slate-700">Event Detail</p>
+            <p className="text-[11px] text-slate-600 mt-0.5">
               Full details with confirm/edit/complete/cancel actions. Shows source text origin
             </p>
           </div>
@@ -351,9 +351,9 @@ function LifecycleSection() {
       </div>
 
       {/* Key files */}
-      <div className="bg-red-50 rounded-lg p-3 border border-red-200">
-        <p className="text-xs text-red-800 mb-2"><strong>Key Files:</strong></p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-1 text-[11px] text-red-700 font-mono">
+      <div className="bg-slate-50 rounded-lg p-3 border border-slate-200">
+        <p className="text-xs text-slate-800 mb-2"><strong>Key Files:</strong></p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-1 text-[11px] text-slate-700 font-mono">
           <div>EventExtractionService.ts &mdash; AI extraction</div>
           <div>events.yaml &mdash; Prompt configuration</div>
           <div>index.ts &mdash; Cloud Function triggers</div>
@@ -395,14 +395,14 @@ export default function EventAlgorithmReference() {
       </div>
 
       {/* Lifecycle & Mobile Integration */}
-      <div className="bg-red-50 border border-red-200 rounded-lg overflow-hidden">
+      <div className="bg-slate-50 border border-slate-200 rounded-lg overflow-hidden">
         <button
           onClick={() => toggle('lifecycle')}
-          className="w-full flex items-center gap-3 p-4 text-left hover:bg-red-100/50 transition-colors cursor-pointer"
+          className="w-full flex items-center gap-3 p-4 text-left hover:bg-slate-100/50 transition-colors cursor-pointer"
         >
-          <div className="text-red-500 text-xl">&#128260;</div>
-          <h3 className="flex-1 text-lg font-semibold text-red-900">Events: Lifecycle &amp; Mobile Integration</h3>
-          <div className="text-red-400">
+          <div className="text-slate-500 text-xl">&#128260;</div>
+          <h3 className="flex-1 text-lg font-semibold text-slate-900">Events: Lifecycle &amp; Mobile Integration</h3>
+          <div className="text-slate-400">
             <ChevronIcon expanded={expanded === 'lifecycle'} />
           </div>
         </button>

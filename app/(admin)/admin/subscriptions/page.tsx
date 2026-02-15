@@ -195,7 +195,7 @@ export default function AdminSubscriptionsPage() {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600">Loading subscription configuration...</p>
         </div>
       </div>
@@ -430,7 +430,7 @@ function TierCard({
         {!isEditing ? (
           <button
             onClick={onEdit}
-            className="px-3 py-1 text-sm bg-red-100 text-red-600 rounded hover:bg-red-200"
+            className="px-3 py-1 text-sm bg-indigo-100 text-indigo-600 rounded hover:bg-indigo-200"
           >
             Edit
           </button>

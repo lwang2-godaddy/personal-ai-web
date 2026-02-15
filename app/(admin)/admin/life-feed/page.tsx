@@ -393,7 +393,7 @@ export default function LifeFeedViewerPage() {
         <button
           onClick={handleRefresh}
           disabled={loadingPosts || loadingUsers}
-          className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 text-sm"
+          className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 text-sm"
         >
           {loadingPosts || loadingUsers ? 'Loading...' : 'Refresh'}
         </button>
@@ -416,7 +416,7 @@ export default function LifeFeedViewerPage() {
                 value={userSearchQuery}
                 onChange={(e) => setUserSearchQuery(e.target.value)}
                 placeholder="Search users..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               />
               {userSearchQuery && filteredUsers.length > 0 && (
                 <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
@@ -428,7 +428,7 @@ export default function LifeFeedViewerPage() {
                         setUserSearchQuery('');
                       }}
                       className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 ${
-                        selectedUserId === user.id ? 'bg-red-50' : ''
+                        selectedUserId === user.id ? 'bg-indigo-50' : ''
                       }`}
                     >
                       <div className="font-medium text-gray-900">{user.displayName}</div>
@@ -446,7 +446,7 @@ export default function LifeFeedViewerPage() {
                 value={selectedUserId}
                 onChange={(e) => setSelectedUserId(e.target.value)}
                 disabled={loadingUsers}
-                className="w-full mt-2 px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                className="w-full mt-2 px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               >
                 {loadingUsers ? (
                   <option>Loading users...</option>
@@ -500,7 +500,7 @@ export default function LifeFeedViewerPage() {
             <select
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 focus:ring-2 focus:ring-red-500 focus:border-red-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             >
               {POST_TYPES.map((t) => (
                 <option key={t.value} value={t.value}>
@@ -519,7 +519,7 @@ export default function LifeFeedViewerPage() {
             <select
               value={generationType}
               onChange={(e) => setGenerationType(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 focus:ring-2 focus:ring-red-500 focus:border-red-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             >
               {GENERATION_TYPES.map((t) => (
                 <option key={t.value} value={t.value}>
@@ -537,7 +537,7 @@ export default function LifeFeedViewerPage() {
             <select
               value={datePreset}
               onChange={(e) => setDatePreset(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 focus:ring-2 focus:ring-red-500 focus:border-red-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             >
               {DATE_PRESETS.map((p) => (
                 <option key={p.value} value={p.value}>
@@ -585,7 +585,7 @@ export default function LifeFeedViewerPage() {
       {/* Loading */}
       {loadingPosts && (
         <div className="flex items-center justify-center py-12">
-          <div className="w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+          <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
         </div>
       )}
 

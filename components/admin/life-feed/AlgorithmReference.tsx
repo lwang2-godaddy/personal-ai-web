@@ -215,7 +215,7 @@ function SelectionSection() {
             </thead>
             <tbody className="text-indigo-800">
               {[
-                { type: 'life_summary', req: 'Always eligible', highlight: true },
+                { type: 'life_summary', req: 'Any activities, locations, voice notes, text notes, or photos (steps alone not enough)', highlight: false },
                 { type: 'milestone', req: 'Detected milestones (special detection pass)', highlight: false },
                 { type: 'streak_achievement', req: 'Detected streaks (special detection pass)', highlight: false },
                 { type: 'pattern_prediction', req: 'Detected predictions (special detection pass)', highlight: false },

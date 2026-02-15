@@ -278,7 +278,7 @@ export default function LifeFeedPostsPage() {
           <button
             onClick={handleRefresh}
             disabled={loading}
-            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 text-sm"
+            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 text-sm"
           >
             {loading ? 'Loading...' : 'Refresh'}
           </button>
@@ -296,7 +296,7 @@ export default function LifeFeedPostsPage() {
             <select
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 focus:ring-2 focus:ring-red-500 focus:border-red-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             >
               {POST_TYPES.map((t) => (
                 <option key={t.value} value={t.value}>
@@ -314,7 +314,7 @@ export default function LifeFeedPostsPage() {
             <select
               value={serviceFilter}
               onChange={(e) => setServiceFilter(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 focus:ring-2 focus:ring-red-500 focus:border-red-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             >
               {SERVICES.map((s) => (
                 <option key={s.value} value={s.value}>{s.label}</option>
@@ -332,7 +332,7 @@ export default function LifeFeedPostsPage() {
               value={userIdFilter}
               onChange={(e) => setUserIdFilter(e.target.value)}
               placeholder="Filter by user ID..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 focus:ring-2 focus:ring-red-500 focus:border-red-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             />
           </div>
 
@@ -345,7 +345,7 @@ export default function LifeFeedPostsPage() {
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 focus:ring-2 focus:ring-red-500 focus:border-red-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             />
           </div>
 
@@ -358,7 +358,7 @@ export default function LifeFeedPostsPage() {
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 focus:ring-2 focus:ring-red-500 focus:border-red-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             />
           </div>
         </div>
@@ -380,7 +380,7 @@ export default function LifeFeedPostsPage() {
       {/* Loading */}
       {loading && (
         <div className="flex items-center justify-center py-12">
-          <div className="w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+          <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
         </div>
       )}
 
@@ -566,7 +566,7 @@ function PostRow({ post, typeMeta, isExpanded, execution, loadingExecution, onTo
               onClick={onToggle}
               className={`px-3 py-1 text-xs rounded-md transition-colors ${
                 isExpanded
-                  ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                  ? 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
                   : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
               }`}
             >
@@ -741,7 +741,7 @@ function ExpandedDetail({ post, execution, loadingExecution }: ExpandedDetailPro
           <h4 className="text-sm font-semibold text-gray-700 mb-2">Prompt Execution Details</h4>
           {loadingExecution ? (
             <div className="flex items-center gap-2 text-sm text-gray-500">
-              <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+              <div className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
               Loading execution data...
             </div>
           ) : execution ? (
