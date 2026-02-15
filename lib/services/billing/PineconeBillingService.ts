@@ -117,6 +117,8 @@ class PineconeBillingService {
       if (cached) {
         return {
           ...cached.data,
+          storageCostUSD: cached.data.storageCostUSD ?? 0,
+          operationsCostUSD: cached.data.operationsCostUSD ?? 0,
           dataSource: 'cached',
         };
       }
@@ -165,6 +167,8 @@ class PineconeBillingService {
 
       const result: PineconeBillingData = {
         totalCostUSD: totalCost,
+        storageCostUSD: proratedStorageCost,
+        operationsCostUSD: operationCost,
         readUnits,
         writeUnits,
         storageGB,
@@ -230,8 +234,8 @@ class PineconeBillingService {
   }
 
   /**
-   * Get operation stats from our usageEvents collection
-   * This aggregates Pinecone operations we've tracked
+   * Get operation stats from promptExecutions collection
+   * Aggregates Pinecone operations tracked by Cloud Functions and web app
    */
   private async getOperationStats(
     startDate: string,
@@ -241,15 +245,13 @@ class PineconeBillingService {
       const { getAdminFirestore } = await import('@/lib/api/firebase/admin');
       const db = getAdminFirestore();
 
-      // Query usageEvents for Pinecone operations
       const startTimestamp = new Date(startDate + 'T00:00:00.000Z').toISOString();
       const endTimestamp = new Date(endDate + 'T23:59:59.999Z').toISOString();
 
       const snapshot = await db
-        .collection('usageEvents')
-        .where('timestamp', '>=', startTimestamp)
-        .where('timestamp', '<=', endTimestamp)
-        .where('endpoint', 'in', ['pinecone_query', 'pinecone_upsert', 'pinecone_delete'])
+        .collection('promptExecutions')
+        .where('executedAt', '>=', startTimestamp)
+        .where('executedAt', '<=', endTimestamp)
         .get();
 
       let readUnits = 0;
@@ -257,21 +259,28 @@ class PineconeBillingService {
 
       snapshot.forEach((doc) => {
         const data = doc.data();
-        const endpoint = data.endpoint as string;
+        const model = (data.model as string) || '';
+        const sourceType = (data.sourceType as string) || '';
+        const promptId = (data.promptId as string) || '';
 
-        if (endpoint === 'pinecone_query') {
+        if (!model.startsWith('pinecone') && sourceType !== 'pinecone' && !promptId.startsWith('pinecone')) {
+          return;
+        }
+
+        if (promptId.includes('query') || sourceType.includes('query') || sourceType === 'rag') {
           readUnits += 1;
-        } else if (endpoint === 'pinecone_upsert') {
-          writeUnits += data.vectorCount || 1;
-        } else if (endpoint === 'pinecone_delete') {
+        } else if (promptId.includes('upsert') || sourceType.includes('upsert') || sourceType.includes('embed')) {
           writeUnits += 1;
+        } else {
+          readUnits += 1;
         }
       });
 
-      // Calculate operation cost
       const readCost = (readUnits / 1_000_000) * PINECONE_PRICING.query.per1MOperations;
       const writeCost = (writeUnits / 1_000_000) * PINECONE_PRICING.upsert.per1MOperations;
       const operationCost = readCost + writeCost;
+
+      console.log(`[PineconeBilling] Operations: ${readUnits} reads, ${writeUnits} writes, $${operationCost.toFixed(6)}`);
 
       return { readUnits, writeUnits, operationCost };
     } catch (error) {

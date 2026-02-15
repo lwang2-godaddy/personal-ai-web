@@ -60,8 +60,9 @@ export default function BillingComparisonCard({ startDate, endDate }: BillingCom
     }
   }, [startDate, endDate]);
 
+  // Always force refresh on first load to avoid stale cached data
   useEffect(() => {
-    fetchBillingData();
+    fetchBillingData(true);
   }, [fetchBillingData]);
 
   const handleRefresh = () => {
@@ -284,7 +285,38 @@ export default function BillingComparisonCard({ startDate, endDate }: BillingCom
               </td>
             </tr>
 
-            {/* Pinecone Row */}
+            {/* OpenAI Sub-Rows (per model) */}
+            {openai.dataSource !== 'unavailable' && Object.entries(openai.byModel)
+              .filter(([, stats]) => stats.costUSD > 0)
+              .sort((a, b) => b[1].costUSD - a[1].costUSD)
+              .map(([model, stats]) => (
+                <tr key={`openai-${model}`} className="bg-gray-50/50">
+                  <td className="px-4 py-2 whitespace-nowrap pl-12">
+                    <div className="text-xs text-gray-500">
+                      {model}
+                      {stats.requests > 0 && ` (${stats.requests.toLocaleString()} requests)`}
+                    </div>
+                  </td>
+                  <td className="px-4 py-2 whitespace-nowrap text-right text-xs text-gray-500">
+                    —
+                  </td>
+                  <td className="px-4 py-2 whitespace-nowrap text-right text-xs text-gray-600">
+                    {formatCurrency(stats.costUSD)}
+                  </td>
+                  <td className="px-4 py-2 whitespace-nowrap text-right text-xs text-gray-400">
+                    {stats.tokens >= 1_000_000
+                      ? `${(stats.tokens / 1_000_000).toFixed(1)}M tokens`
+                      : stats.tokens >= 1_000
+                        ? `${(stats.tokens / 1_000).toFixed(1)}K tokens`
+                        : stats.tokens > 0
+                          ? `${stats.tokens} tokens`
+                          : ''}
+                  </td>
+                  <td className="px-4 py-2"></td>
+                </tr>
+              ))}
+
+            {/* Pinecone Total Row */}
             <tr>
               <td className="px-4 py-4 whitespace-nowrap">
                 <div className="flex items-center">
@@ -310,6 +342,42 @@ export default function BillingComparisonCard({ startDate, endDate }: BillingCom
               <td className="px-4 py-4 whitespace-nowrap text-center">
                 {getDataSourceBadge(pinecone.dataSource)}
               </td>
+            </tr>
+
+            {/* Pinecone Storage Sub-Row */}
+            <tr className="bg-gray-50/50">
+              <td className="px-4 py-2 whitespace-nowrap pl-12">
+                <div className="text-xs text-gray-500">Storage ({pinecone.storageGB.toFixed(4)} GB)</div>
+              </td>
+              <td className="px-4 py-2 whitespace-nowrap text-right text-xs text-gray-500">
+                —
+              </td>
+              <td className="px-4 py-2 whitespace-nowrap text-right text-xs text-gray-600">
+                {formatCurrency(pinecone.storageCostUSD || 0)}
+              </td>
+              <td className="px-4 py-2 whitespace-nowrap text-right text-xs text-gray-400">
+                ${(pinecone.storageGB * 0.25).toFixed(2)}/mo
+              </td>
+              <td className="px-4 py-2"></td>
+            </tr>
+
+            {/* Pinecone Operations Sub-Row */}
+            <tr className="bg-gray-50/50">
+              <td className="px-4 py-2 whitespace-nowrap pl-12">
+                <div className="text-xs text-gray-500">
+                  Operations ({pinecone.readUnits.toLocaleString()} reads, {pinecone.writeUnits.toLocaleString()} writes)
+                </div>
+              </td>
+              <td className="px-4 py-2 whitespace-nowrap text-right text-xs text-gray-500">
+                —
+              </td>
+              <td className="px-4 py-2 whitespace-nowrap text-right text-xs text-gray-600">
+                {formatCurrency(pinecone.operationsCostUSD || 0)}
+              </td>
+              <td className="px-4 py-2 whitespace-nowrap text-right text-xs text-gray-400">
+                R: $0.40/1M · W: $2.00/1M
+              </td>
+              <td className="px-4 py-2"></td>
             </tr>
 
             {/* GCP/Firebase Row */}
@@ -339,6 +407,27 @@ export default function BillingComparisonCard({ startDate, endDate }: BillingCom
                 {getDataSourceBadge(gcp.dataSource)}
               </td>
             </tr>
+
+            {/* GCP Sub-Rows (per service) */}
+            {gcp.dataSource !== 'unavailable' && Object.entries(gcp.byService)
+              .filter(([, cost]) => cost > 0)
+              .sort((a, b) => b[1] - a[1])
+              .map(([service, cost]) => (
+                <tr key={`gcp-${service}`} className="bg-gray-50/50">
+                  <td className="px-4 py-2 whitespace-nowrap pl-12">
+                    <div className="text-xs text-gray-500 capitalize">{service}</div>
+                  </td>
+                  <td className="px-4 py-2 whitespace-nowrap text-right text-xs text-gray-500">
+                    —
+                  </td>
+                  <td className="px-4 py-2 whitespace-nowrap text-right text-xs text-gray-600">
+                    {formatCurrency(cost)}
+                  </td>
+                  <td className="px-4 py-2 whitespace-nowrap text-right text-xs text-gray-400">
+                  </td>
+                  <td className="px-4 py-2"></td>
+                </tr>
+              ))}
 
             {/* Total Row */}
             <tr className="bg-gray-50">

@@ -38,6 +38,10 @@ export interface OpenAIBillingData {
  */
 export interface PineconeBillingData {
   totalCostUSD: number;
+  /** Cost of vectors stored at rest (prorated from monthly) */
+  storageCostUSD: number;
+  /** Cost of read + write operations */
+  operationsCostUSD: number;
   readUnits: number;
   writeUnits: number;
   storageGB: number;
@@ -177,6 +181,8 @@ export function createEmptyOpenAIBilling(): OpenAIBillingData {
 export function createEmptyPineconeBilling(): PineconeBillingData {
   return {
     totalCostUSD: 0,
+    storageCostUSD: 0,
+    operationsCostUSD: 0,
     readUnits: 0,
     writeUnits: 0,
     storageGB: 0,
