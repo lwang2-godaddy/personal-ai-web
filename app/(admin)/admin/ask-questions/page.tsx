@@ -1108,6 +1108,263 @@ export default function AdminAskQuestionsPage() {
         </div>
       </div>
 
+      {/* Selection Algorithm Deep Dive */}
+      <div className="bg-white shadow rounded-lg overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-violet-50 to-purple-50">
+          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <span>🧠</span> Selection Algorithm Deep Dive
+          </h2>
+          <p className="text-sm text-gray-500 mt-1">How the app decides which questions each user sees</p>
+        </div>
+        <div className="px-6 py-5 space-y-6">
+
+          {/* Step 1: User State Detection */}
+          <div className="space-y-3">
+            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+              <span className="w-6 h-6 bg-violet-100 rounded-full flex items-center justify-center text-xs font-bold text-violet-700">1</span>
+              Detect User Data State
+            </h3>
+            <p className="text-sm text-gray-600">The app scans the user&apos;s local database (WatermelonDB) and counts data points across 5 categories: location, health, voice notes, photos, and text notes.</p>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-2 text-left font-medium text-gray-700 border-b">State</th>
+                    <th className="px-4 py-2 text-left font-medium text-gray-700 border-b">Condition</th>
+                    <th className="px-4 py-2 text-left font-medium text-gray-700 border-b">Example User</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  <tr>
+                    <td className="px-4 py-2 font-mono text-xs bg-red-50 text-red-700">NO_DATA</td>
+                    <td className="px-4 py-2 text-gray-600">Total data points = 0</td>
+                    <td className="px-4 py-2 text-gray-500">Brand new user, just signed up</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2 font-mono text-xs bg-yellow-50 text-yellow-700">MINIMAL_DATA</td>
+                    <td className="px-4 py-2 text-gray-600">Total data points {'<'} 3</td>
+                    <td className="px-4 py-2 text-gray-500">Recorded 1 voice note + 1 photo</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2 font-mono text-xs bg-blue-50 text-blue-700">PARTIAL_DATA</td>
+                    <td className="px-4 py-2 text-gray-600">{'<'} 2 categories with data, or total {'<'} 10</td>
+                    <td className="px-4 py-2 text-gray-500">7 voice notes but no location or health data</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2 font-mono text-xs bg-green-50 text-green-700">RICH_DATA</td>
+                    <td className="px-4 py-2 text-gray-600">{'>='} 2 categories AND {'>='} 10 total points</td>
+                    <td className="px-4 py-2 text-gray-500">15 locations + 8 voice notes + health data</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Step 2: Filter by State */}
+          <div className="space-y-3">
+            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+              <span className="w-6 h-6 bg-violet-100 rounded-full flex items-center justify-center text-xs font-bold text-violet-700">2</span>
+              Filter Questions by Data State
+            </h3>
+            <p className="text-sm text-gray-600">Each question has a <code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs">userDataStates</code> array. Only questions matching the user&apos;s current state pass through.</p>
+            <div className="bg-gray-50 rounded-lg p-4 text-sm space-y-2">
+              <div className="flex items-start gap-3">
+                <span className="text-green-500 font-bold">PASS</span>
+                <div>
+                  <span className="font-medium">&quot;What did I share this week?&quot;</span>
+                  <span className="text-gray-500 ml-2">states: [MINIMAL, PARTIAL, RICH]</span>
+                  <span className="text-gray-400 ml-2">→ User is PARTIAL_DATA</span>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="text-red-500 font-bold">FAIL</span>
+                <div>
+                  <span className="font-medium">&quot;Compare my last two weeks&quot;</span>
+                  <span className="text-gray-500 ml-2">states: [RICH]</span>
+                  <span className="text-gray-400 ml-2">→ User is PARTIAL_DATA</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Step 3: Check Data Requirements */}
+          <div className="space-y-3">
+            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+              <span className="w-6 h-6 bg-violet-100 rounded-full flex items-center justify-center text-xs font-bold text-violet-700">3</span>
+              Check Data Requirements
+            </h3>
+            <p className="text-sm text-gray-600">Even if the state matches, some questions require specific data types. Questions without requirements (<code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs">notes</code>, <code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs">general</code>) always pass this step.</p>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-2 text-left font-medium text-gray-700 border-b">Category</th>
+                    <th className="px-4 py-2 text-left font-medium text-gray-700 border-b">Requires</th>
+                    <th className="px-4 py-2 text-left font-medium text-gray-700 border-b">Shown if user has...</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  <tr>
+                    <td className="px-4 py-2"><span className="px-2 py-0.5 bg-amber-100 text-amber-800 rounded text-xs font-medium">notes</span></td>
+                    <td className="px-4 py-2 text-gray-500">No requirement</td>
+                    <td className="px-4 py-2 text-gray-600">Any data at all (voice, text, photos, etc.)</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2"><span className="px-2 py-0.5 bg-gray-100 text-gray-800 rounded text-xs font-medium">general</span></td>
+                    <td className="px-4 py-2 text-gray-500">No requirement</td>
+                    <td className="px-4 py-2 text-gray-600">Any data at all</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2"><span className="px-2 py-0.5 bg-pink-100 text-pink-800 rounded text-xs font-medium">voice</span></td>
+                    <td className="px-4 py-2 text-gray-500">hasVoiceNotes</td>
+                    <td className="px-4 py-2 text-gray-600">At least 1 voice note</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2"><span className="px-2 py-0.5 bg-cyan-100 text-cyan-800 rounded text-xs font-medium">photo</span></td>
+                    <td className="px-4 py-2 text-gray-500">hasPhotoMemories</td>
+                    <td className="px-4 py-2 text-gray-600">At least 1 photo</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2"><span className="px-2 py-0.5 bg-red-100 text-red-800 rounded text-xs font-medium">health</span></td>
+                    <td className="px-4 py-2 text-gray-500">hasHealthData</td>
+                    <td className="px-4 py-2 text-gray-600">Steps, workouts, sleep, or heart rate</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2"><span className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded text-xs font-medium">location</span> <span className="px-2 py-0.5 bg-orange-100 text-orange-800 rounded text-xs font-medium">activity</span></td>
+                    <td className="px-4 py-2 text-gray-500">hasLocationData</td>
+                    <td className="px-4 py-2 text-gray-600">At least 1 location visit</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Step 4: Sort & Select */}
+          <div className="space-y-3">
+            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+              <span className="w-6 h-6 bg-violet-100 rounded-full flex items-center justify-center text-xs font-bold text-violet-700">4</span>
+              Sort by Priority, Then Select Top 8
+            </h3>
+            <p className="text-sm text-gray-600">Filtered questions are sorted by <code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs">priority</code> (descending), then <code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs">order</code> (ascending). The top 8 are displayed in a 4-row grid on the Chat screen.</p>
+            <div className="bg-gray-50 rounded-lg p-4 text-sm">
+              <div className="font-medium text-gray-700 mb-2">Category Priority (higher = shown first):</div>
+              <div className="flex flex-wrap gap-2">
+                <span className="px-3 py-1 bg-gray-200 rounded-full text-xs"><strong>80</strong> general</span>
+                <span className="px-3 py-1 bg-amber-200 rounded-full text-xs"><strong>75</strong> notes</span>
+                <span className="px-3 py-1 bg-red-200 rounded-full text-xs"><strong>70</strong> health</span>
+                <span className="px-3 py-1 bg-blue-200 rounded-full text-xs"><strong>60</strong> location</span>
+                <span className="px-3 py-1 bg-orange-200 rounded-full text-xs"><strong>60</strong> activity</span>
+                <span className="px-3 py-1 bg-pink-200 rounded-full text-xs"><strong>50</strong> voice</span>
+                <span className="px-3 py-1 bg-cyan-200 rounded-full text-xs"><strong>50</strong> photo</span>
+              </div>
+              <p className="text-gray-500 mt-2 text-xs">Within same priority, questions are ordered by their <code className="bg-gray-100 px-1 rounded">order</code> field (the order shown in this admin page).</p>
+            </div>
+          </div>
+
+          {/* Step 5: Variable Substitution */}
+          <div className="space-y-3">
+            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+              <span className="w-6 h-6 bg-violet-100 rounded-full flex items-center justify-center text-xs font-bold text-violet-700">5</span>
+              Substitute Variables
+            </h3>
+            <p className="text-sm text-gray-600">Questions with <code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs">{'{{activity}}'}</code> or <code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs">{'{{healthType}}'}</code> are duplicated for each of the user&apos;s top 2 activities/health types.</p>
+            <div className="bg-gray-50 rounded-lg p-4 text-sm space-y-1">
+              <div className="text-gray-700"><strong>Template:</strong> &quot;How often do I do {'{{activity}}'}?&quot;</div>
+              <div className="text-gray-500">User&apos;s top activities: badminton (15 visits), gym (8 visits)</div>
+              <div className="mt-2 flex flex-col gap-1">
+                <div className="text-green-700">→ &quot;How often do I do badminton?&quot;</div>
+                <div className="text-green-700">→ &quot;How often do I do gym?&quot;</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Full Examples */}
+          <div className="space-y-3">
+            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+              <span>📋</span> Full Examples
+            </h3>
+
+            {/* Example 1 */}
+            <div className="border border-gray-200 rounded-lg overflow-hidden">
+              <div className="px-4 py-2 bg-blue-50 border-b border-gray-200">
+                <span className="font-medium text-gray-900">Example 1: New user with 2 voice notes</span>
+              </div>
+              <div className="px-4 py-3 text-sm space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-xs px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded">MINIMAL_DATA</span>
+                  <span className="text-gray-500">2 total points, 1 category</span>
+                </div>
+                <div className="text-gray-600">
+                  <strong>Eligible questions:</strong> All questions where <code className="bg-gray-100 px-1 rounded text-xs">userDataStates</code> includes MINIMAL_DATA <strong>AND</strong> data requirements are met.
+                </div>
+                <div className="bg-white border border-gray-100 rounded p-3 space-y-1">
+                  <div className="text-green-700 text-xs">&#10003; &quot;What have I shared recently?&quot; (notes, no requirement, includes MINIMAL)</div>
+                  <div className="text-green-700 text-xs">&#10003; &quot;How have I been feeling?&quot; (notes, no requirement, includes MINIMAL)</div>
+                  <div className="text-green-700 text-xs">&#10003; &quot;What did I do today?&quot; (general, no requirement, includes MINIMAL)</div>
+                  <div className="text-red-600 text-xs">&#10007; &quot;My sleep patterns&quot; (health, requires hasHealthData = false)</div>
+                  <div className="text-red-600 text-xs">&#10007; &quot;Compare my weeks&quot; (general, only RICH_DATA)</div>
+                  <div className="text-red-600 text-xs">&#10007; &quot;Photo memories&quot; (photo, requires hasPhotoMemories = false)</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Example 2 */}
+            <div className="border border-gray-200 rounded-lg overflow-hidden">
+              <div className="px-4 py-2 bg-green-50 border-b border-gray-200">
+                <span className="font-medium text-gray-900">Example 2: Active user with locations + health + voice</span>
+              </div>
+              <div className="px-4 py-3 text-sm space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded">RICH_DATA</span>
+                  <span className="text-gray-500">20 locations, 50 health records, 5 voice notes (3 categories, 75 total)</span>
+                </div>
+                <div className="text-gray-600">
+                  <strong>Eligible questions:</strong> Most questions are eligible. Only photo-requiring questions are excluded (no photos).
+                </div>
+                <div className="bg-white border border-gray-100 rounded p-3 space-y-1">
+                  <div className="text-green-700 text-xs">&#10003; &quot;What are the themes in my notes?&quot; (notes, priority 78)</div>
+                  <div className="text-green-700 text-xs">&#10003; &quot;How many times did I play badminton?&quot; (activity, has location)</div>
+                  <div className="text-green-700 text-xs">&#10003; &quot;My best day for health&quot; (health, has health data)</div>
+                  <div className="text-green-700 text-xs">&#10003; &quot;Compare my last two weeks&quot; (general, RICH_DATA only)</div>
+                  <div className="text-green-700 text-xs">&#10003; &quot;What ideas have I mentioned?&quot; (notes, has voice notes)</div>
+                  <div className="text-red-600 text-xs">&#10007; &quot;Describe my photo memories&quot; (photo, requires hasPhotoMemories = false)</div>
+                </div>
+                <div className="text-gray-500 text-xs mt-1">Top 8 by priority are shown. General (80) and notes (75) questions appear first.</div>
+              </div>
+            </div>
+
+            {/* Example 3 */}
+            <div className="border border-gray-200 rounded-lg overflow-hidden">
+              <div className="px-4 py-2 bg-red-50 border-b border-gray-200">
+                <span className="font-medium text-gray-900">Example 3: Brand new user (no data)</span>
+              </div>
+              <div className="px-4 py-3 text-sm space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-xs px-2 py-0.5 bg-red-100 text-red-700 rounded">NO_DATA</span>
+                  <span className="text-gray-500">0 data points</span>
+                </div>
+                <div className="text-gray-600">
+                  <strong>Special case:</strong> Instead of regular questions, the app shows <strong>onboarding cards</strong> that guide the user to connect data sources.
+                </div>
+                <div className="bg-white border border-gray-100 rounded p-3 space-y-1">
+                  <div className="text-blue-700 text-xs">&#9654; &quot;Connect Health Data&quot; → Opens HealthKit permission</div>
+                  <div className="text-blue-700 text-xs">&#9654; &quot;Enable Location&quot; → Opens location permission</div>
+                  <div className="text-blue-700 text-xs">&#9654; &quot;Record a Voice Note&quot; → Opens voice recorder</div>
+                  <div className="text-blue-700 text-xs">&#9654; &quot;Upload Photos&quot; → Opens photo picker</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Fallback Behavior */}
+          <div className="p-4 bg-gray-50 rounded-lg text-sm space-y-2">
+            <h4 className="font-medium text-gray-900">Fallback Behavior</h4>
+            <p className="text-gray-600">If Firestore questions can&apos;t be loaded (offline, permission error, etc.), the app falls back to hardcoded suggestions built into the app binary. These are generated per data state using the same filtering logic but from local JSON locale files instead of Firestore.</p>
+          </div>
+
+        </div>
+      </div>
+
       {/* Editor Modal */}
       <AskQuestionEditor
         question={editingQuestion}
