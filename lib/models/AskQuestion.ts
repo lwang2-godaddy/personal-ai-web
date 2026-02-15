@@ -18,6 +18,7 @@ export type AskCategory =
   | 'location'
   | 'voice'
   | 'photo'
+  | 'notes'
   | 'general'
   | 'onboarding';
 
@@ -178,6 +179,13 @@ export const ASK_CATEGORIES = [
     name: 'Photos',
     icon: '📸',
     description: 'Questions about photo memories',
+    dataStates: ['MINIMAL_DATA', 'PARTIAL_DATA', 'RICH_DATA'] as UserDataState[],
+  },
+  {
+    id: 'notes' as AskCategory,
+    name: 'Notes & Thoughts',
+    icon: '💭',
+    description: 'Questions about thoughts, reflections, and experiences shared via notes or voice',
     dataStates: ['MINIMAL_DATA', 'PARTIAL_DATA', 'RICH_DATA'] as UserDataState[],
   },
   {

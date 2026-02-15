@@ -62,6 +62,11 @@ const CATEGORY_DISPLAY_RULES: Record<
     requirements: 'Photo memories saved',
     description: 'Questions about photo descriptions and memories.',
   },
+  notes: {
+    dataStates: ['MINIMAL_DATA', 'PARTIAL_DATA', 'RICH_DATA'],
+    requirements: 'Voice notes or text notes shared',
+    description: 'Questions about thoughts, reflections, and experiences shared via any format.',
+  },
   general: {
     dataStates: ['MINIMAL_DATA', 'PARTIAL_DATA', 'RICH_DATA'],
     requirements: 'None - works with any data',
@@ -575,11 +580,11 @@ export default function AdminAskQuestionsPage() {
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <div className="text-2xl">4️⃣</div>
+                <div className="text-2xl">8️⃣</div>
                 <div>
                   <div className="font-medium text-gray-900">Display Count</div>
                   <div className="text-sm text-gray-600">
-                    Top 4 questions shown based on user&apos;s data
+                    Top 8 questions shown based on user&apos;s data
                   </div>
                 </div>
               </div>
@@ -1048,7 +1053,7 @@ export default function AdminAskQuestionsPage() {
                   ✨
                 </div>
                 <div className="font-medium text-gray-900">Display</div>
-                <div className="text-gray-500">Top 4 shown</div>
+                <div className="text-gray-500">Top 8 shown</div>
               </div>
             </div>
           </div>
