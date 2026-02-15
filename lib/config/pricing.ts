@@ -19,12 +19,21 @@ export const OPENAI_PRICING = {
 
   /**
    * GPT-4o (Chat Completions, Vision)
+   * Updated Feb 2025: price drop from $5/$15 to $2.50/$10
    */
   'gpt-4o': {
-    inputTokensPer1M: 5.00,      // $5.00 per 1M input tokens
-    outputTokensPer1M: 15.00,    // $15.00 per 1M output tokens
+    inputTokensPer1M: 2.50,      // $2.50 per 1M input tokens
+    outputTokensPer1M: 10.00,    // $10.00 per 1M output tokens
     imageTokensBase: 85,         // Base tokens for image (low detail)
     imageTokensHigh: 170,        // Base tokens for high detail
+  },
+
+  /**
+   * GPT-4o-mini (Lightweight chat)
+   */
+  'gpt-4o-mini': {
+    inputTokensPer1M: 0.15,      // $0.15 per 1M input tokens
+    outputTokensPer1M: 0.60,     // $0.60 per 1M output tokens
   },
 
   /**

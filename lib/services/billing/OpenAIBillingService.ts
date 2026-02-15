@@ -38,19 +38,33 @@ interface OpenAIUsageResponse {
   next_page?: string;
 }
 
-interface OpenAICostsDataPoint {
+interface OpenAICostsResult {
   object: string;
   amount: {
-    value: number;
+    value: string; // Dollar amount as string (e.g., "8.009907460000000000000000000")
     currency: string;
   };
-  line_item?: string;
+  line_item?: string | null;
   project_id?: string;
+  organization_id?: string;
+  project_name?: string;
+  organization_name?: string;
+  user_id?: string | null;
+  user_email?: string | null;
+}
+
+interface OpenAICostsBucket {
+  object: string;
+  start_time: number;
+  end_time: number;
+  start_time_iso: string;
+  end_time_iso: string;
+  results: OpenAICostsResult[];
 }
 
 interface OpenAICostsResponse {
   object: string;
-  data: OpenAICostsDataPoint[];
+  data: OpenAICostsBucket[];
   has_more: boolean;
   next_page?: string;
 }
@@ -153,33 +167,53 @@ class OpenAIBillingService {
 
       console.log(`[OpenAIBilling] Fetching usage: ${startDate} to ${endDate}`);
 
-      // Fetch costs data from OpenAI Costs API
-      const costsUrl = new URL('https://api.openai.com/v1/organization/costs');
-      costsUrl.searchParams.set('start_time', startTimestamp.toString());
-      costsUrl.searchParams.set('end_time', endTimestamp.toString());
-      costsUrl.searchParams.set('bucket_width', '1d');
-      costsUrl.searchParams.set('group_by', 'line_item');
+      // Fetch all pages from OpenAI Costs API
+      const allBuckets: OpenAICostsBucket[] = [];
+      let nextPage: string | undefined = undefined;
+      let pageCount = 0;
+      const MAX_PAGES = 20; // Safety limit
 
-      const costsResponse = await fetch(costsUrl.toString(), {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      do {
+        const costsUrl = new URL('https://api.openai.com/v1/organization/costs');
+        costsUrl.searchParams.set('start_time', startTimestamp.toString());
+        costsUrl.searchParams.set('end_time', endTimestamp.toString());
+        costsUrl.searchParams.set('bucket_width', '1d');
+        costsUrl.searchParams.append('group_by[]', 'line_item');
+        if (nextPage) {
+          costsUrl.searchParams.set('page', nextPage);
+        }
 
-      if (!costsResponse.ok) {
-        const errorText = await costsResponse.text();
-        console.error('[OpenAIBilling] Costs API error:', costsResponse.status, errorText);
+        const costsResponse = await fetch(costsUrl.toString(), {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+          },
+        });
 
-        // If costs API fails, try usage API as fallback
-        return await this.fetchUsageFallback(startDate, endDate, startTimestamp, endTimestamp, apiKey);
-      }
+        if (!costsResponse.ok) {
+          const errorText = await costsResponse.text();
+          console.error('[OpenAIBilling] Costs API error:', costsResponse.status, errorText);
 
-      const costsData: OpenAICostsResponse = await costsResponse.json();
+          // If costs API fails, try usage API as fallback
+          return await this.fetchUsageFallback(startDate, endDate, startTimestamp, endTimestamp, apiKey);
+        }
 
-      // Process costs data
-      const result = this.processCostsData(costsData, startDate, endDate);
+        const costsData: OpenAICostsResponse = await costsResponse.json();
+        allBuckets.push(...costsData.data);
+        nextPage = costsData.has_more ? costsData.next_page : undefined;
+        pageCount++;
+      } while (nextPage && pageCount < MAX_PAGES);
+
+      console.log(`[OpenAIBilling] Fetched ${allBuckets.length} buckets across ${pageCount} page(s)`);
+
+      // Process all collected data
+      const fullResponse: OpenAICostsResponse = {
+        object: 'page',
+        data: allBuckets,
+        has_more: false,
+      };
+      const result = this.processCostsData(fullResponse, startDate, endDate);
 
       // Cache the result
       await cacheService.set('openai', startDate, endDate, result);
@@ -243,7 +277,25 @@ class OpenAIBillingService {
   }
 
   /**
+   * Normalize OpenAI line_item to a clean model name.
+   * The Costs API returns separate line items like "GPT-4o input", "GPT-4o output",
+   * "Embeddings", "Audio", "Images", etc. Merge input/output into one model entry.
+   */
+  private normalizeLineItem(lineItem: string): string {
+    const lower = lineItem.toLowerCase();
+    // Strip " input" / " output" / " cached input" suffixes to merge into one model
+    const cleaned = lower
+      .replace(/\s+(cached\s+)?input$/, '')
+      .replace(/\s+output$/, '');
+    // Capitalize first letter of each word
+    return cleaned.replace(/\b\w/g, c => c.toUpperCase());
+  }
+
+  /**
    * Process costs API response
+   * Response structure: data[] contains buckets, each bucket has results[] with cost amounts.
+   * amount.value is a string in USD (e.g., "8.009907460000000000000000000").
+   * With group_by=line_item, results are broken down by model/service.
    */
   private processCostsData(
     costsData: OpenAICostsResponse,
@@ -254,21 +306,32 @@ class OpenAIBillingService {
     const byModel: Record<string, { costUSD: number; tokens: number; requests: number }> = {};
     const byDateMap: Map<string, number> = new Map();
 
-    for (const item of costsData.data) {
-      if (!item.amount?.value) continue;
+    for (const bucket of costsData.data) {
+      const bucketDate = bucket.start_time_iso?.split('T')[0] || '';
 
-      const cost = item.amount.value / 100; // Convert cents to dollars if needed
-      totalCost += cost;
+      for (const result of bucket.results) {
+        if (!result.amount?.value) continue;
 
-      // Aggregate by line item (model/service)
-      const lineItem = item.line_item || 'other';
-      if (!byModel[lineItem]) {
-        byModel[lineItem] = { costUSD: 0, tokens: 0, requests: 0 };
+        // amount.value is a string in USD — parse it directly
+        const cost = parseFloat(result.amount.value) || 0;
+        totalCost += cost;
+
+        // Aggregate by normalized model name (merges "GPT-4o input" + "GPT-4o output")
+        const rawLineItem = result.line_item || result.project_name || 'other';
+        const modelKey = this.normalizeLineItem(rawLineItem);
+        if (!byModel[modelKey]) {
+          byModel[modelKey] = { costUSD: 0, tokens: 0, requests: 0 };
+        }
+        byModel[modelKey].costUSD += cost;
+
+        // Aggregate by date
+        if (bucketDate) {
+          byDateMap.set(bucketDate, (byDateMap.get(bucketDate) || 0) + cost);
+        }
       }
-      byModel[lineItem].costUSD += cost;
     }
 
-    // Generate date range for byDate
+    // Generate date range for byDate (fill gaps with 0)
     const start = new Date(startDate);
     const end = new Date(endDate);
     const byDate: { date: string; costUSD: number }[] = [];
