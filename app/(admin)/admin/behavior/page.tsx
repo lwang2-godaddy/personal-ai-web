@@ -758,6 +758,67 @@ export default function AdminBehaviorAnalyticsPage() {
         </div>
       )}
 
+      {/* Analytics Providers Section */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h2 className="text-xl font-bold text-gray-900 mb-4">Analytics Providers</h2>
+        <p className="text-gray-600 text-sm mb-4">
+          Behavior events are tracked via a bridge pattern and forwarded to all connected providers automatically.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Firestore (Custom) */}
+          <div className="border border-gray-200 rounded-lg p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+              <span className="font-semibold text-gray-900">Firestore (Custom)</span>
+            </div>
+            <p className="text-gray-600 text-xs mb-3">
+              Primary data source for this dashboard. Stores raw events and sessions in Firestore collections.
+            </p>
+            <span className="inline-block text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
+              Source for this page
+            </span>
+          </div>
+
+          {/* Firebase Analytics */}
+          <div className="border border-gray-200 rounded-lg p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+              <span className="font-semibold text-gray-900">Firebase Analytics</span>
+            </div>
+            <p className="text-gray-600 text-xs mb-3">
+              Google Analytics integration for funnels, retention, and audience insights. Data appears after ~24h.
+            </p>
+            <a
+              href="https://console.firebase.google.com/project/personalaiapp-90131/analytics"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 text-xs font-medium"
+            >
+              Open Firebase Console →
+            </a>
+          </div>
+
+          {/* PostHog */}
+          <div className="border border-gray-200 rounded-lg p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
+              <span className="font-semibold text-gray-900">PostHog</span>
+            </div>
+            <p className="text-gray-600 text-xs mb-3">
+              Product analytics with session replays (web), feature flags, and real-time event stream.
+            </p>
+            <a
+              href="https://us.posthog.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-purple-600 hover:text-purple-800 text-xs font-medium"
+            >
+              Open PostHog Dashboard →
+            </a>
+          </div>
+        </div>
+      </div>
+
       {/* Info Section */}
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-5">
         <div className="flex items-start gap-3">
@@ -769,6 +830,8 @@ export default function AdminBehaviorAnalyticsPage() {
               <li><strong>Screen Views</strong> = Page/screen navigation events</li>
               <li><strong>Feature Uses</strong> = Button clicks, form submissions, interactions</li>
               <li><strong>Platforms</strong> = Mobile (React Native app) vs Web (Dashboard)</li>
+              <li><strong>Bridge Pattern</strong> = Events flow to Firestore + Firebase Analytics + PostHog simultaneously</li>
+              <li><strong>Crashlytics</strong> = Non-fatal errors from critical services are reported to Firebase Crashlytics (mobile only)</li>
             </ul>
             <div className="mt-3">
               <Link

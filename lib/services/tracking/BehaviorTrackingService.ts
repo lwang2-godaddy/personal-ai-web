@@ -23,6 +23,7 @@ import {
   TRACKED_SCREENS,
   TRACKED_FEATURES,
 } from '@/lib/models/BehaviorEvent';
+import { AnalyticsBridge } from './AnalyticsBridge';
 
 // ============================================================================
 // Types
@@ -152,6 +153,9 @@ class BehaviorTrackingService {
     this.sessionState.pageEnterTime = Date.now();
     this.sessionState.lastActivityAt = Date.now();
 
+    // Forward to analytics providers (Firebase Analytics, PostHog)
+    AnalyticsBridge.getInstance().trackPageView(pathname, metadata);
+
     this.queueEvent({
       eventType: 'screen_view',
       category: 'navigation',
@@ -207,6 +211,13 @@ class BehaviorTrackingService {
     }
   ): void {
     this.sessionState.lastActivityAt = Date.now();
+
+    // Forward to analytics providers (Firebase Analytics, PostHog)
+    AnalyticsBridge.getInstance().trackEvent(featureName, {
+      category: options?.category,
+      targetType: options?.targetType,
+      ...options?.metadata,
+    });
 
     this.queueEvent({
       eventType: 'feature_use',
