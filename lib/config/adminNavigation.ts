@@ -61,6 +61,7 @@ export const ADMIN_NAVIGATION: NavGroup[] = [
       { href: '/admin/life-keywords', label: 'Life Keywords', icon: '🔑' },
       { href: '/admin/fun-facts', label: 'Fun Facts', icon: '🎲' },
       { href: '/admin/events', label: 'Events', icon: '📅' },
+      { href: '/admin/check-ins', label: 'Check-Ins', icon: '📍' },
       { href: '/admin/event-config', label: 'Event Config', icon: '⚙️' },
       { href: '/admin/vocabulary', label: 'Vocabulary', icon: '📚' },
       { href: '/admin/notifications', label: 'Notifications', icon: '🔔' },
