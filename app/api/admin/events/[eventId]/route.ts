@@ -65,10 +65,10 @@ export async function GET(
         }
 
         if (eventTime > 0) {
-          type MatchResult = { doc: FirebaseFirestore.QueryDocumentSnapshot; timeDiff: number };
-          let bestMatch: MatchResult | null = null;
+          let bestMatchDoc: FirebaseFirestore.QueryDocumentSnapshot | null = null;
+          let bestMatchTimeDiff = Infinity;
 
-          snapshot.docs.forEach((doc) => {
+          for (const doc of snapshot.docs) {
             const execData = doc.data();
 
             let execTime: number;
@@ -84,19 +84,17 @@ export async function GET(
             if (execTime > 0) {
               const timeDiff = Math.abs(eventTime - execTime);
               // Within 60 second window
-              if (timeDiff <= 60000) {
-                if (!bestMatch || timeDiff < bestMatch.timeDiff) {
-                  bestMatch = { doc, timeDiff };
-                }
+              if (timeDiff <= 60000 && timeDiff < bestMatchTimeDiff) {
+                bestMatchDoc = doc;
+                bestMatchTimeDiff = timeDiff;
               }
             }
-          });
+          }
 
-          if (bestMatch) {
-            const matched = bestMatch as MatchResult;
-            const execData = matched.doc.data();
+          if (bestMatchDoc) {
+            const execData = bestMatchDoc.data();
             execution = {
-              id: matched.doc.id,
+              id: bestMatchDoc.id,
               userId: execData.userId,
               service: execData.service,
               promptId: execData.promptId,

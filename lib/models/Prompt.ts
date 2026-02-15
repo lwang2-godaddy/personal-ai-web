@@ -467,8 +467,8 @@ export const PROMPT_SERVICES = [
     name: 'Carousel Fun Facts',
     category: 'fun_facts' as PromptCategoryId,
     icon: '🎠',
-    description: 'AI-generated insights shown in home screen carousel',
-    trigger: 'On pull-to-refresh or carousel refresh button',
+    description: 'AI-generated fun facts: 3 AI insights (all context) + 3 data-stat facts (domain-specific context only)',
+    trigger: 'Scheduled (hourly check) or manual via manualGenerateFunFacts',
     platform: 'mobile' as const,
     usedBy: ['mobile'] as const,
     example: 'Generating "You walked 20% more this week than last!"',
@@ -477,8 +477,8 @@ export const PROMPT_SERVICES = [
       CONTEXT_SOURCES.locationData,
       CONTEXT_SOURCES.photoMemories,
       CONTEXT_SOURCES.voiceNotes,
-    ] as ContextSource[],
-    usageInfo: { dataTimeRange: 'Last 7 days vs previous 7 days', selectionLogic: 'always' as SelectionLogic },
+    ] as ContextSource[], // AI insights: all 4 sources + RAG. Data-stats: domain-specific only (no photos/voice/RAG)
+    usageInfo: { dataTimeRange: 'Configurable lookback (health: 90d, activity: 90d, recent: 7d)', selectionLogic: 'always' as SelectionLogic },
   },
   {
     id: 'ThisDayService',
@@ -1029,6 +1029,69 @@ export const LIFE_FEED_PROMPT_POST_TYPES: Record<string, LifeFeedPromptInfo> = {
  */
 export function getLifeFeedPromptPostType(promptId: string): LifeFeedPromptInfo | null {
   return LIFE_FEED_PROMPT_POST_TYPES[promptId] || null;
+}
+
+/**
+ * CarouselInsights per-prompt context source mapping
+ *
+ * AI insights (patterns/surprising/recommendation): Full context (all 4 sources + RAG vectors)
+ * Data-stat facts (health_stat/activity_stat/location_stat): Domain-specific Firestore data only (no RAG)
+ */
+export interface CarouselPromptInfo {
+  insightCategory: 'ai_insight' | 'data_stat';
+  description: string;
+  contextSources: string[];
+  usesRAG: boolean;
+}
+
+const AI_INSIGHT_CONTEXT = ['healthData', 'locationData', 'photoMemories', 'voiceNotes'];
+const HEALTH_STAT_CONTEXT = ['healthData'];
+const ACTIVITY_STAT_CONTEXT = ['locationData'];
+const LOCATION_STAT_CONTEXT = ['locationData'];
+
+function aiInsightPrompt(description: string): CarouselPromptInfo {
+  return { insightCategory: 'ai_insight', description, contextSources: AI_INSIGHT_CONTEXT, usesRAG: true };
+}
+
+function dataStatPrompt(description: string, contextSources: string[]): CarouselPromptInfo {
+  return { insightCategory: 'data_stat', description, contextSources, usesRAG: false };
+}
+
+export const CAROUSEL_PROMPT_INFO: Record<string, CarouselPromptInfo> = {
+  // System prompt
+  system: { insightCategory: 'ai_insight', description: 'System instruction for all insight types', contextSources: [], usesRAG: false },
+
+  // AI insights - use all context + RAG vectors
+  insight_patterns: aiInsightPrompt('Pattern detection - generic fallback'),
+  insight_surprising: aiInsightPrompt('Surprising discovery - generic fallback'),
+  insight_recommendation: aiInsightPrompt('Actionable recommendation - generic fallback'),
+  weekly_patterns: aiInsightPrompt('Weekly pattern detection'),
+  weekly_surprising: aiInsightPrompt('Weekly surprising discovery'),
+  weekly_recommendation: aiInsightPrompt('Weekly actionable recommendation'),
+  monthly_patterns: aiInsightPrompt('Monthly pattern detection'),
+  monthly_surprising: aiInsightPrompt('Monthly surprising discovery'),
+  monthly_recommendation: aiInsightPrompt('Monthly actionable recommendation'),
+  quarterly_patterns: aiInsightPrompt('Quarterly pattern detection'),
+  quarterly_surprising: aiInsightPrompt('Quarterly surprising discovery'),
+  quarterly_recommendation: aiInsightPrompt('Quarterly actionable recommendation'),
+
+  // Data-stat facts - domain-specific Firestore data only, NO RAG
+  insight_health_stat: dataStatPrompt('Health metric insight - generic fallback', HEALTH_STAT_CONTEXT),
+  insight_activity_stat: dataStatPrompt('Activity distribution insight - generic fallback', ACTIVITY_STAT_CONTEXT),
+  insight_location_stat: dataStatPrompt('Location insight - generic fallback', LOCATION_STAT_CONTEXT),
+  weekly_health_stat: dataStatPrompt('Weekly health metric (steps, streaks, records)', HEALTH_STAT_CONTEXT),
+  weekly_activity_stat: dataStatPrompt('Weekly top activities and patterns', ACTIVITY_STAT_CONTEXT),
+  weekly_location_stat: dataStatPrompt('Weekly most visited places', LOCATION_STAT_CONTEXT),
+  monthly_health_stat: dataStatPrompt('Monthly health trends and comparisons', HEALTH_STAT_CONTEXT),
+  monthly_activity_stat: dataStatPrompt('Monthly activity diversity and frequency', ACTIVITY_STAT_CONTEXT),
+  monthly_location_stat: dataStatPrompt('Monthly location exploration radius', LOCATION_STAT_CONTEXT),
+  quarterly_health_stat: dataStatPrompt('Quarterly health trajectory', HEALTH_STAT_CONTEXT),
+  quarterly_activity_stat: dataStatPrompt('Quarterly activity evolution', ACTIVITY_STAT_CONTEXT),
+  quarterly_location_stat: dataStatPrompt('Quarterly location patterns', LOCATION_STAT_CONTEXT),
+};
+
+export function getCarouselPromptInfo(promptId: string): CarouselPromptInfo | null {
+  return CAROUSEL_PROMPT_INFO[promptId] || null;
 }
 
 /**

@@ -6,7 +6,9 @@ export interface TestResult {
   name: string;
   passed: boolean;
   reason?: string;
-  details?: Record<string, unknown>;
+  error?: string;
+  skipped?: boolean;
+  details?: Record<string, unknown> | string;
   duration?: number;
 }
 

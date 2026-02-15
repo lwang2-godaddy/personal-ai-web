@@ -438,5 +438,5 @@ async function cleanupTestData(db: FirebaseFirestore.Firestore): Promise<void> {
     }
   }
 
-  logCleanupResult(deleted, failed);
+  logCleanupResult(failed === 0, failed > 0 ? `${failed} deletions failed` : undefined);
 }

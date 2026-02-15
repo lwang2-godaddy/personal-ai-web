@@ -39,6 +39,8 @@ export async function GET(request: NextRequest) {
       const response: BillingResponse<PineconeBillingData> = {
         data: {
           totalCostUSD: 0,
+          storageCostUSD: 0,
+          operationsCostUSD: 0,
           readUnits: 0,
           writeUnits: 0,
           storageGB: 0,

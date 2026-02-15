@@ -65,9 +65,12 @@ export async function GET(request: NextRequest) {
     };
 
     // Track latest Pinecone snapshot for storage metrics
-    let latestPineconeSnapshot: any = null;
+    let latestPineconeTimestamp: string | null = null;
+    let latestPineconeStorageGB = 0;
+    let latestPineconeVectors = 0;
+    let latestPineconeQuantity = 0;
 
-    costsSnapshot.forEach((doc) => {
+    for (const doc of costsSnapshot.docs) {
       const data = doc.data();
       const service = data.service as string;
       const operation = data.operation as string;
@@ -108,20 +111,22 @@ export async function GET(request: NextRequest) {
 
         case 'pinecone_storage':
           // Use the latest snapshot for storage metrics
-          if (!latestPineconeSnapshot || data.timestamp > latestPineconeSnapshot.timestamp) {
-            latestPineconeSnapshot = data;
+          if (!latestPineconeTimestamp || data.timestamp > latestPineconeTimestamp) {
+            latestPineconeTimestamp = data.timestamp;
+            latestPineconeStorageGB = metadata.totalStorageGB || quantity || 0;
+            latestPineconeVectors = metadata.totalVectorCount || 0;
+            latestPineconeQuantity = quantity;
           }
           // Accumulate daily costs
           aggregated.pinecone.cost += cost;
           break;
       }
-    });
+    }
 
     // Apply latest Pinecone snapshot values
-    if (latestPineconeSnapshot) {
-      const metadata = latestPineconeSnapshot.metadata || {};
-      aggregated.pinecone.storageGB = metadata.totalStorageGB || latestPineconeSnapshot.quantity || 0;
-      aggregated.pinecone.vectors = metadata.totalVectorCount || 0;
+    if (latestPineconeTimestamp) {
+      aggregated.pinecone.storageGB = latestPineconeStorageGB || latestPineconeQuantity;
+      aggregated.pinecone.vectors = latestPineconeVectors;
     }
 
     // Calculate totals

@@ -156,10 +156,13 @@ export default function AdminUsageAnalyticsPage() {
   const [error, setError] = useState<string | null>(null);
   const [dataLoaded, setDataLoaded] = useState(false);
 
-  // Date range states
+  // Date range states — default to last 7 days
   const [groupBy, setGroupBy] = useState<'day' | 'month'>('day');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const today = new Date();
+  const sevenDaysAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const [startDate, setStartDate] = useState(sevenDaysAgo.toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState(today.toISOString().split('T')[0]);
+  const [activeRange, setActiveRange] = useState<number>(7);
 
   // Service filter from URL (e.g., /admin/usage?service=RAGEngine)
   const serviceFilter = searchParams.get('service');
@@ -179,28 +182,29 @@ export default function AdminUsageAnalyticsPage() {
   const [infrastructureData, setInfrastructureData] = useState<AggregatedInfrastructureCosts | null>(null);
   const [infrastructureTotals, setInfrastructureTotals] = useState<InfrastructureCostTotals | null>(null);
 
+  // Auto-load data on mount
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
+
+  // Auto-load on mount and when date range changes
   useEffect(() => {
-    // Set default date range (last 30 days)
-    const today = new Date();
-    const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+    if (startDate && endDate && !initialLoadDone) {
+      setInitialLoadDone(true);
+      fetchUsageData();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startDate, endDate]);
 
-    setEndDate(today.toISOString().split('T')[0]);
-    setStartDate(thirtyDaysAgo.toISOString().split('T')[0]);
-  }, []);
+  const fetchUsageData = async (overrideStart?: string, overrideEnd?: string) => {
+    const fetchStart = overrideStart || startDate;
+    const fetchEnd = overrideEnd || endDate;
 
-  // Reset dataLoaded when date range changes so user knows to reload
-  useEffect(() => {
-    setDataLoaded(false);
-  }, [startDate, endDate, groupBy, serviceFilter]);
-
-  const fetchUsageData = async () => {
     try {
       setLoading(true);
       setError(null);
 
       const queryParams = new URLSearchParams({
-        startDate,
-        endDate,
+        startDate: fetchStart,
+        endDate: fetchEnd,
         groupBy,
       });
 
@@ -230,7 +234,7 @@ export default function AdminUsageAnalyticsPage() {
 
       // Fetch infrastructure costs in parallel
       try {
-        const infraQueryParams = new URLSearchParams({ startDate, endDate });
+        const infraQueryParams = new URLSearchParams({ startDate: fetchStart, endDate: fetchEnd });
         const infraData = await apiGet<InfrastructureCostResponse>(
           `/api/admin/infrastructure?${infraQueryParams.toString()}`
         );
@@ -346,11 +350,16 @@ export default function AdminUsageAnalyticsPage() {
   }));
 
   const handleQuickRange = (days: number) => {
-    const today = new Date();
-    const pastDate = new Date(today.getTime() - days * 24 * 60 * 60 * 1000);
+    const now = new Date();
+    const pastDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
 
-    setEndDate(today.toISOString().split('T')[0]);
-    setStartDate(pastDate.toISOString().split('T')[0]);
+    const newStart = pastDate.toISOString().split('T')[0];
+    const newEnd = now.toISOString().split('T')[0];
+    setStartDate(newStart);
+    setEndDate(newEnd);
+    setActiveRange(days);
+    setDataLoaded(true);
+    fetchUsageData(newStart, newEnd);
   };
 
   return (
@@ -365,82 +374,81 @@ export default function AdminUsageAnalyticsPage() {
 
       {/* Date Range Controls */}
       <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Date Range</h2>
-        <div className="space-y-4">
-          {/* Quick Range Buttons */}
-          <div className="flex flex-wrap gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+          <h2 className="text-xl font-bold text-gray-900">Date Range</h2>
+          <div className="flex gap-2">
             <button
-              onClick={() => handleQuickRange(7)}
-              className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors text-sm"
+              onClick={() => {
+                fetchUsageData();
+                setDataLoaded(true);
+              }}
+              disabled={loading || !startDate || !endDate}
+              className="px-5 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-sm"
             >
-              Last 7 Days
+              {loading ? 'Loading...' : 'Refresh'}
             </button>
             <button
-              onClick={() => handleQuickRange(30)}
-              className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors text-sm"
+              onClick={handleExportCSV}
+              disabled={loading || !usageData || usageData.length === 0}
+              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
             >
-              Last 30 Days
-            </button>
-            <button
-              onClick={() => handleQuickRange(90)}
-              className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors text-sm"
-            >
-              Last 90 Days
+              Export CSV
             </button>
           </div>
+        </div>
 
-          {/* Custom Date Range */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Group By</label>
-              <select
-                value={groupBy}
-                onChange={(e) => setGroupBy(e.target.value as 'day' | 'month')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
-              >
-                <option value="day">Day</option>
-                <option value="month">Month</option>
-              </select>
-            </div>
-            <div className="flex items-end">
-              <button
-                onClick={() => {
-                  fetchUsageData();
-                  setDataLoaded(true);
-                }}
-                disabled={loading || !startDate || !endDate}
-                className="w-full px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
-              >
-                {loading ? 'Loading...' : dataLoaded ? 'Refresh Data' : 'Load Analytics'}
-              </button>
-            </div>
-            <div className="flex items-end">
-              <button
-                onClick={handleExportCSV}
-                disabled={loading || !usageData || usageData.length === 0}
-                className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                Export CSV
-              </button>
-            </div>
+        {/* Quick Range Buttons */}
+        <div className="flex flex-wrap gap-2 mb-4">
+          {[
+            { days: 7, label: 'Last 7 Days' },
+            { days: 14, label: 'Last 14 Days' },
+            { days: 30, label: 'Last 30 Days' },
+            { days: 90, label: 'Last 90 Days' },
+          ].map(({ days, label }) => (
+            <button
+              key={days}
+              onClick={() => handleQuickRange(days)}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                activeRange === days
+                  ? 'bg-red-600 text-white shadow-sm'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Custom Date Range */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => { setStartDate(e.target.value); setActiveRange(0); }}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => { setEndDate(e.target.value); setActiveRange(0); }}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Group By</label>
+            <select
+              value={groupBy}
+              onChange={(e) => setGroupBy(e.target.value as 'day' | 'month')}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
+            >
+              <option value="day">Day</option>
+              <option value="month">Month</option>
+            </select>
           </div>
         </div>
       </div>
@@ -460,7 +468,7 @@ export default function AdminUsageAnalyticsPage() {
         <div className="bg-red-50 border border-red-200 rounded-lg p-6">
           <p className="text-red-600">{error}</p>
           <button
-            onClick={fetchUsageData}
+            onClick={() => fetchUsageData()}
             className="mt-4 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
           >
             Retry
@@ -1351,16 +1359,6 @@ export default function AdminUsageAnalyticsPage() {
               </tbody>
             </table>
           </div>
-        </div>
-      )}
-
-      {/* Initial State - Prompt to Load Data */}
-      {!loading && !error && !dataLoaded && (
-        <div className="bg-white rounded-lg shadow-md p-12 text-center">
-          <div className="text-6xl mb-4">📊</div>
-          <p className="text-gray-800 text-xl font-medium">Ready to Load Analytics</p>
-          <p className="text-gray-500 mt-2">Select a date range above and click &quot;Load Analytics&quot; to view usage data.</p>
-          <p className="text-gray-400 text-sm mt-4">This page fetches data on-demand to ensure fast load times.</p>
         </div>
       )}
 

@@ -19,6 +19,9 @@ import {
   PromptVariable,
   getLifeFeedPromptPostType,
   LIFE_FEED_PROMPT_POST_TYPES,
+  getCarouselPromptInfo,
+  CAROUSEL_PROMPT_INFO,
+  CarouselPromptInfo,
   CONTEXT_SOURCES,
   DataSelectionInfo,
 } from '@/lib/models/Prompt';
@@ -585,6 +588,8 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
                 {Object.entries(config.prompts).map(([promptId, prompt]) => {
                   // Get post type info for LifeFeedGenerator prompts
                   const postTypeInfo = service === 'LifeFeedGenerator' ? getLifeFeedPromptPostType(promptId) : null;
+                  // Get carousel prompt info for CarouselInsights prompts
+                  const carouselInfo = service === 'CarouselInsights' ? getCarouselPromptInfo(promptId) : null;
 
                   return (
                   <div
@@ -620,6 +625,23 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
                           </div>
                         </div>
                       )}
+                      {/* Show insight category badge for CarouselInsights */}
+                      {carouselInfo && (
+                        <div className="mt-1.5">
+                          <div className="flex items-center gap-1.5">
+                            <span className={`px-1.5 py-0.5 text-xs rounded ${
+                              carouselInfo.insightCategory === 'ai_insight'
+                                ? 'bg-indigo-100 text-indigo-700'
+                                : 'bg-teal-100 text-teal-700'
+                            }`}>
+                              {carouselInfo.insightCategory === 'ai_insight' ? '🧠 AI insight' : '📊 data-stat'}
+                            </span>
+                            {carouselInfo.usesRAG && (
+                              <span className="text-[10px] text-indigo-500">+RAG</span>
+                            )}
+                          </div>
+                        </div>
+                      )}
                       {/* Context sources preview for all prompts */}
                       {(() => {
                         const icons: Record<string, string> = {
@@ -633,8 +655,8 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
                           ? ((serviceInfo as any).contextSources as any[]).map((s: any) => s.collection || s)
                           : [];
 
-                        // Get prompt-level sources for LifeFeedGenerator
-                        const promptSources = postTypeInfo?.contextSources || [];
+                        // Get prompt-level sources for LifeFeedGenerator or CarouselInsights
+                        const promptSources = postTypeInfo?.contextSources || carouselInfo?.contextSources || [];
 
                         if (serviceSources.length === 0 && promptSources.length === 0) return null;
 
@@ -654,8 +676,8 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
                                 )}
                               </div>
                             )}
-                            {/* Prompt sources (green) - only if different from service sources */}
-                            {postTypeInfo && promptSources.length > 0 && (
+                            {/* Prompt sources (green) - for LifeFeedGenerator or CarouselInsights */}
+                            {(postTypeInfo || carouselInfo) && promptSources.length > 0 && (
                               <div className="flex flex-wrap gap-0.5 items-center">
                                 <span className="text-[10px] text-emerald-500 mr-0.5">P:</span>
                                 {promptSources.map((src: string) => (
@@ -665,8 +687,8 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
                                 ))}
                               </div>
                             )}
-                            {/* For non-LifeFeedGenerator, show "Uses all" indicator */}
-                            {!postTypeInfo && serviceSources.length > 0 && (
+                            {/* For services without per-prompt info, show "Uses all" indicator */}
+                            {!postTypeInfo && !carouselInfo && serviceSources.length > 0 && (
                               <div className="flex items-center">
                                 <span className="text-[10px] text-emerald-500 mr-0.5">P:</span>
                                 <span className="text-[10px] text-gray-400 italic">all</span>
@@ -1060,10 +1082,14 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
                       }
                     }
 
-                    // Get prompt-level context sources (for LifeFeedGenerator)
+                    // Get prompt-level context sources (for LifeFeedGenerator or CarouselInsights)
                     let promptContextSources: string[] | null = null;
+                    let carouselPromptInfo: CarouselPromptInfo | null = null;
                     if (service === 'LifeFeedGenerator' && selectedPromptId && LIFE_FEED_PROMPT_POST_TYPES[selectedPromptId]) {
                       promptContextSources = LIFE_FEED_PROMPT_POST_TYPES[selectedPromptId].contextSources;
+                    } else if (service === 'CarouselInsights' && selectedPromptId && CAROUSEL_PROMPT_INFO[selectedPromptId]) {
+                      carouselPromptInfo = CAROUSEL_PROMPT_INFO[selectedPromptId];
+                      promptContextSources = carouselPromptInfo.contextSources;
                     }
 
                     const icons: Record<string, string> = {
@@ -1107,7 +1133,7 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
                           )}
                         </div>
 
-                        {/* Prompt-Level Context Sources (for LifeFeedGenerator and potentially other services) */}
+                        {/* Prompt-Level Context Sources (for LifeFeedGenerator, CarouselInsights, etc.) */}
                         <div className="p-3 bg-emerald-50 rounded-lg">
                           <h4 className="text-xs font-medium text-emerald-800 mb-2">
                             Prompt Context Sources
@@ -1115,23 +1141,48 @@ export default function EditPromptsPage({ params }: { params: Promise<{ service:
                           </h4>
                           {promptContextSources ? (
                             promptContextSources.length > 0 ? (
-                              <div className="flex flex-wrap gap-2">
-                                {promptContextSources.map((src: string) => {
-                                  const sourceInfo = CONTEXT_SOURCES[src as keyof typeof CONTEXT_SOURCES];
-                                  return (
-                                    <span
-                                      key={src}
-                                      className="inline-flex items-center gap-1 px-2 py-1 bg-white rounded text-xs text-emerald-700 border border-emerald-200 cursor-help"
-                                      title={sourceInfo ? `${sourceInfo.description}\n\nTrigger: ${sourceInfo.trigger}` : src}
-                                    >
-                                      <span>{icons[src] || '📦'}</span>
-                                      {src}
+                              <div className="space-y-2">
+                                <div className="flex flex-wrap gap-2">
+                                  {promptContextSources.map((src: string) => {
+                                    const sourceInfo = CONTEXT_SOURCES[src as keyof typeof CONTEXT_SOURCES];
+                                    return (
+                                      <span
+                                        key={src}
+                                        className="inline-flex items-center gap-1 px-2 py-1 bg-white rounded text-xs text-emerald-700 border border-emerald-200 cursor-help"
+                                        title={sourceInfo ? `${sourceInfo.description}\n\nTrigger: ${sourceInfo.trigger}` : src}
+                                      >
+                                        <span>{icons[src] || '📦'}</span>
+                                        {src}
+                                      </span>
+                                    );
+                                  })}
+                                </div>
+                                {/* CarouselInsights: show insight category and RAG info */}
+                                {carouselPromptInfo && (
+                                  <div className="flex flex-wrap gap-2 pt-1 border-t border-emerald-200">
+                                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs ${
+                                      carouselPromptInfo.insightCategory === 'ai_insight'
+                                        ? 'bg-indigo-100 text-indigo-700 border border-indigo-200'
+                                        : 'bg-teal-100 text-teal-700 border border-teal-200'
+                                    }`}>
+                                      {carouselPromptInfo.insightCategory === 'ai_insight' ? '🧠' : '📊'}
+                                      {carouselPromptInfo.insightCategory === 'ai_insight' ? 'AI Insight' : 'Data Stat'}
                                     </span>
-                                  );
-                                })}
+                                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs ${
+                                      carouselPromptInfo.usesRAG
+                                        ? 'bg-violet-100 text-violet-700 border border-violet-200'
+                                        : 'bg-gray-100 text-gray-500 border border-gray-200'
+                                    }`}>
+                                      {carouselPromptInfo.usesRAG ? '🔍 + RAG vectors' : '🚫 No RAG'}
+                                    </span>
+                                    <span className="text-xs text-emerald-600 italic">
+                                      {carouselPromptInfo.description}
+                                    </span>
+                                  </div>
+                                )}
                               </div>
                             ) : (
-                              <span className="text-xs text-emerald-600 italic">System prompt - used by all post types</span>
+                              <span className="text-xs text-emerald-600 italic">System prompt - used by all insight types</span>
                             )
                           ) : serviceContextSources.length > 0 ? (
                             <span className="text-xs text-emerald-600 italic">Uses all service context sources</span>

@@ -32,9 +32,11 @@ export function logPass(testName: string): void {
 /**
  * Log a failing test
  */
-export function logFail(testName: string, reason: string): void {
+export function logFail(testName: string, reason?: string): void {
   log(`  \u2717 ${testName}`, colors.red);
-  log(`    Reason: ${reason}`, colors.dim);
+  if (reason) {
+    log(`    Reason: ${reason}`, colors.dim);
+  }
 }
 
 /**
