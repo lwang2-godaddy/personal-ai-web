@@ -16,7 +16,6 @@ const SERVICE_TO_OPERATION: Record<string, string> = {
   EntityExtractionService: 'entity_extraction',
   EventExtractionService: 'event_extraction',
   MemoryGeneratorService: 'memory_generation',
-  SuggestionEngine: 'suggestion',
   LifeFeedGenerator: 'life_feed',
 };
 

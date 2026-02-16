@@ -14,7 +14,6 @@
  * - EntityExtractionService
  * - EventExtractionService
  * - MemoryGeneratorService
- * - SuggestionEngine
  * - FunFactsService (CarouselInsights)
  * - TopicClassifierService
  * - TemporalParserService
@@ -49,7 +48,6 @@ const TRACKED_SERVICES = [
   'EntityExtractionService',
   'EventExtractionService',
   'MemoryGeneratorService',
-  'SuggestionEngine',
   'CarouselInsights',
   'TopicClassifierService',
   'TemporalParserService',

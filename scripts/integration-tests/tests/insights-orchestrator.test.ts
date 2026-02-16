@@ -579,13 +579,6 @@ async function testMinimumThresholds(
         'Currently: 0 documents in collection',
       ],
     },
-    {
-      service: 'PredictionService',
-      requirements: [
-        'Depends on PatternDetectionService output',
-        'If 0 patterns, returns 0 predictions',
-      ],
-    },
   ];
 
   logQueryBox('InsightsOrchestrator Service Thresholds', [
@@ -661,7 +654,6 @@ async function testMinimumThresholds(
     `Can generate health anomalies: MAYBE (if fix is deployed and 10+ records exist)`,
     `Can generate activity anomalies: ${taggedLocations.some(d => d.data().visitCount >= 5) ? 'MAYBE' : 'NO (no favorite places)'}`,
     `Can generate mood insights: ${canGenerateMoodInsights ? 'MAYBE' : 'NO (no mood data)'}`,
-    `Can generate predictions: ${canGeneratePatterns ? 'MAYBE' : 'NO (depends on patterns)'}`,
   ]);
 
   return results;

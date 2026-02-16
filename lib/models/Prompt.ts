@@ -105,7 +105,6 @@ export const SERVICE_FILE_MAP: Record<string, string> = {
   EntityExtractionService: 'analysis.yaml',
   EventExtractionService: 'events.yaml',
   MemoryGeneratorService: 'memory.yaml',
-  SuggestionEngine: 'suggestions.yaml',
   LifeFeedGenerator: 'lifeFeed.yaml',
   DailySummaryService: 'dailySummary.yaml',
   KeywordGenerator: 'lifeKeywords.yaml',
@@ -191,7 +190,7 @@ export const SERVICE_OUTPUT_CATEGORIES = [
     icon: '📊',
     description: 'Services that generate insights from aggregated data',
     outputCollection: 'Various (funFacts, lifeKeywords, lifeConnections)',
-    services: ['CarouselInsights', 'KeywordGenerator', 'LifeConnectionsService', 'SuggestionEngine'],
+    services: ['CarouselInsights', 'KeywordGenerator', 'LifeConnectionsService'],
   },
   {
     id: 'summary_services',
@@ -424,25 +423,6 @@ export const PROMPT_SERVICES = [
       CONTEXT_SOURCES.moodEntries,
     ] as ContextSource[],
     usageInfo: { dataTimeRange: 'Last 24 hours (daily) or Last 7 days (weekly)', selectionLogic: 'conditional' as SelectionLogic },
-  },
-  // Fun Facts - Daily insights & smart suggestions
-  {
-    id: 'SuggestionEngine',
-    name: 'Smart Suggestions',
-    category: 'fun_facts' as PromptCategoryId,
-    icon: '💡',
-    description: 'Generates proactive suggestions and daily insights',
-    trigger: 'Based on user patterns and context',
-    platform: 'server' as const,
-    usedBy: ['mobile'] as const,
-    example: 'Suggesting "Time for your daily walk?"',
-    contextSources: [
-      CONTEXT_SOURCES.healthData,
-      CONTEXT_SOURCES.locationData,
-      CONTEXT_SOURCES.events,
-      CONTEXT_SOURCES.moodEntries,
-    ] as ContextSource[],
-    usageInfo: { dataTimeRange: 'Last 7 days + upcoming events', selectionLogic: 'context-based' as SelectionLogic },
   },
   {
     id: 'KeywordGenerator',

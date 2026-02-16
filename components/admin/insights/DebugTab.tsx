@@ -132,21 +132,6 @@ const ORCHESTRATOR_SERVICES: ServiceRequirement[] = [
       '✅ FIXED (Feb 2026): generateMoodPatterns was querying with getTime() but moodEntries.createdAt is Timestamp',
     ],
   },
-  {
-    name: 'PredictionService',
-    description: 'Predicts future activities and mood trends',
-    collection: 'N/A (depends on other services)',
-    requiredFields: [],
-    minimumRecords: 0,
-    additionalRequirements: [
-      'Depends on PatternDetectionService results',
-      'If patterns return 0, predictions return 0',
-      'Generates activity and mood predictions',
-    ],
-    outputType: 'Prediction[]',
-    postType: 'pattern_prediction',
-    cooldownDays: 1,
-  },
 ];
 
 // Combined list for display
@@ -164,7 +149,6 @@ const POST_TYPE_MAPPINGS = [
   { service: 'HealthAnomaly', postType: 'reflective_insight', cooldown: '3 days', emoji: '❤️', source: 'InsightsOrchestrator' },
   { service: 'ActivityAnomaly', postType: 'reflective_insight', cooldown: '3 days', emoji: '📍', source: 'InsightsOrchestrator' },
   { service: 'MoodCorrelation', postType: 'reflective_insight', cooldown: '3 days', emoji: '🧭', source: 'InsightsOrchestrator' },
-  { service: 'Prediction', postType: 'pattern_prediction', cooldown: '1 day', emoji: '🔮', source: 'InsightsOrchestrator' },
 ];
 
 // Other AI Analysis Services (write to different collections)
@@ -693,7 +677,7 @@ export default function DebugTab({ onSaving }: DebugTabProps) {
             <span>⚠️</span> Post Type Overlap
           </h5>
           <p className="text-sm text-yellow-700">
-            Both systems can generate some of the same post types (e.g., <code className="bg-yellow-100 text-yellow-800 px-1 rounded">milestone</code>, <code className="bg-yellow-100 text-yellow-800 px-1 rounded">pattern_prediction</code>).
+            Both systems can generate some of the same post types (e.g., <code className="bg-yellow-100 text-yellow-800 px-1 rounded">milestone</code>, <code className="bg-yellow-100 text-yellow-800 px-1 rounded">reflective_insight</code>).
             The <strong>cooldown system</strong> prevents duplicates by checking when the last post of each type was generated.
           </p>
         </div>
@@ -1381,12 +1365,12 @@ export default function DebugTab({ onSaving }: DebugTabProps) {
 │  • memory_highlight              │  │ FunFactGenerator│    │ InsightsOrchestrator │  │     • Pinecone clustering    │
 │  • streak_achievement            │  │ (RULE-BASED)    │    │ (ANALYTICAL)         │  │     • Weekly/Monthly         │
 │  • comparison                    │  │                 │    │                      │  │     → lifeKeywords           │
-│  • seasonal_reflection           │  │ NOT AI-BASED!   │    │ 5 Sub-Services:      │  │                              │
+│  • seasonal_reflection           │  │ NOT AI-BASED!   │    │ 3 Sub-Services:      │  │                              │
 │  • activity_pattern              │  │ Direct Firestore│    │ • PatternDetection   │  │  🔗 LifeConnectionsAnalyzer  │
 │  • health_alert                  │  │ queries +       │    │ • AnomalyDetection   │  │     • Statistical analysis   │
 │  • category_insight              │  │ templates       │    │ • MoodCorrelation    │  │     • Pearson correlation    │
-│                                  │  │                 │    │ • Prediction         │  │     → lifeConnections        │
-│                                  │  │ Generates:      │    │ • SuggestionEngine   │  │       (user subcollection)   │
+│                                  │  │                 │    │                      │  │     → lifeConnections        │
+│                                  │  │ Generates:      │    │                      │  │       (user subcollection)   │
 │                                  │  │ milestones,     │    │                      │  │                              │
 │                                  │  │ comparisons,    │    └──────────────────────┘  │                              │
 │                                  │  │ streaks         │              │               │                              │
@@ -1608,15 +1592,6 @@ export default function DebugTab({ onSaving }: DebugTabProps) {
                 <td className="border border-gray-200 px-2 py-2 text-center text-gray-400">—</td>
                 <td className="border border-gray-200 px-2 py-2 text-xs text-gray-400">Date matching only</td>
               </tr>
-              <tr>
-                <td className="border border-gray-200 px-2 py-2 font-mono text-xs">07:00</td>
-                <td className="border border-gray-200 px-2 py-2 text-xs">generateDailyPredictions</td>
-                <td className="border border-gray-200 px-2 py-2 text-xs text-gray-600">PredictionService</td>
-                <td className="border border-gray-200 px-2 py-2 text-xs">predictions</td>
-                <td className="border border-gray-200 px-2 py-2 text-xs text-purple-600">LifeFeedScreen<br/><span className="text-gray-400">(prediction posts)</span></td>
-                <td className="border border-gray-200 px-2 py-2 text-center text-gray-400">—</td>
-                <td className="border border-gray-200 px-2 py-2 text-xs text-gray-400">Statistical only</td>
-              </tr>
               <tr className="bg-green-100">
                 <td className="border border-gray-200 px-2 py-2 font-mono text-xs font-bold">07:30</td>
                 <td className="border border-gray-200 px-2 py-2 text-xs font-bold">generateUnifiedInsightsScheduled</td>
@@ -1661,15 +1636,6 @@ export default function DebugTab({ onSaving }: DebugTabProps) {
                   <a href="/admin/prompts?service=KeywordGenerator" className="text-blue-600 hover:underline">KeywordGenerator</a>
                 </td>
               </tr>
-              <tr>
-                <td className="border border-gray-200 px-2 py-2 font-mono text-xs">23:00</td>
-                <td className="border border-gray-200 px-2 py-2 text-xs">validatePredictions</td>
-                <td className="border border-gray-200 px-2 py-2 text-xs text-gray-600">Inline</td>
-                <td className="border border-gray-200 px-2 py-2 text-xs">predictions (updates)</td>
-                <td className="border border-gray-200 px-2 py-2 text-xs text-gray-400 italic">Background</td>
-                <td className="border border-gray-200 px-2 py-2 text-center text-gray-400">—</td>
-                <td className="border border-gray-200 px-2 py-2 text-xs text-gray-400">Accuracy check</td>
-              </tr>
             </tbody>
           </table>
         </div>
@@ -1712,16 +1678,6 @@ export default function DebugTab({ onSaving }: DebugTabProps) {
                 <td className="border border-gray-200 px-2 py-2 text-center text-gray-400">—</td>
                 <td className="border border-gray-200 px-2 py-2 text-xs">Event reminders</td>
               </tr>
-              <tr className="bg-green-50">
-                <td className="border border-gray-200 px-2 py-2 font-mono text-xs">Every 60 min</td>
-                <td className="border border-gray-200 px-2 py-2 text-xs">deliverProactiveSuggestions</td>
-                <td className="border border-gray-200 px-2 py-2 text-xs text-blue-600 font-medium">SuggestionEngine</td>
-                <td className="border border-gray-200 px-2 py-2 text-xs text-purple-600">HomeFeedScreen<br/><span className="text-gray-400">(suggestion card)</span></td>
-                <td className="border border-gray-200 px-2 py-2 text-center">🤖</td>
-                <td className="border border-gray-200 px-2 py-2 text-xs">
-                  <a href="/admin/prompts?service=SuggestionEngine" className="text-blue-600 hover:underline">SuggestionEngine</a>
-                </td>
-              </tr>
               <tr>
                 <td className="border border-gray-200 px-2 py-2 font-mono text-xs">Every 1 hour</td>
                 <td className="border border-gray-200 px-2 py-2 text-xs">expireCircleInvites</td>
@@ -1763,10 +1719,8 @@ export default function DebugTab({ onSaving }: DebugTabProps) {
             </ul>
           </div>
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h5 className="font-semibold text-blue-800 mb-2">🔮 Predictions & Memory</h5>
+            <h5 className="font-semibold text-blue-800 mb-2">📅 Memory</h5>
             <ul className="text-xs text-blue-700 space-y-1">
-              <li>• <strong>generateDailyPredictions</strong> (7:00) → predictions</li>
-              <li>• <strong>validatePredictions</strong> (23:00) → predictions (updates)</li>
               <li>• <strong>generateDailyAnniversaries</strong> (7:00) → thisDayMemories</li>
             </ul>
           </div>
@@ -1784,7 +1738,6 @@ export default function DebugTab({ onSaving }: DebugTabProps) {
             <ul className="text-xs text-orange-700 space-y-1">
               <li>• <strong>schedulePatternNotifications</strong> (6:00) → Push</li>
               <li>• <strong>eventNotificationScheduler</strong> (hourly) → Push</li>
-              <li>• <strong>deliverProactiveSuggestions</strong> (hourly) → Push</li>
               <li>• <strong>cleanupNotificationHistory</strong> (3:00) → Cleanup</li>
             </ul>
           </div>
@@ -1823,7 +1776,6 @@ export default function DebugTab({ onSaving }: DebugTabProps) {
           <h5 className="font-semibold text-blue-800 mb-2">🤖 AI Prompt Services (Configurable at <a href="/admin/prompts" className="underline">/admin/prompts</a>)</h5>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
             <a href="/admin/prompts?service=LifeFeedGenerator" className="text-blue-600 hover:underline">• LifeFeedGenerator</a>
-            <a href="/admin/prompts?service=SuggestionEngine" className="text-blue-600 hover:underline">• SuggestionEngine</a>
             <a href="/admin/prompts?service=KeywordGenerator" className="text-blue-600 hover:underline">• KeywordGenerator</a>
             <a href="/admin/prompts?service=DailyInsightService" className="text-blue-600 hover:underline">• DailyInsightService</a>
             <a href="/admin/prompts?service=LifeConnectionsService" className="text-blue-600 hover:underline">• LifeConnectionsService</a>
@@ -2140,10 +2092,10 @@ db.collection('lifeFeedPosts')
         {/* InsightsOrchestrator Section */}
         <div className="mb-4">
           <h4 className="text-lg font-semibold text-indigo-800 mb-3 flex items-center gap-2 border-b border-indigo-200 pb-2">
-            <span>🔮</span> InsightsOrchestrator (5 Sub-Services)
+            <span>🔍</span> InsightsOrchestrator (3 Sub-Services)
           </h4>
           <p className="text-sm text-gray-600 mb-4">
-            Coordinates pattern detection, anomaly analysis, mood correlation, and predictions.
+            Coordinates pattern detection, anomaly analysis, and mood correlation.
           </p>
         </div>
 
@@ -2570,15 +2522,6 @@ db.collection('lifeFeedPosts')
             </p>
           </div>
 
-          <div className="border-l-4 border-blue-500 pl-4">
-            <h4 className="font-semibold text-gray-900">Cascade Effect</h4>
-            <p className="text-sm text-gray-600 mt-1">
-              <strong>Issue:</strong> PredictionService depends on PatternDetectionService. If patterns return 0, predictions return 0.
-            </p>
-            <p className="text-sm text-gray-600 mt-1">
-              <strong>Solution:</strong> Fix upstream data issues first (location tagging).
-            </p>
-          </div>
 
           <div className="border-l-4 border-orange-500 pl-4">
             <h4 className="font-semibold text-gray-900">FunFacts vs InsightsOrchestrator Confusion</h4>

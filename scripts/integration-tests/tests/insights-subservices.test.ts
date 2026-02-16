@@ -5,19 +5,15 @@
  * 1. PatternDetectionService - Finds recurring activity patterns
  * 2. AnomalyDetectionService - Detects unusual health metrics & long absences
  * 3. MoodCorrelationService - Links mood to sleep/exercise/activities
- * 4. PredictionService - Predicts tomorrow's activities & mood trends
- * 5. SuggestionEngine - Generates personalized AI suggestions
  *
  * Data Requirements:
  * - PatternDetection: ≥5 location entries, ≥5 per activity, confidence ≥0.7
  * - AnomalyDetection: ≥10 health data points, z-score ≥1.5, ≥3 consecutive days
  * - MoodCorrelation: ≥14 mood entries, strength ≥0.3
- * - PredictionService: ≥7 mood entries, r² ≥0.3, confidence ≥0.7
- * - SuggestionEngine: Requires valid prediction (uses AI/GPT)
  *
  * Collections:
  * - Reads: locationData, healthData, moodEntries, users/{userId}
- * - Writes: insights, moodCorrelations, predictions, suggestions
+ * - Writes: insights, moodCorrelations
  */
 
 import * as admin from 'firebase-admin';
@@ -97,15 +93,7 @@ export async function run(): Promise<TestResult[]> {
   const test3Results = await testMoodCorrelationService(db, userId);
   allResults.push(...test3Results);
 
-  // Test Case 4: PredictionService requirements
-  const test4Results = await testPredictionService(db, userId);
-  allResults.push(...test4Results);
-
-  // Test Case 5: SuggestionEngine (AI-powered)
-  const test5Results = await testSuggestionEngine(db, userId);
-  allResults.push(...test5Results);
-
-  // Test Case 6: Full orchestration flow
+  // Test Case 4: Full orchestration flow
   const test6Results = await testFullOrchestrationFlow(db, userId);
   allResults.push(...test6Results);
 
@@ -526,250 +514,12 @@ async function testMoodCorrelationService(
 }
 
 /**
- * Test Case 4: PredictionService
- *
- * Requirements:
- * - Mood prediction: ≥7 entries, r² ≥0.3
- * - Activity prediction: Based on patterns with confidence ≥0.7
- * - Confidence threshold ≥0.7 (configurable)
- *
- * Uses: Linear regression for mood trends, pattern matching for activities
- */
-async function testPredictionService(
-  db: admin.firestore.Firestore,
-  userId: string
-): Promise<TestResult[]> {
-  const results: TestResult[] = [];
-  logTestCase('PredictionService requirements');
-
-  try {
-    // Test 4a: Check existing predictions
-    // Note: Avoiding orderBy to prevent composite index requirement
-    const predictionsSnapshot = await db.collection('predictions')
-      .where('userId', '==', userId)
-      .limit(20)
-      .get();
-
-    // Sort in memory
-    const predictions = predictionsSnapshot.docs
-      .map(d => ({ doc: d, createdAt: d.data().createdAt }))
-      .sort((a, b) => {
-        const aTime = getTimestamp(a.createdAt);
-        const bTime = getTimestamp(b.createdAt);
-        return bTime - aTime; // desc
-      })
-      .slice(0, 10);
-
-    logQueryBox('PredictionService Output', [
-      'Collection: predictions',
-      'Sort in-memory: createdAt desc',
-    ]);
-
-    const predictionCount = predictions.length;
-    log(`  Found ${predictionCount} predictions`, colors.dim);
-
-    if (predictionCount > 0) {
-      logPass(`Has ${predictionCount} predictions`);
-      predictions.slice(0, 3).forEach(({ doc }) => {
-        const data = doc.data();
-        log(`    - Type: ${data.type || 'unknown'}, Confidence: ${data.confidence?.toFixed(2) || 'N/A'}`, colors.dim);
-      });
-    } else {
-      logInfo('No predictions generated yet');
-    }
-
-    results.push({
-      name: 'PredictionService: Existing predictions',
-      passed: true, // Informational
-      reason: `Found ${predictionCount} predictions`,
-      details: {
-        predictionCount,
-        predictions: predictions.slice(0, 5).map(({ doc }) => ({
-          type: doc.data().type,
-          confidence: doc.data().confidence,
-        })),
-      },
-    });
-
-    // Test 4b: Verify prediction requirements
-    // Check if we have enough mood data for mood predictions
-    const sevenDaysAgoDate = new Date();
-    sevenDaysAgoDate.setDate(sevenDaysAgoDate.getDate() - 7);
-    const recentMoodSnapshot = await db.collection('moodEntries')
-      .where('userId', '==', userId)
-      .where('createdAt', '>=', admin.firestore.Timestamp.fromDate(sevenDaysAgoDate))
-      .limit(20)
-      .get();
-
-    const recentMoodCount = recentMoodSnapshot.size;
-    const canPredictMood = recentMoodCount >= 7;
-
-    logQueryBox('Mood Prediction Requirements', [
-      'Collection: moodEntries (last 7 days)',
-      `Found: ${recentMoodCount} entries`,
-      `Required: ≥7 for linear regression`,
-    ]);
-
-    if (canPredictMood) {
-      logPass(`Has ${recentMoodCount} recent mood entries (min: 7)`);
-    } else {
-      logInfo(`Only ${recentMoodCount} recent mood entries (need 7+)`);
-    }
-
-    results.push({
-      name: 'PredictionService: Mood prediction eligibility',
-      passed: canPredictMood,
-      reason: canPredictMood
-        ? `Has ${recentMoodCount} recent mood entries`
-        : `Only ${recentMoodCount} recent mood entries (need 7+)`,
-      details: { recentMoodCount, threshold: 7 },
-    });
-
-    // Test 4c: Check patterns for activity prediction
-    // Note: Avoiding triple-where query to prevent composite index requirement
-    const allPatternsSnapshot = await db.collection('insights')
-      .where('userId', '==', userId)
-      .where('type', '==', 'pattern')
-      .limit(50)
-      .get();
-
-    // Filter confidence in memory
-    const highConfidencePatterns = allPatternsSnapshot.docs.filter(d => {
-      const confidence = d.data().confidence;
-      return typeof confidence === 'number' && confidence >= 0.7;
-    }).length;
-    const canPredictActivity = highConfidencePatterns > 0;
-
-    log(`  High-confidence patterns (≥0.7): ${highConfidencePatterns}`, colors.dim);
-
-    results.push({
-      name: 'PredictionService: Activity prediction eligibility',
-      passed: true, // Informational - data availability check
-      reason: canPredictActivity
-        ? `Has ${highConfidencePatterns} high-confidence patterns`
-        : 'No high-confidence patterns for activity prediction',
-      details: { highConfidencePatterns, canPredictActivity },
-    });
-
-  } catch (error: any) {
-    logFail(`Error: ${error.message}`);
-    results.push({
-      name: 'PredictionService: Test execution',
-      passed: false,
-      reason: `Error: ${error.message}`,
-    });
-  }
-
-  return results;
-}
-
-/**
- * Test Case 5: SuggestionEngine (AI-powered)
- *
- * Requirements:
- * - Requires valid prediction (any confidence)
- * - Uses GPT-4o-mini via PromptLoader
- * - Prompt Service: SuggestionEngine
- *
- * Cost: ~$0.0001-0.0005 per suggestion
- */
-async function testSuggestionEngine(
-  db: admin.firestore.Firestore,
-  userId: string
-): Promise<TestResult[]> {
-  const results: TestResult[] = [];
-  logTestCase('SuggestionEngine (AI-powered)');
-
-  try {
-    // Test 5a: Check existing suggestions
-    // Note: Avoiding orderBy to prevent composite index requirement
-    const suggestionsSnapshot = await db.collection('suggestions')
-      .where('userId', '==', userId)
-      .limit(20)
-      .get();
-
-    // Sort in memory
-    const suggestions = suggestionsSnapshot.docs
-      .map(d => ({ doc: d, createdAt: d.data().createdAt }))
-      .sort((a, b) => {
-        const aTime = getTimestamp(a.createdAt);
-        const bTime = getTimestamp(b.createdAt);
-        return bTime - aTime; // desc
-      })
-      .slice(0, 10);
-
-    logQueryBox('SuggestionEngine Output', [
-      'Collection: suggestions',
-      'Uses AI: ✓ GPT-4o-mini',
-      'Prompt Service: SuggestionEngine',
-      'Admin URL: /admin/prompts?service=SuggestionEngine',
-    ]);
-
-    const suggestionCount = suggestions.length;
-    log(`  Found ${suggestionCount} suggestions`, colors.dim);
-
-    if (suggestionCount > 0) {
-      logPass(`Has ${suggestionCount} AI-generated suggestions`);
-      suggestions.slice(0, 3).forEach(({ doc }) => {
-        const data = doc.data();
-        const preview = data.content?.substring(0, 60) || data.text?.substring(0, 60) || 'N/A';
-        log(`    - "${preview}..."`, colors.dim);
-      });
-    } else {
-      logInfo('No suggestions generated yet');
-    }
-
-    results.push({
-      name: 'SuggestionEngine: Existing suggestions',
-      passed: true, // Informational
-      reason: `Found ${suggestionCount} suggestions`,
-      details: {
-        suggestionCount,
-        usesAI: true,
-        promptService: 'SuggestionEngine',
-      },
-    });
-
-    // Test 5b: Verify prompt configuration exists
-    const promptDoc = await db.collection('prompts')
-      .doc('en_SuggestionEngine')
-      .get();
-
-    const promptConfigured = promptDoc.exists;
-    if (promptConfigured) {
-      logPass('SuggestionEngine prompts configured in Firestore');
-    } else {
-      logInfo('SuggestionEngine prompts not in Firestore (using YAML fallback)');
-    }
-
-    results.push({
-      name: 'SuggestionEngine: Prompt configuration',
-      passed: true, // Both Firestore and YAML fallback work
-      reason: promptConfigured
-        ? 'Prompts configured in Firestore'
-        : 'Using YAML fallback',
-      details: { promptConfigured, service: 'SuggestionEngine' },
-    });
-
-  } catch (error: any) {
-    logFail(`Error: ${error.message}`);
-    results.push({
-      name: 'SuggestionEngine: Test execution',
-      passed: false,
-      reason: `Error: ${error.message}`,
-    });
-  }
-
-  return results;
-}
-
-/**
- * Test Case 6: Full Orchestration Flow
+ * Test Case 4: Full Orchestration Flow
  *
  * Tests the complete InsightsOrchestrator pipeline:
  * 1. Checks 12-hour cache
- * 2. Runs all 5 sub-services in parallel
- * 3. Stores results across 4 collections
+ * 2. Runs all 3 sub-services in parallel
+ * 3. Stores results across 2 collections
  */
 async function testFullOrchestrationFlow(
   db: admin.firestore.Firestore,
@@ -822,7 +572,6 @@ async function testFullOrchestrationFlow(
       `Health records: ${dataSummary.healthCount}`,
       `Mood entries (30d): ${dataSummary.moodCount}`,
       `Patterns: ${dataSummary.patternCount}`,
-      `Predictions: ${dataSummary.predictionCount}`,
     ]);
 
     const canRunFullOrchestration =
@@ -850,8 +599,6 @@ async function testFullOrchestrationFlow(
       PatternDetection: dataSummary.locationCount >= 5,
       AnomalyDetection: dataSummary.healthCount >= 10,
       MoodCorrelation: dataSummary.moodCount >= 14,
-      PredictionService: dataSummary.moodCount >= 7 || dataSummary.patternCount > 0,
-      SuggestionEngine: dataSummary.predictionCount > 0,
     };
 
     log('  Service Eligibility:', colors.dim);
@@ -892,12 +639,11 @@ async function getDataSufficiencySummary(
   healthCount: number;
   moodCount: number;
   patternCount: number;
-  predictionCount: number;
 }> {
   const thirtyDaysAgoDate = new Date();
   thirtyDaysAgoDate.setDate(thirtyDaysAgoDate.getDate() - 30);
 
-  const [locations, health, mood, patterns, predictions] = await Promise.all([
+  const [locations, health, mood, patterns] = await Promise.all([
     db.collection('locationData')
       .where('userId', '==', userId)
       .limit(200)
@@ -916,10 +662,6 @@ async function getDataSufficiencySummary(
       .where('type', '==', 'pattern')
       .limit(20)
       .get(),
-    db.collection('predictions')
-      .where('userId', '==', userId)
-      .limit(20)
-      .get(),
   ]);
 
   // Count locations with activity in-memory to avoid index requirement
@@ -930,7 +672,6 @@ async function getDataSufficiencySummary(
     healthCount: health.size,
     moodCount: mood.size,
     patternCount: patterns.size,
-    predictionCount: predictions.size,
   };
 }
 

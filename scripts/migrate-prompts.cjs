@@ -35,7 +35,6 @@ const FILE_TO_SERVICE = {
   'events.yaml': 'EventExtractionService',
   'lifeFeed.yaml': 'LifeFeedGenerator',
   'memory.yaml': 'MemoryGeneratorService',
-  'suggestions.yaml': 'SuggestionEngine',
   'chat.yaml': 'OpenAIService',
   'rag.yaml': 'RAGEngine',
   'dailySummary.yaml': 'DailySummaryService',

@@ -1642,19 +1642,7 @@ function LifeForecasterContent({ config, loading, error, saving, setSaving, onRe
         <div className="flex items-start">
           <span className="text-indigo-500 mr-2">ℹ️</span>
           <div className="text-sm text-indigo-800">
-            <strong>Two outputs:</strong> Creates <code className="bg-indigo-100 px-1 rounded">pattern_prediction</code> posts at 6 AM UTC,
-            and sends push notifications hourly via <code className="bg-indigo-100 px-1 rounded">deliverProactiveSuggestions</code>.
-          </div>
-        </div>
-      </div>
-
-      {/* Gap Warning */}
-      <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
-        <div className="flex items-start">
-          <span className="text-orange-500 mr-2">⚠️</span>
-          <div className="text-sm text-orange-800">
-            <strong>Configuration Gap:</strong> Pattern Detection settings below are saved but <strong>NOT fully wired</strong> to PredictionService.
-            The service uses some hardcoded defaults. Fix in progress.
+            <strong>Pattern Detection:</strong> Creates <code className="bg-indigo-100 px-1 rounded">pattern_prediction</code> posts via InsightsIntegrationService.
           </div>
         </div>
       </div>
@@ -1741,36 +1729,6 @@ function LifeForecasterContent({ config, loading, error, saving, setSaving, onRe
         </div>
       </div>
 
-      {/* Prediction Settings */}
-      <div>
-        <h4 className="text-sm font-medium text-gray-700 mb-3">Prediction Settings</h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">Max Predictions Per Day</label>
-            <input
-              type="number"
-              min="1"
-              max="10"
-              value={config.maxPredictionsPerDay}
-              onChange={(e) => handleUpdateSettings({ maxPredictionsPerDay: Number(e.target.value) })}
-              disabled={saving}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">Prediction Horizon (days)</label>
-            <input
-              type="number"
-              min="1"
-              max="30"
-              value={config.predictionHorizonDays}
-              onChange={(e) => handleUpdateSettings({ predictionHorizonDays: Number(e.target.value) })}
-              disabled={saving}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-            />
-          </div>
-        </div>
-      </div>
 
       {/* Display Settings */}
       <div>
@@ -1799,34 +1757,6 @@ function LifeForecasterContent({ config, loading, error, saving, setSaving, onRe
         </div>
       </div>
 
-      {/* Notification Settings */}
-      <div>
-        <h4 className="text-sm font-medium text-gray-700 mb-3">Notification Settings</h4>
-        <div className="space-y-3">
-          <label className="flex items-center">
-            <input
-              type="checkbox"
-              checked={config.notifyOnPrediction}
-              onChange={(e) => handleUpdateSettings({ notifyOnPrediction: e.target.checked })}
-              disabled={saving}
-              className="h-4 w-4 text-indigo-600 rounded focus:ring-indigo-500 disabled:opacity-50"
-            />
-            <span className="ml-2 text-sm text-gray-700">Notify users about predictions</span>
-          </label>
-          {config.notifyOnPrediction && (
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">Notification Time</label>
-              <input
-                type="time"
-                value={config.notificationTime}
-                onChange={(e) => handleUpdateSettings({ notificationTime: e.target.value })}
-                disabled={saving}
-                className="w-full max-w-xs px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-              />
-            </div>
-          )}
-        </div>
-      </div>
 
       <VersionInfo version={config.version} lastUpdatedAt={config.lastUpdatedAt} />
     </div>
