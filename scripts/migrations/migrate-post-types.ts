@@ -145,9 +145,9 @@ const ALL_POST_TYPES = {
     enabled: true,
     displayName: 'Reflection',
     icon: '🌟',
-    description: 'Seasonal summaries',
-    cooldownDays: 30,
-    priority: 3,
+    description: 'Monthly and bi-weekly life summaries',
+    cooldownDays: 14,       // Was 30 - now bi-weekly for more frequent generation
+    priority: 6,            // Was 3 - increased priority
     defaultCategory: 'general',
     minConfidence: 0.5,
     maxPerDay: 1,
@@ -180,9 +180,9 @@ const ALL_POST_TYPES = {
     icon: '📊',
     description: 'Category distribution and trend insights',
     cooldownDays: 3,
-    priority: 5,
+    priority: 6,            // Was 5 - increased priority
     defaultCategory: 'general',
-    minConfidence: 0.6,
+    minConfidence: 0.5,     // Was 0.6 - lowered threshold for new users
     maxPerDay: 1,
   },
 };

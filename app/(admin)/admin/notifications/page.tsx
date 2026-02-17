@@ -44,16 +44,40 @@ interface UsersResponse {
 
 const NOTIFICATION_TYPES = [
   { value: '', label: 'All Types' },
-  { value: 'content_comment', label: 'Comment', color: 'bg-blue-100 text-blue-800' },
-  { value: 'content_like', label: 'Like', color: 'bg-red-100 text-red-800' },
-  { value: 'life_feed_like', label: 'Life Feed Like', color: 'bg-pink-100 text-pink-800' },
-  { value: 'life_feed_comment', label: 'Life Feed Comment', color: 'bg-purple-100 text-purple-800' },
-  { value: 'circle_member_joined', label: 'Circle Join', color: 'bg-green-100 text-green-800' },
+
+  // System Notifications
   { value: 'daily_summary', label: 'Daily Summary', color: 'bg-indigo-100 text-indigo-800' },
   { value: 'weekly_insights', label: 'Weekly Insights', color: 'bg-teal-100 text-teal-800' },
   { value: 'fun_fact', label: 'Fun Fact', color: 'bg-amber-100 text-amber-800' },
   { value: 'achievement', label: 'Achievement', color: 'bg-yellow-100 text-yellow-800' },
+  { value: 'life_keyword', label: 'Life Keyword', color: 'bg-violet-100 text-violet-800' },
+
+  // Reminder Notifications
+  { value: 'event_reminder', label: 'Event Reminder', color: 'bg-blue-100 text-blue-800' },
+  { value: 'escalated_reminder', label: 'Urgent Reminder', color: 'bg-red-100 text-red-800' },
+  { value: 'pattern_reminder', label: 'Pattern Reminder', color: 'bg-sky-100 text-sky-800' },
+  { value: 'location_alert', label: 'Location Alert', color: 'bg-emerald-100 text-emerald-800' },
   { value: 'check_in_suggestion', label: 'Check-In', color: 'bg-cyan-100 text-cyan-800' },
+
+  // Social Notifications
+  { value: 'content_like', label: 'Like', color: 'bg-pink-100 text-pink-800' },
+  { value: 'content_comment', label: 'Comment', color: 'bg-purple-100 text-purple-800' },
+  { value: 'life_feed_like', label: 'Life Feed Like', color: 'bg-pink-100 text-pink-800' },
+  { value: 'life_feed_comment', label: 'Life Feed Comment', color: 'bg-purple-100 text-purple-800' },
+  { value: 'circle_member_joined', label: 'Circle Join', color: 'bg-green-100 text-green-800' },
+
+  // Friend Notifications
+  { value: 'friend_request', label: 'Friend Request', color: 'bg-cyan-100 text-cyan-800' },
+  { value: 'friend_request_accepted', label: 'Friend Accepted', color: 'bg-green-100 text-green-800' },
+
+  // Challenge Notifications
+  { value: 'challenge_daily_reminder', label: 'Challenge Reminder', color: 'bg-orange-100 text-orange-800' },
+  { value: 'challenge_progress', label: 'Challenge Progress', color: 'bg-lime-100 text-lime-800' },
+  { value: 'challenge_event', label: 'Challenge Event', color: 'bg-rose-100 text-rose-800' },
+  { value: 'challenge_milestone', label: 'Challenge Milestone', color: 'bg-fuchsia-100 text-fuchsia-800' },
+
+  // Local Notifications (from mobile app)
+  { value: 'morning_briefing', label: 'Morning Briefing', color: 'bg-amber-100 text-amber-800' },
 ];
 
 const READ_STATUS_OPTIONS = [
@@ -243,20 +267,105 @@ Trigger (Schedule/Firestore) --> Cloud Function --> Push Notification (FCM/APNs)
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
+                {/* System Notifications */}
+                <tr className="bg-gray-50">
+                  <td colSpan={4} className="px-4 py-1 text-xs font-semibold text-gray-500 uppercase">System</td>
+                </tr>
                 {[
                   { type: 'daily_summary', trigger: 'Scheduled', channel: 'daily_summaries', fn: 'sendDailySummary' },
                   { type: 'weekly_insights', trigger: 'Scheduled', channel: 'insights', fn: 'sendWeeklyInsights' },
                   { type: 'fun_fact', trigger: 'Scheduled', channel: 'fun_facts', fn: 'sendDailyFunFact' },
                   { type: 'achievement', trigger: 'Firestore', channel: 'insights', fn: 'checkAchievements' },
+                  { type: 'life_keyword', trigger: 'Firestore', channel: 'insights', fn: 'onLifeKeywordGenerated' },
+                ].map((row) => (
+                  <tr key={row.type} className="hover:bg-gray-50">
+                    <td className="px-4 py-2"><code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs">{row.type}</code></td>
+                    <td className="px-4 py-2 text-gray-600">{row.trigger}</td>
+                    <td className="px-4 py-2"><code className="text-xs">{row.channel}</code></td>
+                    <td className="px-4 py-2"><code className="text-xs">{row.fn}</code></td>
+                  </tr>
+                ))}
+                {/* Reminder Notifications */}
+                <tr className="bg-gray-50">
+                  <td colSpan={4} className="px-4 py-1 text-xs font-semibold text-gray-500 uppercase">Reminders</td>
+                </tr>
+                {[
                   { type: 'event_reminder', trigger: 'Scheduled', channel: 'event_reminders', fn: 'eventNotificationScheduler' },
+                  { type: 'escalated_reminder', trigger: 'Scheduled', channel: 'important_events', fn: 'escalateReminder' },
                   { type: 'pattern_reminder', trigger: 'Scheduled', channel: 'pattern_reminders', fn: 'schedulePatternNotifications' },
-                  { type: 'content_comment', trigger: 'Realtime', channel: 'social', fn: 'onCommentCreated' },
+                  { type: 'location_alert', trigger: 'Realtime', channel: 'location', fn: 'onLocationActivityDetected' },
+                  { type: 'check_in_suggestion', trigger: 'Realtime', channel: 'location', fn: 'onCheckInSuggestion' },
+                ].map((row) => (
+                  <tr key={row.type} className="hover:bg-gray-50">
+                    <td className="px-4 py-2"><code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs">{row.type}</code></td>
+                    <td className="px-4 py-2 text-gray-600">{row.trigger}</td>
+                    <td className="px-4 py-2"><code className="text-xs">{row.channel}</code></td>
+                    <td className="px-4 py-2"><code className="text-xs">{row.fn}</code></td>
+                  </tr>
+                ))}
+                {/* Social Notifications */}
+                <tr className="bg-gray-50">
+                  <td colSpan={4} className="px-4 py-1 text-xs font-semibold text-gray-500 uppercase">Social</td>
+                </tr>
+                {[
                   { type: 'content_like', trigger: 'Realtime', channel: 'social', fn: 'onLikeCreated' },
+                  { type: 'content_comment', trigger: 'Realtime', channel: 'social', fn: 'onCommentCreated' },
+                  { type: 'life_feed_like', trigger: 'Realtime', channel: 'social', fn: 'onLifeFeedLikeCreated' },
+                  { type: 'life_feed_comment', trigger: 'Realtime', channel: 'social', fn: 'onLifeFeedCommentCreated' },
                   { type: 'circle_member_joined', trigger: 'Realtime', channel: 'social', fn: 'onCircleMemberJoined' },
                 ].map((row) => (
                   <tr key={row.type} className="hover:bg-gray-50">
                     <td className="px-4 py-2"><code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs">{row.type}</code></td>
                     <td className="px-4 py-2 text-gray-600">{row.trigger}</td>
+                    <td className="px-4 py-2"><code className="text-xs">{row.channel}</code></td>
+                    <td className="px-4 py-2"><code className="text-xs">{row.fn}</code></td>
+                  </tr>
+                ))}
+                {/* Friend Notifications */}
+                <tr className="bg-gray-50">
+                  <td colSpan={4} className="px-4 py-1 text-xs font-semibold text-gray-500 uppercase">Friends</td>
+                </tr>
+                {[
+                  { type: 'friend_request', trigger: 'Realtime', channel: 'social', fn: 'onFriendRequestCreated' },
+                  { type: 'friend_request_accepted', trigger: 'Realtime', channel: 'social', fn: 'onFriendRequestAccepted' },
+                ].map((row) => (
+                  <tr key={row.type} className="hover:bg-gray-50">
+                    <td className="px-4 py-2"><code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs">{row.type}</code></td>
+                    <td className="px-4 py-2 text-gray-600">{row.trigger}</td>
+                    <td className="px-4 py-2"><code className="text-xs">{row.channel}</code></td>
+                    <td className="px-4 py-2"><code className="text-xs">{row.fn}</code></td>
+                  </tr>
+                ))}
+                {/* Challenge Notifications */}
+                <tr className="bg-gray-50">
+                  <td colSpan={4} className="px-4 py-1 text-xs font-semibold text-gray-500 uppercase">Challenges</td>
+                </tr>
+                {[
+                  { type: 'challenge_daily_reminder', trigger: 'Scheduled', channel: 'reminders', fn: 'sendChallengeDailyReminder' },
+                  { type: 'challenge_progress', trigger: 'Firestore', channel: 'insights', fn: 'onChallengeProgressUpdate' },
+                  { type: 'challenge_event', trigger: 'Realtime', channel: 'social', fn: 'onChallengeEvent' },
+                  { type: 'challenge_milestone', trigger: 'Firestore', channel: 'insights', fn: 'onChallengeMilestone' },
+                ].map((row) => (
+                  <tr key={row.type} className="hover:bg-gray-50">
+                    <td className="px-4 py-2"><code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs">{row.type}</code></td>
+                    <td className="px-4 py-2 text-gray-600">{row.trigger}</td>
+                    <td className="px-4 py-2"><code className="text-xs">{row.channel}</code></td>
+                    <td className="px-4 py-2"><code className="text-xs">{row.fn}</code></td>
+                  </tr>
+                ))}
+                {/* Local Notifications (Mobile App) */}
+                <tr className="bg-amber-50">
+                  <td colSpan={4} className="px-4 py-1 text-xs font-semibold text-amber-700 uppercase">Local (Mobile App)</td>
+                </tr>
+                {[
+                  { type: 'morning_briefing', trigger: 'Scheduled (Local)', channel: 'morning_briefing', fn: 'MorningBriefingService' },
+                  { type: 'check_in_suggestion', trigger: 'Geofence (Local)', channel: 'location', fn: 'NotificationService' },
+                  { type: 'event_reminder', trigger: 'Scheduled (Local)', channel: 'event_reminders', fn: 'ReminderService' },
+                  { type: 'pattern_reminder', trigger: 'Scheduled (Local)', channel: 'pattern_reminders', fn: 'ReminderService' },
+                ].map((row) => (
+                  <tr key={row.type} className="hover:bg-amber-50/50">
+                    <td className="px-4 py-2"><code className="bg-amber-100 px-1.5 py-0.5 rounded text-xs">{row.type}</code></td>
+                    <td className="px-4 py-2 text-amber-700">{row.trigger}</td>
                     <td className="px-4 py-2"><code className="text-xs">{row.channel}</code></td>
                     <td className="px-4 py-2"><code className="text-xs">{row.fn}</code></td>
                   </tr>
@@ -486,15 +595,15 @@ export default function NotificationsViewerPage() {
           Admin
         </Link>
         <span className="mx-2">/</span>
-        <span className="text-gray-900 font-medium">Notifications</span>
+        <span className="text-gray-900 font-medium">Push Notifications</span>
       </nav>
 
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Notification Viewer</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Push Notifications</h1>
           <p className="mt-1 text-gray-600">
-            Browse notification data per user from Firestore
+            Browse all push notification history from Firestore (system, social, reminders, challenges)
           </p>
         </div>
         <button
