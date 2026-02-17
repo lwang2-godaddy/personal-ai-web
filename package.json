@@ -15,6 +15,8 @@
     "test": "tsx scripts/integration-tests/run-all.ts",
     "test:event-date": "tsx scripts/integration-tests/run-all.ts --filter event-date",
     "test:insights": "tsx scripts/integration-tests/run-all.ts --filter insights-orchestrator",
+    "test:push-notifications": "tsx scripts/integration-tests/run-all.ts --filter push-notifications-admin",
+    "test:ask-ai": "tsx scripts/integration-tests/run-all.ts --filter ask-ai-questions",
     "check:ingestion": "tsx scripts/diagnostics/check-voice-ingestion.ts",
     "check:firestore": "tsx scripts/diagnostics/check-firestore.ts"
   },
@@ -37,7 +39,7 @@
     "react-redux": "^9.2.0",
     "recharts": "^3.6.0",
     "redux-persist": "^6.0.0",
-    "vercel": "^50.13.2"
+    "vercel": "^50.18.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

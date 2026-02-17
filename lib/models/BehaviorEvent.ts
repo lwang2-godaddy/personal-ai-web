@@ -356,10 +356,14 @@ export const TRACKED_SCREENS = {
   adminMigrations: 'admin_migrations',
   adminMigrationDetail: 'admin_migration_detail',
   adminAskQuestions: 'admin_ask_questions',
+  adminAskAiQuestions: 'admin_ask_ai_questions',
   adminDocs: 'admin_docs',
   adminDemoData: 'admin_demo_data',
   adminTesting: 'admin_testing',
   adminPerformance: 'admin_performance',
+  adminFeatures: 'admin_features',
+  adminReleaseNotes: 'admin_release_notes',
+  adminPredictions: 'admin_predictions',
 
   // Mobile (for cross-platform compatibility)
   home: 'home',

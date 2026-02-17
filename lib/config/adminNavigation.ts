@@ -22,6 +22,8 @@ export interface NavGroup {
 export const STANDALONE_NAV_ITEMS: NavItem[] = [
   { href: '/admin', label: 'Overview', icon: '📊' },
   { href: '/admin/alerts', label: 'Alerts', icon: '🚨' },
+  { href: '/admin/features', label: 'Features', icon: '🧩' },
+  { href: '/admin/release-notes', label: 'Release Notes', icon: '📋' },
 ];
 
 /**
@@ -67,6 +69,7 @@ export const ADMIN_NAVIGATION: NavGroup[] = [
       { href: '/admin/vocabulary', label: 'Vocabulary', icon: '📚' },
       { href: '/admin/notifications', label: 'Notifications', icon: '🔔' },
       { href: '/admin/voice-categories', label: 'Voice Categories', icon: '🎤' },
+      { href: '/admin/ask-ai-questions', label: 'Ask AI Questions', icon: '❓' },
     ],
   },
   {

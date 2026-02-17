@@ -768,7 +768,7 @@ export const LIFE_FEED_PROMPT_POST_TYPES: Record<string, LifeFeedPromptInfo> = {
     contextSources: LIFE_FEED_CONTEXT_BY_POST_TYPE.pattern_prediction,
     usageInfo: {
       dataTimeRange: 'Last 14 days (+ 30-day lookback for seasonal)',
-      selectionLogic: 'generatePredictions() must return patterns (strict)',
+      selectionLogic: 'conditional',  // Only when generatePredictions() returns patterns
       variantGroup: 'pattern_prediction',
       variants: ['pattern_prediction', 'pattern_prediction_curious', 'pattern_prediction_playful'],
       cooldownDays: 2,
@@ -930,9 +930,10 @@ export const LIFE_FEED_PROMPT_POST_TYPES: Record<string, LifeFeedPromptInfo> = {
     contextSources: LIFE_FEED_CONTEXT_BY_POST_TYPE.streak_achievement,
     usageInfo: {
       dataTimeRange: 'Last 7 days',
-      selectionLogic: 'detectStreaks() must return consecutive-day streaks (strict)',
+      selectionLogic: 'conditional',  // Only when detectStreaks() finds consecutive-day streaks
       cooldownDays: 3,
       dataSelection: {
+        maxItems: { voiceNotes: 5, photos: 0, diaryEntries: 5 },
         scoringFactors: [
           { name: 'Diary Streak', weight: 'days', description: 'Consecutive days with diary entries (3+ days, uses calculateConsecutiveDays)' },
           { name: 'Voice Streak', weight: 'days', description: 'Consecutive days with voice notes (3+ days, uses calculateConsecutiveDays)' },
@@ -1001,9 +1002,10 @@ export const LIFE_FEED_PROMPT_POST_TYPES: Record<string, LifeFeedPromptInfo> = {
     contextSources: LIFE_FEED_CONTEXT_BY_POST_TYPE.activity_pattern,
     usageInfo: {
       dataTimeRange: 'Last 7 days',
-      selectionLogic: 'detectDayPatterns() + detectDiaryTopicPatterns()',
+      selectionLogic: 'conditional',  // detectDayPatterns() + detectDiaryTopicPatterns()
       cooldownDays: 7,
       dataSelection: {
+        maxItems: { voiceNotes: 3, photos: 0, diaryEntries: 5 },
         scoringFactors: [
           { name: 'Location Pattern', weight: 'count', description: 'Same activity at location 2+ times on same day-of-week' },
           { name: 'Diary Topic', weight: 'count', description: 'Activity keyword (run, gym, yoga, etc.) mentioned 2+ times in entries' },
@@ -1020,9 +1022,10 @@ export const LIFE_FEED_PROMPT_POST_TYPES: Record<string, LifeFeedPromptInfo> = {
     contextSources: LIFE_FEED_CONTEXT_BY_POST_TYPE.health_alert,
     usageInfo: {
       dataTimeRange: 'Last 7 days (compares latest vs 7-day average)',
-      selectionLogic: 'detectHealthAnomalies()',
+      selectionLogic: 'conditional',  // detectHealthAnomalies()
       cooldownDays: 1,
       dataSelection: {
+        maxItems: { voiceNotes: 0, photos: 0, diaryEntries: 0 },
         scoringFactors: [
           { name: 'Spike Detection', weight: 'severity', description: 'Latest value >50% above 7-day average (medium) or >100% (high)' },
           { name: 'Drop Detection', weight: 'severity', description: 'Latest value >40% below 7-day average (for steps, energy)' },
@@ -1045,9 +1048,9 @@ export const LIFE_FEED_PROMPT_POST_TYPES: Record<string, LifeFeedPromptInfo> = {
       variants: ['category_insight', 'category_trend', 'category_correlation'],
       cooldownDays: 3,
       dataSelection: {
-        threshold: 3, // Lowered from 5 for new users
+        maxItems: { voiceNotes: 5, photos: 5, diaryEntries: 5 },
         scoringFactors: [
-          { name: 'Post Count', weight: 'count', description: 'Requires 3+ posts (text, voice, or photo)' },
+          { name: 'Post Count', weight: 'count', description: 'Requires 3+ posts (lowered from 5 for new users)' },
           { name: 'Category Tags', weight: 'distribution', description: 'Analyzes tag/topic distribution' },
         ],
       },
