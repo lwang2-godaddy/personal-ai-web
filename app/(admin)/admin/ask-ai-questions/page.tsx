@@ -80,11 +80,23 @@ const SIGNAL_TYPE_COLORS: Record<string, string> = {
   category_trend: 'bg-yellow-100 text-yellow-800',
 };
 
+// Algorithm documentation
+const SIGNAL_THRESHOLDS = {
+  visit_frequency: { threshold: 5, description: '5+ visits to same location' },
+  streak: { threshold: 3, description: '3+ consecutive days of activity' },
+  gap: { threshold: 14, description: '14+ days since last activity' },
+  milestone: { threshold: '10, 25, 50, 100', description: 'Near milestone counts' },
+  category_trend: { threshold: 4, description: '4+ entries in same category (weekly)' },
+  day_pattern: { threshold: 3, description: '3+ occurrences on same weekday' },
+  related_memory: { threshold: 0.8, description: '80%+ semantic similarity' },
+};
+
 export default function AdminAskAiQuestionsPage() {
   useTrackPage(TRACKED_SCREENS.adminAskAiQuestions || 'admin_ask_ai_questions');
 
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [showAlgorithm, setShowAlgorithm] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [questions, setQuestions] = useState<AskAiQuestion[]>([]);
   const [stats, setStats] = useState<QuestionsResponse['stats'] | null>(null);
@@ -155,7 +167,114 @@ export default function AdminAskAiQuestionsPage() {
             Review personalized questions generated for user content
           </p>
         </div>
+        <button
+          onClick={() => setShowAlgorithm(!showAlgorithm)}
+          className="px-4 py-2 text-sm font-medium text-indigo-600 hover:text-indigo-800 border border-indigo-200 rounded-lg hover:bg-indigo-50 transition-colors"
+        >
+          {showAlgorithm ? 'Hide Algorithm' : 'View Algorithm'}
+        </button>
       </div>
+
+      {/* Algorithm Documentation */}
+      {showAlgorithm && (
+        <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 rounded-lg p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <span>🧠</span> Question Generation Algorithm
+          </h2>
+
+          {/* 2-Tier System Overview */}
+          <div className="grid md:grid-cols-2 gap-6 mb-6">
+            <div className="bg-white rounded-lg p-4 shadow-sm">
+              <h3 className="font-medium text-indigo-800 mb-2 flex items-center gap-2">
+                <span className="px-2 py-0.5 text-xs bg-indigo-100 text-indigo-800 rounded-full">Tier 1</span>
+                Heuristic Questions
+              </h3>
+              <ul className="text-sm text-gray-600 space-y-1">
+                <li>• <strong>Instant</strong> - No API calls, ~100ms</li>
+                <li>• <strong>$0 cost</strong> - Uses cached data only</li>
+                <li>• <strong>Signal-based</strong> - Detects patterns in user data</li>
+                <li>• <strong>Fallback</strong> - Generic question if no signal &gt; 50%</li>
+              </ul>
+            </div>
+
+            <div className="bg-white rounded-lg p-4 shadow-sm">
+              <h3 className="font-medium text-purple-800 mb-2 flex items-center gap-2">
+                <span className="px-2 py-0.5 text-xs bg-purple-100 text-purple-800 rounded-full">Tier 2</span>
+                AI-Generated Questions
+              </h3>
+              <ul className="text-sm text-gray-600 space-y-1">
+                <li>• <strong>On-demand</strong> - User taps &quot;Get better questions&quot;</li>
+                <li>• <strong>~$0.01/request</strong> - GPT-4o-mini</li>
+                <li>• <strong>Semantic search</strong> - Pinecone finds related content</li>
+                <li>• <strong>3-5 questions</strong> - Personalized to context</li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Signal Detection Thresholds */}
+          <div className="bg-white rounded-lg p-4 shadow-sm mb-4">
+            <h3 className="font-medium text-gray-900 mb-3">Signal Detection Thresholds</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {Object.entries(SIGNAL_THRESHOLDS).map(([signal, config]) => (
+                <div
+                  key={signal}
+                  className={`p-3 rounded-lg ${SIGNAL_TYPE_COLORS[signal] || 'bg-gray-100 text-gray-800'}`}
+                >
+                  <div className="font-medium text-sm">{signal.replace(/_/g, ' ')}</div>
+                  <div className="text-xs opacity-75 mt-1">
+                    Threshold: {config.threshold}
+                  </div>
+                  <div className="text-xs opacity-60 mt-0.5">
+                    {config.description}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Flow Explanation */}
+          <div className="bg-white rounded-lg p-4 shadow-sm">
+            <h3 className="font-medium text-gray-900 mb-3">Question Generation Flow</h3>
+            <div className="flex items-center gap-2 text-sm text-gray-600 flex-wrap">
+              <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded">User taps Ask AI</span>
+              <span>→</span>
+              <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded">Detect signals</span>
+              <span>→</span>
+              <span className="px-2 py-1 bg-green-100 text-green-800 rounded">Signal &gt; 50%?</span>
+              <span>→</span>
+              <span className="px-2 py-1 bg-indigo-100 text-indigo-800 rounded">Personalized Q</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-gray-600 mt-2 flex-wrap">
+              <span className="px-2 py-1 bg-gray-100 text-gray-500 rounded ml-[180px] md:ml-[220px]">No strong signal</span>
+              <span>→</span>
+              <span className="px-2 py-1 bg-gray-200 text-gray-700 rounded">Fallback: &quot;What insights...&quot;</span>
+            </div>
+          </div>
+
+          {/* Example Questions */}
+          <div className="mt-4 text-sm">
+            <h4 className="font-medium text-gray-700 mb-2">Example Personalized Questions:</h4>
+            <div className="grid md:grid-cols-2 gap-2 text-gray-600">
+              <div className="flex items-start gap-2">
+                <span className={`px-1.5 py-0.5 text-xs rounded ${SIGNAL_TYPE_COLORS.visit_frequency}`}>visit</span>
+                <span>&quot;This is your 5th visit to the gym - what keeps you coming back?&quot;</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className={`px-1.5 py-0.5 text-xs rounded ${SIGNAL_TYPE_COLORS.streak}`}>streak</span>
+                <span>&quot;You&apos;re on a 7-day journaling streak! What&apos;s motivating you?&quot;</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className={`px-1.5 py-0.5 text-xs rounded ${SIGNAL_TYPE_COLORS.gap}`}>gap</span>
+                <span>&quot;It&apos;s been 2 weeks since your last visit. What brought you back?&quot;</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className={`px-1.5 py-0.5 text-xs rounded ${SIGNAL_TYPE_COLORS.milestone}`}>milestone</span>
+                <span>&quot;This is your 25th workout! How has your fitness journey been?&quot;</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="bg-white border border-gray-200 rounded-lg p-4">
