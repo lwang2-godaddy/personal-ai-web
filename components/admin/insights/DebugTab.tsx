@@ -142,10 +142,10 @@ const POST_TYPE_MAPPINGS = [
   { service: 'FunFact (milestone)', postType: 'milestone', cooldown: '7 days', emoji: '🎉', source: 'FunFactGenerator' },
   { service: 'FunFact (comparison)', postType: 'comparison', cooldown: '14 days', emoji: '📊', source: 'FunFactGenerator' },
   { service: 'FunFact (streak)', postType: 'streak_achievement', cooldown: '3 days', emoji: '🔥', source: 'FunFactGenerator' },
-  { service: 'FunFact (pattern)', postType: 'pattern_prediction', cooldown: '1 day', emoji: '🔍', source: 'FunFactGenerator' },
+  { service: 'FunFact (pattern)', postType: 'pattern_prediction', cooldown: '2 days', emoji: '🔮', source: 'FunFactGenerator' },
   { service: 'FunFact (statistic)', postType: 'reflective_insight', cooldown: '3 days', emoji: '📈', source: 'FunFactGenerator' },
   // InsightsOrchestrator outputs
-  { service: 'PatternInsight', postType: 'pattern_prediction', cooldown: '1 day', emoji: '🔍', source: 'InsightsOrchestrator' },
+  { service: 'PatternInsight', postType: 'pattern_prediction', cooldown: '2 days', emoji: '🔮', source: 'LifeFeedGenerator (multi-signal: diary, voice, activity, mood, social, goals)' },
   { service: 'HealthAnomaly', postType: 'reflective_insight', cooldown: '3 days', emoji: '❤️', source: 'InsightsOrchestrator' },
   { service: 'ActivityAnomaly', postType: 'reflective_insight', cooldown: '3 days', emoji: '📍', source: 'InsightsOrchestrator' },
   { service: 'MoodCorrelation', postType: 'reflective_insight', cooldown: '3 days', emoji: '🧭', source: 'InsightsOrchestrator' },

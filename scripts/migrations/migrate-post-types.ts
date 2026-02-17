@@ -22,55 +22,43 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Load environment variables FIRST
-dotenv.config({ path: path.join(__dirname, '../.env.local') });
+// Script is at scripts/migrations/, so go up two levels to find .env.local in project root
+dotenv.config({ path: path.join(__dirname, '../../.env.local') });
 
 // Now import firebase-admin after env vars are loaded
 import * as admin from 'firebase-admin';
 
-// Initialize Firebase Admin
-function initializeFirebase() {
-  // Check if already initialized
-  if (admin.apps.length > 0) {
-    return admin.app();
-  }
+// Initialize Firebase Admin (same pattern as migrate-all-prompts-i18n.ts)
+const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
-  // Try service account key from env
-  const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
-  if (serviceAccountKey) {
-    try {
-      const serviceAccount = JSON.parse(serviceAccountKey);
-      return admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-      });
-    } catch (error) {
-      console.error('Failed to parse FIREBASE_SERVICE_ACCOUNT_KEY');
-    }
-  }
-
-  // Try service account key file
-  const serviceAccountPath = path.join(__dirname, '../serviceAccountKey.json');
+if (serviceAccountKey) {
   try {
-    return admin.initializeApp({
-      credential: admin.credential.cert(serviceAccountPath),
+    const serviceAccount = JSON.parse(serviceAccountKey);
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+      projectId: projectId || serviceAccount.project_id,
     });
-  } catch (error) {
-    console.error('Failed to load serviceAccountKey.json');
+    console.log(`Firebase initialized with project: ${projectId || serviceAccount.project_id}`);
+  } catch (e) {
+    console.error('Error parsing FIREBASE_SERVICE_ACCOUNT_KEY:', e);
+    process.exit(1);
   }
-
-  // Try GOOGLE_APPLICATION_CREDENTIALS
-  if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-    return admin.initializeApp({
-      credential: admin.credential.applicationDefault(),
-    });
-  }
-
-  throw new Error(
-    'Firebase Admin initialization failed. Set FIREBASE_SERVICE_ACCOUNT_KEY in .env.local, ' +
-    'place serviceAccountKey.json in project root, or set GOOGLE_APPLICATION_CREDENTIALS.'
-  );
+} else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+  admin.initializeApp({
+    projectId,
+  });
+  console.log(`Firebase initialized from GOOGLE_APPLICATION_CREDENTIALS`);
+} else {
+  console.error('Error: No Firebase credentials found.');
+  console.error('Set FIREBASE_SERVICE_ACCOUNT_KEY or GOOGLE_APPLICATION_CREDENTIALS');
+  console.error('\nCurrent env vars:');
+  console.error(`  FIREBASE_SERVICE_ACCOUNT_KEY: ${serviceAccountKey ? 'set (length: ' + serviceAccountKey.length + ')' : 'not set'}`);
+  console.error(`  GOOGLE_APPLICATION_CREDENTIALS: ${process.env.GOOGLE_APPLICATION_CREDENTIALS || 'not set'}`);
+  console.error(`  NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${projectId || 'not set'}`);
+  process.exit(1);
 }
 
-initializeFirebase();
 const db = admin.firestore();
 
 // All post types - this is the canonical list
@@ -102,12 +90,12 @@ const ALL_POST_TYPES = {
     enabled: true,
     displayName: 'Prediction',
     icon: '🔮',
-    description: 'Future activity predictions',
-    cooldownDays: 1,
-    priority: 7,
-    defaultCategory: 'activity',
-    minConfidence: 0.7,
-    maxPerDay: 2,
+    description: 'Forward-looking predictions from diary, voice notes, activities, and mood patterns',
+    cooldownDays: 2,
+    priority: 8,
+    defaultCategory: 'personal',
+    minConfidence: 0.5,
+    maxPerDay: 1,
   },
   reflective_insight: {
     enabled: true,

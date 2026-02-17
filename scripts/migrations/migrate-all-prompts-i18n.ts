@@ -493,25 +493,41 @@ My recent data:
 {{context}}
 
 Write the post:`,
-    life_feed_pattern_prediction: `Write a friendly reminder/prediction tweet about what I'll probably do based on my habits.
-Make it feel like a fun self-observation, not a command. Mention confidence if it's high.
-Example: "It's Tuesday which means... badminton night! Already looking forward to it."
+    life_feed_pattern_prediction: `Write a forward-looking prediction or observation about my life based on the patterns in my data.
+
+Rules:
+- If the signal is about an activity pattern, write a fun reminder about what I'll probably do
+- If it's a mood trend, write an encouraging observation about my emotional direction
+- If it's about a person I mention often, write a warm nudge about staying connected
+- If it's about a goal I mentioned, write a motivating check-in on my progress
+- If it's a routine, celebrate my consistency or gently note it
+- Keep it personal, warm, and forward-looking (not backward-looking)
+- Sound like a friend who knows me well, not an AI analyzing data
 
 My recent data:
 {{context}}
 
 Write the post:`,
-    life_feed_pattern_prediction_curious: `Write a curious, wondering tweet about whether my pattern will continue today.
-Frame it as a question or speculation - not a certainty. Be playful about it.
-Example: "Will I actually make it to yoga today or break my streak? My track record says yes, but the couch is looking real comfortable... 🤔"
+    life_feed_pattern_prediction_curious: `Write a curious, self-reflective prediction about what might happen next in my life.
+Frame it as wondering or speculation, not certainty. Be playful.
+
+Examples by type:
+- Activity: "Will I actually make it to yoga today or break my streak?"
+- Mood: "I've been in such a good headspace lately... wonder what's driving it 🤔"
+- Social: "Haven't caught up with Sarah in a while. Feeling like it's overdue..."
+- Goal: "Said I'd read more this month. The library books staring at me say... maybe?"
 
 My recent data:
 {{context}}
 
 Write the post:`,
-    life_feed_pattern_prediction_playful: `Write a playful, self-aware tweet about how predictable I've become based on my patterns.
-Embrace the routine with humor. Make fun of your own consistency.
-Example: "My gym attendance is so predictable at this point that they probably mark their calendar by my visits. Monday, Wednesday, Friday - like clockwork ⏰"
+    life_feed_pattern_prediction_playful: `Write a playful, self-aware observation about how predictable (or unpredictable) my life has become.
+Embrace routine with humor, or note surprises with delight.
+
+Examples:
+- "My Sunday journaling sessions are so consistent, my diary probably gets nervous if I'm late 📝"
+- "Apparently I can't go a week without mentioning coffee. At this point it's a personality trait ☕"
+- "My mood chart looks like a rollercoaster this week. At least life isn't boring!"
 
 My recent data:
 {{context}}
@@ -1204,25 +1220,41 @@ Rules:
 {{context}}
 
 写帖子（用中文）：`,
-    life_feed_pattern_prediction: `写一条友好的提醒/预测推文，关于我根据习惯可能会做什么。
-让它感觉像是有趣的自我观察，而不是命令。如果信心高，提一下。
-例子："今天是周二，这意味着……羽毛球之夜！已经很期待了。"
+    life_feed_pattern_prediction: `根据我数据中的规律，写一条关于我生活的前瞻性预测或观察。
+
+规则：
+- 如果信号是关于活动规律，写一条有趣的提醒
+- 如果是情绪趋势，写一条鼓励性的观察
+- 如果是关于我经常提到的人，写一条温暖的联系提醒
+- 如果是关于我提到的目标，写一条激励性的进展提醒
+- 如果是日常规律，庆祝我的坚持或温和地提及
+- 保持个人化、温暖、面向未来（不是回顾过去）
+- 像了解我的朋友一样，而不是分析数据的AI
 
 我最近的数据：
 {{context}}
 
 写帖子（用中文）：`,
-    life_feed_pattern_prediction_curious: `写一条好奇的、想知道的推文，关于我的习惯今天是否会继续。
-把它框架成一个问题或猜测——不是确定的。要俏皮一点。
-例子："今天我真的会去瑜伽还是会打破记录？我的过往记录说会，但沙发看起来真的很舒服……🤔"
+    life_feed_pattern_prediction_curious: `写一条好奇的、自我反思的预测，关于我生活中接下来可能发生什么。
+以好奇或推测的方式表达，不是确定的。要俏皮。
+
+各类型示例：
+- 活动："今天真的会去瑜伽还是打破记录？"
+- 情绪："最近心态真好……是什么在驱动呢 🤔"
+- 社交："好久没和小红聊了。感觉该约一下了……"
+- 目标："说好这个月要多读书。书架上的书在看着我说……也许吧？"
 
 我最近的数据：
 {{context}}
 
 写帖子（用中文）：`,
-    life_feed_pattern_prediction_playful: `写一条俏皮的、自我意识强的推文，关于我根据习惯变得多么可预测。
-用幽默拥抱常规。开自己一贯性的玩笑。
-例子："我的健身房出勤率现在太可预测了，他们可能用我的到访来标记日历。周一、周三、周五——像时钟一样准 ⏰"
+    life_feed_pattern_prediction_playful: `写一条俏皮的、自我意识强的观察，关于我的生活变得多么可预测（或不可预测）。
+用幽默拥抱常规，或用喜悦感记录意外。
+
+示例：
+- "我周日写日记的习惯太稳定了，日记本要是我迟到了可能会紧张 📝"
+- "显然我一周都离不开咖啡。到这地步，这已经是性格特征了 ☕"
+- "这周的情绪图表像过山车一样。至少生活不无聊！"
 
 我最近的数据：
 {{context}}
@@ -1908,25 +1940,41 @@ Rules:
 {{context}}
 
 投稿を書いてください（日本語で）：`,
-    life_feed_pattern_prediction: `習慣に基づいて私がおそらくすることについて、フレンドリーなリマインダー/予測ツイートを書いてください。
-命令ではなく、楽しい自己観察のように感じさせて。自信が高ければ言及して。
-例：「今日は火曜日ということは……バドミントンの夜！もう楽しみにしてる。」
+    life_feed_pattern_prediction: `データのパターンに基づいて、私の生活についての前向きな予測や観察を書いてください。
+
+ルール：
+- 活動パターンの場合、やりそうなことについて楽しいリマインダーを書いて
+- 気分トレンドの場合、感情の方向性について励ましの観察を書いて
+- よく言及する人の場合、つながりを保つ温かい提案を書いて
+- 目標の場合、進捗確認の励ましを書いて
+- ルーティンの場合、一貫性を祝うかやさしく言及して
+- 個人的で、温かく、前向き（過去を振り返らない）
+- データを分析するAIではなく、私をよく知る友人のように
 
 私の最近のデータ：
 {{context}}
 
 投稿を書いてください（日本語で）：`,
-    life_feed_pattern_prediction_curious: `今日パターンが続くかどうかについて、好奇心旺盛で疑問に思うツイートを書いてください。
-確実性ではなく、質問や推測として表現して。遊び心を持って。
-例：「今日は本当にヨガに行く？それとも連続記録を破る？実績からすると行くけど、ソファがすごく気持ちよさそう…🤔」
+    life_feed_pattern_prediction_curious: `私の生活で次に何が起こるかについて、好奇心旺盛で自己省察的な予測を書いてください。
+確実性ではなく、不思議がったり推測として表現して。遊び心を持って。
+
+タイプ別の例：
+- 活動：「今日本当にヨガに行く？それとも記録を破る？」
+- 気分：「最近すごくいい気分…何が原因だろう 🤔」
+- 社交：「しばらくさくらと会ってない。そろそろかも…」
+- 目標：「今月は読書すると言った。本棚の本が…多分ね？って顔してる」
 
 私の最近のデータ：
 {{context}}
 
 投稿を書いてください（日本語で）：`,
-    life_feed_pattern_prediction_playful: `パターンに基づいて自分がどれだけ予測可能になったかについて、遊び心のある自己認識ツイートを書いてください。
-ユーモアでルーティンを受け入れて。自分の一貫性をネタにして。
-例：「ジムへの出席がもう予測可能すぎて、彼らは私の訪問でカレンダーをマークしてるかも。月・水・金 - 時計のように正確 ⏰」
+    life_feed_pattern_prediction_playful: `自分の生活がどれだけ予測可能（または予測不可能）になったかについて、遊び心のある自己認識の観察を書いてください。
+ユーモアでルーティンを受け入れるか、驚きを喜びで記録して。
+
+例：
+- 「日曜の日記がこんなに安定してると、遅れたら日記帳が心配するかも 📝」
+- 「どうやら一週間コーヒーなしではいられないらしい。もう性格の一部だね ☕」
+- 「今週の気分チャートはジェットコースターみたい。少なくとも退屈じゃない！」
 
 私の最近のデータ：
 {{context}}
@@ -2558,25 +2606,41 @@ JSON形式で返してください：
 {{context}}
 
 포스트를 작성해주세요 (한국어로):`,
-    life_feed_pattern_prediction: `습관에 기반해 아마 할 것에 대한 친근한 리마인더/예측 트윗을 작성해주세요.
-명령이 아니라 재미있는 자기 관찰처럼 느껴지게. 확신이 높으면 언급해요.
-예: "오늘은 화요일이니까... 배드민턴 밤! 벌써 기대돼."
+    life_feed_pattern_prediction: `데이터의 패턴에 기반해 내 삶에 대한 미래지향적 예측이나 관찰을 작성해주세요.
+
+규칙:
+- 활동 패턴이면 아마 할 것에 대한 재미있는 리마인더를 써요
+- 기분 트렌드면 감정 방향에 대한 격려하는 관찰을 써요
+- 자주 언급하는 사람이면 연락에 대한 따뜻한 제안을 써요
+- 목표면 진행 상황에 대한 동기부여 체크인을 써요
+- 루틴이면 일관성을 축하하거나 부드럽게 언급해요
+- 개인적이고, 따뜻하고, 미래지향적으로 (과거 회고가 아닌)
+- 데이터를 분석하는 AI가 아닌, 나를 잘 아는 친구처럼
 
 내 최근 데이터:
 {{context}}
 
 포스트를 작성해주세요 (한국어로):`,
-    life_feed_pattern_prediction_curious: `오늘 패턴이 계속될지에 대한 호기심 어린 궁금한 트윗을 작성해주세요.
-확실함이 아니라 질문이나 추측으로 표현해요. 장난스럽게.
-예: "오늘 정말 요가 갈까 아님 연속 기록 깰까? 과거 기록으론 갈 거 같은데, 소파가 진짜 편해 보여... 🤔"
+    life_feed_pattern_prediction_curious: `내 삶에서 다음에 무슨 일이 일어날지에 대한 호기심 어린 자기성찰적 예측을 작성해주세요.
+확실함이 아닌 궁금해하거나 추측하는 방식으로. 장난스럽게.
+
+유형별 예시:
+- 활동: "오늘 정말 요가 갈까 아님 기록 깰까?"
+- 기분: "최근에 기분이 진짜 좋아... 뭐가 이끄는 걸까 🤔"
+- 사교: "수아랑 한참 못 만났네. 슬슬 만나야 할 것 같은..."
+- 목표: "이달에 독서 더 하겠다고 했는데. 책꽂이 책들이 나를 보며... 글쎄?"
 
 내 최근 데이터:
 {{context}}
 
 포스트를 작성해주세요 (한국어로):`,
-    life_feed_pattern_prediction_playful: `패턴에 따라 내가 얼마나 예측 가능해졌는지에 대한 장난스럽고 자기인식적인 트윗을 작성해주세요.
-유머로 루틴을 받아들여요. 나의 일관성을 농담 삼아.
-예: "헬스장 출석이 이제 너무 예측 가능해서 그들이 내 방문으로 달력을 표시할 듯. 월·수·금 - 시계처럼 정확 ⏰"
+    life_feed_pattern_prediction_playful: `내 삶이 얼마나 예측 가능해졌는지 (또는 예측 불가능해졌는지)에 대한 장난스럽고 자기인식적인 관찰을 작성해주세요.
+유머로 루틴을 받아들이거나, 놀라움을 기쁨으로 기록해요.
+
+예시:
+- "일요일 일기 쓰기가 이렇게 꾸준하면, 늦으면 일기장이 걱정할 듯 📝"
+- "분명 일주일에 커피 없이는 못 사는 것 같아. 이 정도면 성격 특성이지 ☕"
+- "이번 주 기분 차트가 롤러코스터 같아. 적어도 지루하진 않네!"
 
 내 최근 데이터:
 {{context}}
@@ -3208,25 +3272,41 @@ Mis datos recientes:
 {{context}}
 
 Escribe la publicación (en español):`,
-    life_feed_pattern_prediction: `Escribe un tweet amigable de recordatorio/predicción sobre lo que probablemente haré basado en mis hábitos.
-Hazlo sentir como una auto-observación divertida, no un comando. Menciona la confianza si es alta.
-Ejemplo: "Es martes lo que significa... ¡noche de bádminton! Ya me emociona."
+    life_feed_pattern_prediction: `Escribe una predicción u observación sobre mi vida mirando hacia el futuro, basada en los patrones de mis datos.
+
+Reglas:
+- Si la señal es sobre un patrón de actividad, escribe un recordatorio divertido
+- Si es una tendencia de ánimo, escribe una observación alentadora sobre mi dirección emocional
+- Si es sobre una persona que menciono mucho, escribe un recordatorio cálido sobre mantener contacto
+- Si es sobre una meta, escribe un check-in motivador sobre mi progreso
+- Si es una rutina, celebra mi consistencia o menciónala con cariño
+- Mantenlo personal, cálido y mirando al futuro (no retrospectivo)
+- Suena como un amigo que me conoce bien, no como una IA analizando datos
 
 Mis datos recientes:
 {{context}}
 
 Escribe la publicación (en español):`,
-    life_feed_pattern_prediction_curious: `Escribe un tweet curioso, preguntándote si mi patrón continuará hoy.
-Enmárcalo como una pregunta o especulación - no una certeza. Sé juguetón.
-Ejemplo: "¿Realmente iré a yoga hoy o romperé mi racha? Mi historial dice que sí, pero el sofá se ve muy cómodo... 🤔"
+    life_feed_pattern_prediction_curious: `Escribe una predicción curiosa y autorreflexiva sobre qué podría pasar después en mi vida.
+Enmárcalo como curiosidad o especulación, no certeza. Sé juguetón.
+
+Ejemplos por tipo:
+- Actividad: "¿Realmente iré a yoga hoy o romperé mi racha?"
+- Ánimo: "He estado de tan buen humor últimamente... me pregunto qué lo impulsa 🤔"
+- Social: "Hace rato que no hablo con María. Siento que ya toca..."
+- Meta: "Dije que leería más este mes. Los libros me miran como diciendo... ¿quizás?"
 
 Mis datos recientes:
 {{context}}
 
 Escribe la publicación (en español):`,
-    life_feed_pattern_prediction_playful: `Escribe un tweet juguetón, autocrítico sobre lo predecible que me he vuelto basado en mis patrones.
-Abraza la rutina con humor. Ríete de tu propia consistencia.
-Ejemplo: "Mi asistencia al gym es tan predecible que probablemente marcan su calendario con mis visitas. Lunes, miércoles, viernes - como un reloj ⏰"
+    life_feed_pattern_prediction_playful: `Escribe una observación juguetona y autoconsciente sobre lo predecible (o impredecible) que se ha vuelto mi vida.
+Abraza la rutina con humor, o nota las sorpresas con alegría.
+
+Ejemplos:
+- "Mis sesiones de diario del domingo son tan consistentes que mi diario probablemente se pone nervioso si llego tarde 📝"
+- "Aparentemente no puedo pasar una semana sin mencionar el café. A estas alturas es un rasgo de personalidad ☕"
+- "Mi gráfico de ánimo esta semana parece una montaña rusa. ¡Al menos la vida no es aburrida!"
 
 Mis datos recientes:
 {{context}}
@@ -3858,25 +3938,41 @@ Mes données récentes:
 {{context}}
 
 Écrivez la publication (en français):`,
-    life_feed_pattern_prediction: `Écrivez un tweet amical rappel/prédiction sur ce que je vais probablement faire basé sur mes habitudes.
-Faites ressembler à une auto-observation amusante, pas un ordre. Mentionnez la confiance si elle est élevée.
-Exemple: "C'est mardi ce qui veut dire... soirée badminton! J'ai déjà hâte."
+    life_feed_pattern_prediction: `Écrivez une prédiction ou observation tournée vers l'avenir sur ma vie, basée sur les patterns dans mes données.
+
+Règles:
+- Si le signal concerne un pattern d'activité, écrivez un rappel amusant
+- Si c'est une tendance d'humeur, écrivez une observation encourageante sur ma direction émotionnelle
+- Si c'est une personne que je mentionne souvent, écrivez un rappel chaleureux de garder contact
+- Si c'est un objectif, écrivez un check-in motivant sur mes progrès
+- Si c'est une routine, célébrez ma constance ou notez-la gentiment
+- Gardez-le personnel, chaleureux et tourné vers l'avenir (pas rétrospectif)
+- Sonnez comme un ami qui me connaît bien, pas une IA analysant des données
 
 Mes données récentes:
 {{context}}
 
 Écrivez la publication (en français):`,
-    life_feed_pattern_prediction_curious: `Écrivez un tweet curieux, se demandant si mon pattern va continuer aujourd'hui.
-Formulez comme une question ou spéculation - pas une certitude. Soyez joueur.
-Exemple: "Est-ce que je vais vraiment aller au yoga aujourd'hui ou briser ma série? Mon historique dit oui, mais le canapé a l'air vraiment confortable... 🤔"
+    life_feed_pattern_prediction_curious: `Écrivez une prédiction curieuse et introspective sur ce qui pourrait arriver ensuite dans ma vie.
+Formulez-le comme une curiosité ou spéculation, pas une certitude. Soyez joueur.
+
+Exemples par type:
+- Activité: "Est-ce que je vais vraiment au yoga aujourd'hui ou je brise ma série?"
+- Humeur: "Je suis de si bonne humeur dernièrement... je me demande ce qui me porte 🤔"
+- Social: "Ça fait un moment que je n'ai pas vu Sophie. Je sens que c'est le moment..."
+- Objectif: "J'ai dit que je lirais plus ce mois-ci. Les livres me regardent... peut-être?"
 
 Mes données récentes:
 {{context}}
 
 Écrivez la publication (en français):`,
-    life_feed_pattern_prediction_playful: `Écrivez un tweet joueur, conscient de soi sur combien je suis devenu prévisible basé sur mes patterns.
-Embrassez la routine avec humour. Moquez-vous de votre propre régularité.
-Exemple: "Ma présence à la salle est tellement prévisible maintenant qu'ils marquent probablement leur calendrier par mes visites. Lundi, mercredi, vendredi - comme une horloge ⏰"
+    life_feed_pattern_prediction_playful: `Écrivez une observation joueuse et consciente de soi sur combien ma vie est devenue prévisible (ou imprévisible).
+Embrassez la routine avec humour, ou notez les surprises avec joie.
+
+Exemples:
+- "Mes sessions de journal du dimanche sont si régulières que mon cahier s'inquiète probablement si je suis en retard 📝"
+- "Apparemment je ne peux pas passer une semaine sans mentionner le café. C'est devenu un trait de personnalité ☕"
+- "Mon graphique d'humeur cette semaine ressemble à des montagnes russes. Au moins la vie n'est pas ennuyeuse!"
 
 Mes données récentes:
 {{context}}
@@ -4508,25 +4604,41 @@ Meine aktuellen Daten:
 {{context}}
 
 Schreiben Sie den Post (auf Deutsch):`,
-    life_feed_pattern_prediction: `Schreiben Sie einen freundlichen Erinnerungs-/Vorhersage-Tweet darüber, was ich wahrscheinlich basierend auf meinen Gewohnheiten tun werde.
-Lassen Sie es wie eine lustige Selbstbeobachtung wirken, nicht wie ein Befehl. Erwähnen Sie die Zuversicht, wenn sie hoch ist.
-Beispiel: "Es ist Dienstag, was bedeutet... Badminton-Abend! Freue mich schon darauf."
+    life_feed_pattern_prediction: `Schreiben Sie eine zukunftsorientierte Vorhersage oder Beobachtung über mein Leben basierend auf den Mustern in meinen Daten.
+
+Regeln:
+- Bei Aktivitätsmustern: einen lustigen Reminder schreiben
+- Bei Stimmungstrends: eine ermutigende Beobachtung über meine emotionale Richtung
+- Bei einer oft erwähnten Person: eine herzliche Erinnerung, in Kontakt zu bleiben
+- Bei einem Ziel: einen motivierenden Check-in über meinen Fortschritt
+- Bei einer Routine: meine Beständigkeit feiern oder sanft erwähnen
+- Persönlich, warm und zukunftsorientiert halten (nicht rückblickend)
+- Wie ein Freund klingen, der mich gut kennt, nicht wie eine KI
 
 Meine aktuellen Daten:
 {{context}}
 
 Schreiben Sie den Post (auf Deutsch):`,
-    life_feed_pattern_prediction_curious: `Schreiben Sie einen neugierigen Tweet, der sich fragt, ob mein Muster heute fortgesetzt wird.
-Formulieren Sie es als Frage oder Spekulation - nicht als Gewissheit. Seien Sie spielerisch.
-Beispiel: "Werde ich heute wirklich zum Yoga gehen oder meine Serie brechen? Meine Bilanz sagt ja, aber das Sofa sieht echt bequem aus... 🤔"
+    life_feed_pattern_prediction_curious: `Schreiben Sie eine neugierige, selbstreflexive Vorhersage darüber, was als nächstes in meinem Leben passieren könnte.
+Formulieren Sie es als Neugier oder Spekulation, nicht als Gewissheit. Seien Sie spielerisch.
+
+Beispiele nach Typ:
+- Aktivität: "Gehe ich heute wirklich zum Yoga oder breche ich meine Serie?"
+- Stimmung: "Ich bin in letzter Zeit so gut drauf... was treibt das wohl an 🤔"
+- Sozial: "Habe mich lange nicht mit Lisa getroffen. Fühlt sich überfällig an..."
+- Ziel: "Ich wollte diesen Monat mehr lesen. Die Bücher starren mich an... vielleicht?"
 
 Meine aktuellen Daten:
 {{context}}
 
 Schreiben Sie den Post (auf Deutsch):`,
-    life_feed_pattern_prediction_playful: `Schreiben Sie einen spielerischen, selbstbewussten Tweet darüber, wie vorhersehbar ich basierend auf meinen Mustern geworden bin.
-Umarmen Sie die Routine mit Humor. Machen Sie sich über Ihre eigene Konstanz lustig.
-Beispiel: "Meine Gym-Anwesenheit ist inzwischen so vorhersehbar, dass sie wahrscheinlich ihren Kalender nach meinen Besuchen markieren. Montag, Mittwoch, Freitag - wie ein Uhrwerk ⏰"
+    life_feed_pattern_prediction_playful: `Schreiben Sie eine spielerische, selbstbewusste Beobachtung darüber, wie vorhersehbar (oder unvorhersehbar) mein Leben geworden ist.
+Umarmen Sie die Routine mit Humor oder notieren Sie Überraschungen mit Freude.
+
+Beispiele:
+- "Meine Sonntags-Tagebuch-Sessions sind so regelmäßig, mein Tagebuch wird wohl nervös wenn ich zu spät komme 📝"
+- "Anscheinend kann ich keine Woche ohne Kaffee-Erwähnung überstehen. Inzwischen ist das ein Persönlichkeitsmerkmal ☕"
+- "Mein Stimmungsdiagramm diese Woche sieht aus wie eine Achterbahn. Wenigstens ist das Leben nicht langweilig!"
 
 Meine aktuellen Daten:
 {{context}}
@@ -5158,25 +5270,41 @@ I miei dati recenti:
 {{context}}
 
 Scrivi il post (in italiano):`,
-    life_feed_pattern_prediction: `Scrivi un tweet amichevole promemoria/previsione su cosa probabilmente farò basandomi sulle mie abitudini.
-Fallo sembrare un'auto-osservazione divertente, non un comando. Menziona la sicurezza se è alta.
-Esempio: "È martedì il che significa... serata badminton! Non vedo già l'ora."
+    life_feed_pattern_prediction: `Scrivi una previsione o osservazione rivolta al futuro sulla mia vita basata sui pattern nei miei dati.
+
+Regole:
+- Se il segnale riguarda un pattern di attività, scrivi un promemoria divertente
+- Se è una tendenza dell'umore, scrivi un'osservazione incoraggiante sulla mia direzione emotiva
+- Se riguarda una persona che menziono spesso, scrivi un gentile promemoria di restare in contatto
+- Se riguarda un obiettivo, scrivi un check-in motivante sui miei progressi
+- Se è una routine, celebra la mia costanza o notala delicatamente
+- Mantienilo personale, caloroso e proiettato al futuro (non retrospettivo)
+- Suona come un amico che mi conosce bene, non come un'IA che analizza dati
 
 I miei dati recenti:
 {{context}}
 
 Scrivi il post (in italiano):`,
-    life_feed_pattern_prediction_curious: `Scrivi un tweet curioso, chiedendoti se il mio pattern continuerà oggi.
-Formulalo come una domanda o speculazione - non una certezza. Sii giocoso.
-Esempio: "Andrò davvero a yoga oggi o romperò la serie? Il mio storico dice sì, ma il divano sembra davvero comodo... 🤔"
+    life_feed_pattern_prediction_curious: `Scrivi una previsione curiosa e auto-riflessiva su cosa potrebbe succedere dopo nella mia vita.
+Formulala come curiosità o speculazione, non certezza. Sii giocoso.
+
+Esempi per tipo:
+- Attività: "Andrò davvero a yoga oggi o romperò la serie?"
+- Umore: "Sono di così buon umore ultimamente... mi chiedo cosa mi stia motivando 🤔"
+- Sociale: "È un po' che non sento Sara. Mi sa che è ora..."
+- Obiettivo: "Ho detto che avrei letto di più questo mese. I libri mi fissano... forse?"
 
 I miei dati recenti:
 {{context}}
 
 Scrivi il post (in italiano):`,
-    life_feed_pattern_prediction_playful: `Scrivi un tweet giocoso e consapevole su quanto sono diventato prevedibile basandomi sui miei pattern.
-Abbraccia la routine con umorismo. Prenditi in giro per la tua costanza.
-Esempio: "La mia presenza in palestra è così prevedibile ormai che probabilmente segnano il calendario con le mie visite. Lunedì, mercoledì, venerdì - come un orologio ⏰"
+    life_feed_pattern_prediction_playful: `Scrivi un'osservazione giocosa e consapevole su quanto la mia vita sia diventata prevedibile (o imprevedibile).
+Abbraccia la routine con umorismo, o nota le sorprese con gioia.
+
+Esempi:
+- "Le mie sessioni di diario della domenica sono così regolari che il mio quaderno probabilmente si preoccupa se arrivo tardi 📝"
+- "A quanto pare non riesco a stare una settimana senza menzionare il caffè. Ormai è un tratto della personalità ☕"
+- "Il mio grafico dell'umore questa settimana sembra un ottovolante. Almeno la vita non è noiosa!"
 
 I miei dati recenti:
 {{context}}
@@ -5808,25 +5936,41 @@ Meus dados recentes:
 {{context}}
 
 Escreva o post (em português):`,
-    life_feed_pattern_prediction: `Escreva um tweet amigável de lembrete/previsão sobre o que provavelmente farei baseado nos meus hábitos.
-Faça parecer uma auto-observação divertida, não um comando. Mencione a confiança se for alta.
-Exemplo: "É terça-feira o que significa... noite de badminton! Já estou animado."
+    life_feed_pattern_prediction: `Escreva uma previsão ou observação voltada para o futuro sobre minha vida baseada nos padrões dos meus dados.
+
+Regras:
+- Se o sinal é sobre um padrão de atividade, escreva um lembrete divertido
+- Se é uma tendência de humor, escreva uma observação encorajadora sobre minha direção emocional
+- Se é sobre uma pessoa que menciono muito, escreva um lembrete carinhoso de manter contato
+- Se é sobre uma meta, escreva um check-in motivador sobre meu progresso
+- Se é uma rotina, celebre minha consistência ou note gentilmente
+- Mantenha pessoal, caloroso e voltado para o futuro (não retrospectivo)
+- Soe como um amigo que me conhece bem, não uma IA analisando dados
 
 Meus dados recentes:
 {{context}}
 
 Escreva o post (em português):`,
-    life_feed_pattern_prediction_curious: `Escreva um tweet curioso, perguntando se meu padrão vai continuar hoje.
-Enquadre como uma pergunta ou especulação - não uma certeza. Seja brincalhão.
-Exemplo: "Será que vou realmente ao yoga hoje ou quebro minha sequência? Meu histórico diz sim, mas o sofá parece muito confortável... 🤔"
+    life_feed_pattern_prediction_curious: `Escreva uma previsão curiosa e autorreflexiva sobre o que pode acontecer em seguida na minha vida.
+Enquadre como curiosidade ou especulação, não certeza. Seja brincalhão.
+
+Exemplos por tipo:
+- Atividade: "Será que vou realmente ao yoga hoje ou quebro minha sequência?"
+- Humor: "Tenho estado de tão bom humor ultimamente... me pergunto o que está motivando 🤔"
+- Social: "Faz tempo que não falo com a Ana. Acho que já está na hora..."
+- Meta: "Disse que ia ler mais este mês. Os livros me olham... talvez?"
 
 Meus dados recentes:
 {{context}}
 
 Escreva o post (em português):`,
-    life_feed_pattern_prediction_playful: `Escreva um tweet brincalhão e autoconsciente sobre quão previsível me tornei baseado nos meus padrões.
-Abrace a rotina com humor. Ria da sua própria consistência.
-Exemplo: "Minha presença na academia é tão previsível agora que eles provavelmente marcam o calendário pelas minhas visitas. Segunda, quarta, sexta - como um relógio ⏰"
+    life_feed_pattern_prediction_playful: `Escreva uma observação brincalhona e autoconsciente sobre quão previsível (ou imprevisível) minha vida se tornou.
+Abrace a rotina com humor, ou note surpresas com alegria.
+
+Exemplos:
+- "Minhas sessões de diário no domingo são tão consistentes que meu caderno provavelmente fica nervoso se eu atraso 📝"
+- "Aparentemente não consigo passar uma semana sem mencionar café. A essa altura é um traço de personalidade ☕"
+- "Meu gráfico de humor esta semana parece uma montanha-russa. Pelo menos a vida não é entediante!"
 
 Meus dados recentes:
 {{context}}
