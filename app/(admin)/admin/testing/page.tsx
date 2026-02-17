@@ -68,7 +68,53 @@ const INTEGRATION_TESTS = [
   { file: 'vocabulary-memory-integration.test.ts', keyword: 'vocabulary', type: 'Standard' },
 ];
 
-type TabId = 'maestro' | 'integration' | 'performance';
+// Mobile app unit tests (PersonalAIApp/__tests__/)
+const MOBILE_UNIT_TESTS = {
+  components: [
+    { file: 'AnimatedCounter.test.tsx', description: 'Animated number counter with formatting' },
+    { file: 'ChallengeProgressBar.test.tsx', description: 'Challenge progress visualization' },
+    { file: 'CorrelationAlertCard.test.tsx', description: 'Mood-activity correlation alerts' },
+    { file: 'DataQualityBanner.test.tsx', description: 'Data quality issue banners' },
+    { file: 'FollowUpChips.test.tsx', description: 'AI follow-up question chips' },
+    { file: 'LeaderboardCard.test.tsx', description: 'Challenge leaderboard display' },
+    { file: 'PredictionCard.test.tsx', description: 'AI prediction cards' },
+    { file: 'SkeletonBase.test.tsx', description: 'Skeleton loading base component' },
+    { file: 'SkeletonCard.test.tsx', description: 'Skeleton card placeholder' },
+    { file: 'SkeletonList.test.tsx', description: 'Skeleton list placeholder' },
+  ],
+  services: [
+    { file: 'CircleDigestService.test.ts', description: 'Weekly circle activity digests' },
+    { file: 'ContextualQuestionService.test.ts', description: 'Contextual RAG questions' },
+    { file: 'ConversationService.test.ts', description: 'Chat conversation threads' },
+    { file: 'DataExportService.test.ts', description: 'User data export functionality' },
+    { file: 'DataQualityService.test.ts', description: 'Data quality monitoring' },
+    { file: 'FollowUpQuestionService.test.ts', description: 'AI follow-up question generation' },
+    { file: 'HapticsService.test.ts', description: 'Haptic feedback patterns' },
+    { file: 'MoodCorrelationAlertService.test.ts', description: 'Mood-activity pattern detection' },
+    { file: 'ShareService.test.ts', description: 'External sharing functionality' },
+  ],
+  models: [
+    { file: 'Conversation.test.ts', description: 'Conversation thread model' },
+    { file: 'CorrelationAlert.test.ts', description: 'Correlation alert model' },
+    { file: 'DataQualityAlert.test.ts', description: 'Data quality alert model' },
+    { file: 'MorningBriefing.test.ts', description: 'Morning briefing model' },
+    { file: 'Subscription-premium.test.ts', description: 'Premium personality logic' },
+    { file: 'WeeklyReport.test.ts', description: 'Weekly report model' },
+    { file: 'YearInReview.test.ts', description: 'Year in review model' },
+  ],
+  store: [
+    { file: 'chatSlice.test.ts', description: 'Chat Redux slice' },
+    { file: 'chatSlice-conversations.test.ts', description: 'Conversation threads in chat slice' },
+  ],
+};
+
+const MOBILE_TEST_TOTAL =
+  MOBILE_UNIT_TESTS.components.length +
+  MOBILE_UNIT_TESTS.services.length +
+  MOBILE_UNIT_TESTS.models.length +
+  MOBILE_UNIT_TESTS.store.length;
+
+type TabId = 'maestro' | 'integration' | 'mobile' | 'performance';
 
 // ---------------------------------------------------------------------------
 // Collection label map
@@ -427,6 +473,199 @@ export default function AdminTestingPage() {
   };
 
   // ---------------------------------------------------------------------------
+  // Tab: Mobile Unit Tests
+  // ---------------------------------------------------------------------------
+
+  const renderMobileTab = () => (
+    <div className="space-y-6">
+      {/* Info Banner */}
+      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+        <div className="flex items-start gap-3">
+          <div className="text-green-500 text-xl">📱</div>
+          <div>
+            <h3 className="text-sm font-semibold text-green-900 mb-1">Mobile App Unit Tests (Jest)</h3>
+            <p className="text-sm text-green-700">
+              Unit tests for the React Native mobile app. These tests run locally via Jest and cover
+              components, services, models, and Redux store slices. They are <strong>not included</strong> in
+              the production app bundle.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Summary Stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 text-center">
+          <div className="text-2xl font-bold text-gray-900">{MOBILE_TEST_TOTAL}</div>
+          <div className="text-xs text-gray-500">Total Tests</div>
+        </div>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 text-center">
+          <div className="text-2xl font-bold text-blue-600">{MOBILE_UNIT_TESTS.components.length}</div>
+          <div className="text-xs text-gray-500">Components</div>
+        </div>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 text-center">
+          <div className="text-2xl font-bold text-purple-600">{MOBILE_UNIT_TESTS.services.length}</div>
+          <div className="text-xs text-gray-500">Services</div>
+        </div>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 text-center">
+          <div className="text-2xl font-bold text-orange-600">{MOBILE_UNIT_TESTS.models.length}</div>
+          <div className="text-xs text-gray-500">Models</div>
+        </div>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 text-center">
+          <div className="text-2xl font-bold text-teal-600">{MOBILE_UNIT_TESTS.store.length}</div>
+          <div className="text-xs text-gray-500">Store Slices</div>
+        </div>
+      </div>
+
+      {/* Components Tests */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h2 className="text-lg font-bold text-gray-900 mb-4">
+          Component Tests
+          <span className="ml-2 text-sm font-normal text-blue-600">
+            ({MOBILE_UNIT_TESTS.components.length} files)
+          </span>
+        </h2>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-200">
+                <th className="text-left py-2 pr-4 text-gray-500 font-medium">File</th>
+                <th className="text-left py-2 text-gray-500 font-medium">Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              {MOBILE_UNIT_TESTS.components.map((test) => (
+                <tr key={test.file} className="border-b border-gray-100">
+                  <td className="py-2 pr-4 font-mono text-gray-700 text-xs">{test.file}</td>
+                  <td className="py-2 text-gray-600 text-sm">{test.description}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Services Tests */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h2 className="text-lg font-bold text-gray-900 mb-4">
+          Service Tests
+          <span className="ml-2 text-sm font-normal text-purple-600">
+            ({MOBILE_UNIT_TESTS.services.length} files)
+          </span>
+        </h2>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-200">
+                <th className="text-left py-2 pr-4 text-gray-500 font-medium">File</th>
+                <th className="text-left py-2 text-gray-500 font-medium">Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              {MOBILE_UNIT_TESTS.services.map((test) => (
+                <tr key={test.file} className="border-b border-gray-100">
+                  <td className="py-2 pr-4 font-mono text-gray-700 text-xs">{test.file}</td>
+                  <td className="py-2 text-gray-600 text-sm">{test.description}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Models Tests */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h2 className="text-lg font-bold text-gray-900 mb-4">
+          Model Tests
+          <span className="ml-2 text-sm font-normal text-orange-600">
+            ({MOBILE_UNIT_TESTS.models.length} files)
+          </span>
+        </h2>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-200">
+                <th className="text-left py-2 pr-4 text-gray-500 font-medium">File</th>
+                <th className="text-left py-2 text-gray-500 font-medium">Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              {MOBILE_UNIT_TESTS.models.map((test) => (
+                <tr key={test.file} className="border-b border-gray-100">
+                  <td className="py-2 pr-4 font-mono text-gray-700 text-xs">{test.file}</td>
+                  <td className="py-2 text-gray-600 text-sm">{test.description}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Store Tests */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h2 className="text-lg font-bold text-gray-900 mb-4">
+          Store Slice Tests
+          <span className="ml-2 text-sm font-normal text-teal-600">
+            ({MOBILE_UNIT_TESTS.store.length} files)
+          </span>
+        </h2>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-200">
+                <th className="text-left py-2 pr-4 text-gray-500 font-medium">File</th>
+                <th className="text-left py-2 text-gray-500 font-medium">Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              {MOBILE_UNIT_TESTS.store.map((test) => (
+                <tr key={test.file} className="border-b border-gray-100">
+                  <td className="py-2 pr-4 font-mono text-gray-700 text-xs">{test.file}</td>
+                  <td className="py-2 text-gray-600 text-sm">{test.description}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* CLI Quick Reference */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+        <div className="flex items-start gap-3">
+          <div className="text-blue-500 text-xl">&#8505;</div>
+          <div>
+            <h3 className="text-lg font-semibold text-blue-900 mb-2">CLI Quick Reference</h3>
+            <div className="space-y-2 text-sm text-blue-800 font-mono">
+              <p><code className="bg-blue-100 px-2 py-0.5 rounded">cd PersonalAIApp</code></p>
+              <p><code className="bg-blue-100 px-2 py-0.5 rounded">npm test</code> — Run all tests</p>
+              <p><code className="bg-blue-100 px-2 py-0.5 rounded">npm test -- --watch</code> — Watch mode (re-run on changes)</p>
+              <p><code className="bg-blue-100 px-2 py-0.5 rounded">npm test -- CircleDigestService</code> — Run specific test file</p>
+              <p><code className="bg-blue-100 px-2 py-0.5 rounded">npm test -- __tests__/components</code> — Run all component tests</p>
+              <p><code className="bg-blue-100 px-2 py-0.5 rounded">npm test -- __tests__/services</code> — Run all service tests</p>
+              <p><code className="bg-blue-100 px-2 py-0.5 rounded">npm test -- --coverage</code> — Run with coverage report</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Location Note */}
+      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+        <div className="flex items-start gap-3">
+          <div className="text-gray-400 text-xl">📁</div>
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 mb-1">File Locations</h3>
+            <p className="text-sm text-gray-600">
+              Tests are located in <code className="bg-gray-100 px-1 rounded text-xs">PersonalAIApp/__tests__/</code> and{' '}
+              <code className="bg-gray-100 px-1 rounded text-xs">PersonalAIApp/src/store/slices/__tests__/</code>.
+              These files are excluded from production builds by Metro bundler.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // ---------------------------------------------------------------------------
   // Tab: Performance Baseline
   // ---------------------------------------------------------------------------
 
@@ -606,6 +845,19 @@ export default function AdminTestingPage() {
             </span>
           </button>
           <button
+            onClick={() => setActiveTab('mobile')}
+            className={`py-3 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'mobile'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Mobile Unit Tests
+            <span className="ml-2 bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs">
+              {MOBILE_TEST_TOTAL}
+            </span>
+          </button>
+          <button
             onClick={() => setActiveTab('performance')}
             className={`py-3 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'performance'
@@ -621,6 +873,7 @@ export default function AdminTestingPage() {
       {/* Tab Content */}
       {activeTab === 'maestro' && renderMaestroTab()}
       {activeTab === 'integration' && renderIntegrationTab()}
+      {activeTab === 'mobile' && renderMobileTab()}
       {activeTab === 'performance' && renderPerformanceTab()}
 
       {/* Progress Log (shared) */}
