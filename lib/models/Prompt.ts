@@ -244,17 +244,18 @@ export interface DataSelectionInfo {
     photos?: number;
     diaryEntries?: number;
   };
-  strategy: 'scored' | 'recent' | 'diverse';  // Selection strategy
+  strategy?: 'scored' | 'recent' | 'diverse';  // Selection strategy
   scoringFactors?: {           // If strategy is 'scored', these factors apply
     recency: { maxPoints: number; description: string };
     contentLength: { maxPoints: number; description: string };
     sentiment: { maxPoints: number; description: string };
     tags: { maxPoints: number; description: string };
-  };
+  } | Array<{ name: string; weight: string; description: string }>;  // Or array of custom factors
   summarization?: {            // Content summarization settings
     wordThreshold: number;     // Words above which content gets summarized
     description: string;
   };
+  summarizationThreshold?: number;  // Alternative: word count threshold
 }
 
 export interface PromptUsageInfo {
@@ -634,12 +635,12 @@ export const LIFE_FEED_CONTEXT_BY_POST_TYPE: Record<string, string[]> = {
   pattern_prediction: ['textNotes', 'voiceNotes', 'locationData', 'memories', 'moodEntries'],
   reflective_insight: ['moodEntries', 'healthData', 'locationData'],
   memory_highlight: ['photoMemories', 'voiceNotes', 'textNotes'],
-  streak_achievement: ['healthData', 'locationData'],
+  streak_achievement: ['healthData', 'textNotes', 'voiceNotes'],  // Now includes diary/voice streaks
   comparison: ['healthData', 'locationData'],
-  seasonal_reflection: ['healthData', 'locationData', 'moodEntries'],
-  activity_pattern: ['locationData'],
+  seasonal_reflection: ['textNotes', 'voiceNotes', 'photoMemories', 'locationData'],  // Added text/voice/photos
+  activity_pattern: ['locationData', 'textNotes', 'voiceNotes'],  // Now includes diary topic patterns
   health_alert: ['healthData'],
-  category_insight: ['locationData'],
+  category_insight: ['textNotes', 'voiceNotes', 'photoMemories'],  // Changed from locationData
 };
 
 /**
@@ -759,15 +760,15 @@ export const LIFE_FEED_PROMPT_POST_TYPES: Record<string, LifeFeedPromptInfo> = {
     usageInfo: { dataTimeRange: 'All time (count-based)', selectionLogic: 'always', cooldownDays: 7 },
   },
 
-  // pattern_prediction variants (2-day cooldown) — multi-signal detection
+  // pattern_prediction variants (2-day cooldown) — only triggers when actual patterns detected
   pattern_prediction: {
     postType: 'pattern_prediction',
     isVariant: false,
-    description: 'Multi-signal prediction — confident/forward-looking tone. Uses diary, voice, location, mood, and social signals.',
+    description: 'Multi-signal prediction — confident/forward-looking tone. Only triggers when generatePredictions() finds actual patterns.',
     contextSources: LIFE_FEED_CONTEXT_BY_POST_TYPE.pattern_prediction,
     usageInfo: {
       dataTimeRange: 'Last 14 days (+ 30-day lookback for seasonal)',
-      selectionLogic: 'multi-signal detection: activity patterns, diary routines, mood trends, social mentions, goal keywords, seasonal parallels — strongest signal wins',
+      selectionLogic: 'generatePredictions() must return patterns (strict)',
       variantGroup: 'pattern_prediction',
       variants: ['pattern_prediction', 'pattern_prediction_curious', 'pattern_prediction_playful'],
       cooldownDays: 2,
@@ -792,7 +793,7 @@ export const LIFE_FEED_PROMPT_POST_TYPES: Record<string, LifeFeedPromptInfo> = {
     contextSources: LIFE_FEED_CONTEXT_BY_POST_TYPE.pattern_prediction,
     usageInfo: {
       dataTimeRange: 'Last 14 days (+ 30-day lookback for seasonal)',
-      selectionLogic: 'multi-signal detection — strongest signal wins',
+      selectionLogic: 'context-based',
       variantGroup: 'pattern_prediction',
       variants: ['pattern_prediction', 'pattern_prediction_curious', 'pattern_prediction_playful'],
       cooldownDays: 2,
@@ -817,7 +818,7 @@ export const LIFE_FEED_PROMPT_POST_TYPES: Record<string, LifeFeedPromptInfo> = {
     contextSources: LIFE_FEED_CONTEXT_BY_POST_TYPE.pattern_prediction,
     usageInfo: {
       dataTimeRange: 'Last 14 days (+ 30-day lookback for seasonal)',
-      selectionLogic: 'multi-signal detection — strongest signal wins',
+      selectionLogic: 'context-based',
       variantGroup: 'pattern_prediction',
       variants: ['pattern_prediction', 'pattern_prediction_curious', 'pattern_prediction_playful'],
       cooldownDays: 2,
@@ -921,13 +922,25 @@ export const LIFE_FEED_PROMPT_POST_TYPES: Record<string, LifeFeedPromptInfo> = {
     },
   },
 
-  // streak_achievement (3-day cooldown)
+  // streak_achievement (3-day cooldown) — requires actual consecutive-day streaks
   streak_achievement: {
     postType: 'streak_achievement',
     isVariant: false,
-    description: 'Streak/habit celebration',
+    description: 'Streak/habit celebration — only triggers when detectStreaks() finds consecutive-day activity (not just 3+ entries)',
     contextSources: LIFE_FEED_CONTEXT_BY_POST_TYPE.streak_achievement,
-    usageInfo: { dataTimeRange: 'Last 7 days', selectionLogic: 'always', cooldownDays: 3 },
+    usageInfo: {
+      dataTimeRange: 'Last 7 days',
+      selectionLogic: 'detectStreaks() must return consecutive-day streaks (strict)',
+      cooldownDays: 3,
+      dataSelection: {
+        scoringFactors: [
+          { name: 'Diary Streak', weight: 'days', description: 'Consecutive days with diary entries (3+ days, uses calculateConsecutiveDays)' },
+          { name: 'Voice Streak', weight: 'days', description: 'Consecutive days with voice notes (3+ days, uses calculateConsecutiveDays)' },
+          { name: 'Workout Streak', weight: 'days', description: 'Consecutive days with workouts' },
+          { name: 'Activity Streak', weight: 'count', description: 'Same activity visited 3+ times in period' },
+        ],
+      },
+    },
   },
 
   // comparison (14-day cooldown)
@@ -939,70 +952,91 @@ export const LIFE_FEED_PROMPT_POST_TYPES: Record<string, LifeFeedPromptInfo> = {
     usageInfo: { dataTimeRange: 'Last 14 days vs previous 14 days', selectionLogic: 'always', cooldownDays: 14 },
   },
 
-  // seasonal_reflection variants (30-day cooldown)
+  // seasonal_reflection variants (14-day cooldown) — bi-weekly reflections
   seasonal_reflection: {
     postType: 'seasonal_reflection',
     isVariant: false,
-    description: 'Seasonal summary - default',
+    description: 'Bi-weekly reflection — summarizes recent activities, journal themes, and photos',
     contextSources: LIFE_FEED_CONTEXT_BY_POST_TYPE.seasonal_reflection,
     usageInfo: {
-      dataTimeRange: 'Last 30 days',
+      dataTimeRange: 'Last 14-30 days',
       selectionLogic: 'random',
       variantGroup: 'seasonal_reflection',
       variants: ['seasonal_reflection', 'seasonal_reflection_growth', 'seasonal_reflection_gratitude'],
-      cooldownDays: 30,
+      cooldownDays: 14, // Reduced from 30 for more frequent generation
     },
   },
   seasonal_reflection_growth: {
     postType: 'seasonal_reflection',
     isVariant: true,
-    description: 'Seasonal summary - growth focused',
+    description: 'Bi-weekly reflection - growth focused',
     contextSources: LIFE_FEED_CONTEXT_BY_POST_TYPE.seasonal_reflection,
     usageInfo: {
-      dataTimeRange: 'Last 30 days',
+      dataTimeRange: 'Last 14-30 days',
       selectionLogic: 'random',
       variantGroup: 'seasonal_reflection',
       variants: ['seasonal_reflection', 'seasonal_reflection_growth', 'seasonal_reflection_gratitude'],
-      cooldownDays: 30,
+      cooldownDays: 14,
     },
   },
   seasonal_reflection_gratitude: {
     postType: 'seasonal_reflection',
     isVariant: true,
-    description: 'Seasonal summary - gratitude focused',
+    description: 'Bi-weekly reflection - gratitude focused',
     contextSources: LIFE_FEED_CONTEXT_BY_POST_TYPE.seasonal_reflection,
     usageInfo: {
-      dataTimeRange: 'Last 30 days',
+      dataTimeRange: 'Last 14-30 days',
       selectionLogic: 'random',
       variantGroup: 'seasonal_reflection',
       variants: ['seasonal_reflection', 'seasonal_reflection_growth', 'seasonal_reflection_gratitude'],
-      cooldownDays: 30,
+      cooldownDays: 14,
     },
   },
 
-  // activity_pattern (7-day cooldown)
+  // activity_pattern (7-day cooldown) — location + diary topic patterns
   activity_pattern: {
     postType: 'activity_pattern',
     isVariant: false,
-    description: 'Discovered activity pattern',
+    description: 'Discovered activity pattern — detects location patterns AND diary topic keywords',
     contextSources: LIFE_FEED_CONTEXT_BY_POST_TYPE.activity_pattern,
-    usageInfo: { dataTimeRange: 'Last 7 days', selectionLogic: 'always', cooldownDays: 7 },
+    usageInfo: {
+      dataTimeRange: 'Last 7 days',
+      selectionLogic: 'detectDayPatterns() + detectDiaryTopicPatterns()',
+      cooldownDays: 7,
+      dataSelection: {
+        scoringFactors: [
+          { name: 'Location Pattern', weight: 'count', description: 'Same activity at location 2+ times on same day-of-week' },
+          { name: 'Diary Topic', weight: 'count', description: 'Activity keyword (run, gym, yoga, etc.) mentioned 2+ times in entries' },
+        ],
+      },
+    },
   },
 
-  // health_alert (1-day cooldown)
+  // health_alert (1-day cooldown) — anomaly detection
   health_alert: {
     postType: 'health_alert',
     isVariant: false,
-    description: 'Health metric awareness',
+    description: 'Health metric awareness — detects spikes, drops, and trends in health data',
     contextSources: LIFE_FEED_CONTEXT_BY_POST_TYPE.health_alert,
-    usageInfo: { dataTimeRange: 'Last 24 hours', selectionLogic: 'always', cooldownDays: 1 },
+    usageInfo: {
+      dataTimeRange: 'Last 7 days (compares latest vs 7-day average)',
+      selectionLogic: 'detectHealthAnomalies()',
+      cooldownDays: 1,
+      dataSelection: {
+        scoringFactors: [
+          { name: 'Spike Detection', weight: 'severity', description: 'Latest value >50% above 7-day average (medium) or >100% (high)' },
+          { name: 'Drop Detection', weight: 'severity', description: 'Latest value >40% below 7-day average (for steps, energy)' },
+          { name: 'Trend Detection', weight: 'low', description: '3+ consecutive days trending up or down' },
+        ],
+      },
+    },
   },
 
-  // category_insight variants (3-day cooldown)
+  // category_insight variants (3-day cooldown) — threshold lowered to 3 posts
   category_insight: {
     postType: 'category_insight',
     isVariant: false,
-    description: 'Category distribution - default',
+    description: 'Category distribution — analyzes 3+ diary/voice/photo posts (lowered from 5)',
     contextSources: LIFE_FEED_CONTEXT_BY_POST_TYPE.category_insight,
     usageInfo: {
       dataTimeRange: 'Last 7 days',
@@ -1010,6 +1044,13 @@ export const LIFE_FEED_PROMPT_POST_TYPES: Record<string, LifeFeedPromptInfo> = {
       variantGroup: 'category_insight',
       variants: ['category_insight', 'category_trend', 'category_correlation'],
       cooldownDays: 3,
+      dataSelection: {
+        threshold: 3, // Lowered from 5 for new users
+        scoringFactors: [
+          { name: 'Post Count', weight: 'count', description: 'Requires 3+ posts (text, voice, or photo)' },
+          { name: 'Category Tags', weight: 'distribution', description: 'Analyzes tag/topic distribution' },
+        ],
+      },
     },
   },
   category_trend: {
