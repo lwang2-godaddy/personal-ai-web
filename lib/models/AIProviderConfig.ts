@@ -343,7 +343,7 @@ export const DEFAULT_PRICING_CONFIG: PricingConfig = {
 /**
  * Get display name for a service type
  */
-export function getServiceDisplayName(service: ServiceType): string {
+export function getAIServiceDisplayName(service: ServiceType): string {
   const names: Record<ServiceType, string> = {
     chat: 'Chat Completion',
     embedding: 'Embeddings',

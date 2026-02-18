@@ -10,7 +10,7 @@ import {
   ProviderStatus,
   ALL_SERVICE_TYPES,
   DEFAULT_AI_PROVIDER_CONFIG,
-  getServiceDisplayName,
+  getAIServiceDisplayName,
   getServiceIcon,
   getProviderTypeLabel,
   getProviderTypeColor,
@@ -104,7 +104,7 @@ export default function AdminAIProvidersPage() {
       setConfig(data.config);
       setEditingService(null);
       setPendingChanges({});
-      setSuccessMessage(`${getServiceDisplayName(service)} configuration updated!`);
+      setSuccessMessage(`${getAIServiceDisplayName(service)} configuration updated!`);
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err: any) {
       setError(err.message || 'Failed to save configuration');
@@ -318,7 +318,7 @@ export default function AdminAIProvidersPage() {
                       <span className="text-2xl">{getServiceIcon(service)}</span>
                       <div>
                         <h3 className="font-semibold text-gray-900">
-                          {getServiceDisplayName(service)}
+                          {getAIServiceDisplayName(service)}
                         </h3>
                         <p className="text-sm text-gray-500">
                           Provider: <strong>{getProviderName(serviceConfig.providerId)}</strong>

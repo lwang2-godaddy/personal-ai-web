@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebase/admin';
-import { verifyAdmin } from '@/lib/auth/verifyAdmin';
+import { getAdminFirestore } from '@/lib/api/firebase/admin';
+import { requireAdmin } from '@/lib/middleware/auth';
 import {
   AIProviderConfig,
   ServiceType,
@@ -11,6 +11,11 @@ import {
 
 const CONFIG_DOC_PATH = 'config/aiProviders';
 
+// Helper to get Firestore instance
+function getDb() {
+  return getAdminFirestore();
+}
+
 /**
  * GET /api/admin/ai-providers
  *
@@ -20,13 +25,12 @@ const CONFIG_DOC_PATH = 'config/aiProviders';
 export async function GET(request: NextRequest) {
   try {
     // Verify admin access
-    const authResult = await verifyAdmin(request);
-    if (!authResult.authorized) {
-      return NextResponse.json({ error: authResult.error }, { status: 401 });
-    }
+    const { user, response } = await requireAdmin(request);
+    if (response) return response;
 
     // Fetch config from Firestore
-    const configDoc = await adminDb.doc(CONFIG_DOC_PATH).get();
+    const db = getDb();
+    const configDoc = await db.doc(CONFIG_DOC_PATH).get();
 
     if (!configDoc.exists) {
       // Return default config with isDefault flag
@@ -65,13 +69,13 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     // Verify admin access
-    const authResult = await verifyAdmin(request);
-    if (!authResult.authorized) {
-      return NextResponse.json({ error: authResult.error }, { status: 401 });
-    }
+    const { user, response } = await requireAdmin(request);
+    if (response) return response;
+
+    const db = getDb();
 
     // Check if config already exists
-    const configDoc = await adminDb.doc(CONFIG_DOC_PATH).get();
+    const configDoc = await db.doc(CONFIG_DOC_PATH).get();
     if (configDoc.exists) {
       return NextResponse.json(
         { error: 'Configuration already initialized. Use PATCH to update.' },
@@ -83,10 +87,10 @@ export async function POST(request: NextRequest) {
     const config: AIProviderConfig = {
       ...DEFAULT_AI_PROVIDER_CONFIG,
       lastUpdated: new Date().toISOString(),
-      updatedBy: authResult.uid!,
+      updatedBy: user.uid,
     };
 
-    await adminDb.doc(CONFIG_DOC_PATH).set(config);
+    await db.doc(CONFIG_DOC_PATH).set(config);
 
     return NextResponse.json({
       config,
@@ -112,15 +116,14 @@ export async function POST(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     // Verify admin access
-    const authResult = await verifyAdmin(request);
-    if (!authResult.authorized) {
-      return NextResponse.json({ error: authResult.error }, { status: 401 });
-    }
+    const { user, response } = await requireAdmin(request);
+    if (response) return response;
 
+    const db = getDb();
     const body = await request.json();
 
     // Fetch current config
-    const configDoc = await adminDb.doc(CONFIG_DOC_PATH).get();
+    const configDoc = await db.doc(CONFIG_DOC_PATH).get();
     if (!configDoc.exists) {
       return NextResponse.json(
         { error: 'Configuration not initialized. Use POST to initialize.' },
@@ -234,11 +237,11 @@ export async function PATCH(request: NextRequest) {
 
     // Update metadata
     updatedConfig.lastUpdated = new Date().toISOString();
-    updatedConfig.updatedBy = authResult.uid!;
+    updatedConfig.updatedBy = user.uid;
     updatedConfig.version = (currentConfig.version || 1) + 1;
 
     // Save to Firestore
-    await adminDb.doc(CONFIG_DOC_PATH).set(updatedConfig);
+    await db.doc(CONFIG_DOC_PATH).set(updatedConfig);
 
     return NextResponse.json({
       config: updatedConfig,
