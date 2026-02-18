@@ -322,14 +322,14 @@ export default function Mar2026EngagementPage() {
             <span className="text-sm font-mono font-medium text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
               v1.4.0
             </span>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-              <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
-              Planned
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+              <span className="w-1.5 h-1.5 rounded-full bg-yellow-500" />
+              In Progress
             </span>
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Virtual Companion & Enhancements</h1>
           <p className="mt-1 text-sm text-gray-500">
-            5 features across 4 categories ({stats.newFeatures} new, {stats.enhancements} enhancements)
+            5 features across 4 categories ({stats.newFeatures} new, {stats.enhancements} enhancements) — {stats.completed} completed
           </p>
         </div>
         <div className="flex gap-2 flex-shrink-0">
@@ -573,6 +573,61 @@ export default function Mar2026EngagementPage() {
                 src/locales/*/common.json (6 files) ✓
               </li>
             </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* How to Access Features */}
+      <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg border border-indigo-200 p-5">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">How to Access Features</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-white rounded-lg p-4 border border-indigo-100">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-2xl">🐕</span>
+              <h3 className="font-semibold text-gray-900">Virtual Companion</h3>
+            </div>
+            <p className="text-sm text-gray-600 mb-2">
+              The mascot widget appears on the Home Feed screen. Tap it to open the full Mascot screen.
+            </p>
+            <p className="text-xs text-gray-500">
+              <strong>Path:</strong> Home Feed → Mascot Widget (tap) → Mascot Screen
+            </p>
+          </div>
+          <div className="bg-white rounded-lg p-4 border border-indigo-100">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-2xl">📸</span>
+              <h3 className="font-semibold text-gray-900">Photo Timeline</h3>
+            </div>
+            <p className="text-sm text-gray-600 mb-2">
+              Navigate to PhotoTimeline screen from navigation. Shows photos grouped by date with month picker.
+            </p>
+            <p className="text-xs text-gray-500">
+              <strong>Path:</strong> Navigation → PhotoTimeline
+            </p>
+          </div>
+          <div className="bg-white rounded-lg p-4 border border-indigo-100">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-2xl">📊</span>
+              <h3 className="font-semibold text-gray-900">Monthly Digests</h3>
+            </div>
+            <p className="text-sm text-gray-600 mb-2">
+              Monthly summaries are generated on the 1st of each month via Cloud Function.
+            </p>
+            <p className="text-xs text-gray-500">
+              <strong>Path:</strong> Summaries → Monthly tab (coming soon)
+            </p>
+          </div>
+          <div className="bg-white rounded-lg p-4 border border-indigo-100">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-2xl">🧠</span>
+              <h3 className="font-semibold text-gray-900">Question Effectiveness</h3>
+            </div>
+            <p className="text-sm text-gray-600 mb-2">
+              Tracking is automatic in EnhancedQuestionService. Analytics available in admin dashboard.
+            </p>
+            <p className="text-xs text-gray-500">
+              <strong>Path:</strong> Admin → Insights → Question Analytics
+            </p>
           </div>
         </div>
       </div>
