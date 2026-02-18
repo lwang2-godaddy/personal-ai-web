@@ -28,6 +28,42 @@ interface Release {
 
 const RELEASES: Release[] = [
   {
+    id: 'mar-2026-multi-provider',
+    version: '1.5.0',
+    title: 'Multi-Provider AI Architecture',
+    description:
+      'Extensible AI provider framework supporting cloud and local LLMs. Switch between OpenAI, Google Cloud, Anthropic, and Ollama without app updates. Save up to 100% on TTS/STT with free tiers.',
+    date: 'Mar 2026',
+    status: 'in-progress',
+    featureCount: 8,
+    categories: ['Infrastructure', 'Cost Savings', 'Admin', 'AI/Intelligence'],
+    highlights: [
+      'Provider framework (NEW)',
+      'Google Cloud integration',
+      'Local LLM support (Ollama)',
+      'Admin config portal',
+      'Cost tracking per provider',
+    ],
+  },
+  {
+    id: 'mar-2026-engagement',
+    version: '1.4.0',
+    title: 'Virtual Companion & Enhancements',
+    description:
+      'Introducing a virtual AI companion (Finch-style) that grows with your journaling journey. Plus monthly digests, photo timeline view, and smarter question personalization.',
+    date: 'Mar 2026',
+    status: 'planned',
+    featureCount: 5,
+    categories: ['Engagement', 'AI/Intelligence', 'Photos', 'Summaries'],
+    highlights: [
+      'Virtual AI companion (NEW)',
+      'Monthly summary digests',
+      'Photo timeline view',
+      'Question effectiveness tracking',
+      'Morning/evening routines',
+    ],
+  },
+  {
     id: 'feb-2026-ui-ux',
     version: '1.3.0',
     title: 'Calm Clarity UI Refresh',

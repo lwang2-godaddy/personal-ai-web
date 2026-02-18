@@ -14,3 +14,4 @@ export * from './AskQuestion';
 export * from './BehaviorEvent';
 export * from './VoiceCategory';
 export * from './FriendInvite';
+export * from './AIProviderConfig';
