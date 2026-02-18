@@ -97,6 +97,7 @@ export const ADMIN_NAVIGATION: NavGroup[] = [
     items: [
       { href: '/admin/migrations', label: 'Migrations', icon: '🔄' },
       { href: '/admin/demo-data', label: 'Demo Data', icon: '🎭' },
+      { href: '/admin/screenshots', label: 'App Store Screenshots', icon: '📸' },
       { href: '/admin/testing', label: 'Testing', icon: '🧪' },
       { href: '/admin/docs', label: 'Docs', icon: '📚' },
     ],

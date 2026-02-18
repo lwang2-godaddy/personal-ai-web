@@ -359,6 +359,7 @@ export const TRACKED_SCREENS = {
   adminAskAiQuestions: 'admin_ask_ai_questions',
   adminDocs: 'admin_docs',
   adminDemoData: 'admin_demo_data',
+  adminScreenshots: 'admin_screenshots',
   adminTesting: 'admin_testing',
   adminPerformance: 'admin_performance',
   adminFeatures: 'admin_features',
