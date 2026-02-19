@@ -1,6 +1,9 @@
 /**
  * Admin Navigation Configuration
  * Defines the sidebar navigation structure with collapsible groups
+ *
+ * Updated: Feb 2026 - Combined related pages using tabs to reduce sidebar items
+ * Previous: 43 items → Now: ~18 items
  */
 
 export interface NavItem {
@@ -35,10 +38,8 @@ export const ADMIN_NAVIGATION: NavGroup[] = [
     label: 'Users & Accounts',
     icon: '👥',
     items: [
-      { href: '/admin/users', label: 'Users', icon: '👥' },
-      { href: '/admin/subscriptions', label: 'Subscriptions', icon: '💳' },
-      { href: '/admin/app-settings', label: 'App Settings', icon: '⚙️' },
-      { href: '/admin/user-content', label: 'User Content', icon: '📋' },
+      { href: '/admin/users-hub', label: 'Users', icon: '👥' },
+      { href: '/admin/app-config', label: 'App Config', icon: '⚙️' },
     ],
   },
   {
@@ -46,9 +47,7 @@ export const ADMIN_NAVIGATION: NavGroup[] = [
     label: 'Analytics',
     icon: '📈',
     items: [
-      { href: '/admin/usage', label: 'Usage Analytics', icon: '📈' },
-      { href: '/admin/behavior', label: 'Behavior', icon: '🎯' },
-      { href: '/admin/performance', label: 'Performance', icon: '⚡' },
+      { href: '/admin/analytics', label: 'Analytics', icon: '📈' },
     ],
   },
   {
@@ -56,22 +55,12 @@ export const ADMIN_NAVIGATION: NavGroup[] = [
     label: 'AI Configuration',
     icon: '🤖',
     items: [
-      { href: '/admin/ai-providers', label: 'AI Providers', icon: '🔌' },
-      { href: '/admin/ai-models', label: 'AI Models', icon: '🤖' },
+      { href: '/admin/ai-setup', label: 'AI Setup', icon: '🔌' },
       { href: '/admin/prompts', label: 'Prompts', icon: '💬' },
-      { href: '/admin/insights', label: 'Insights', icon: '💡' },
-      { href: '/admin/life-feed', label: 'Life Feed Viewer', icon: '📰' },
-      { href: '/admin/chat-history', label: 'Chat History', icon: '💬' },
-      { href: '/admin/memory-builder', label: 'Memory Builder', icon: '🧠' },
-      { href: '/admin/life-keywords', label: 'Life Keywords', icon: '🔑' },
-      { href: '/admin/fun-facts', label: 'Fun Facts', icon: '🎲' },
-      { href: '/admin/events', label: 'Events', icon: '📅' },
-      { href: '/admin/check-ins', label: 'Check-Ins', icon: '📍' },
-      { href: '/admin/event-config', label: 'Event Config', icon: '⚙️' },
-      { href: '/admin/vocabulary', label: 'Vocabulary', icon: '📚' },
-      { href: '/admin/notifications', label: 'Notifications', icon: '🔔' },
-      { href: '/admin/voice-categories', label: 'Voice Categories', icon: '🎤' },
-      { href: '/admin/ask-ai-questions', label: 'Ask AI Questions', icon: '❓' },
+      { href: '/admin/ai-content', label: 'AI Content', icon: '💡' },
+      { href: '/admin/conversations', label: 'Conversations', icon: '💬' },
+      { href: '/admin/events-hub', label: 'Events', icon: '📅' },
+      { href: '/admin/notifications-hub', label: 'Notifications', icon: '🔔' },
     ],
   },
   {
@@ -79,8 +68,7 @@ export const ADMIN_NAVIGATION: NavGroup[] = [
     label: 'Social',
     icon: '🏆',
     items: [
-      { href: '/admin/challenges', label: 'Challenges', icon: '🏆' },
-      { href: '/admin/engagement', label: 'Engagement', icon: '🎮' },
+      { href: '/admin/social', label: 'Social', icon: '🏆' },
     ],
   },
   {
@@ -88,8 +76,7 @@ export const ADMIN_NAVIGATION: NavGroup[] = [
     label: 'Content',
     icon: '📄',
     items: [
-      { href: '/admin/ask-questions', label: 'Ask Questions', icon: '🔍' },
-      { href: '/admin/pricing', label: 'Pricing', icon: '💰' },
+      { href: '/admin/content', label: 'Content', icon: '📄' },
     ],
   },
   {
@@ -98,9 +85,7 @@ export const ADMIN_NAVIGATION: NavGroup[] = [
     icon: '🔧',
     items: [
       { href: '/admin/migrations', label: 'Migrations', icon: '🔄' },
-      { href: '/admin/demo-data', label: 'Demo Data', icon: '🎭' },
-      { href: '/admin/screenshots', label: 'App Store Screenshots', icon: '📸' },
-      { href: '/admin/testing', label: 'Testing', icon: '🧪' },
+      { href: '/admin/testing-tools', label: 'Testing Tools', icon: '🧪' },
       { href: '/admin/docs', label: 'Docs', icon: '📚' },
     ],
   },
