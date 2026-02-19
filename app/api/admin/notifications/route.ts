@@ -53,6 +53,10 @@ export async function GET(request: NextRequest) {
       query = query.where('type', '==', type);
     }
 
+    // Filter by read status
+    // Note: Most existing notifications use legacy 'read' field (boolean)
+    // NotificationHistoryService uses 'status' field (opened/dismissed = read)
+    // We filter using 'read' field since that's what most documents have
     if (readStatus === 'read') {
       query = query.where('read', '==', true);
     } else if (readStatus === 'unread') {
@@ -80,17 +84,45 @@ export async function GET(request: NextRequest) {
     const docs = hasMore ? snapshot.docs.slice(0, limit) : snapshot.docs;
 
     // Convert documents to notification objects
+    // Handles TWO schemas:
+    // 1. Legacy (most existing): uses 'read' boolean, 'data' object
+    // 2. NotificationHistoryService: uses 'status' string, 'metadata' object
     const notifications = docs.map((doc) => {
       const data = doc.data();
+
+      // Handle read status from either schema
+      let readValue: boolean;
+      let statusValue: string;
+
+      if ('read' in data) {
+        // Legacy schema - read field exists
+        readValue = data.read === true;
+        statusValue = readValue ? 'read' : 'unread';
+      } else if ('status' in data) {
+        // NotificationHistoryService schema - derive from status
+        statusValue = data.status;
+        readValue = statusValue === 'opened' || statusValue === 'dismissed';
+      } else {
+        // Default to unread
+        readValue = false;
+        statusValue = 'unknown';
+      }
+
       return {
         id: doc.id,
         userId: data.userId,
         type: data.type || 'unknown',
         title: data.title || '',
         body: data.body || '',
-        read: data.read ?? false,
-        data: data.data || null,
+        read: readValue,
+        status: statusValue,
+        category: data.category || null,
+        channel: data.channel || null,
+        priority: data.priority || 'default',
+        // Map 'metadata' to 'data' for backward compatibility
+        data: data.data || data.metadata || null,
         createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt || null,
+        sentAt: data.sentAt?.toDate?.()?.toISOString() || data.sentAt || null,
       };
     });
 
