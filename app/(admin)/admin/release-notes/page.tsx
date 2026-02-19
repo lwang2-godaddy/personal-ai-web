@@ -64,6 +64,24 @@ const RELEASES: Release[] = [
     ],
   },
   {
+    id: 'feb-2026-auto-checkin',
+    version: '1.3.1',
+    title: 'Auto Check-In Enhancements',
+    description:
+      'Smart check-in enhancements with home/work place designation, category-based behavior (silent check-ins at home/work), and daily summary feature for batch confirmation of visited places.',
+    date: 'Feb 18, 2026',
+    status: 'released',
+    featureCount: 9,
+    categories: ['Engagement', 'Location', 'Notifications', 'Settings'],
+    highlights: [
+      'Home/Work place types (NEW)',
+      'Silent check-ins',
+      'Daily summary notification',
+      'Batch confirmation modal',
+      'i18n for 6 locales',
+    ],
+  },
+  {
     id: 'feb-2026-ui-ux',
     version: '1.3.0',
     title: 'Calm Clarity UI Refresh',
