@@ -74,7 +74,9 @@ const FEATURES: Feature[] = [
   { name: 'Daily Prompts', category: 'Engagement', status: 'active', screens: ['HomeFeedScreen'], description: '30-day journey + rotating prompts with XP rewards' },
   { name: 'Achievements & XP', category: 'Engagement', status: 'active', screens: ['ProfileScreen'], description: 'Gamification with levels, XP, and achievement badges' },
   { name: 'Streaks', category: 'Engagement', status: 'active', screens: ['HomeFeedScreen', 'ProfileScreen'], description: 'Daily usage streaks with bonus XP' },
-  { name: 'Check-In Suggestions', category: 'Engagement', status: 'active', screens: ['HomeFeedScreen'], description: 'Location-based check-in suggestions with notifications' },
+  { name: 'Check-In Suggestions', category: 'Engagement', status: 'active', screens: ['HomeFeedScreen'], description: 'Location-based check-in suggestions with smart auto check-in and home/work support' },
+  { name: 'Home/Work Places', category: 'Engagement', status: 'active', screens: ['CheckInSettingsScreen', 'PlaceEditModal'], description: 'Designate home and work locations with special check-in behavior' },
+  { name: 'Daily Check-In Summary', category: 'Engagement', status: 'active', screens: ['HomeFeedScreen', 'DailySummaryModal'], description: 'End-of-day summary of visited places with batch confirmation' },
   { name: 'Fun Facts', category: 'Engagement', status: 'active', screens: ['LifeFeedScreen'], description: 'AI-generated fun facts from personal data' },
   { name: 'Events', category: 'Engagement', status: 'active', screens: ['EventsScreen'], description: 'Auto-extracted events from user data with calendar view' },
   { name: 'Morning Briefing', category: 'Engagement', status: 'planned', screens: ['HomeFeedScreen'], description: 'Daily AI-generated briefing with weather, schedule, insights' },
@@ -180,6 +182,9 @@ const DEFAULT_FEATURE_FLAGS: Record<string, { label: string; description: string
   challenges: { label: 'Challenges', description: 'Group challenges with progress tracking' },
   engagement: { label: 'Engagement System', description: 'XP, levels, achievements, streaks' },
   checkInSuggestions: { label: 'Check-In Suggestions', description: 'Location-based check-in suggestions' },
+  dailySummary: { label: 'Daily Summary', description: 'End-of-day check-in summary notification' },
+  homeWorkCheckIn: { label: 'Home/Work Check-ins', description: 'Enable check-in prompts for home and work locations' },
+  autoCheckInSmart: { label: 'Smart Auto Check-In', description: 'Auto-confirm check-ins at frequently visited places' },
 };
 
 // ============================================================

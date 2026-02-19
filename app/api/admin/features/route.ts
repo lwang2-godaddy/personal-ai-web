@@ -29,6 +29,9 @@ const DEFAULT_FEATURE_FLAGS: Record<string, boolean> = {
   challenges: true,
   engagement: true,
   checkInSuggestions: true,
+  dailySummary: false,
+  homeWorkCheckIn: false,
+  autoCheckInSmart: true,
 };
 
 /**
