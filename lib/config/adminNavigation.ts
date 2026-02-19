@@ -80,6 +80,14 @@ export const ADMIN_NAVIGATION: NavGroup[] = [
     ],
   },
   {
+    id: 'non-ai-features',
+    label: 'Non-AI Features',
+    icon: '🎮',
+    items: [
+      { href: '/admin/non-ai-features', label: 'Non-AI Features', icon: '🎮' },
+    ],
+  },
+  {
     id: 'operations',
     label: 'Operations',
     icon: '🔧',

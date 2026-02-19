@@ -8,6 +8,7 @@ const AI_CONTENT_TABS = [
   { id: 'memory-builder', label: 'Memory Builder', href: '/admin/ai-content/memory-builder', icon: '🧠' },
   { id: 'fun-facts', label: 'Fun Facts', href: '/admin/ai-content/fun-facts', icon: '🎲' },
   { id: 'keywords', label: 'Life Keywords', href: '/admin/ai-content/keywords', icon: '🔑' },
+  { id: 'questions', label: 'Ask Questions', href: '/admin/ai-content/questions', icon: '🔍' },
 ];
 
 export default function AIContentLayout({ children }: { children: React.ReactNode }) {

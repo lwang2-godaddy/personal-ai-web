@@ -4,7 +4,6 @@ import { AdminTabs } from '@/components/admin/AdminTabs';
 
 const SOCIAL_TABS = [
   { id: 'challenges', label: 'Challenges', href: '/admin/social/challenges', icon: '🏆' },
-  { id: 'engagement', label: 'Engagement', href: '/admin/social/engagement', icon: '🎮' },
 ];
 
 export default function SocialLayout({ children }: { children: React.ReactNode }) {

@@ -3,8 +3,8 @@
 import { AdminTabs } from '@/components/admin/AdminTabs';
 
 const CONTENT_TABS = [
-  { id: 'questions', label: 'Ask Questions', href: '/admin/content/questions', icon: '🔍' },
-  { id: 'pricing', label: 'Pricing', href: '/admin/content/pricing', icon: '💰' },
+  { id: 'user-content', label: 'User Content', href: '/admin/content/user-content', icon: '📋' },
+  { id: 'voice-categories', label: 'Voice Categories', href: '/admin/content/voice-categories', icon: '🎤' },
 ];
 
 export default function ContentLayout({ children }: { children: React.ReactNode }) {
