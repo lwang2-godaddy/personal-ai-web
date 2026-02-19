@@ -56,10 +56,12 @@ export const ADMIN_NAVIGATION: NavGroup[] = [
     label: 'AI Configuration',
     icon: '🤖',
     items: [
+      { href: '/admin/ai-providers', label: 'AI Providers', icon: '🔌' },
       { href: '/admin/ai-models', label: 'AI Models', icon: '🤖' },
       { href: '/admin/prompts', label: 'Prompts', icon: '💬' },
       { href: '/admin/insights', label: 'Insights', icon: '💡' },
       { href: '/admin/life-feed', label: 'Life Feed Viewer', icon: '📰' },
+      { href: '/admin/chat-history', label: 'Chat History', icon: '💬' },
       { href: '/admin/memory-builder', label: 'Memory Builder', icon: '🧠' },
       { href: '/admin/life-keywords', label: 'Life Keywords', icon: '🔑' },
       { href: '/admin/fun-facts', label: 'Fun Facts', icon: '🎲' },
