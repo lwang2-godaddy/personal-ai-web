@@ -52,3 +52,56 @@ export interface FunFact {
   viewed?: boolean;
   hidden?: boolean;
 }
+
+export interface LifeConnectionDomain {
+  type: string;
+  metric: string;
+  displayName: string;
+}
+
+export interface LifeConnectionMetrics {
+  coefficient: number;        // Spearman rho (primary)
+  pearsonR?: number;          // Pearson r (secondary)
+  pValue: number;             // Raw p-value
+  adjustedPValue?: number;    // BH-corrected p-value
+  effectSize: number;         // Cohen's d
+  sampleSize: number;         // Raw sample size
+  effectiveSampleSize?: number; // Autocorrelation-adjusted
+  autocorrelation?: number;   // Max lag-1 autocorrelation
+  correlationType?: 'spearman'; // Correlation method used
+  confidenceInterval: { lower: number; upper: number };
+}
+
+export interface WithWithoutComparison {
+  withActivity: { count: number; mean: number; median: number };
+  withoutActivity: { count: number; mean: number; median: number };
+  absoluteDifference: number;
+  percentDifference: number;
+}
+
+export interface LifeConnection {
+  id: string;
+  userId: string;
+  category: string;
+  direction: 'positive' | 'negative';
+  strength: 'weak' | 'moderate' | 'strong';
+  domainA: LifeConnectionDomain;
+  domainB: LifeConnectionDomain;
+  metrics: LifeConnectionMetrics;
+  title: string;
+  description: string;
+  explanation: string;
+  recommendation?: { text: string; actionType: string };
+  timeLag?: { days: number; direction: string };
+  withWithout?: WithWithoutComparison;
+  survivesConfounderControl?: boolean;
+  confounderPartialR?: number;
+  confounderNote?: string;
+  trendDirection?: 'strengthening' | 'stable' | 'weakening';
+  dataPoints: Array<{ date: string; valueA: number; valueB: number }>;
+  detectedAt: number;
+  expiresAt: number;
+  dismissed: boolean;
+  userRating?: 'helpful' | 'not_helpful';
+  aiGenerated: boolean;
+}

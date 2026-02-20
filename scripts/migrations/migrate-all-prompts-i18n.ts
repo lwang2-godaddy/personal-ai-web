@@ -209,6 +209,13 @@ interface Translations {
   // MoodInsightService - AI-powered mood daily insights
   mood_insight_system: string;
   mood_insight_generate: string;
+
+  // DailySummaryService - Daily and weekly activity summaries
+  daily_summary_system: string;
+  daily_summary_prompt: string;
+  weekly_summary_prompt: string;
+  highlight_generator_prompt: string;
+  notification_content_prompt: string;
 }
 
 const translations: Record<string, Translations> = {
@@ -282,14 +289,34 @@ My data today:
 - Active calories: {{calories}}
 - Workouts: {{workoutCount}}
 
-Generate a friendly 2-3 sentence summary with ONE emoji that represents the day's mood at the start.`,
+{{#if voiceNotes}}
+Voice notes I recorded today:
+{{voiceNotes}}
+{{/if}}
+
+{{#if diaryNotes}}
+Diary entries today:
+{{diaryNotes}}
+{{/if}}
+
+Generate a friendly 2-3 sentence summary with ONE emoji. Prioritize personal content (voice notes, diary) over generic metrics when available.`,
     daily_insight_rest: `Create a brief, encouraging summary of my rest day today ({{date}}).
 
 My data today:
 - Steps: {{steps}}
 - Active calories: {{calories}}
 
-This appears to be a low-activity day. Generate a supportive 2-sentence summary that acknowledges rest days are important. Include ONE calming emoji at the start.`,
+{{#if voiceNotes}}
+Voice notes I recorded today:
+{{voiceNotes}}
+{{/if}}
+
+{{#if diaryNotes}}
+Diary entries today:
+{{diaryNotes}}
+{{/if}}
+
+This appears to be a low-activity day. Generate a supportive 2-sentence summary that acknowledges rest days are important. Prioritize personal content when available. Include ONE calming emoji at the start.`,
     rag_system: `You are a personal AI assistant with access to the user's data. Answer questions based on the provided context.
 
 Context:
@@ -963,6 +990,93 @@ Generate ONE insightful observation. Respond in JSON:
   "emoji": "single emoji",
   "type": "positive|neutral|encouragement"
 }`,
+
+    // DailySummaryService
+    daily_summary_system: `You are a helpful personal assistant that creates engaging, friendly summaries of the user's daily and weekly activities.
+
+Guidelines:
+- Write in second person ("you" language) to address the user directly
+- Be encouraging and positive without being over-the-top
+- Highlight achievements and milestones
+- Use natural, conversational language
+- Keep summaries concise but informative
+- Include relevant statistics where meaningful
+- If activity is lower than usual, frame it positively (e.g., "rest day", "took it easy")
+- Never make the user feel bad about their activity levels`,
+    daily_summary_prompt: `Generate a friendly daily activity summary for {{date}}.
+
+Activity Data:
+{{#if steps}}- Steps: {{steps}} (goal: {{stepsGoal}}){{/if}}
+{{#if workoutsCount}}- Workouts: {{workoutsCount}} workout(s){{#if workoutTypes}} ({{workoutTypes}}){{/if}}{{/if}}
+{{#if sleepHours}}- Sleep: {{sleepHours}} hours{{/if}}
+{{#if calories}}- Calories burned: {{calories}}{{/if}}
+{{#if distance}}- Distance: {{distance}} {{distanceUnit}}{{/if}}
+{{#if avgHeartRate}}- Average heart rate: {{avgHeartRate}} bpm{{/if}}
+{{#if placesVisited}}- Places visited: {{placesVisited}}{{/if}}
+{{#if activitiesLogged}}- Activities logged: {{activitiesLogged}}{{/if}}
+{{#if topActivities}}- Top activities: {{topActivities}}{{/if}}
+{{#if eventsTotal}}- Events: {{eventsTotal}}{{#if eventsCompleted}} ({{eventsCompleted}} completed){{/if}}{{/if}}
+
+Write a 2-3 sentence summary that:
+1. Highlights the most notable achievement or activity
+2. Provides context on overall activity level
+3. Ends with an encouraging note
+
+Summary:`,
+    weekly_summary_prompt: `Generate an engaging weekly activity summary for Week {{weekNumber}} of {{year}}.
+
+This Week's Data:
+{{#if totalSteps}}- Total steps: {{totalSteps}} ({{avgDailySteps}} daily avg){{/if}}
+{{#if workoutsCount}}- Workouts: {{workoutsCount}}{{#if workoutTypes}} ({{workoutTypes}}){{/if}}{{/if}}
+{{#if avgSleepHours}}- Average sleep: {{avgSleepHours}} hours/night{{/if}}
+{{#if totalCalories}}- Total calories: {{totalCalories}}{{/if}}
+{{#if totalDistance}}- Total distance: {{totalDistance}} {{distanceUnit}}{{/if}}
+{{#if placesVisited}}- Places visited: {{placesVisited}}{{/if}}
+{{#if activitiesLogged}}- Activities logged: {{activitiesLogged}}{{/if}}
+{{#if topActivities}}- Top activities: {{topActivities}}{{/if}}
+{{#if eventsTotal}}- Events: {{eventsTotal}}{{#if eventsCompleted}} ({{eventsCompleted}} completed){{/if}}{{/if}}
+
+{{#if hasComparison}}
+Compared to Last Week:
+- Steps: {{stepsChange}}% {{#if stepsUp}}increase{{else}}decrease{{/if}}
+- Workouts: {{workoutsChange}}% {{#if workoutsUp}}increase{{else}}decrease{{/if}}
+- Sleep: {{sleepChange}}% {{#if sleepUp}}increase{{else}}decrease{{/if}}
+- Overall trend: {{trend}}
+{{/if}}
+
+Write a 3-4 sentence summary that:
+1. Celebrates the week's top achievement
+2. Summarizes overall activity trends
+3. If comparison data exists, mention notable improvements or areas to focus on
+4. Ends with motivation for the upcoming week
+
+Summary:`,
+    highlight_generator_prompt: `Generate a short, engaging highlight for the following achievement:
+
+Achievement Type: {{achievementType}}
+Value: {{value}} {{unit}}
+Context: {{context}}
+
+Return a JSON object with:
+{
+  "title": "Short title (max 5 words)",
+  "description": "One sentence description",
+  "emoji": "Single relevant emoji"
+}`,
+    notification_content_prompt: `Create a brief, engaging push notification for a {{period}} summary.
+
+Key Metrics:
+{{#if steps}}- {{steps}} steps{{/if}}
+{{#if workoutsCount}}- {{workoutsCount}} workout(s){{/if}}
+{{#if placesVisited}}- {{placesVisited}} places visited{{/if}}
+{{#if trend}}- Trend: {{trend}}{{/if}}
+
+Generate a notification that:
+1. Is under 100 characters
+2. Highlights the most impressive metric
+3. Creates curiosity to open the app
+
+Notification text:`,
   },
 
   zh: {
@@ -1037,14 +1151,34 @@ Generate ONE insightful observation. Respond in JSON:
 - 活动卡路里：{{calories}}
 - 锻炼次数：{{workoutCount}}
 
-生成一个友好的2-3句总结，开头加一个代表当天心情的表情符号。用中文回复。`,
+{{#if voiceNotes}}
+今天录制的语音笔记：
+{{voiceNotes}}
+{{/if}}
+
+{{#if diaryNotes}}
+今天的日记：
+{{diaryNotes}}
+{{/if}}
+
+生成一个友好的2-3句总结，开头加一个表情符号。优先使用个人内容（语音笔记、日记），而非通用指标。用中文回复。`,
     daily_insight_rest: `为我今天（{{date}}）的休息日创建一个简短、鼓励性的总结。
 
 我今天的数据：
 - 步数：{{steps}}
 - 活动卡路里：{{calories}}
 
-这似乎是一个低活动日。生成一个支持性的2句总结，承认休息日的重要性。开头加一个平静的表情符号。用中文回复。`,
+{{#if voiceNotes}}
+今天录制的语音笔记：
+{{voiceNotes}}
+{{/if}}
+
+{{#if diaryNotes}}
+今天的日记：
+{{diaryNotes}}
+{{/if}}
+
+这似乎是一个低活动日。生成一个支持性的2句总结，承认休息日的重要性。有个人内容时优先使用。开头加一个平静的表情符号。用中文回复。`,
     rag_system: `你是一个可以访问用户数据的个人AI助手。根据提供的上下文回答问题。
 
 上下文：
@@ -1713,6 +1847,94 @@ Generate ONE insightful observation. Respond in JSON:
   "emoji": "单个表情符号",
   "type": "positive|neutral|encouragement"
 }`,
+
+    // DailySummaryService
+    daily_summary_system: `你是一个有帮助的个人助手，负责创建引人入胜、友好的用户每日和每周活动总结。
+
+指南：
+- 使用第二人称（"你"）直接称呼用户
+- 鼓励和积极，但不要过度
+- 突出成就和里程碑
+- 使用自然、对话式的语言
+- 保持总结简洁但有信息量
+- 在有意义时包含相关统计数据
+- 如果活动量低于平时，积极地表达（例如"休息日"、"放松了一下"）
+- 永远不要让用户对自己的活动量感到不好
+- 必须用中文回复`,
+    daily_summary_prompt: `为{{date}}生成一个友好的每日活动总结。
+
+活动数据：
+{{#if steps}}- 步数：{{steps}}（目标：{{stepsGoal}}）{{/if}}
+{{#if workoutsCount}}- 锻炼：{{workoutsCount}}次{{#if workoutTypes}}（{{workoutTypes}}）{{/if}}{{/if}}
+{{#if sleepHours}}- 睡眠：{{sleepHours}}小时{{/if}}
+{{#if calories}}- 消耗卡路里：{{calories}}{{/if}}
+{{#if distance}}- 距离：{{distance}} {{distanceUnit}}{{/if}}
+{{#if avgHeartRate}}- 平均心率：{{avgHeartRate}} bpm{{/if}}
+{{#if placesVisited}}- 到访地点：{{placesVisited}}{{/if}}
+{{#if activitiesLogged}}- 记录活动：{{activitiesLogged}}{{/if}}
+{{#if topActivities}}- 热门活动：{{topActivities}}{{/if}}
+{{#if eventsTotal}}- 事件：{{eventsTotal}}{{#if eventsCompleted}}（{{eventsCompleted}}已完成）{{/if}}{{/if}}
+
+写一个2-3句的总结：
+1. 突出最值得注意的成就或活动
+2. 提供整体活动水平的背景
+3. 以鼓励的话结尾
+
+总结：`,
+    weekly_summary_prompt: `为{{year}}年第{{weekNumber}}周生成一个引人入胜的每周活动总结。
+
+本周数据：
+{{#if totalSteps}}- 总步数：{{totalSteps}}（日均{{avgDailySteps}}）{{/if}}
+{{#if workoutsCount}}- 锻炼：{{workoutsCount}}次{{#if workoutTypes}}（{{workoutTypes}}）{{/if}}{{/if}}
+{{#if avgSleepHours}}- 平均睡眠：{{avgSleepHours}}小时/晚{{/if}}
+{{#if totalCalories}}- 总卡路里：{{totalCalories}}{{/if}}
+{{#if totalDistance}}- 总距离：{{totalDistance}} {{distanceUnit}}{{/if}}
+{{#if placesVisited}}- 到访地点：{{placesVisited}}{{/if}}
+{{#if activitiesLogged}}- 记录活动：{{activitiesLogged}}{{/if}}
+{{#if topActivities}}- 热门活动：{{topActivities}}{{/if}}
+{{#if eventsTotal}}- 事件：{{eventsTotal}}{{#if eventsCompleted}}（{{eventsCompleted}}已完成）{{/if}}{{/if}}
+
+{{#if hasComparison}}
+与上周比较：
+- 步数：{{stepsChange}}% {{#if stepsUp}}增加{{else}}减少{{/if}}
+- 锻炼：{{workoutsChange}}% {{#if workoutsUp}}增加{{else}}减少{{/if}}
+- 睡眠：{{sleepChange}}% {{#if sleepUp}}增加{{else}}减少{{/if}}
+- 整体趋势：{{trend}}
+{{/if}}
+
+写一个3-4句的总结：
+1. 庆祝本周最大的成就
+2. 总结整体活动趋势
+3. 如果有比较数据，提及显著的改进或需要关注的方面
+4. 以对下周的鼓励结尾
+
+总结：`,
+    highlight_generator_prompt: `为以下成就生成一个简短、引人入胜的亮点：
+
+成就类型：{{achievementType}}
+数值：{{value}} {{unit}}
+背景：{{context}}
+
+返回一个JSON对象：
+{
+  "title": "简短标题（最多5个字）",
+  "description": "一句话描述",
+  "emoji": "一个相关的表情符号"
+}`,
+    notification_content_prompt: `为{{period}}总结创建一条简短、引人入胜的推送通知。
+
+关键指标：
+{{#if steps}}- {{steps}}步{{/if}}
+{{#if workoutsCount}}- {{workoutsCount}}次锻炼{{/if}}
+{{#if placesVisited}}- 到访{{placesVisited}}个地点{{/if}}
+{{#if trend}}- 趋势：{{trend}}{{/if}}
+
+生成一条通知：
+1. 不超过100个字符
+2. 突出最令人印象深刻的指标
+3. 引发好奇心打开应用
+
+通知文本：`,
   },
 
   ja: {
@@ -1787,14 +2009,34 @@ Generate ONE insightful observation. Respond in JSON:
 - アクティブカロリー：{{calories}}
 - ワークアウト：{{workoutCount}}
 
-その日の気分を表す絵文字で始まる、フレンドリーな2-3文のサマリーを生成してください。日本語で回答。`,
+{{#if voiceNotes}}
+今日録音した音声メモ：
+{{voiceNotes}}
+{{/if}}
+
+{{#if diaryNotes}}
+今日の日記：
+{{diaryNotes}}
+{{/if}}
+
+フレンドリーな2-3文のサマリーを絵文字付きで生成してください。音声メモや日記などの個人的なコンテンツを、一般的な指標よりも優先してください。日本語で回答。`,
     daily_insight_rest: `今日（{{date}}）の休息日について、簡潔で励みになるサマリーを作成してください。
 
 今日のデータ：
 - 歩数：{{steps}}
 - アクティブカロリー：{{calories}}
 
-低活動の日のようです。休息日が重要であることを認める、サポート的な2文のサマリーを生成してください。穏やかな絵文字で始めて。日本語で回答。`,
+{{#if voiceNotes}}
+今日録音した音声メモ：
+{{voiceNotes}}
+{{/if}}
+
+{{#if diaryNotes}}
+今日の日記：
+{{diaryNotes}}
+{{/if}}
+
+低活動の日のようです。休息日が重要であることを認める、サポート的な2文のサマリーを生成してください。個人的なコンテンツがある場合は優先してください。穏やかな絵文字で始めて。日本語で回答。`,
     rag_system: `あなたはユーザーのデータにアクセスできるパーソナルAIアシスタントです。提供されたコンテキストに基づいて質問に答えてください。
 
 コンテキスト：
@@ -2438,6 +2680,94 @@ JSON形式で返してください：
   "emoji": "1つの絵文字",
   "type": "positive|neutral|encouragement"
 }`,
+
+    // DailySummaryService
+    daily_summary_system: `あなたは、ユーザーの毎日および週間の活動について魅力的でフレンドリーなサマリーを作成する、親切なパーソナルアシスタントです。
+
+ガイドライン：
+- 二人称（「あなた」）でユーザーに直接話しかける
+- 過度にならず、励ましとポジティブな姿勢で
+- 達成事項やマイルストーンを強調する
+- 自然で会話的な言葉遣いを使う
+- サマリーは簡潔だが情報量のあるものにする
+- 意味のある場合は関連する統計を含める
+- 活動量が通常より少ない場合は、ポジティブに表現する（例：「休息日」「のんびりした日」）
+- ユーザーの活動量について悪い気持ちにさせない
+- 日本語で回答してください`,
+    daily_summary_prompt: `{{date}}のフレンドリーな毎日の活動サマリーを生成してください。
+
+活動データ：
+{{#if steps}}- 歩数：{{steps}}（目標：{{stepsGoal}}）{{/if}}
+{{#if workoutsCount}}- ワークアウト：{{workoutsCount}}回{{#if workoutTypes}}（{{workoutTypes}}）{{/if}}{{/if}}
+{{#if sleepHours}}- 睡眠：{{sleepHours}}時間{{/if}}
+{{#if calories}}- 消費カロリー：{{calories}}{{/if}}
+{{#if distance}}- 距離：{{distance}} {{distanceUnit}}{{/if}}
+{{#if avgHeartRate}}- 平均心拍数：{{avgHeartRate}} bpm{{/if}}
+{{#if placesVisited}}- 訪問場所：{{placesVisited}}{{/if}}
+{{#if activitiesLogged}}- 記録された活動：{{activitiesLogged}}{{/if}}
+{{#if topActivities}}- 人気の活動：{{topActivities}}{{/if}}
+{{#if eventsTotal}}- イベント：{{eventsTotal}}{{#if eventsCompleted}}（{{eventsCompleted}}完了）{{/if}}{{/if}}
+
+2-3文のサマリーを書いてください：
+1. 最も注目すべき達成事項または活動を強調
+2. 全体的な活動レベルの文脈を提供
+3. 励ましのメモで締めくくる
+
+サマリー：`,
+    weekly_summary_prompt: `{{year}}年第{{weekNumber}}週の魅力的な週間活動サマリーを生成してください。
+
+今週のデータ：
+{{#if totalSteps}}- 総歩数：{{totalSteps}}（日平均{{avgDailySteps}}）{{/if}}
+{{#if workoutsCount}}- ワークアウト：{{workoutsCount}}回{{#if workoutTypes}}（{{workoutTypes}}）{{/if}}{{/if}}
+{{#if avgSleepHours}}- 平均睡眠：{{avgSleepHours}}時間/晩{{/if}}
+{{#if totalCalories}}- 総カロリー：{{totalCalories}}{{/if}}
+{{#if totalDistance}}- 総距離：{{totalDistance}} {{distanceUnit}}{{/if}}
+{{#if placesVisited}}- 訪問場所：{{placesVisited}}{{/if}}
+{{#if activitiesLogged}}- 記録された活動：{{activitiesLogged}}{{/if}}
+{{#if topActivities}}- 人気の活動：{{topActivities}}{{/if}}
+{{#if eventsTotal}}- イベント：{{eventsTotal}}{{#if eventsCompleted}}（{{eventsCompleted}}完了）{{/if}}{{/if}}
+
+{{#if hasComparison}}
+先週との比較：
+- 歩数：{{stepsChange}}% {{#if stepsUp}}増加{{else}}減少{{/if}}
+- ワークアウト：{{workoutsChange}}% {{#if workoutsUp}}増加{{else}}減少{{/if}}
+- 睡眠：{{sleepChange}}% {{#if sleepUp}}増加{{else}}減少{{/if}}
+- 全体的なトレンド：{{trend}}
+{{/if}}
+
+3-4文のサマリーを書いてください：
+1. 今週のトップの達成を祝う
+2. 全体的な活動トレンドをまとめる
+3. 比較データがある場合、注目すべき改善点や重点分野に言及
+4. 来週へのモチベーションで締めくくる
+
+サマリー：`,
+    highlight_generator_prompt: `以下の達成について、短く魅力的なハイライトを生成してください：
+
+達成タイプ：{{achievementType}}
+値：{{value}} {{unit}}
+コンテキスト：{{context}}
+
+JSONオブジェクトを返してください：
+{
+  "title": "短いタイトル（最大5単語）",
+  "description": "一文の説明",
+  "emoji": "関連する絵文字1つ"
+}`,
+    notification_content_prompt: `{{period}}サマリーのための簡潔で魅力的なプッシュ通知を作成してください。
+
+主要な指標：
+{{#if steps}}- {{steps}}歩{{/if}}
+{{#if workoutsCount}}- {{workoutsCount}}回のワークアウト{{/if}}
+{{#if placesVisited}}- {{placesVisited}}か所を訪問{{/if}}
+{{#if trend}}- トレンド：{{trend}}{{/if}}
+
+通知の条件：
+1. 100文字以内
+2. 最も印象的な指標を強調
+3. アプリを開きたくなる好奇心を生む
+
+通知テキスト：`,
   },
 
   ko: {
@@ -2512,14 +2842,34 @@ JSON形式で返してください：
 - 활동 칼로리: {{calories}}
 - 운동: {{workoutCount}}
 
-그날의 기분을 나타내는 이모지로 시작하는 친근한 2-3문장 요약을 생성해주세요. 한국어로 응답.`,
+{{#if voiceNotes}}
+오늘 녹음한 음성 메모:
+{{voiceNotes}}
+{{/if}}
+
+{{#if diaryNotes}}
+오늘의 일기:
+{{diaryNotes}}
+{{/if}}
+
+이모지로 시작하는 친근한 2-3문장 요약을 생성해주세요. 음성 메모, 일기 등 개인적인 콘텐츠를 일반적인 지표보다 우선하세요. 한국어로 응답.`,
     daily_insight_rest: `오늘({{date}}) 휴식일에 대한 간략하고 격려하는 요약을 작성해주세요.
 
 오늘 데이터:
 - 걸음 수: {{steps}}
 - 활동 칼로리: {{calories}}
 
-낮은 활동 일인 것 같습니다. 휴식일이 중요하다는 것을 인정하는 지지적인 2문장 요약을 생성해주세요. 차분한 이모지로 시작. 한국어로 응답.`,
+{{#if voiceNotes}}
+오늘 녹음한 음성 메모:
+{{voiceNotes}}
+{{/if}}
+
+{{#if diaryNotes}}
+오늘의 일기:
+{{diaryNotes}}
+{{/if}}
+
+낮은 활동 일인 것 같습니다. 휴식일이 중요하다는 것을 인정하는 지지적인 2문장 요약을 생성해주세요. 개인적인 콘텐츠가 있으면 우선하세요. 차분한 이모지로 시작. 한국어로 응답.`,
     rag_system: `당신은 사용자의 데이터에 접근할 수 있는 개인 AI 어시스턴트입니다. 제공된 컨텍스트를 바탕으로 질문에 답하세요.
 
 컨텍스트:
@@ -3134,6 +3484,94 @@ JSON 형식으로 반환:
   "emoji": "이모지 하나",
   "type": "positive|neutral|encouragement"
 }`,
+
+    // DailySummaryService
+    daily_summary_system: `당신은 사용자의 일일 및 주간 활동에 대해 매력적이고 친근한 요약을 만드는 도움이 되는 개인 비서입니다.
+
+가이드라인:
+- 2인칭("당신")으로 사용자에게 직접 말하기
+- 과하지 않게 격려하고 긍정적으로
+- 성과와 이정표를 강조
+- 자연스럽고 대화적인 언어 사용
+- 요약은 간결하지만 정보가 풍부하게
+- 의미 있는 경우 관련 통계 포함
+- 활동이 평소보다 적으면 긍정적으로 표현 (예: "휴식일", "여유로운 하루")
+- 사용자가 자신의 활동량에 대해 나쁘게 느끼지 않도록
+- 한국어로 응답하세요`,
+    daily_summary_prompt: `{{date}}에 대한 친근한 일일 활동 요약을 생성하세요.
+
+활동 데이터:
+{{#if steps}}- 걸음 수: {{steps}} (목표: {{stepsGoal}}){{/if}}
+{{#if workoutsCount}}- 운동: {{workoutsCount}}회{{#if workoutTypes}} ({{workoutTypes}}){{/if}}{{/if}}
+{{#if sleepHours}}- 수면: {{sleepHours}}시간{{/if}}
+{{#if calories}}- 소모 칼로리: {{calories}}{{/if}}
+{{#if distance}}- 거리: {{distance}} {{distanceUnit}}{{/if}}
+{{#if avgHeartRate}}- 평균 심박수: {{avgHeartRate}} bpm{{/if}}
+{{#if placesVisited}}- 방문 장소: {{placesVisited}}{{/if}}
+{{#if activitiesLogged}}- 기록된 활동: {{activitiesLogged}}{{/if}}
+{{#if topActivities}}- 인기 활동: {{topActivities}}{{/if}}
+{{#if eventsTotal}}- 이벤트: {{eventsTotal}}{{#if eventsCompleted}} ({{eventsCompleted}} 완료){{/if}}{{/if}}
+
+2-3문장의 요약을 작성하세요:
+1. 가장 주목할 만한 성취 또는 활동을 강조
+2. 전반적인 활동 수준에 대한 맥락 제공
+3. 격려의 메모로 마무리
+
+요약:`,
+    weekly_summary_prompt: `{{year}}년 {{weekNumber}}주차의 매력적인 주간 활동 요약을 생성하세요.
+
+이번 주 데이터:
+{{#if totalSteps}}- 총 걸음 수: {{totalSteps}} (일 평균 {{avgDailySteps}}){{/if}}
+{{#if workoutsCount}}- 운동: {{workoutsCount}}회{{#if workoutTypes}} ({{workoutTypes}}){{/if}}{{/if}}
+{{#if avgSleepHours}}- 평균 수면: {{avgSleepHours}}시간/밤{{/if}}
+{{#if totalCalories}}- 총 칼로리: {{totalCalories}}{{/if}}
+{{#if totalDistance}}- 총 거리: {{totalDistance}} {{distanceUnit}}{{/if}}
+{{#if placesVisited}}- 방문 장소: {{placesVisited}}{{/if}}
+{{#if activitiesLogged}}- 기록된 활동: {{activitiesLogged}}{{/if}}
+{{#if topActivities}}- 인기 활동: {{topActivities}}{{/if}}
+{{#if eventsTotal}}- 이벤트: {{eventsTotal}}{{#if eventsCompleted}} ({{eventsCompleted}} 완료){{/if}}{{/if}}
+
+{{#if hasComparison}}
+지난주와 비교:
+- 걸음 수: {{stepsChange}}% {{#if stepsUp}}증가{{else}}감소{{/if}}
+- 운동: {{workoutsChange}}% {{#if workoutsUp}}증가{{else}}감소{{/if}}
+- 수면: {{sleepChange}}% {{#if sleepUp}}증가{{else}}감소{{/if}}
+- 전체 추세: {{trend}}
+{{/if}}
+
+3-4문장의 요약을 작성하세요:
+1. 이번 주의 최고 성취를 축하
+2. 전반적인 활동 추세 요약
+3. 비교 데이터가 있으면 주목할 만한 개선 사항이나 집중해야 할 부분 언급
+4. 다음 주를 위한 동기부여로 마무리
+
+요약:`,
+    highlight_generator_prompt: `다음 성취에 대한 짧고 매력적인 하이라이트를 생성하세요:
+
+성취 유형: {{achievementType}}
+값: {{value}} {{unit}}
+맥락: {{context}}
+
+JSON 객체를 반환하세요:
+{
+  "title": "짧은 제목 (최대 5단어)",
+  "description": "한 문장 설명",
+  "emoji": "관련 이모지 하나"
+}`,
+    notification_content_prompt: `{{period}} 요약을 위한 간결하고 매력적인 푸시 알림을 만드세요.
+
+주요 지표:
+{{#if steps}}- {{steps}}걸음{{/if}}
+{{#if workoutsCount}}- {{workoutsCount}}회 운동{{/if}}
+{{#if placesVisited}}- {{placesVisited}}곳 방문{{/if}}
+{{#if trend}}- 추세: {{trend}}{{/if}}
+
+알림 조건:
+1. 100자 이내
+2. 가장 인상적인 지표를 강조
+3. 앱을 열고 싶은 호기심 유발
+
+알림 텍스트:`,
   },
 
   es: {
@@ -3208,14 +3646,34 @@ Mis datos de hoy:
 - Calorías activas: {{calories}}
 - Entrenamientos: {{workoutCount}}
 
-Genera un resumen amigable de 2-3 oraciones con UN emoji que represente el estado de ánimo del día al inicio. En español.`,
+{{#if voiceNotes}}
+Notas de voz que grabé hoy:
+{{voiceNotes}}
+{{/if}}
+
+{{#if diaryNotes}}
+Entradas de diario de hoy:
+{{diaryNotes}}
+{{/if}}
+
+Genera un resumen amigable de 2-3 oraciones con UN emoji. Prioriza el contenido personal (notas de voz, diario) sobre métricas genéricas cuando esté disponible. En español.`,
     daily_insight_rest: `Crea un resumen breve y alentador de mi día de descanso de hoy ({{date}}).
 
 Mis datos de hoy:
 - Pasos: {{steps}}
 - Calorías activas: {{calories}}
 
-Parece ser un día de baja actividad. Genera un resumen de apoyo de 2 oraciones que reconozca que los días de descanso son importantes. Incluye UN emoji tranquilo al inicio. En español.`,
+{{#if voiceNotes}}
+Notas de voz que grabé hoy:
+{{voiceNotes}}
+{{/if}}
+
+{{#if diaryNotes}}
+Entradas de diario de hoy:
+{{diaryNotes}}
+{{/if}}
+
+Parece ser un día de baja actividad. Genera un resumen de apoyo de 2 oraciones que reconozca que los días de descanso son importantes. Prioriza el contenido personal cuando esté disponible. Incluye UN emoji tranquilo al inicio. En español.`,
     rag_system: `Eres un asistente personal de IA con acceso a los datos del usuario. Responde preguntas basándote en el contexto proporcionado.
 
 Contexto:
@@ -3830,6 +4288,94 @@ Genera UNA observación perspicaz. Responde en JSON:
   "emoji": "un emoji",
   "type": "positive|neutral|encouragement"
 }`,
+
+    // DailySummaryService
+    daily_summary_system: `Eres un asistente personal útil que crea resúmenes atractivos y amigables de las actividades diarias y semanales del usuario.
+
+Directrices:
+- Escribe en segunda persona ("tú") para dirigirte directamente al usuario
+- Sé alentador y positivo sin exagerar
+- Destaca logros e hitos
+- Usa un lenguaje natural y conversacional
+- Mantén los resúmenes concisos pero informativos
+- Incluye estadísticas relevantes cuando sea significativo
+- Si la actividad es menor de lo habitual, exprésalo positivamente (ej: "día de descanso", "te lo tomaste con calma")
+- Nunca hagas que el usuario se sienta mal por sus niveles de actividad
+- Responde en español`,
+    daily_summary_prompt: `Genera un resumen amigable de actividad diaria para {{date}}.
+
+Datos de Actividad:
+{{#if steps}}- Pasos: {{steps}} (meta: {{stepsGoal}}){{/if}}
+{{#if workoutsCount}}- Entrenamientos: {{workoutsCount}}{{#if workoutTypes}} ({{workoutTypes}}){{/if}}{{/if}}
+{{#if sleepHours}}- Sueño: {{sleepHours}} horas{{/if}}
+{{#if calories}}- Calorías quemadas: {{calories}}{{/if}}
+{{#if distance}}- Distancia: {{distance}} {{distanceUnit}}{{/if}}
+{{#if avgHeartRate}}- Frecuencia cardíaca promedio: {{avgHeartRate}} bpm{{/if}}
+{{#if placesVisited}}- Lugares visitados: {{placesVisited}}{{/if}}
+{{#if activitiesLogged}}- Actividades registradas: {{activitiesLogged}}{{/if}}
+{{#if topActivities}}- Actividades principales: {{topActivities}}{{/if}}
+{{#if eventsTotal}}- Eventos: {{eventsTotal}}{{#if eventsCompleted}} ({{eventsCompleted}} completados){{/if}}{{/if}}
+
+Escribe un resumen de 2-3 oraciones que:
+1. Destaque el logro o actividad más notable
+2. Proporcione contexto sobre el nivel general de actividad
+3. Termine con una nota alentadora
+
+Resumen:`,
+    weekly_summary_prompt: `Genera un resumen atractivo de actividad semanal para la Semana {{weekNumber}} de {{year}}.
+
+Datos de Esta Semana:
+{{#if totalSteps}}- Pasos totales: {{totalSteps}} ({{avgDailySteps}} promedio diario){{/if}}
+{{#if workoutsCount}}- Entrenamientos: {{workoutsCount}}{{#if workoutTypes}} ({{workoutTypes}}){{/if}}{{/if}}
+{{#if avgSleepHours}}- Sueño promedio: {{avgSleepHours}} horas/noche{{/if}}
+{{#if totalCalories}}- Calorías totales: {{totalCalories}}{{/if}}
+{{#if totalDistance}}- Distancia total: {{totalDistance}} {{distanceUnit}}{{/if}}
+{{#if placesVisited}}- Lugares visitados: {{placesVisited}}{{/if}}
+{{#if activitiesLogged}}- Actividades registradas: {{activitiesLogged}}{{/if}}
+{{#if topActivities}}- Actividades principales: {{topActivities}}{{/if}}
+{{#if eventsTotal}}- Eventos: {{eventsTotal}}{{#if eventsCompleted}} ({{eventsCompleted}} completados){{/if}}{{/if}}
+
+{{#if hasComparison}}
+Comparado con la Semana Pasada:
+- Pasos: {{stepsChange}}% de {{#if stepsUp}}aumento{{else}}disminución{{/if}}
+- Entrenamientos: {{workoutsChange}}% de {{#if workoutsUp}}aumento{{else}}disminución{{/if}}
+- Sueño: {{sleepChange}}% de {{#if sleepUp}}aumento{{else}}disminución{{/if}}
+- Tendencia general: {{trend}}
+{{/if}}
+
+Escribe un resumen de 3-4 oraciones que:
+1. Celebre el mayor logro de la semana
+2. Resuma las tendencias generales de actividad
+3. Si hay datos comparativos, mencione mejoras notables o áreas de enfoque
+4. Termine con motivación para la próxima semana
+
+Resumen:`,
+    highlight_generator_prompt: `Genera un breve y atractivo destacado para el siguiente logro:
+
+Tipo de Logro: {{achievementType}}
+Valor: {{value}} {{unit}}
+Contexto: {{context}}
+
+Devuelve un objeto JSON:
+{
+  "title": "Título corto (máximo 5 palabras)",
+  "description": "Descripción de una oración",
+  "emoji": "Un emoji relevante"
+}`,
+    notification_content_prompt: `Crea una notificación push breve y atractiva para un resumen {{period}}.
+
+Métricas Clave:
+{{#if steps}}- {{steps}} pasos{{/if}}
+{{#if workoutsCount}}- {{workoutsCount}} entrenamiento(s){{/if}}
+{{#if placesVisited}}- {{placesVisited}} lugares visitados{{/if}}
+{{#if trend}}- Tendencia: {{trend}}{{/if}}
+
+Genera una notificación que:
+1. Tenga menos de 100 caracteres
+2. Destaque la métrica más impresionante
+3. Cree curiosidad para abrir la app
+
+Texto de notificación:`,
   },
 
   fr: {
@@ -3904,14 +4450,34 @@ Mes données d'aujourd'hui:
 - Calories actives: {{calories}}
 - Entraînements: {{workoutCount}}
 
-Générez un résumé amical de 2-3 phrases avec UN emoji représentant l'humeur du jour au début. En français.`,
+{{#if voiceNotes}}
+Notes vocales enregistrées aujourd'hui :
+{{voiceNotes}}
+{{/if}}
+
+{{#if diaryNotes}}
+Entrées de journal aujourd'hui :
+{{diaryNotes}}
+{{/if}}
+
+Générez un résumé amical de 2-3 phrases avec UN emoji. Privilégie le contenu personnel (notes vocales, journal) par rapport aux métriques génériques lorsqu'il est disponible. En français.`,
     daily_insight_rest: `Créez un résumé bref et encourageant de ma journée de repos d'aujourd'hui ({{date}}).
 
 Mes données d'aujourd'hui:
 - Pas: {{steps}}
 - Calories actives: {{calories}}
 
-Cela semble être une journée de faible activité. Générez un résumé de soutien de 2 phrases qui reconnaît que les jours de repos sont importants. Incluez UN emoji apaisant au début. En français.`,
+{{#if voiceNotes}}
+Notes vocales enregistrées aujourd'hui :
+{{voiceNotes}}
+{{/if}}
+
+{{#if diaryNotes}}
+Entrées de journal aujourd'hui :
+{{diaryNotes}}
+{{/if}}
+
+Cela semble être une journée de faible activité. Générez un résumé de soutien de 2 phrases qui reconnaît que les jours de repos sont importants. Privilégie le contenu personnel lorsqu'il est disponible. Incluez UN emoji apaisant au début. En français.`,
     rag_system: `Vous êtes un assistant IA personnel avec accès aux données de l'utilisateur. Répondez aux questions basées sur le contexte fourni.
 
 Contexte:
@@ -4526,6 +5092,94 @@ Générez UNE observation perspicace. Répondez en JSON :
   "emoji": "un seul emoji",
   "type": "positive|neutral|encouragement"
 }`,
+
+    // DailySummaryService
+    daily_summary_system: `Vous êtes un assistant personnel utile qui crée des résumés engageants et amicaux des activités quotidiennes et hebdomadaires de l'utilisateur.
+
+Directives :
+- Écrivez à la deuxième personne ("vous") pour vous adresser directement à l'utilisateur
+- Soyez encourageant et positif sans exagérer
+- Mettez en valeur les réalisations et les étapes importantes
+- Utilisez un langage naturel et conversationnel
+- Gardez les résumés concis mais informatifs
+- Incluez des statistiques pertinentes quand c'est significatif
+- Si l'activité est inférieure à la normale, présentez-le positivement (ex : "jour de repos", "journée tranquille")
+- Ne faites jamais culpabiliser l'utilisateur sur ses niveaux d'activité
+- Répondez en français`,
+    daily_summary_prompt: `Générez un résumé d'activité quotidienne amical pour le {{date}}.
+
+Données d'Activité :
+{{#if steps}}- Pas : {{steps}} (objectif : {{stepsGoal}}){{/if}}
+{{#if workoutsCount}}- Entraînements : {{workoutsCount}}{{#if workoutTypes}} ({{workoutTypes}}){{/if}}{{/if}}
+{{#if sleepHours}}- Sommeil : {{sleepHours}} heures{{/if}}
+{{#if calories}}- Calories brûlées : {{calories}}{{/if}}
+{{#if distance}}- Distance : {{distance}} {{distanceUnit}}{{/if}}
+{{#if avgHeartRate}}- Fréquence cardiaque moyenne : {{avgHeartRate}} bpm{{/if}}
+{{#if placesVisited}}- Lieux visités : {{placesVisited}}{{/if}}
+{{#if activitiesLogged}}- Activités enregistrées : {{activitiesLogged}}{{/if}}
+{{#if topActivities}}- Activités principales : {{topActivities}}{{/if}}
+{{#if eventsTotal}}- Événements : {{eventsTotal}}{{#if eventsCompleted}} ({{eventsCompleted}} terminés){{/if}}{{/if}}
+
+Écrivez un résumé de 2-3 phrases qui :
+1. Met en valeur la réalisation ou l'activité la plus notable
+2. Fournit un contexte sur le niveau d'activité global
+3. Se termine par une note encourageante
+
+Résumé :`,
+    weekly_summary_prompt: `Générez un résumé d'activité hebdomadaire engageant pour la Semaine {{weekNumber}} de {{year}}.
+
+Données de Cette Semaine :
+{{#if totalSteps}}- Pas totaux : {{totalSteps}} ({{avgDailySteps}} moyenne quotidienne){{/if}}
+{{#if workoutsCount}}- Entraînements : {{workoutsCount}}{{#if workoutTypes}} ({{workoutTypes}}){{/if}}{{/if}}
+{{#if avgSleepHours}}- Sommeil moyen : {{avgSleepHours}} heures/nuit{{/if}}
+{{#if totalCalories}}- Calories totales : {{totalCalories}}{{/if}}
+{{#if totalDistance}}- Distance totale : {{totalDistance}} {{distanceUnit}}{{/if}}
+{{#if placesVisited}}- Lieux visités : {{placesVisited}}{{/if}}
+{{#if activitiesLogged}}- Activités enregistrées : {{activitiesLogged}}{{/if}}
+{{#if topActivities}}- Activités principales : {{topActivities}}{{/if}}
+{{#if eventsTotal}}- Événements : {{eventsTotal}}{{#if eventsCompleted}} ({{eventsCompleted}} terminés){{/if}}{{/if}}
+
+{{#if hasComparison}}
+Comparaison avec la Semaine Dernière :
+- Pas : {{stepsChange}}% d'{{#if stepsUp}}augmentation{{else}}diminution{{/if}}
+- Entraînements : {{workoutsChange}}% d'{{#if workoutsUp}}augmentation{{else}}diminution{{/if}}
+- Sommeil : {{sleepChange}}% d'{{#if sleepUp}}augmentation{{else}}diminution{{/if}}
+- Tendance générale : {{trend}}
+{{/if}}
+
+Écrivez un résumé de 3-4 phrases qui :
+1. Célèbre la plus grande réalisation de la semaine
+2. Résume les tendances d'activité globales
+3. Si des données comparatives existent, mentionne les améliorations notables ou les points d'attention
+4. Se termine par de la motivation pour la semaine à venir
+
+Résumé :`,
+    highlight_generator_prompt: `Générez un court highlight engageant pour la réalisation suivante :
+
+Type de Réalisation : {{achievementType}}
+Valeur : {{value}} {{unit}}
+Contexte : {{context}}
+
+Retournez un objet JSON :
+{
+  "title": "Titre court (max 5 mots)",
+  "description": "Description en une phrase",
+  "emoji": "Un emoji pertinent"
+}`,
+    notification_content_prompt: `Créez une notification push brève et engageante pour un résumé {{period}}.
+
+Métriques Clés :
+{{#if steps}}- {{steps}} pas{{/if}}
+{{#if workoutsCount}}- {{workoutsCount}} entraînement(s){{/if}}
+{{#if placesVisited}}- {{placesVisited}} lieux visités{{/if}}
+{{#if trend}}- Tendance : {{trend}}{{/if}}
+
+Générez une notification qui :
+1. Fait moins de 100 caractères
+2. Met en valeur la métrique la plus impressionnante
+3. Crée de la curiosité pour ouvrir l'app
+
+Texte de notification :`,
   },
 
   de: {
@@ -4600,14 +5254,34 @@ Meine heutigen Daten:
 - Aktive Kalorien: {{calories}}
 - Training: {{workoutCount}}
 
-Generieren Sie eine freundliche 2-3 Sätze Zusammenfassung mit EINEM Emoji, das die Stimmung des Tages am Anfang darstellt. Auf Deutsch.`,
+{{#if voiceNotes}}
+Heute aufgenommene Sprachnotizen:
+{{voiceNotes}}
+{{/if}}
+
+{{#if diaryNotes}}
+Tagebucheinträge heute:
+{{diaryNotes}}
+{{/if}}
+
+Generieren Sie eine freundliche 2-3 Sätze Zusammenfassung mit EINEM Emoji. Priorisiere persönliche Inhalte (Sprachnotizen, Tagebuch) gegenüber allgemeinen Metriken, wenn verfügbar. Auf Deutsch.`,
     daily_insight_rest: `Erstellen Sie eine kurze, ermutigende Zusammenfassung meines heutigen Ruhetags ({{date}}).
 
 Meine heutigen Daten:
 - Schritte: {{steps}}
 - Aktive Kalorien: {{calories}}
 
-Dies scheint ein Tag mit geringer Aktivität zu sein. Generieren Sie eine unterstützende 2-Sätze-Zusammenfassung, die anerkennt, dass Ruhetage wichtig sind. Fügen Sie am Anfang EIN beruhigendes Emoji hinzu. Auf Deutsch.`,
+{{#if voiceNotes}}
+Heute aufgenommene Sprachnotizen:
+{{voiceNotes}}
+{{/if}}
+
+{{#if diaryNotes}}
+Tagebucheinträge heute:
+{{diaryNotes}}
+{{/if}}
+
+Dies scheint ein Tag mit geringer Aktivität zu sein. Generieren Sie eine unterstützende 2-Sätze-Zusammenfassung, die anerkennt, dass Ruhetage wichtig sind. Priorisiere persönliche Inhalte, wenn verfügbar. Fügen Sie am Anfang EIN beruhigendes Emoji hinzu. Auf Deutsch.`,
     rag_system: `Sie sind ein persönlicher KI-Assistent mit Zugriff auf die Daten des Benutzers. Beantworten Sie Fragen basierend auf dem bereitgestellten Kontext.
 
 Kontext:
@@ -5222,6 +5896,94 @@ Generieren Sie EINE aufschlussreiche Beobachtung. Antworten Sie in JSON:
   "emoji": "ein einzelnes Emoji",
   "type": "positive|neutral|encouragement"
 }`,
+
+    // DailySummaryService
+    daily_summary_system: `Sie sind ein hilfreicher persönlicher Assistent, der ansprechende, freundliche Zusammenfassungen der täglichen und wöchentlichen Aktivitäten des Benutzers erstellt.
+
+Richtlinien:
+- Schreiben Sie in der zweiten Person ("Sie") um den Benutzer direkt anzusprechen
+- Seien Sie ermutigend und positiv, ohne zu übertreiben
+- Heben Sie Erfolge und Meilensteine hervor
+- Verwenden Sie natürliche, gesprächige Sprache
+- Halten Sie Zusammenfassungen prägnant aber informativ
+- Fügen Sie relevante Statistiken ein, wenn sie aussagekräftig sind
+- Bei geringerer Aktivität als üblich, formulieren Sie es positiv (z.B. "Ruhetag", "entspannter Tag")
+- Geben Sie dem Benutzer nie ein schlechtes Gefühl wegen seiner Aktivitätsniveaus
+- Antworten Sie auf Deutsch`,
+    daily_summary_prompt: `Erstellen Sie eine freundliche tägliche Aktivitätszusammenfassung für {{date}}.
+
+Aktivitätsdaten:
+{{#if steps}}- Schritte: {{steps}} (Ziel: {{stepsGoal}}){{/if}}
+{{#if workoutsCount}}- Trainings: {{workoutsCount}}{{#if workoutTypes}} ({{workoutTypes}}){{/if}}{{/if}}
+{{#if sleepHours}}- Schlaf: {{sleepHours}} Stunden{{/if}}
+{{#if calories}}- Verbrannte Kalorien: {{calories}}{{/if}}
+{{#if distance}}- Distanz: {{distance}} {{distanceUnit}}{{/if}}
+{{#if avgHeartRate}}- Durchschnittliche Herzfrequenz: {{avgHeartRate}} bpm{{/if}}
+{{#if placesVisited}}- Besuchte Orte: {{placesVisited}}{{/if}}
+{{#if activitiesLogged}}- Protokollierte Aktivitäten: {{activitiesLogged}}{{/if}}
+{{#if topActivities}}- Top-Aktivitäten: {{topActivities}}{{/if}}
+{{#if eventsTotal}}- Ereignisse: {{eventsTotal}}{{#if eventsCompleted}} ({{eventsCompleted}} abgeschlossen){{/if}}{{/if}}
+
+Schreiben Sie eine 2-3-Satz-Zusammenfassung die:
+1. Den bemerkenswertesten Erfolg oder die bemerkenswerteste Aktivität hervorhebt
+2. Kontext zum allgemeinen Aktivitätsniveau bietet
+3. Mit einer ermutigenden Anmerkung endet
+
+Zusammenfassung:`,
+    weekly_summary_prompt: `Erstellen Sie eine ansprechende wöchentliche Aktivitätszusammenfassung für Woche {{weekNumber}} von {{year}}.
+
+Daten Dieser Woche:
+{{#if totalSteps}}- Gesamtschritte: {{totalSteps}} ({{avgDailySteps}} Tagesdurchschnitt){{/if}}
+{{#if workoutsCount}}- Trainings: {{workoutsCount}}{{#if workoutTypes}} ({{workoutTypes}}){{/if}}{{/if}}
+{{#if avgSleepHours}}- Durchschnittlicher Schlaf: {{avgSleepHours}} Stunden/Nacht{{/if}}
+{{#if totalCalories}}- Gesamtkalorien: {{totalCalories}}{{/if}}
+{{#if totalDistance}}- Gesamtdistanz: {{totalDistance}} {{distanceUnit}}{{/if}}
+{{#if placesVisited}}- Besuchte Orte: {{placesVisited}}{{/if}}
+{{#if activitiesLogged}}- Protokollierte Aktivitäten: {{activitiesLogged}}{{/if}}
+{{#if topActivities}}- Top-Aktivitäten: {{topActivities}}{{/if}}
+{{#if eventsTotal}}- Ereignisse: {{eventsTotal}}{{#if eventsCompleted}} ({{eventsCompleted}} abgeschlossen){{/if}}{{/if}}
+
+{{#if hasComparison}}
+Vergleich mit Letzter Woche:
+- Schritte: {{stepsChange}}% {{#if stepsUp}}Zunahme{{else}}Abnahme{{/if}}
+- Trainings: {{workoutsChange}}% {{#if workoutsUp}}Zunahme{{else}}Abnahme{{/if}}
+- Schlaf: {{sleepChange}}% {{#if sleepUp}}Zunahme{{else}}Abnahme{{/if}}
+- Gesamttrend: {{trend}}
+{{/if}}
+
+Schreiben Sie eine 3-4-Satz-Zusammenfassung die:
+1. Den größten Erfolg der Woche feiert
+2. Allgemeine Aktivitätstrends zusammenfasst
+3. Bei vorhandenen Vergleichsdaten bemerkenswerte Verbesserungen oder Schwerpunktbereiche erwähnt
+4. Mit Motivation für die kommende Woche endet
+
+Zusammenfassung:`,
+    highlight_generator_prompt: `Erstellen Sie ein kurzes, ansprechendes Highlight für den folgenden Erfolg:
+
+Erfolgstyp: {{achievementType}}
+Wert: {{value}} {{unit}}
+Kontext: {{context}}
+
+Geben Sie ein JSON-Objekt zurück:
+{
+  "title": "Kurzer Titel (max. 5 Wörter)",
+  "description": "Beschreibung in einem Satz",
+  "emoji": "Ein passendes Emoji"
+}`,
+    notification_content_prompt: `Erstellen Sie eine kurze, ansprechende Push-Benachrichtigung für eine {{period}}-Zusammenfassung.
+
+Wichtige Kennzahlen:
+{{#if steps}}- {{steps}} Schritte{{/if}}
+{{#if workoutsCount}}- {{workoutsCount}} Training(s){{/if}}
+{{#if placesVisited}}- {{placesVisited}} besuchte Orte{{/if}}
+{{#if trend}}- Trend: {{trend}}{{/if}}
+
+Generieren Sie eine Benachrichtigung die:
+1. Unter 100 Zeichen liegt
+2. Die beeindruckendste Kennzahl hervorhebt
+3. Neugier zum Öffnen der App weckt
+
+Benachrichtigungstext:`,
   },
 
   it: {
@@ -5296,14 +6058,34 @@ I miei dati di oggi:
 - Calorie attive: {{calories}}
 - Allenamenti: {{workoutCount}}
 
-Genera un riassunto amichevole di 2-3 frasi con UN emoji che rappresenta l'umore del giorno all'inizio. In italiano.`,
+{{#if voiceNotes}}
+Note vocali registrate oggi:
+{{voiceNotes}}
+{{/if}}
+
+{{#if diaryNotes}}
+Voci del diario di oggi:
+{{diaryNotes}}
+{{/if}}
+
+Genera un riassunto amichevole di 2-3 frasi con UN emoji. Dai priorità ai contenuti personali (note vocali, diario) rispetto alle metriche generiche quando disponibili. In italiano.`,
     daily_insight_rest: `Crea un breve e incoraggiante riassunto del mio giorno di riposo di oggi ({{date}}).
 
 I miei dati di oggi:
 - Passi: {{steps}}
 - Calorie attive: {{calories}}
 
-Sembra essere un giorno di bassa attività. Genera un riassunto di supporto di 2 frasi che riconosce che i giorni di riposo sono importanti. Includi UN emoji calmante all'inizio. In italiano.`,
+{{#if voiceNotes}}
+Note vocali registrate oggi:
+{{voiceNotes}}
+{{/if}}
+
+{{#if diaryNotes}}
+Voci del diario di oggi:
+{{diaryNotes}}
+{{/if}}
+
+Sembra essere un giorno di bassa attività. Genera un riassunto di supporto di 2 frasi che riconosce che i giorni di riposo sono importanti. Dai priorità ai contenuti personali quando disponibili. Includi UN emoji calmante all'inizio. In italiano.`,
     rag_system: `Sei un assistente IA personale con accesso ai dati dell'utente. Rispondi alle domande basandoti sul contesto fornito.
 
 Contesto:
@@ -5918,6 +6700,94 @@ Genera UN'osservazione perspicace. Rispondi in JSON:
   "emoji": "un singolo emoji",
   "type": "positive|neutral|encouragement"
 }`,
+
+    // DailySummaryService
+    daily_summary_system: `Sei un assistente personale utile che crea riassunti coinvolgenti e amichevoli delle attività quotidiane e settimanali dell'utente.
+
+Linee guida:
+- Scrivi in seconda persona ("tu") per rivolgerti direttamente all'utente
+- Sii incoraggiante e positivo senza esagerare
+- Evidenzia traguardi e risultati importanti
+- Usa un linguaggio naturale e conversazionale
+- Mantieni i riassunti concisi ma informativi
+- Includi statistiche pertinenti quando significative
+- Se l'attività è inferiore al solito, esprimilo positivamente (es: "giorno di riposo", "giornata rilassata")
+- Non far mai sentire male l'utente per i suoi livelli di attività
+- Rispondi in italiano`,
+    daily_summary_prompt: `Genera un riassunto amichevole dell'attività quotidiana per {{date}}.
+
+Dati di Attività:
+{{#if steps}}- Passi: {{steps}} (obiettivo: {{stepsGoal}}){{/if}}
+{{#if workoutsCount}}- Allenamenti: {{workoutsCount}}{{#if workoutTypes}} ({{workoutTypes}}){{/if}}{{/if}}
+{{#if sleepHours}}- Sonno: {{sleepHours}} ore{{/if}}
+{{#if calories}}- Calorie bruciate: {{calories}}{{/if}}
+{{#if distance}}- Distanza: {{distance}} {{distanceUnit}}{{/if}}
+{{#if avgHeartRate}}- Frequenza cardiaca media: {{avgHeartRate}} bpm{{/if}}
+{{#if placesVisited}}- Luoghi visitati: {{placesVisited}}{{/if}}
+{{#if activitiesLogged}}- Attività registrate: {{activitiesLogged}}{{/if}}
+{{#if topActivities}}- Attività principali: {{topActivities}}{{/if}}
+{{#if eventsTotal}}- Eventi: {{eventsTotal}}{{#if eventsCompleted}} ({{eventsCompleted}} completati){{/if}}{{/if}}
+
+Scrivi un riassunto di 2-3 frasi che:
+1. Evidenzi il risultato o l'attività più notevole
+2. Fornisca contesto sul livello di attività generale
+3. Si concluda con una nota incoraggiante
+
+Riassunto:`,
+    weekly_summary_prompt: `Genera un coinvolgente riassunto settimanale dell'attività per la Settimana {{weekNumber}} del {{year}}.
+
+Dati di Questa Settimana:
+{{#if totalSteps}}- Passi totali: {{totalSteps}} ({{avgDailySteps}} media giornaliera){{/if}}
+{{#if workoutsCount}}- Allenamenti: {{workoutsCount}}{{#if workoutTypes}} ({{workoutTypes}}){{/if}}{{/if}}
+{{#if avgSleepHours}}- Sonno medio: {{avgSleepHours}} ore/notte{{/if}}
+{{#if totalCalories}}- Calorie totali: {{totalCalories}}{{/if}}
+{{#if totalDistance}}- Distanza totale: {{totalDistance}} {{distanceUnit}}{{/if}}
+{{#if placesVisited}}- Luoghi visitati: {{placesVisited}}{{/if}}
+{{#if activitiesLogged}}- Attività registrate: {{activitiesLogged}}{{/if}}
+{{#if topActivities}}- Attività principali: {{topActivities}}{{/if}}
+{{#if eventsTotal}}- Eventi: {{eventsTotal}}{{#if eventsCompleted}} ({{eventsCompleted}} completati){{/if}}{{/if}}
+
+{{#if hasComparison}}
+Confronto con la Settimana Scorsa:
+- Passi: {{stepsChange}}% di {{#if stepsUp}}aumento{{else}}diminuzione{{/if}}
+- Allenamenti: {{workoutsChange}}% di {{#if workoutsUp}}aumento{{else}}diminuzione{{/if}}
+- Sonno: {{sleepChange}}% di {{#if sleepUp}}aumento{{else}}diminuzione{{/if}}
+- Tendenza generale: {{trend}}
+{{/if}}
+
+Scrivi un riassunto di 3-4 frasi che:
+1. Celebri il più grande traguardo della settimana
+2. Riassuma le tendenze generali dell'attività
+3. Se ci sono dati comparativi, menzioni miglioramenti notevoli o aree su cui concentrarsi
+4. Si concluda con motivazione per la prossima settimana
+
+Riassunto:`,
+    highlight_generator_prompt: `Genera un breve ed accattivante highlight per il seguente traguardo:
+
+Tipo di Traguardo: {{achievementType}}
+Valore: {{value}} {{unit}}
+Contesto: {{context}}
+
+Restituisci un oggetto JSON:
+{
+  "title": "Titolo breve (max 5 parole)",
+  "description": "Descrizione in una frase",
+  "emoji": "Un emoji pertinente"
+}`,
+    notification_content_prompt: `Crea una notifica push breve e coinvolgente per un riassunto {{period}}.
+
+Metriche Chiave:
+{{#if steps}}- {{steps}} passi{{/if}}
+{{#if workoutsCount}}- {{workoutsCount}} allenamento/i{{/if}}
+{{#if placesVisited}}- {{placesVisited}} luoghi visitati{{/if}}
+{{#if trend}}- Tendenza: {{trend}}{{/if}}
+
+Genera una notifica che:
+1. Sia sotto i 100 caratteri
+2. Evidenzi la metrica più impressionante
+3. Crei curiosità per aprire l'app
+
+Testo della notifica:`,
   },
 
   pt: {
@@ -5992,14 +6862,34 @@ Meus dados de hoje:
 - Calorias ativas: {{calories}}
 - Treinos: {{workoutCount}}
 
-Gere um resumo amigável de 2-3 frases com UM emoji representando o humor do dia no início. Em português.`,
+{{#if voiceNotes}}
+Notas de voz gravadas hoje:
+{{voiceNotes}}
+{{/if}}
+
+{{#if diaryNotes}}
+Entradas do diário de hoje:
+{{diaryNotes}}
+{{/if}}
+
+Gere um resumo amigável de 2-3 frases com UM emoji. Priorize o conteúdo pessoal (notas de voz, diário) em relação às métricas genéricas quando disponível. Em português.`,
     daily_insight_rest: `Crie um resumo breve e encorajador do meu dia de descanso de hoje ({{date}}).
 
 Meus dados de hoje:
 - Passos: {{steps}}
 - Calorias ativas: {{calories}}
 
-Parece ser um dia de baixa atividade. Gere um resumo de apoio de 2 frases que reconheça que dias de descanso são importantes. Inclua UM emoji calmante no início. Em português.`,
+{{#if voiceNotes}}
+Notas de voz gravadas hoje:
+{{voiceNotes}}
+{{/if}}
+
+{{#if diaryNotes}}
+Entradas do diário de hoje:
+{{diaryNotes}}
+{{/if}}
+
+Parece ser um dia de baixa atividade. Gere um resumo de apoio de 2 frases que reconheça que dias de descanso são importantes. Priorize o conteúdo pessoal quando disponível. Inclua UM emoji calmante no início. Em português.`,
     rag_system: `Você é um assistente de IA pessoal com acesso aos dados do usuário. Responda perguntas com base no contexto fornecido.
 
 Contexto:
@@ -6614,6 +7504,94 @@ Gere UMA observação perspicaz. Responda em JSON:
   "emoji": "um único emoji",
   "type": "positive|neutral|encouragement"
 }`,
+
+    // DailySummaryService
+    daily_summary_system: `Você é um assistente pessoal útil que cria resumos envolventes e amigáveis das atividades diárias e semanais do usuário.
+
+Diretrizes:
+- Escreva na segunda pessoa ("você") para se dirigir diretamente ao usuário
+- Seja encorajador e positivo sem exagerar
+- Destaque conquistas e marcos
+- Use linguagem natural e conversacional
+- Mantenha os resumos concisos mas informativos
+- Inclua estatísticas relevantes quando significativas
+- Se a atividade for menor que o habitual, expresse positivamente (ex: "dia de descanso", "dia tranquilo")
+- Nunca faça o usuário se sentir mal por seus níveis de atividade
+- Responda em português`,
+    daily_summary_prompt: `Gere um resumo amigável de atividade diária para {{date}}.
+
+Dados de Atividade:
+{{#if steps}}- Passos: {{steps}} (meta: {{stepsGoal}}){{/if}}
+{{#if workoutsCount}}- Treinos: {{workoutsCount}}{{#if workoutTypes}} ({{workoutTypes}}){{/if}}{{/if}}
+{{#if sleepHours}}- Sono: {{sleepHours}} horas{{/if}}
+{{#if calories}}- Calorias queimadas: {{calories}}{{/if}}
+{{#if distance}}- Distância: {{distance}} {{distanceUnit}}{{/if}}
+{{#if avgHeartRate}}- Frequência cardíaca média: {{avgHeartRate}} bpm{{/if}}
+{{#if placesVisited}}- Locais visitados: {{placesVisited}}{{/if}}
+{{#if activitiesLogged}}- Atividades registradas: {{activitiesLogged}}{{/if}}
+{{#if topActivities}}- Principais atividades: {{topActivities}}{{/if}}
+{{#if eventsTotal}}- Eventos: {{eventsTotal}}{{#if eventsCompleted}} ({{eventsCompleted}} concluídos){{/if}}{{/if}}
+
+Escreva um resumo de 2-3 frases que:
+1. Destaque a conquista ou atividade mais notável
+2. Forneça contexto sobre o nível geral de atividade
+3. Termine com uma nota encorajadora
+
+Resumo:`,
+    weekly_summary_prompt: `Gere um resumo envolvente de atividade semanal para a Semana {{weekNumber}} de {{year}}.
+
+Dados Desta Semana:
+{{#if totalSteps}}- Passos totais: {{totalSteps}} ({{avgDailySteps}} média diária){{/if}}
+{{#if workoutsCount}}- Treinos: {{workoutsCount}}{{#if workoutTypes}} ({{workoutTypes}}){{/if}}{{/if}}
+{{#if avgSleepHours}}- Sono médio: {{avgSleepHours}} horas/noite{{/if}}
+{{#if totalCalories}}- Calorias totais: {{totalCalories}}{{/if}}
+{{#if totalDistance}}- Distância total: {{totalDistance}} {{distanceUnit}}{{/if}}
+{{#if placesVisited}}- Locais visitados: {{placesVisited}}{{/if}}
+{{#if activitiesLogged}}- Atividades registradas: {{activitiesLogged}}{{/if}}
+{{#if topActivities}}- Principais atividades: {{topActivities}}{{/if}}
+{{#if eventsTotal}}- Eventos: {{eventsTotal}}{{#if eventsCompleted}} ({{eventsCompleted}} concluídos){{/if}}{{/if}}
+
+{{#if hasComparison}}
+Comparação com a Semana Passada:
+- Passos: {{stepsChange}}% de {{#if stepsUp}}aumento{{else}}diminuição{{/if}}
+- Treinos: {{workoutsChange}}% de {{#if workoutsUp}}aumento{{else}}diminuição{{/if}}
+- Sono: {{sleepChange}}% de {{#if sleepUp}}aumento{{else}}diminuição{{/if}}
+- Tendência geral: {{trend}}
+{{/if}}
+
+Escreva um resumo de 3-4 frases que:
+1. Celebre a maior conquista da semana
+2. Resuma as tendências gerais de atividade
+3. Se houver dados comparativos, mencione melhorias notáveis ou áreas de foco
+4. Termine com motivação para a próxima semana
+
+Resumo:`,
+    highlight_generator_prompt: `Gere um destaque curto e envolvente para a seguinte conquista:
+
+Tipo de Conquista: {{achievementType}}
+Valor: {{value}} {{unit}}
+Contexto: {{context}}
+
+Retorne um objeto JSON:
+{
+  "title": "Título curto (máx. 5 palavras)",
+  "description": "Descrição em uma frase",
+  "emoji": "Um emoji relevante"
+}`,
+    notification_content_prompt: `Crie uma notificação push breve e envolvente para um resumo {{period}}.
+
+Métricas Chave:
+{{#if steps}}- {{steps}} passos{{/if}}
+{{#if workoutsCount}}- {{workoutsCount}} treino(s){{/if}}
+{{#if placesVisited}}- {{placesVisited}} locais visitados{{/if}}
+{{#if trend}}- Tendência: {{trend}}{{/if}}
+
+Gere uma notificação que:
+1. Tenha menos de 100 caracteres
+2. Destaque a métrica mais impressionante
+3. Crie curiosidade para abrir o app
+
+Texto da notificação:`,
   },
 };
 
@@ -6853,30 +7831,49 @@ function buildDailySummaryDoc(lang: string, t: Translations) {
   return {
     language: lang,
     service: 'DailySummaryService',
-    version: '1.0.0',
+    version: '2.0.0',
     status: 'published',
     enabled: true,
     prompts: {
       system: {
-        id: 'daily-insight-system',
+        id: 'daily-summary-system',
         service: 'DailySummaryService',
         type: 'system',
-        content: t.daily_insight_system,
-        metadata: { model: 'gpt-4o-mini', temperature: 0.7, maxTokens: 200 },
+        description: 'System prompt for generating personal activity summaries',
+        content: t.daily_summary_system,
+        metadata: { model: 'gpt-4o-mini', temperature: 0.7, maxTokens: 300 },
       },
-      daily_insight: {
-        id: 'daily-insight-user',
+      daily_summary: {
+        id: 'daily-summary-generation',
         service: 'DailySummaryService',
         type: 'user',
-        content: t.daily_insight_prompt,
+        description: 'Generates a daily activity summary',
+        content: t.daily_summary_prompt,
         metadata: { model: 'gpt-4o-mini', temperature: 0.7, maxTokens: 200 },
       },
-      daily_insight_rest: {
-        id: 'daily-insight-rest',
+      weekly_summary: {
+        id: 'weekly-summary-generation',
         service: 'DailySummaryService',
         type: 'user',
-        content: t.daily_insight_rest,
-        metadata: { model: 'gpt-4o-mini', temperature: 0.7, maxTokens: 150 },
+        description: 'Generates a weekly activity summary with comparisons',
+        content: t.weekly_summary_prompt,
+        metadata: { model: 'gpt-4o-mini', temperature: 0.7, maxTokens: 250 },
+      },
+      highlight_generator: {
+        id: 'highlight-generator',
+        service: 'DailySummaryService',
+        type: 'user',
+        description: 'Generates highlight titles and descriptions for achievements',
+        content: t.highlight_generator_prompt,
+        metadata: { model: 'gpt-4o-mini', temperature: 0.6, maxTokens: 100, responseFormat: 'json_object' },
+      },
+      notification_content: {
+        id: 'notification-content',
+        service: 'DailySummaryService',
+        type: 'user',
+        description: 'Generates notification content for summary alerts',
+        content: t.notification_content_prompt,
+        metadata: { model: 'gpt-4o-mini', temperature: 0.8, maxTokens: 50 },
       },
     },
   };

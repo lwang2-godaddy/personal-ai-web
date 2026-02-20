@@ -21,7 +21,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Load environment variables FIRST
-dotenv.config({ path: path.join(__dirname, '../.env.local') });
+dotenv.config({ path: path.join(__dirname, '../../.env.local') });
 
 // Now import firebase-admin after env vars are loaded
 import * as admin from 'firebase-admin';
@@ -56,17 +56,22 @@ Guidelines:
     service: 'LifeConnectionsService',
     type: 'user',
     description: 'Generate an explanation for a discovered correlation',
-    content: `Based on {{sampleSize}} days of data, I found a {{strength}} {{direction}} correlation between {{domainA}} and {{domainB}}.
+    content: `Based on {{sampleSize}} days of data ({{effectiveSampleSize}} effective after autocorrelation adjustment), I found a {{strength}} {{direction}} {{correlationType}} correlation between {{domainA}} and {{domainB}}.
 
 Correlation coefficient: {{coefficient}}
 Confidence: {{confidencePercent}}%
 
-Write a 2-3 sentence explanation that:
-1. Describes what this correlation means in plain language
-2. Makes it feel like a helpful discovery
-3. Ends with a brief actionable suggestion
+{{withWithoutContext}}
+{{confounderContext}}
+{{trendContext}}
+{{bestWorstContext}}
 
-Keep it warm and encouraging.`,
+Write a 2-3 sentence explanation that:
+1. States specific numbers from the with/without comparison (e.g., "2 more hours of sleep")
+2. Notes whether this holds after controlling for weekend/weekday patterns
+3. Ends with a brief actionable suggestion based on the actual data
+
+Do NOT give generic health advice. Use the specific numbers provided above. Keep it warm and encouraging.`,
     metadata: {
       model: 'gpt-4o-mini',
       temperature: 0.7,
@@ -80,12 +85,16 @@ Keep it warm and encouraging.`,
     description: 'Generate a short title for a life connection insight',
     content: `Create a short title (max 8 words) for this insight:
 {{domainA}} has a {{direction}} correlation with {{domainB}}.
+{{withWithoutContext}}
+{{percentDifference}}
+
+Include specific numbers when available (e.g., percentage difference).
 
 Examples:
-- "Badminton improves your sleep"
-- "Morning gym boosts your mood"
-- "Walking more, sleeping better"
-- "Parks make you happier"
+- "Badminton adds 2h to your sleep"
+- "Gym days: 34% better mood"
+- "Walking more, sleeping 1.5h longer"
+- "Parks boost mood by 28%"
 
 Return ONLY the title, nothing else.`,
     metadata: {
@@ -103,13 +112,16 @@ Return ONLY the title, nothing else.`,
 - {{domainA}} {{direction}}ly affects {{domainB}}
 - Strength: {{strength}}
 - Confidence: {{confidencePercent}}%
+{{withWithoutContext}}
+{{confounderContext}}
 
-Generate a brief, actionable recommendation (max 15 words).
+Generate a brief, actionable recommendation (max 20 words).
+Use specific numbers from the data (e.g., "Play badminton 3x/week — your data shows 2h more sleep on those days").
 Be specific and encouraging. Focus on what the user can do.`,
     metadata: {
       model: 'gpt-4o-mini',
       temperature: 0.7,
-      maxTokens: 50,
+      maxTokens: 80,
     },
   },
 };
@@ -135,29 +147,36 @@ Directrices:
     explain_correlation: {
       ...basePrompts.explain_correlation,
       description: 'Generar una explicación para una correlación descubierta',
-      content: `Basándome en {{sampleSize}} días de datos, encontré una correlación {{strength}} {{direction}} entre {{domainA}} y {{domainB}}.
+      content: `Basándome en {{sampleSize}} días de datos ({{effectiveSampleSize}} efectivos), encontré una correlación {{strength}} {{direction}} {{correlationType}} entre {{domainA}} y {{domainB}}.
 
-Coeficiente de correlación: {{coefficient}}
-Confianza: {{confidencePercent}}%
+Coeficiente: {{coefficient}} | Confianza: {{confidencePercent}}%
+
+{{withWithoutContext}}
+{{confounderContext}}
+{{trendContext}}
+{{bestWorstContext}}
 
 Escribe una explicación de 2-3 oraciones que:
-1. Describa lo que significa esta correlación en lenguaje simple
-2. Lo haga sentir como un descubrimiento útil
-3. Termine con una breve sugerencia accionable
+1. Mencione números específicos de la comparación con/sin
+2. Note si la correlación se mantiene tras controlar patrones de día de semana
+3. Termine con una breve sugerencia accionable basada en los datos
 
-Mantenlo cálido y alentador. Responde en español.`,
+NO des consejos genéricos de salud. Usa los números proporcionados. Mantenlo cálido y alentador. Responde en español.`,
     },
     generate_title: {
       ...basePrompts.generate_title,
       description: 'Generar un título corto para un insight de conexión de vida',
       content: `Crea un título corto (máximo 8 palabras) para este insight:
 {{domainA}} tiene una correlación {{direction}} con {{domainB}}.
+{{withWithoutContext}}
+{{percentDifference}}
+
+Incluye números específicos cuando estén disponibles.
 
 Ejemplos:
-- "El bádminton mejora tu sueño"
-- "El gimnasio matutino eleva tu ánimo"
-- "Caminar más, dormir mejor"
-- "Los parques te hacen más feliz"
+- "El bádminton añade 2h a tu sueño"
+- "Días de gimnasio: 34% mejor ánimo"
+- "Los parques mejoran el ánimo 28%"
 
 Devuelve SOLO el título, nada más. En español.`,
     },
@@ -168,9 +187,11 @@ Devuelve SOLO el título, nada más. En español.`,
 - {{domainA}} afecta {{direction}}mente a {{domainB}}
 - Fuerza: {{strength}}
 - Confianza: {{confidencePercent}}%
+{{withWithoutContext}}
+{{confounderContext}}
 
-Genera una recomendación breve y accionable (máximo 15 palabras).
-Sé específico y alentador. Enfócate en lo que el usuario puede hacer. En español.`,
+Genera una recomendación breve y accionable (máximo 20 palabras).
+Usa números específicos de los datos. Sé específico y alentador. Enfócate en lo que el usuario puede hacer. En español.`,
     },
   },
   fr: {
@@ -191,41 +212,53 @@ Directives:
     explain_correlation: {
       ...basePrompts.explain_correlation,
       description: 'Générer une explication pour une corrélation découverte',
-      content: `Basé sur {{sampleSize}} jours de données, j'ai trouvé une corrélation {{strength}} {{direction}} entre {{domainA}} et {{domainB}}.
+      content: `Basé sur {{sampleSize}} jours de données ({{effectiveSampleSize}} effectifs après ajustement d'autocorrélation), j'ai trouvé une corrélation {{strength}} {{direction}} {{correlationType}} entre {{domainA}} et {{domainB}}.
 
-Coefficient de corrélation: {{coefficient}}
-Confiance: {{confidencePercent}}%
+Coefficient de corrélation : {{coefficient}}
+Confiance : {{confidencePercent}}%
 
-Écrivez une explication de 2-3 phrases qui:
-1. Décrit ce que cette corrélation signifie en langage simple
-2. Donne l'impression d'une découverte utile
-3. Se termine par une brève suggestion actionnable
+{{withWithoutContext}}
+{{confounderContext}}
+{{trendContext}}
+{{bestWorstContext}}
 
-Gardez un ton chaleureux et encourageant. Répondez en français.`,
+Écrivez une explication de 2-3 phrases qui :
+1. Mentionne des chiffres spécifiques de la comparaison avec/sans
+2. Note si la corrélation se maintient après contrôle des patterns jour de semaine/week-end
+3. Se termine par une brève suggestion actionnable basée sur les données
+
+Ne donnez PAS de conseils de santé génériques. Utilisez les chiffres spécifiques fournis ci-dessus. Gardez un ton chaleureux et encourageant. Répondez en français.`,
     },
     generate_title: {
       ...basePrompts.generate_title,
       description: 'Générer un titre court pour un insight de connexion de vie',
-      content: `Créez un titre court (max 8 mots) pour cet insight:
+      content: `Créez un titre court (max 8 mots) pour cet insight :
 {{domainA}} a une corrélation {{direction}} avec {{domainB}}.
+{{withWithoutContext}}
+{{percentDifference}}
 
-Exemples:
-- "Le badminton améliore votre sommeil"
-- "La gym matinale booste votre humeur"
-- "Marcher plus, mieux dormir"
-- "Les parcs vous rendent plus heureux"
+Incluez des chiffres spécifiques quand disponibles (ex. pourcentage de différence).
+
+Exemples :
+- "Le badminton ajoute 2h à votre sommeil"
+- "Jours de gym : 34% meilleure humeur"
+- "Marcher plus, dormir 1,5h de plus"
+- "Les parcs améliorent l'humeur de 28%"
 
 Retournez UNIQUEMENT le titre, rien d'autre. En français.`,
     },
     generate_recommendation: {
       ...basePrompts.generate_recommendation,
       description: 'Générer une recommandation actionnable basée sur la corrélation',
-      content: `Basé sur cette corrélation:
+      content: `Basé sur cette corrélation :
 - {{domainA}} affecte {{direction}}ment {{domainB}}
-- Force: {{strength}}
-- Confiance: {{confidencePercent}}%
+- Force : {{strength}}
+- Confiance : {{confidencePercent}}%
+{{withWithoutContext}}
+{{confounderContext}}
 
-Générez une recommandation brève et actionnable (max 15 mots).
+Générez une recommandation brève et actionnable (max 20 mots).
+Utilisez des chiffres spécifiques des données (ex. "Jouez au badminton 3x/semaine — vos données montrent 2h de sommeil en plus ces jours-là").
 Soyez précis et encourageant. Concentrez-vous sur ce que l'utilisateur peut faire. En français.`,
     },
   },
@@ -247,29 +280,38 @@ Richtlinien:
     explain_correlation: {
       ...basePrompts.explain_correlation,
       description: 'Eine Erklärung für eine entdeckte Korrelation generieren',
-      content: `Basierend auf {{sampleSize}} Tagen Daten habe ich eine {{strength}} {{direction}} Korrelation zwischen {{domainA}} und {{domainB}} gefunden.
+      content: `Basierend auf {{sampleSize}} Tagen Daten ({{effectiveSampleSize}} effektiv nach Autokorrelationsanpassung) habe ich eine {{strength}} {{direction}} {{correlationType}} Korrelation zwischen {{domainA}} und {{domainB}} gefunden.
 
 Korrelationskoeffizient: {{coefficient}}
 Konfidenz: {{confidencePercent}}%
 
-Schreiben Sie eine 2-3 Sätze Erklärung, die:
-1. Beschreibt, was diese Korrelation in einfacher Sprache bedeutet
-2. Es wie eine hilfreiche Entdeckung erscheinen lässt
-3. Mit einem kurzen umsetzbaren Vorschlag endet
+{{withWithoutContext}}
+{{confounderContext}}
+{{trendContext}}
+{{bestWorstContext}}
 
-Halten Sie es warm und ermutigend. Antworten Sie auf Deutsch.`,
+Schreiben Sie eine 2-3 Sätze Erklärung, die:
+1. Spezifische Zahlen aus dem Mit/Ohne-Vergleich nennt
+2. Anmerkt, ob dies nach Kontrolle der Wochentag/Wochenend-Muster gilt
+3. Mit einem kurzen umsetzbaren Vorschlag basierend auf den Daten endet
+
+Geben Sie KEINE allgemeinen Gesundheitsratschläge. Verwenden Sie die oben angegebenen spezifischen Zahlen. Halten Sie es warm und ermutigend. Antworten Sie auf Deutsch.`,
     },
     generate_title: {
       ...basePrompts.generate_title,
       description: 'Einen kurzen Titel für eine Lebensverbindungs-Erkenntnis generieren',
       content: `Erstellen Sie einen kurzen Titel (max 8 Wörter) für diese Erkenntnis:
 {{domainA}} hat eine {{direction}} Korrelation mit {{domainB}}.
+{{withWithoutContext}}
+{{percentDifference}}
+
+Verwenden Sie spezifische Zahlen wenn verfügbar (z.B. Prozentunterschied).
 
 Beispiele:
-- "Badminton verbessert Ihren Schlaf"
-- "Morgensport hebt Ihre Stimmung"
-- "Mehr gehen, besser schlafen"
-- "Parks machen Sie glücklicher"
+- "Badminton bringt 2h mehr Schlaf"
+- "Gym-Tage: 34% bessere Stimmung"
+- "Mehr gehen, 1,5h länger schlafen"
+- "Parks verbessern Stimmung um 28%"
 
 Geben Sie NUR den Titel zurück, nichts anderes. Auf Deutsch.`,
     },
@@ -280,8 +322,11 @@ Geben Sie NUR den Titel zurück, nichts anderes. Auf Deutsch.`,
 - {{domainA}} beeinflusst {{domainB}} {{direction}}
 - Stärke: {{strength}}
 - Konfidenz: {{confidencePercent}}%
+{{withWithoutContext}}
+{{confounderContext}}
 
-Generieren Sie eine kurze, umsetzbare Empfehlung (max 15 Wörter).
+Generieren Sie eine kurze, umsetzbare Empfehlung (max 20 Wörter).
+Verwenden Sie spezifische Zahlen aus den Daten (z.B. "Spielen Sie 3x/Woche Badminton — Ihre Daten zeigen 2h mehr Schlaf an diesen Tagen").
 Seien Sie spezifisch und ermutigend. Konzentrieren Sie sich darauf, was der Benutzer tun kann. Auf Deutsch.`,
     },
   },
@@ -303,29 +348,38 @@ Linee guida:
     explain_correlation: {
       ...basePrompts.explain_correlation,
       description: 'Generare una spiegazione per una correlazione scoperta',
-      content: `Basandomi su {{sampleSize}} giorni di dati, ho trovato una correlazione {{strength}} {{direction}} tra {{domainA}} e {{domainB}}.
+      content: `Basandomi su {{sampleSize}} giorni di dati ({{effectiveSampleSize}} effettivi dopo aggiustamento per autocorrelazione), ho trovato una correlazione {{strength}} {{direction}} {{correlationType}} tra {{domainA}} e {{domainB}}.
 
 Coefficiente di correlazione: {{coefficient}}
 Confidenza: {{confidencePercent}}%
 
-Scrivi una spiegazione di 2-3 frasi che:
-1. Descriva cosa significa questa correlazione in linguaggio semplice
-2. La faccia sembrare una scoperta utile
-3. Termini con un breve suggerimento attuabile
+{{withWithoutContext}}
+{{confounderContext}}
+{{trendContext}}
+{{bestWorstContext}}
 
-Mantienilo caldo e incoraggiante. Rispondi in italiano.`,
+Scrivi una spiegazione di 2-3 frasi che:
+1. Menzioni numeri specifici dal confronto con/senza
+2. Noti se la correlazione si mantiene dopo il controllo dei pattern giorno feriale/weekend
+3. Termini con un breve suggerimento attuabile basato sui dati
+
+NON dare consigli generici sulla salute. Usa i numeri specifici forniti sopra. Mantienilo caldo e incoraggiante. Rispondi in italiano.`,
     },
     generate_title: {
       ...basePrompts.generate_title,
       description: 'Generare un titolo breve per un insight di connessione di vita',
       content: `Crea un titolo breve (max 8 parole) per questo insight:
 {{domainA}} ha una correlazione {{direction}} con {{domainB}}.
+{{withWithoutContext}}
+{{percentDifference}}
+
+Includi numeri specifici quando disponibili (es. percentuale di differenza).
 
 Esempi:
-- "Il badminton migliora il tuo sonno"
-- "La palestra mattutina migliora l'umore"
-- "Camminare di più, dormire meglio"
-- "I parchi ti rendono più felice"
+- "Il badminton aggiunge 2h al tuo sonno"
+- "Giorni di palestra: 34% umore migliore"
+- "Camminare di più, dormire 1,5h in più"
+- "I parchi migliorano l'umore del 28%"
 
 Restituisci SOLO il titolo, nient'altro. In italiano.`,
     },
@@ -336,8 +390,11 @@ Restituisci SOLO il titolo, nient'altro. In italiano.`,
 - {{domainA}} influenza {{direction}}mente {{domainB}}
 - Forza: {{strength}}
 - Confidenza: {{confidencePercent}}%
+{{withWithoutContext}}
+{{confounderContext}}
 
-Genera una raccomandazione breve e attuabile (max 15 parole).
+Genera una raccomandazione breve e attuabile (max 20 parole).
+Usa numeri specifici dai dati (es. "Gioca a badminton 3x/settimana — i tuoi dati mostrano 2h di sonno in più in quei giorni").
 Sii specifico e incoraggiante. Concentrati su cosa l'utente può fare. In italiano.`,
     },
   },
@@ -359,29 +416,38 @@ Diretrizes:
     explain_correlation: {
       ...basePrompts.explain_correlation,
       description: 'Gerar uma explicação para uma correlação descoberta',
-      content: `Com base em {{sampleSize}} dias de dados, encontrei uma correlação {{strength}} {{direction}} entre {{domainA}} e {{domainB}}.
+      content: `Com base em {{sampleSize}} dias de dados ({{effectiveSampleSize}} efetivos após ajuste de autocorrelação), encontrei uma correlação {{strength}} {{direction}} {{correlationType}} entre {{domainA}} e {{domainB}}.
 
 Coeficiente de correlação: {{coefficient}}
 Confiança: {{confidencePercent}}%
 
-Escreva uma explicação de 2-3 frases que:
-1. Descreva o que essa correlação significa em linguagem simples
-2. Faça parecer uma descoberta útil
-3. Termine com uma breve sugestão acionável
+{{withWithoutContext}}
+{{confounderContext}}
+{{trendContext}}
+{{bestWorstContext}}
 
-Mantenha-o caloroso e encorajador. Responda em português.`,
+Escreva uma explicação de 2-3 frases que:
+1. Mencione números específicos da comparação com/sem
+2. Note se a correlação se mantém após controlar padrões de dia de semana/fim de semana
+3. Termine com uma breve sugestão acionável baseada nos dados
+
+NÃO dê conselhos genéricos de saúde. Use os números específicos fornecidos acima. Mantenha-o caloroso e encorajador. Responda em português.`,
     },
     generate_title: {
       ...basePrompts.generate_title,
       description: 'Gerar um título curto para um insight de conexão de vida',
       content: `Crie um título curto (máximo 8 palavras) para este insight:
 {{domainA}} tem uma correlação {{direction}} com {{domainB}}.
+{{withWithoutContext}}
+{{percentDifference}}
+
+Inclua números específicos quando disponíveis (ex. percentual de diferença).
 
 Exemplos:
-- "Badminton melhora seu sono"
-- "Academia matinal eleva seu humor"
-- "Caminhar mais, dormir melhor"
-- "Parques te deixam mais feliz"
+- "Badminton adiciona 2h ao seu sono"
+- "Dias de academia: 34% melhor humor"
+- "Caminhar mais, dormir 1,5h a mais"
+- "Parques melhoram humor em 28%"
 
 Retorne APENAS o título, nada mais. Em português.`,
     },
@@ -392,8 +458,11 @@ Retorne APENAS o título, nada mais. Em português.`,
 - {{domainA}} afeta {{direction}}mente {{domainB}}
 - Força: {{strength}}
 - Confiança: {{confidencePercent}}%
+{{withWithoutContext}}
+{{confounderContext}}
 
-Gere uma recomendação breve e acionável (máximo 15 palavras).
+Gere uma recomendação breve e acionável (máximo 20 palavras).
+Use números específicos dos dados (ex. "Jogue badminton 3x/semana — seus dados mostram 2h a mais de sono nesses dias").
 Seja específico e encorajador. Concentre-se no que o usuário pode fazer. Em português.`,
     },
   },
@@ -415,29 +484,38 @@ Seja específico e encorajador. Concentre-se no que o usuário pode fazer. Em po
     explain_correlation: {
       ...basePrompts.explain_correlation,
       description: '为发现的相关性生成解释',
-      content: `基于{{sampleSize}}天的数据，我发现{{domainA}}和{{domainB}}之间存在{{strength}}的{{direction}}相关性。
+      content: `基于{{sampleSize}}天的数据（{{effectiveSampleSize}}个有效样本，经自相关调整），我发现{{domainA}}和{{domainB}}之间存在{{strength}}的{{direction}} {{correlationType}}相关性。
 
 相关系数：{{coefficient}}
 置信度：{{confidencePercent}}%
 
-写一个2-3句的解释，要：
-1. 用简单的语言描述这个相关性意味着什么
-2. 让它感觉像是一个有用的发现
-3. 以一个简短的可操作建议结束
+{{withWithoutContext}}
+{{confounderContext}}
+{{trendContext}}
+{{bestWorstContext}}
 
-保持温暖和鼓励性。用中文回复。`,
+写一个2-3句的解释，要：
+1. 提及有/无对比中的具体数字
+2. 指出在控制工作日/周末模式后相关性是否仍然成立
+3. 以基于数据的简短可操作建议结束
+
+不要给出泛泛的健康建议。使用上面提供的具体数字。保持温暖和鼓励性。用中文回复。`,
     },
     generate_title: {
       ...basePrompts.generate_title,
       description: '为生活连接洞察生成简短标题',
       content: `为这个洞察创建一个简短的标题（最多8个字）：
 {{domainA}}与{{domainB}}有{{direction}}相关性。
+{{withWithoutContext}}
+{{percentDifference}}
+
+在可能时包含具体数字（如百分比差异）。
 
 示例：
-- "羽毛球改善你的睡眠"
-- "晨练提升你的心情"
-- "多走路，睡得更好"
-- "公园让你更快乐"
+- "羽毛球多睡2小时"
+- "健身日：心情好34%"
+- "多走路，多睡1.5小时"
+- "公园提升心情28%"
 
 只返回标题，不要其他内容。用中文。`,
     },
@@ -448,8 +526,11 @@ Seja específico e encorajador. Concentre-se no que o usuário pode fazer. Em po
 - {{domainA}}{{direction}}地影响{{domainB}}
 - 强度：{{strength}}
 - 置信度：{{confidencePercent}}%
+{{withWithoutContext}}
+{{confounderContext}}
 
-生成一个简短的可操作建议（最多15个字）。
+生成一个简短的可操作建议（最多20个字）。
+使用数据中的具体数字（如"每周打3次羽毛球——你的数据显示那些天多睡2小时"）。
 要具体和鼓励性。专注于用户可以做什么。用中文。`,
     },
   },
@@ -471,29 +552,38 @@ Seja específico e encorajador. Concentre-se no que o usuário pode fazer. Em po
     explain_correlation: {
       ...basePrompts.explain_correlation,
       description: '発見された相関関係の説明を生成',
-      content: `{{sampleSize}}日間のデータに基づいて、{{domainA}}と{{domainB}}の間に{{strength}}な{{direction}}相関を発見しました。
+      content: `{{sampleSize}}日間のデータ（自己相関調整後の有効サンプル{{effectiveSampleSize}}件）に基づいて、{{domainA}}と{{domainB}}の間に{{strength}}な{{direction}} {{correlationType}}相関を発見しました。
 
 相関係数：{{coefficient}}
 信頼度：{{confidencePercent}}%
 
-2-3文の説明を書いてください：
-1. この相関が何を意味するかを簡単な言葉で説明
-2. 役立つ発見のように感じられるように
-3. 簡潔で実行可能な提案で締めくくる
+{{withWithoutContext}}
+{{confounderContext}}
+{{trendContext}}
+{{bestWorstContext}}
 
-温かく励ましになるように。日本語で回答してください。`,
+2-3文の説明を書いてください：
+1. あり/なし比較の具体的な数字を述べる
+2. 平日/週末パターンを制御した後もこの相関が成立するかどうかに言及する
+3. データに基づいた簡潔で実行可能な提案で締めくくる
+
+一般的な健康アドバイスを述べないでください。上記の具体的な数字を使用してください。温かく励ましになるように。日本語で回答してください。`,
     },
     generate_title: {
       ...basePrompts.generate_title,
       description: 'ライフコネクションの洞察のための短いタイトルを生成',
       content: `このインサイトのための短いタイトル（最大8単語）を作成してください：
 {{domainA}}は{{domainB}}と{{direction}}相関があります。
+{{withWithoutContext}}
+{{percentDifference}}
+
+可能な場合は具体的な数字を含めてください（例：パーセント差）。
 
 例：
-- 「バドミントンが睡眠を改善」
-- 「朝のジムで気分アップ」
-- 「歩くほど眠りが良くなる」
-- 「公園があなたを幸せに」
+- 「バドミントンで睡眠2時間増」
+- 「ジムの日：気分34%アップ」
+- 「歩くほど1.5時間長く眠れる」
+- 「公園で気分28%アップ」
 
 タイトルのみを返してください、他には何も。日本語で。`,
     },
@@ -504,8 +594,11 @@ Seja específico e encorajador. Concentre-se no que o usuário pode fazer. Em po
 - {{domainA}}は{{domainB}}に{{direction}}に影響する
 - 強さ：{{strength}}
 - 信頼度：{{confidencePercent}}%
+{{withWithoutContext}}
+{{confounderContext}}
 
-簡潔で実行可能な推奨事項を生成してください（最大15単語）。
+簡潔で実行可能な推奨事項を生成してください（最大20単語）。
+データの具体的な数字を使用してください（例：「週3回バドミントンを — データではその日は2時間多く睡眠」）。
 具体的で励ましになるように。ユーザーができることに焦点を当てて。日本語で。`,
     },
   },
@@ -527,29 +620,38 @@ Seja específico e encorajador. Concentre-se no que o usuário pode fazer. Em po
     explain_correlation: {
       ...basePrompts.explain_correlation,
       description: '발견된 상관관계에 대한 설명 생성',
-      content: `{{sampleSize}}일간의 데이터를 기반으로, {{domainA}}와 {{domainB}} 사이에 {{strength}}한 {{direction}} 상관관계를 발견했습니다.
+      content: `{{sampleSize}}일간의 데이터(자기상관 조정 후 유효 샘플 {{effectiveSampleSize}}개)를 기반으로, {{domainA}}와 {{domainB}} 사이에 {{strength}}한 {{direction}} {{correlationType}} 상관관계를 발견했습니다.
 
 상관계수: {{coefficient}}
 신뢰도: {{confidencePercent}}%
 
-2-3문장의 설명을 작성하세요:
-1. 이 상관관계가 무엇을 의미하는지 쉬운 말로 설명
-2. 유용한 발견처럼 느껴지게
-3. 간단하고 실행 가능한 제안으로 마무리
+{{withWithoutContext}}
+{{confounderContext}}
+{{trendContext}}
+{{bestWorstContext}}
 
-따뜻하고 격려가 되게 유지하세요. 한국어로 응답하세요.`,
+2-3문장의 설명을 작성하세요:
+1. 있음/없음 비교의 구체적인 숫자를 언급
+2. 주중/주말 패턴을 통제한 후에도 상관관계가 유지되는지 언급
+3. 데이터에 기반한 간단하고 실행 가능한 제안으로 마무리
+
+일반적인 건강 조언을 하지 마세요. 위에 제공된 구체적인 숫자를 사용하세요. 따뜻하고 격려가 되게 유지하세요. 한국어로 응답하세요.`,
     },
     generate_title: {
       ...basePrompts.generate_title,
       description: '라이프 커넥션 인사이트를 위한 짧은 제목 생성',
       content: `이 인사이트를 위한 짧은 제목(최대 8단어)을 만드세요:
 {{domainA}}는 {{domainB}}와 {{direction}} 상관관계가 있습니다.
+{{withWithoutContext}}
+{{percentDifference}}
+
+가능한 경우 구체적인 숫자를 포함하세요 (예: 퍼센트 차이).
 
 예시:
-- "배드민턴이 수면을 개선합니다"
-- "아침 운동이 기분을 높입니다"
-- "더 걸으면 더 잘 잡니다"
-- "공원이 당신을 더 행복하게"
+- "배드민턴으로 수면 2시간 증가"
+- "운동하는 날: 기분 34% 상승"
+- "더 걸을수록 1.5시간 더 잠"
+- "공원이 기분 28% 향상"
 
 제목만 반환하세요, 다른 것은 없이. 한국어로.`,
     },
@@ -560,8 +662,11 @@ Seja específico e encorajador. Concentre-se no que o usuário pode fazer. Em po
 - {{domainA}}가 {{domainB}}에 {{direction}}하게 영향을 미칩니다
 - 강도: {{strength}}
 - 신뢰도: {{confidencePercent}}%
+{{withWithoutContext}}
+{{confounderContext}}
 
-간단하고 실행 가능한 추천을 생성하세요(최대 15단어).
+간단하고 실행 가능한 추천을 생성하세요(최대 20단어).
+데이터의 구체적인 숫자를 사용하세요 (예: "주 3회 배드민턴 — 데이터에 따르면 그날 2시간 더 수면").
 구체적이고 격려가 되게. 사용자가 할 수 있는 것에 집중하세요. 한국어로.`,
     },
   },
