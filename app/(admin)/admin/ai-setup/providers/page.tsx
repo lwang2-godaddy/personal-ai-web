@@ -19,6 +19,111 @@ import { useTrackPage } from '@/lib/hooks/useTrackPage';
 import { TRACKED_SCREENS } from '@/lib/models/BehaviorEvent';
 
 /**
+ * Model options by provider and service type
+ */
+const MODEL_OPTIONS: Record<string, Record<ServiceType, { value: string; label: string }[]>> = {
+  openai: {
+    chat: [
+      { value: 'gpt-4o', label: 'GPT-4o (Recommended)' },
+      { value: 'gpt-4o-mini', label: 'GPT-4o Mini (Cheaper)' },
+      { value: 'gpt-4-turbo', label: 'GPT-4 Turbo' },
+    ],
+    embedding: [
+      { value: 'text-embedding-3-small', label: 'text-embedding-3-small (Recommended)' },
+      { value: 'text-embedding-3-large', label: 'text-embedding-3-large (Higher quality)' },
+    ],
+    tts: [
+      { value: 'tts-1', label: 'TTS-1 (Standard)' },
+      { value: 'tts-1-hd', label: 'TTS-1 HD (Higher quality)' },
+    ],
+    stt: [
+      { value: 'whisper-1', label: 'Whisper-1' },
+    ],
+    vision: [
+      { value: 'gpt-4o', label: 'GPT-4o Vision' },
+    ],
+  },
+  google: {
+    chat: [
+      { value: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash (Recommended)' },
+      { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro (Most capable)' },
+      { value: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash' },
+    ],
+    embedding: [
+      { value: 'gemini-embedding-001', label: 'Gemini Embedding 001' },
+    ],
+    tts: [
+      { value: 'Wavenet', label: 'Wavenet (Recommended)' },
+      { value: 'Neural2', label: 'Neural2 (English/EU only)' },
+      { value: 'Studio', label: 'Studio (Premium, English only)' },
+      { value: 'Standard', label: 'Standard (Basic)' },
+    ],
+    stt: [
+      { value: 'chirp_2', label: 'Chirp 2 (Latest)' },
+      { value: 'latest_long', label: 'Latest Long' },
+      { value: 'latest_short', label: 'Latest Short' },
+    ],
+    vision: [
+      { value: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash Vision' },
+      { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro Vision' },
+    ],
+  },
+  anthropic: {
+    chat: [
+      { value: 'claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet (Recommended)' },
+      { value: 'claude-3-opus-20240229', label: 'Claude 3 Opus (Most capable)' },
+      { value: 'claude-3-haiku-20240307', label: 'Claude 3 Haiku (Fastest)' },
+    ],
+    embedding: [],
+    tts: [],
+    stt: [],
+    vision: [
+      { value: 'claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet Vision' },
+    ],
+  },
+  ollama: {
+    chat: [
+      { value: 'llama3.2', label: 'Llama 3.2' },
+      { value: 'mistral', label: 'Mistral' },
+      { value: 'mixtral', label: 'Mixtral' },
+    ],
+    embedding: [
+      { value: 'nomic-embed-text', label: 'Nomic Embed Text' },
+      { value: 'all-minilm', label: 'All-MiniLM' },
+    ],
+    tts: [],
+    stt: [],
+    vision: [
+      { value: 'llava', label: 'LLaVA' },
+    ],
+  },
+};
+
+/**
+ * Get model options for a specific provider and service
+ */
+function getModelOptions(providerId: string, service: ServiceType): { value: string; label: string }[] {
+  return MODEL_OPTIONS[providerId]?.[service] || [];
+}
+
+/**
+ * Get default model for a provider and service
+ */
+function getDefaultModel(providerId: string, service: ServiceType): string {
+  const options = getModelOptions(providerId, service);
+  return options[0]?.value || '';
+}
+
+/**
+ * Get display label for a model value
+ */
+function getModelDisplayLabel(providerId: string, service: ServiceType, modelValue: string): string {
+  const options = getModelOptions(providerId, service);
+  const found = options.find(o => o.value === modelValue);
+  return found?.label || modelValue;
+}
+
+/**
  * Admin AI Providers Configuration Page
  *
  * Configure which AI providers are used for different services.
@@ -322,11 +427,11 @@ export default function AdminAIProvidersPage() {
                         </h3>
                         <p className="text-sm text-gray-500">
                           Provider: <strong>{getProviderName(serviceConfig.providerId)}</strong>
-                          {' '}| Model: <code className="bg-gray-200 px-1 rounded">{serviceConfig.model}</code>
+                          {' '}| {service === 'tts' ? 'Voice' : 'Model'}: <code className="bg-gray-200 px-1 rounded">{getModelDisplayLabel(serviceConfig.providerId, service, serviceConfig.model)}</code>
                         </p>
                         {serviceConfig.fallbackProviderId && (
                           <p className="text-xs text-gray-400 mt-1">
-                            Fallback: {getProviderName(serviceConfig.fallbackProviderId)} ({serviceConfig.fallbackModel})
+                            Fallback: {getProviderName(serviceConfig.fallbackProviderId)} ({getModelDisplayLabel(serviceConfig.fallbackProviderId, service, serviceConfig.fallbackModel || '')})
                           </p>
                         )}
                       </div>
@@ -356,12 +461,15 @@ export default function AdminAIProvidersPage() {
                           </label>
                           <select
                             value={pendingChanges.providerId || serviceConfig.providerId}
-                            onChange={(e) =>
+                            onChange={(e) => {
+                              const newProviderId = e.target.value;
+                              const newModel = getDefaultModel(newProviderId, service);
                               setPendingChanges({
                                 ...pendingChanges,
-                                providerId: e.target.value,
-                              })
-                            }
+                                providerId: newProviderId,
+                                model: newModel,
+                              });
+                            }}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md"
                           >
                             {enabledProviders.map((p) => (
@@ -374,21 +482,112 @@ export default function AdminAIProvidersPage() {
 
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Model
+                            {service === 'tts' ? 'Voice' : 'Model'}
                           </label>
-                          <input
-                            type="text"
-                            value={pendingChanges.model || serviceConfig.model}
-                            onChange={(e) =>
-                              setPendingChanges({
-                                ...pendingChanges,
-                                model: e.target.value,
-                              })
+                          {(() => {
+                            const currentProviderId = pendingChanges.providerId || serviceConfig.providerId;
+                            const modelOptions = getModelOptions(currentProviderId, service);
+                            const currentModel = pendingChanges.model || serviceConfig.model;
+
+                            if (modelOptions.length === 0) {
+                              return (
+                                <input
+                                  type="text"
+                                  value={currentModel}
+                                  onChange={(e) =>
+                                    setPendingChanges({
+                                      ...pendingChanges,
+                                      model: e.target.value,
+                                    })
+                                  }
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                  placeholder="Enter model name"
+                                />
+                              );
                             }
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                            placeholder="e.g., gpt-4o, gemini-2.5-flash"
-                          />
+
+                            return (
+                              <select
+                                value={currentModel}
+                                onChange={(e) =>
+                                  setPendingChanges({
+                                    ...pendingChanges,
+                                    model: e.target.value,
+                                  })
+                                }
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                              >
+                                {modelOptions.map((opt) => (
+                                  <option key={opt.value} value={opt.value}>
+                                    {opt.label}
+                                  </option>
+                                ))}
+                                {/* Show current value if not in options (legacy) */}
+                                {!modelOptions.find(o => o.value === currentModel) && currentModel && (
+                                  <option value={currentModel}>{currentModel} (Current)</option>
+                                )}
+                              </select>
+                            );
+                          })()}
                         </div>
+
+                        {/* Google Cloud TTS language fallback info */}
+                        {service === 'tts' && (pendingChanges.providerId || serviceConfig.providerId) === 'google' && (
+                          <div className="col-span-1 md:col-span-2 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <h4 className="text-sm font-semibold text-blue-900 mb-2">
+                              Language-Aware Voice Mapping
+                            </h4>
+                            <p className="text-xs text-blue-700 mb-3">
+                              Not all voice families are available for every language. The app automatically falls back to the best available family.
+                            </p>
+                            <div className="overflow-x-auto">
+                              <table className="w-full text-xs">
+                                <thead>
+                                  <tr className="border-b border-blue-200">
+                                    <th className="text-left py-1 pr-3 text-blue-800">Language</th>
+                                    <th className="text-center py-1 px-2 text-blue-800">Neural2</th>
+                                    <th className="text-center py-1 px-2 text-blue-800">Wavenet</th>
+                                    <th className="text-center py-1 px-2 text-blue-800">Standard</th>
+                                    <th className="text-center py-1 px-2 text-blue-800">Studio</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="text-blue-700">
+                                  {[
+                                    { lang: 'English', neural2: true, wavenet: true, standard: true, studio: true },
+                                    { lang: 'Chinese', neural2: false, wavenet: true, standard: true, studio: false },
+                                    { lang: 'Japanese', neural2: true, wavenet: true, standard: true, studio: false },
+                                    { lang: 'Korean', neural2: true, wavenet: true, standard: true, studio: false },
+                                    { lang: 'Spanish', neural2: true, wavenet: true, standard: true, studio: false },
+                                    { lang: 'French', neural2: true, wavenet: true, standard: true, studio: false },
+                                    { lang: 'German', neural2: true, wavenet: true, standard: true, studio: false },
+                                    { lang: 'Italian', neural2: true, wavenet: true, standard: true, studio: false },
+                                    { lang: 'Portuguese', neural2: true, wavenet: true, standard: true, studio: false },
+                                  ].map((row) => (
+                                    <tr key={row.lang} className="border-b border-blue-100">
+                                      <td className="py-1 pr-3 font-medium">{row.lang}</td>
+                                      <td className="text-center py-1 px-2">{row.neural2 ? '✓' : '—'}</td>
+                                      <td className="text-center py-1 px-2">{row.wavenet ? '✓' : '—'}</td>
+                                      <td className="text-center py-1 px-2">{row.standard ? '✓' : '—'}</td>
+                                      <td className="text-center py-1 px-2">{row.studio ? '✓' : '—'}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                            <p className="text-xs text-blue-600 mt-2">
+                              {(() => {
+                                const selected = pendingChanges.model || serviceConfig.model || 'Neural2';
+                                if (selected === 'Neural2') {
+                                  return 'Neural2 selected → Chinese users will automatically get Wavenet voices (Neural2 unavailable for Chinese).';
+                                }
+                                if (selected === 'Studio') {
+                                  return 'Studio selected → Non-English users will automatically fall back to Wavenet → Standard.';
+                                }
+                                return `${selected} selected → Languages without ${selected} support will fall back to: Wavenet → Standard.`;
+                              })()}
+                            </p>
+                          </div>
+                        )}
 
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -396,12 +595,17 @@ export default function AdminAIProvidersPage() {
                           </label>
                           <select
                             value={pendingChanges.fallbackProviderId || serviceConfig.fallbackProviderId || ''}
-                            onChange={(e) =>
+                            onChange={(e) => {
+                              const newFallbackProviderId = e.target.value || undefined;
+                              const newFallbackModel = newFallbackProviderId
+                                ? getDefaultModel(newFallbackProviderId, service)
+                                : undefined;
                               setPendingChanges({
                                 ...pendingChanges,
-                                fallbackProviderId: e.target.value || undefined,
-                              })
-                            }
+                                fallbackProviderId: newFallbackProviderId,
+                                fallbackModel: newFallbackModel,
+                              });
+                            }}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md"
                           >
                             <option value="">None</option>
@@ -417,21 +621,55 @@ export default function AdminAIProvidersPage() {
 
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Fallback Model
+                            {service === 'tts' ? 'Fallback Voice' : 'Fallback Model'}
                           </label>
-                          <input
-                            type="text"
-                            value={pendingChanges.fallbackModel || serviceConfig.fallbackModel || ''}
-                            onChange={(e) =>
-                              setPendingChanges({
-                                ...pendingChanges,
-                                fallbackModel: e.target.value || undefined,
-                              })
+                          {(() => {
+                            const fallbackProviderId = pendingChanges.fallbackProviderId || serviceConfig.fallbackProviderId;
+                            const fallbackModel = pendingChanges.fallbackModel || serviceConfig.fallbackModel || '';
+                            const modelOptions = fallbackProviderId ? getModelOptions(fallbackProviderId, service) : [];
+                            const isDisabled = !fallbackProviderId;
+
+                            if (modelOptions.length === 0 || isDisabled) {
+                              return (
+                                <input
+                                  type="text"
+                                  value={fallbackModel}
+                                  onChange={(e) =>
+                                    setPendingChanges({
+                                      ...pendingChanges,
+                                      fallbackModel: e.target.value || undefined,
+                                    })
+                                  }
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-md disabled:bg-gray-100"
+                                  placeholder={isDisabled ? 'Select fallback provider first' : 'Enter model name'}
+                                  disabled={isDisabled}
+                                />
+                              );
                             }
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                            placeholder="e.g., gemini-2.5-flash"
-                            disabled={!pendingChanges.fallbackProviderId && !serviceConfig.fallbackProviderId}
-                          />
+
+                            return (
+                              <select
+                                value={fallbackModel}
+                                onChange={(e) =>
+                                  setPendingChanges({
+                                    ...pendingChanges,
+                                    fallbackModel: e.target.value || undefined,
+                                  })
+                                }
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                              >
+                                {modelOptions.map((opt) => (
+                                  <option key={opt.value} value={opt.value}>
+                                    {opt.label}
+                                  </option>
+                                ))}
+                                {/* Show current value if not in options (legacy) */}
+                                {!modelOptions.find(o => o.value === fallbackModel) && fallbackModel && (
+                                  <option value={fallbackModel}>{fallbackModel} (Current)</option>
+                                )}
+                              </select>
+                            );
+                          })()}
                         </div>
                       </div>
 
