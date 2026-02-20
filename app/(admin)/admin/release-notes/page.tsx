@@ -46,6 +46,24 @@ const RELEASES: Release[] = [
     ],
   },
   {
+    id: 'feb-2026-mood-compass',
+    version: '1.3.2',
+    title: 'Mood Compass Enhancement',
+    description:
+      'Major update to Mood Compass with source content display, AI reasoning transparency, and fun gamification elements. Users can now see exactly what triggered their mood analysis and track their emotional journey with streaks and achievements.',
+    date: 'Feb 19, 2026',
+    status: 'released',
+    featureCount: 6,
+    categories: ['AI/Intelligence', 'Engagement', 'UX Polish', 'Transparency'],
+    highlights: [
+      'Source content display (NEW)',
+      'AI reasoning breakdown',
+      'Mood streaks & achievements',
+      'Daily insights',
+      'i18n for 6 locales',
+    ],
+  },
+  {
     id: 'mar-2026-engagement',
     version: '1.4.0',
     title: 'Virtual Companion & Enhancements',
