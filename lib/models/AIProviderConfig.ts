@@ -275,7 +275,7 @@ export const DEFAULT_AI_PROVIDER_CONFIG: AIProviderConfig = {
       providerId: 'openai',
       model: 'tts-1',
       fallbackProviderId: 'google',
-      fallbackModel: 'en-US-Neural2-C',
+      fallbackModel: 'Neural2',
     },
     stt: {
       providerId: 'openai',

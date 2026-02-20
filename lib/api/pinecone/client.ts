@@ -153,10 +153,32 @@ export class PineconeService {
       const client = this.getClient();
       const index = client.Index(this.indexName);
 
-      const queryFilter: Record<string, any> = {
-        userId: { $eq: userId },
-        ...filter,
-      };
+      // Build query filter - always include userId
+      const userIdFilter = { userId: { $eq: userId } };
+
+      let queryFilter: Record<string, any>;
+      if (filter) {
+        // If filter contains $and or $or operators, merge properly
+        if (filter.$and) {
+          // Prepend userId filter to existing $and array
+          queryFilter = {
+            $and: [userIdFilter, ...filter.$and]
+          };
+        } else if (filter.$or) {
+          // Wrap userId and $or in $and
+          queryFilter = {
+            $and: [userIdFilter, { $or: filter.$or }]
+          };
+        } else {
+          // Simple filter - can spread safely
+          queryFilter = {
+            ...userIdFilter,
+            ...filter,
+          };
+        }
+      } else {
+        queryFilter = userIdFilter;
+      }
 
       const queryResponse = await index.query({
         vector: queryVector,

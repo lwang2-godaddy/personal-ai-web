@@ -15,3 +15,4 @@ export * from './BehaviorEvent';
 export * from './VoiceCategory';
 export * from './FriendInvite';
 export * from './AIProviderConfig';
+export * from './AIProviderInfo';

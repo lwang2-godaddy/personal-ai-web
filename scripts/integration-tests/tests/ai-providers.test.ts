@@ -176,7 +176,7 @@ async function testInitializeConfig() {
           providerId: 'openai',
           model: 'tts-1',
           fallbackProviderId: 'google',
-          fallbackModel: 'en-US-Neural2-C',
+          fallbackModel: 'Neural2',
         },
         stt: {
           providerId: 'openai',
@@ -230,7 +230,7 @@ async function testUpdateServiceConfig() {
       ...currentConfig.services,
       tts: {
         providerId: 'google',
-        model: 'en-US-Neural2-C',
+        model: 'Neural2',
         fallbackProviderId: 'openai',
         fallbackModel: 'tts-1',
       },
@@ -284,7 +284,7 @@ async function testUpdateServiceConfig() {
         providerId: 'openai',
         model: 'tts-1',
         fallbackProviderId: 'google',
-        fallbackModel: 'en-US-Neural2-C',
+        fallbackModel: 'Neural2',
       },
       stt: {
         providerId: 'openai',

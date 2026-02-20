@@ -117,48 +117,60 @@ User Question
 AI Response with Sources
 ```
 
-### Temporal Reasoning
+### Temporal Reasoning (Multi-language)
 
-The RAG engine parses temporal references in queries:
+The RAG engine parses temporal references in queries. **Supports 9 languages:** English, Chinese, Japanese, Korean, Spanish, French, German, Italian, Portuguese.
 
-| Query Pattern | Parsed Intent |
-|---------------|---------------|
-| "yesterday" | Previous day |
-| "last week" | Previous 7 days |
-| "last month" | Previous 30 days |
-| "this year" | Current calendar year |
-| "January 2025" | Specific month |
-| "on Monday" | Most recent Monday |
+| Query Pattern | EN | ZH | JA | KO |
+|---------------|----|----|----|----|
+| today | today | 今天 | 今日 | 오늘 |
+| yesterday | yesterday | 昨天 | 昨日 | 어제 |
+| this week | this week | 这周/本周 | 今週 | 이번 주 |
+| last week | last week | 上周 | 先週 | 지난 주 |
+| this month | this month | 这个月/本月 | 今月 | 이번 달 |
+| last month | last month | 上个月 | 先月 | 지난 달 |
+| N days ago | N days ago | N天前 | N日前 | N일 전 |
+
+European languages (ES, FR, DE, IT, PT) are also fully supported with equivalent patterns.
 
 **Implementation**:
 ```typescript
 interface TemporalIntent {
-  type: 'relative' | 'absolute' | 'range' | 'none';
-  startDate?: Date;
-  endDate?: Date;
-  reference?: string;
+  hasTemporalIntent: boolean;
+  dateRange?: { start: Date; end: Date };
+  timeReference?: string;
 }
 
 function parseTemporalIntent(query: string): TemporalIntent {
-  // Pattern matching for temporal references
-  const yesterday = /yesterday/i;
-  const lastWeek = /last\s+week/i;
-  const lastMonth = /last\s+month/i;
+  // Pattern matching for all 9 languages
+  // yesterday: /\byesterday\b|昨天|昨日|어제|ayer|hier|gestern|ieri|ontem/i
   // ... more patterns
 }
 ```
 
-### Query Intent Analysis
+### Query Intent Analysis (Multi-language)
 
-The system detects query types to optimize responses:
+The system detects query types to optimize responses. **Supports 9 languages:** English, Chinese, Japanese, Korean, Spanish, French, German, Italian, Portuguese.
 
 | Intent | Example | Behavior |
 |--------|---------|----------|
-| count | "How many times..." | Returns numerical count |
-| average | "What's my average..." | Calculates mean |
-| comparison | "Compare my..." | Shows differences |
+| count | "How many times..." / "几个" / "何個" / "몇 개" | Returns numerical count (uses topK=50) |
+| average | "What's my average..." / "平均" / "평균" | Calculates mean |
+| comparison | "Compare my..." / "比较" / "비교" | Shows differences |
 | timeline | "When did I..." | Lists chronologically |
 | search | "Find all..." | Returns matching items |
+
+**Counting Query Detection Patterns:**
+- **EN:** how many, number of, count, times, how often
+- **ZH:** 几个, 几次, 多少, 数量, 多少张
+- **JA:** いくつ, 何個, 何回, 何度, 何枚, 回数
+- **KO:** 몇 개, 몇 번, 몇 장, 얼마나, 횟수
+- **ES/FR/DE/IT/PT:** cuántos, combien, wie viele, quanti, quantos
+
+**Counting Query Optimization:**
+- When a counting query is detected, `topK` is increased from 10 to 50
+- An explicit counting instruction is prepended to the context
+- This ensures accurate counts like "You recorded 5 voice notes yesterday"
 
 ### Context Building
 
@@ -401,6 +413,48 @@ Currently no response caching. Future optimization:
 - Cache frequent queries
 - Cache embedding for repeated questions
 - Consider semantic cache (similar questions)
+
+---
+
+---
+
+## E2E Tests
+
+### Counting Query Tests
+
+The counting query functionality is covered by comprehensive E2E tests across all 9 languages.
+
+**Run tests:**
+```bash
+npm run test:counting-query
+```
+
+**Test coverage (213 test cases):**
+- Counting query detection (36 tests - 4 per language)
+- Temporal patterns (99 tests - 11 per language)
+- N days ago patterns (18 tests - 2 per language)
+- Data type detection (72 tests - 8 per language)
+
+**Test file:** `scripts/integration-tests/tests/counting-query-e2e.test.ts`
+
+### Chat History Admin Tests
+
+The chat history admin API is covered by E2E tests.
+
+**Run tests:**
+```bash
+npm run test -- --filter chat-history
+```
+
+**Test coverage:**
+- List users with chat counts
+- List conversations for a user
+- Context references in messages
+- Message counts calculation
+- Date range filtering
+- Context types aggregation
+
+**Test file:** `scripts/integration-tests/tests/chat-history-admin-e2e.test.ts`
 
 ---
 

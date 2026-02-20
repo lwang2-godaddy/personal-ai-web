@@ -17,8 +17,15 @@
     "test:insights": "tsx scripts/integration-tests/run-all.ts --filter insights-orchestrator",
     "test:push-notifications": "tsx scripts/integration-tests/run-all.ts --filter push-notifications-admin",
     "test:ask-ai": "tsx scripts/integration-tests/run-all.ts --filter ask-ai-questions",
+    "test:counting-query": "tsx scripts/integration-tests/tests/counting-query-e2e.test.ts",
+    "test:rag-filter": "tsx scripts/integration-tests/tests/rag-counting-query-e2e.test.ts",
+    "test:query-routing": "tsx scripts/integration-tests/tests/query-routing-e2e.test.ts",
     "check:ingestion": "tsx scripts/diagnostics/check-voice-ingestion.ts",
-    "check:firestore": "tsx scripts/diagnostics/check-firestore.ts"
+    "check:firestore": "tsx scripts/diagnostics/check-firestore.ts",
+    "screenshots:generate": "tsx scripts/generate-app-store-screenshots.ts",
+    "deploy": "./scripts/deploy.sh",
+    "deploy:prod": "./scripts/deploy.sh --prod",
+    "deploy:quick": "./scripts/deploy.sh --skip-lint --skip-build"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.9",
@@ -39,7 +46,7 @@
     "react-redux": "^9.2.0",
     "recharts": "^3.6.0",
     "redux-persist": "^6.0.0",
-    "vercel": "^50.18.0"
+    "vercel": "^50.22.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

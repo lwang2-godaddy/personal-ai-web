@@ -366,6 +366,7 @@ export const TRACKED_SCREENS = {
   adminReleaseNotes: 'admin_release_notes',
   adminPredictions: 'admin_predictions',
   adminAiProviders: 'admin_ai_providers',
+  adminChatHistory: 'admin_chat_history',
 
   // Mobile (for cross-platform compatibility)
   home: 'home',

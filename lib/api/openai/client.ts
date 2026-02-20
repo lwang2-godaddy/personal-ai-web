@@ -281,6 +281,82 @@ export class OpenAIService {
   }
 
   /**
+   * Generate chat completion with usage info returned
+   * Use this when you need to track provider/model info for auditing
+   */
+  async chatCompletionWithUsage(
+    messages: ChatMessage[],
+    context?: string,
+    options?: {
+      temperature?: number;
+      maxTokens?: number;
+      userId?: string;
+      endpoint?: string;
+    },
+  ): Promise<{ content: string; inputTokens: number; outputTokens: number; model: string }> {
+    try {
+      console.log(`[OpenAI] chatCompletionWithUsage called - userId: ${options?.userId}, endpoint: ${options?.endpoint}`);
+
+      const systemMessage = context
+        ? {
+            role: 'system' as const,
+            content: `You are a personal AI assistant with access to the user's health, location, and voice data. Use the following context from the user's personal data to answer their question:\n\n${context}\n\nProvide helpful, accurate answers based on this data. If the data doesn't contain enough information to answer the question, say so clearly.`,
+          }
+        : {
+            role: 'system' as const,
+            content: 'You are a helpful personal AI assistant.',
+          };
+
+      const formattedMessages = [
+        systemMessage,
+        ...messages.map((msg) => ({
+          role: msg.role,
+          content: msg.content,
+        })),
+      ];
+
+      const model = 'gpt-4o';
+      const response = await this.client.chat.completions.create({
+        model,
+        messages: formattedMessages as any,
+        temperature: options?.temperature ?? 0.7,
+        max_tokens: options?.maxTokens ?? 500,
+        stream: false,
+      });
+
+      const inputTokens = response.usage?.prompt_tokens || 0;
+      const outputTokens = response.usage?.completion_tokens || 0;
+
+      console.log(`[OpenAI] Chat completed - model: ${model}, promptTokens: ${inputTokens}, completionTokens: ${outputTokens}`);
+
+      // Track usage if userId provided
+      if (options?.userId && typeof window === 'undefined') {
+        try {
+          const UsageTracker = (await import('@/lib/services/usage/UsageTracker')).default;
+          await UsageTracker.trackChatCompletion(
+            options.userId,
+            inputTokens,
+            outputTokens,
+            options.endpoint || 'chat_completion'
+          );
+        } catch (trackingError) {
+          console.error(`[OpenAI] Chat usage tracking FAILED:`, trackingError);
+        }
+      }
+
+      return {
+        content: response.choices[0]?.message?.content || '',
+        inputTokens,
+        outputTokens,
+        model,
+      };
+    } catch (error) {
+      console.error('OpenAI chat completion with usage error:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Generate chat completion with custom system prompt
    * Allows full control over the system message for specialized queries
    */
