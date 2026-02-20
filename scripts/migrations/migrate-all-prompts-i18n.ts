@@ -11,7 +11,7 @@
  *   - Or GOOGLE_APPLICATION_CREDENTIALS environment variable set
  *
  * Supported languages: en, es, fr, de, it, pt, zh, ja, ko
- * Services: CarouselInsights, OpenAIService, DailySummaryService, DailyInsightService, RAGEngine, QueryRAGServer, ThisDayService, LifeFeedGenerator, ContentSummaryService
+ * Services: CarouselInsights, OpenAIService, DailySummaryService, DailyInsightService, RAGEngine, QueryRAGServer, ThisDayService, LifeFeedGenerator, ContentSummaryService, MoodInsightService
  */
 
 import * as path from 'path';
@@ -205,6 +205,10 @@ interface Translations {
   suggestion_summary_week: string;
   suggestion_patterns_notice: string;
   suggestion_recommendations: string;
+
+  // MoodInsightService - AI-powered mood daily insights
+  mood_insight_system: string;
+  mood_insight_generate: string;
 }
 
 const translations: Record<string, Translations> = {
@@ -929,6 +933,36 @@ Rules:
     suggestion_summary_week: 'What did I accomplish this week?',
     suggestion_patterns_notice: 'What interesting patterns have you noticed?',
     suggestion_recommendations: 'What do you suggest I do based on my data?',
+
+    // MoodInsightService - AI-powered mood insights
+    mood_insight_system: `You are a supportive mood coach analyzing the user's emotional patterns.
+Generate ONE short, personalized insight (1-2 sentences) based on their mood data.
+
+Guidelines:
+- Use second person ("Your mood...", "You tend to...")
+- Be encouraging and positive
+- Include specific data when available (percentages, days, activities)
+- If not enough data, encourage continued logging
+- Respond in {{language}}`,
+    mood_insight_generate: `Based on this mood data, generate a personalized daily insight:
+
+**Mood Summary ({{days}} days):**
+- Dominant emotion: {{dominantEmotion}}
+- Average mood score: {{avgScore}}/10
+- Trend: {{trend}} ({{trendPercent}}% change)
+- Total entries: {{entryCount}}
+
+**Patterns:**
+{{#if topActivity}}- Best activity: {{topActivity}} (+{{activityBoost}}% mood boost){{/if}}
+{{#if bestDayOfWeek}}- Happiest day: {{bestDayOfWeek}}{{/if}}
+{{#if currentStreak}}- Current positive streak: {{currentStreak}} days{{/if}}
+
+Generate ONE insightful observation. Respond in JSON:
+{
+  "content": "Your insight here (1-2 sentences)",
+  "emoji": "single emoji",
+  "type": "positive|neutral|encouragement"
+}`,
   },
 
   zh: {
@@ -1649,6 +1683,36 @@ Rules:
     suggestion_summary_week: '这周我完成了什么？',
     suggestion_patterns_notice: '你注意到什么有趣的规律？',
     suggestion_recommendations: '根据我的数据你有什么建议？',
+
+    // MoodInsightService - AI-powered mood insights
+    mood_insight_system: `你是一位支持性的情绪教练，正在分析用户的情绪模式。
+根据他们的情绪数据生成一条简短、个性化的洞察（1-2句话）。
+
+指南：
+- 使用第二人称（"你的情绪..."，"你倾向于..."）
+- 保持鼓励和积极
+- 在可用时包含具体数据（百分比、天数、活动）
+- 如果数据不足，鼓励继续记录
+- 用{{language}}回复`,
+    mood_insight_generate: `根据这些情绪数据，生成个性化的每日洞察：
+
+**情绪摘要（{{days}}天）：**
+- 主导情绪：{{dominantEmotion}}
+- 平均情绪分数：{{avgScore}}/10
+- 趋势：{{trend}}（{{trendPercent}}%变化）
+- 总记录数：{{entryCount}}
+
+**模式：**
+{{#if topActivity}}- 最佳活动：{{topActivity}}（+{{activityBoost}}%情绪提升）{{/if}}
+{{#if bestDayOfWeek}}- 最开心的日子：{{bestDayOfWeek}}{{/if}}
+{{#if currentStreak}}- 当前积极连续天数：{{currentStreak}}天{{/if}}
+
+生成一条有见地的观察。用JSON回复：
+{
+  "content": "你的洞察（1-2句话）",
+  "emoji": "单个表情符号",
+  "type": "positive|neutral|encouragement"
+}`,
   },
 
   ja: {
@@ -2344,6 +2408,36 @@ JSON形式で返してください：
     suggestion_summary_week: '今週何を達成しましたか？',
     suggestion_patterns_notice: '興味深いパターンは見つかりましたか？',
     suggestion_recommendations: 'データに基づいて何かおすすめはありますか？',
+
+    // MoodInsightService - AI-powered mood insights
+    mood_insight_system: `あなたはユーザーの感情パターンを分析するサポーティブなムードコーチです。
+彼らのムードデータに基づいて、短くパーソナライズされた洞察（1-2文）を1つ生成してください。
+
+ガイドライン：
+- 二人称を使用（「あなたの気分は...」「あなたは...傾向があります」）
+- 励ましとポジティブさを保つ
+- 可能な場合は具体的なデータを含める（パーセンテージ、日数、活動）
+- データが不十分な場合は、継続的な記録を奨励する
+- {{language}}で応答する`,
+    mood_insight_generate: `このムードデータに基づいて、パーソナライズされた毎日の洞察を生成してください：
+
+**ムードサマリー（{{days}}日間）：**
+- 主な感情：{{dominantEmotion}}
+- 平均ムードスコア：{{avgScore}}/10
+- トレンド：{{trend}}（{{trendPercent}}%変化）
+- 合計エントリー数：{{entryCount}}
+
+**パターン：**
+{{#if topActivity}}- ベストな活動：{{topActivity}}（+{{activityBoost}}%ムード向上）{{/if}}
+{{#if bestDayOfWeek}}- 最も幸せな日：{{bestDayOfWeek}}{{/if}}
+{{#if currentStreak}}- 現在のポジティブ連続日数：{{currentStreak}}日{{/if}}
+
+洞察のある観察を1つ生成してください。JSONで応答：
+{
+  "content": "あなたの洞察（1-2文）",
+  "emoji": "1つの絵文字",
+  "type": "positive|neutral|encouragement"
+}`,
   },
 
   ko: {
@@ -3010,6 +3104,36 @@ JSON 형식으로 반환:
     suggestion_summary_week: '이번 주에 뭘 달성했어요?',
     suggestion_patterns_notice: '흥미로운 패턴을 발견했나요?',
     suggestion_recommendations: '내 데이터 기반으로 뭘 추천해요?',
+
+    // MoodInsightService - AI-powered mood insights
+    mood_insight_system: `당신은 사용자의 감정 패턴을 분석하는 지지적인 기분 코치입니다.
+그들의 기분 데이터를 기반으로 짧고 개인화된 통찰(1-2문장)을 하나 생성하세요.
+
+가이드라인:
+- 2인칭 사용 ("당신의 기분은...", "당신은 ...하는 경향이 있습니다")
+- 격려적이고 긍정적으로
+- 가능하면 구체적인 데이터 포함 (퍼센트, 일수, 활동)
+- 데이터가 부족하면 계속 기록하도록 격려
+- {{language}}로 응답`,
+    mood_insight_generate: `이 기분 데이터를 기반으로 개인화된 일일 통찰을 생성하세요:
+
+**기분 요약 ({{days}}일):**
+- 주요 감정: {{dominantEmotion}}
+- 평균 기분 점수: {{avgScore}}/10
+- 추세: {{trend}} ({{trendPercent}}% 변화)
+- 총 기록 수: {{entryCount}}
+
+**패턴:**
+{{#if topActivity}}- 최고의 활동: {{topActivity}} (+{{activityBoost}}% 기분 상승){{/if}}
+{{#if bestDayOfWeek}}- 가장 행복한 날: {{bestDayOfWeek}}{{/if}}
+{{#if currentStreak}}- 현재 긍정 연속일: {{currentStreak}}일{{/if}}
+
+통찰력 있는 관찰 하나를 생성하세요. JSON으로 응답:
+{
+  "content": "당신의 통찰 (1-2문장)",
+  "emoji": "이모지 하나",
+  "type": "positive|neutral|encouragement"
+}`,
   },
 
   es: {
@@ -3676,6 +3800,36 @@ Reglas:
     suggestion_summary_week: '¿Qué logré esta semana?',
     suggestion_patterns_notice: '¿Qué patrones interesantes has notado?',
     suggestion_recommendations: '¿Qué me sugieres según mis datos?',
+
+    // MoodInsightService - AI-powered mood insights
+    mood_insight_system: `Eres un coach de estado de ánimo comprensivo que analiza los patrones emocionales del usuario.
+Genera UNA observación corta y personalizada (1-2 oraciones) basada en sus datos de estado de ánimo.
+
+Directrices:
+- Usa segunda persona ("Tu estado de ánimo...", "Tiendes a...")
+- Sé alentador y positivo
+- Incluye datos específicos cuando estén disponibles (porcentajes, días, actividades)
+- Si no hay suficientes datos, anima a seguir registrando
+- Responde en {{language}}`,
+    mood_insight_generate: `Basándote en estos datos de estado de ánimo, genera una observación diaria personalizada:
+
+**Resumen de Estado de Ánimo ({{days}} días):**
+- Emoción dominante: {{dominantEmotion}}
+- Puntuación promedio: {{avgScore}}/10
+- Tendencia: {{trend}} ({{trendPercent}}% de cambio)
+- Total de registros: {{entryCount}}
+
+**Patrones:**
+{{#if topActivity}}- Mejor actividad: {{topActivity}} (+{{activityBoost}}% mejora del ánimo){{/if}}
+{{#if bestDayOfWeek}}- Día más feliz: {{bestDayOfWeek}}{{/if}}
+{{#if currentStreak}}- Racha positiva actual: {{currentStreak}} días{{/if}}
+
+Genera UNA observación perspicaz. Responde en JSON:
+{
+  "content": "Tu observación aquí (1-2 oraciones)",
+  "emoji": "un emoji",
+  "type": "positive|neutral|encouragement"
+}`,
   },
 
   fr: {
@@ -4342,6 +4496,36 @@ Règles :
     suggestion_summary_week: 'Qu\'ai-je accompli cette semaine ?',
     suggestion_patterns_notice: 'Quels schémas intéressants as-tu remarqués ?',
     suggestion_recommendations: 'Que me suggères-tu selon mes données ?',
+
+    // MoodInsightService - AI-powered mood insights
+    mood_insight_system: `Vous êtes un coach d'humeur bienveillant qui analyse les patterns émotionnels de l'utilisateur.
+Générez UNE observation courte et personnalisée (1-2 phrases) basée sur leurs données d'humeur.
+
+Directives :
+- Utilisez la deuxième personne ("Votre humeur...", "Vous avez tendance à...")
+- Soyez encourageant et positif
+- Incluez des données spécifiques quand disponibles (pourcentages, jours, activités)
+- Si données insuffisantes, encouragez à continuer l'enregistrement
+- Répondez en {{language}}`,
+    mood_insight_generate: `À partir de ces données d'humeur, générez une observation quotidienne personnalisée :
+
+**Résumé d'Humeur ({{days}} jours) :**
+- Émotion dominante : {{dominantEmotion}}
+- Score moyen : {{avgScore}}/10
+- Tendance : {{trend}} ({{trendPercent}}% de changement)
+- Total d'entrées : {{entryCount}}
+
+**Patterns :**
+{{#if topActivity}}- Meilleure activité : {{topActivity}} (+{{activityBoost}}% boost d'humeur){{/if}}
+{{#if bestDayOfWeek}}- Jour le plus heureux : {{bestDayOfWeek}}{{/if}}
+{{#if currentStreak}}- Série positive actuelle : {{currentStreak}} jours{{/if}}
+
+Générez UNE observation perspicace. Répondez en JSON :
+{
+  "content": "Votre observation ici (1-2 phrases)",
+  "emoji": "un seul emoji",
+  "type": "positive|neutral|encouragement"
+}`,
   },
 
   de: {
@@ -5008,6 +5192,36 @@ Regeln:
     suggestion_summary_week: 'Was habe ich diese Woche erreicht?',
     suggestion_patterns_notice: 'Welche interessanten Muster hast du bemerkt?',
     suggestion_recommendations: 'Was empfiehlst du mir basierend auf meinen Daten?',
+
+    // MoodInsightService - AI-powered mood insights
+    mood_insight_system: `Sie sind ein unterstützender Stimmungscoach, der die emotionalen Muster des Benutzers analysiert.
+Generieren Sie EINE kurze, personalisierte Erkenntnis (1-2 Sätze) basierend auf den Stimmungsdaten.
+
+Richtlinien:
+- Verwenden Sie die zweite Person ("Ihre Stimmung...", "Sie neigen dazu...")
+- Seien Sie ermutigend und positiv
+- Fügen Sie spezifische Daten hinzu, wenn verfügbar (Prozentsätze, Tage, Aktivitäten)
+- Bei unzureichenden Daten ermutigen Sie zum weiteren Erfassen
+- Antworten Sie auf {{language}}`,
+    mood_insight_generate: `Basierend auf diesen Stimmungsdaten, generieren Sie eine personalisierte tägliche Erkenntnis:
+
+**Stimmungsübersicht ({{days}} Tage):**
+- Vorherrschende Emotion: {{dominantEmotion}}
+- Durchschnittliche Stimmung: {{avgScore}}/10
+- Trend: {{trend}} ({{trendPercent}}% Änderung)
+- Gesamteinträge: {{entryCount}}
+
+**Muster:**
+{{#if topActivity}}- Beste Aktivität: {{topActivity}} (+{{activityBoost}}% Stimmungsverbesserung){{/if}}
+{{#if bestDayOfWeek}}- Glücklichster Tag: {{bestDayOfWeek}}{{/if}}
+{{#if currentStreak}}- Aktuelle positive Serie: {{currentStreak}} Tage{{/if}}
+
+Generieren Sie EINE aufschlussreiche Beobachtung. Antworten Sie in JSON:
+{
+  "content": "Ihre Erkenntnis hier (1-2 Sätze)",
+  "emoji": "ein einzelnes Emoji",
+  "type": "positive|neutral|encouragement"
+}`,
   },
 
   it: {
@@ -5674,6 +5888,36 @@ Regole:
     suggestion_summary_week: 'Cosa ho realizzato questa settimana?',
     suggestion_patterns_notice: 'Quali schemi interessanti hai notato?',
     suggestion_recommendations: 'Cosa mi suggerisci in base ai miei dati?',
+
+    // MoodInsightService - AI-powered mood insights
+    mood_insight_system: `Sei un coach dell'umore solidale che analizza i pattern emotivi dell'utente.
+Genera UN'osservazione breve e personalizzata (1-2 frasi) basata sui loro dati dell'umore.
+
+Linee guida:
+- Usa la seconda persona ("Il tuo umore...", "Tendi a...")
+- Sii incoraggiante e positivo
+- Includi dati specifici quando disponibili (percentuali, giorni, attività)
+- Se i dati sono insufficienti, incoraggia a continuare la registrazione
+- Rispondi in {{language}}`,
+    mood_insight_generate: `In base a questi dati dell'umore, genera un'osservazione giornaliera personalizzata:
+
+**Riepilogo Umore ({{days}} giorni):**
+- Emozione dominante: {{dominantEmotion}}
+- Punteggio medio: {{avgScore}}/10
+- Tendenza: {{trend}} ({{trendPercent}}% di cambiamento)
+- Totale registrazioni: {{entryCount}}
+
+**Pattern:**
+{{#if topActivity}}- Migliore attività: {{topActivity}} (+{{activityBoost}}% miglioramento umore){{/if}}
+{{#if bestDayOfWeek}}- Giorno più felice: {{bestDayOfWeek}}{{/if}}
+{{#if currentStreak}}- Serie positiva attuale: {{currentStreak}} giorni{{/if}}
+
+Genera UN'osservazione perspicace. Rispondi in JSON:
+{
+  "content": "La tua osservazione qui (1-2 frasi)",
+  "emoji": "un singolo emoji",
+  "type": "positive|neutral|encouragement"
+}`,
   },
 
   pt: {
@@ -6340,6 +6584,36 @@ Regras:
     suggestion_summary_week: 'O que realizei esta semana?',
     suggestion_patterns_notice: 'Quais padrões interessantes você notou?',
     suggestion_recommendations: 'O que você sugere com base nos meus dados?',
+
+    // MoodInsightService - AI-powered mood insights
+    mood_insight_system: `Você é um coach de humor solidário que analisa os padrões emocionais do usuário.
+Gere UMA observação curta e personalizada (1-2 frases) baseada nos dados de humor.
+
+Diretrizes:
+- Use a segunda pessoa ("Seu humor...", "Você tende a...")
+- Seja encorajador e positivo
+- Inclua dados específicos quando disponíveis (porcentagens, dias, atividades)
+- Se os dados forem insuficientes, encoraje a continuar registrando
+- Responda em {{language}}`,
+    mood_insight_generate: `Com base nesses dados de humor, gere uma observação diária personalizada:
+
+**Resumo de Humor ({{days}} dias):**
+- Emoção dominante: {{dominantEmotion}}
+- Pontuação média: {{avgScore}}/10
+- Tendência: {{trend}} ({{trendPercent}}% de mudança)
+- Total de registros: {{entryCount}}
+
+**Padrões:**
+{{#if topActivity}}- Melhor atividade: {{topActivity}} (+{{activityBoost}}% melhora do humor){{/if}}
+{{#if bestDayOfWeek}}- Dia mais feliz: {{bestDayOfWeek}}{{/if}}
+{{#if currentStreak}}- Sequência positiva atual: {{currentStreak}} dias{{/if}}
+
+Gere UMA observação perspicaz. Responda em JSON:
+{
+  "content": "Sua observação aqui (1-2 frases)",
+  "emoji": "um único emoji",
+  "type": "positive|neutral|encouragement"
+}`,
   },
 };
 
@@ -7254,6 +7528,43 @@ function buildChatSuggestionsDoc(lang: string, t: Translations) {
   };
 }
 
+function buildMoodInsightServiceDoc(lang: string, t: Translations) {
+  return {
+    language: lang,
+    service: 'MoodInsightService',
+    version: '1.0.0',
+    status: 'published',
+    enabled: true,
+    prompts: {
+      system: {
+        id: 'mood-insight-system',
+        service: 'MoodInsightService',
+        type: 'system',
+        description: 'System prompt for mood insight generation',
+        content: t.mood_insight_system,
+        metadata: {
+          model: 'gpt-4o-mini',
+          temperature: 0.8,
+          maxTokens: 150,
+        },
+      },
+      generate_insight: {
+        id: 'mood-insight-generate',
+        service: 'MoodInsightService',
+        type: 'user',
+        description: 'Generate personalized mood insight from mood data summary',
+        content: t.mood_insight_generate,
+        metadata: {
+          model: 'gpt-4o-mini',
+          temperature: 0.8,
+          maxTokens: 150,
+          responseFormat: 'json_object',
+        },
+      },
+    },
+  };
+}
+
 // =============================================================================
 // Main Migration Function
 // =============================================================================
@@ -7264,7 +7575,7 @@ async function migrateAllPrompts() {
   console.log('='.repeat(60));
   console.log('\nThis will add/update prompts for all languages and services.');
   console.log('Languages: en, es, fr, de, it, pt, zh, ja, ko');
-  console.log('Services: CarouselInsights, OpenAIService, DailySummaryService, DailyInsightService, RAGEngine, QueryRAGServer, ThisDayService, LifeFeedGenerator, ContentSummaryService, ChatSuggestions\n');
+  console.log('Services: CarouselInsights, OpenAIService, DailySummaryService, DailyInsightService, RAGEngine, QueryRAGServer, ThisDayService, LifeFeedGenerator, ContentSummaryService, ChatSuggestions, MoodInsightService\n');
 
   // Initialize Firebase
   const db = initializeFirebase();
@@ -7282,6 +7593,7 @@ async function migrateAllPrompts() {
     { name: 'KeywordGenerator', builder: buildKeywordGeneratorDoc },
     { name: 'ContentSummaryService', builder: buildContentSummaryServiceDoc },
     { name: 'ChatSuggestions', builder: buildChatSuggestionsDoc },
+    { name: 'MoodInsightService', builder: buildMoodInsightServiceDoc },
   ];
 
   let successCount = 0;

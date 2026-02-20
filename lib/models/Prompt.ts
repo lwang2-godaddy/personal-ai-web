@@ -117,6 +117,8 @@ export const SERVICE_FILE_MAP: Record<string, string> = {
   CarouselInsights: 'carouselInsights.yaml',
   // Chat suggestions (Firestore only - no YAML)
   ChatSuggestions: 'chatSuggestions.yaml',
+  // Mood Compass - AI-powered mood insights
+  MoodInsightService: 'moodInsight.yaml',
 };
 
 /**
@@ -175,6 +177,14 @@ export const SERVICE_OUTPUT_CATEGORIES = [
     description: 'Services that power chat and context retrieval',
     outputCollection: 'chatHistory (responses)',
     services: ['OpenAIService', 'RAGEngine', 'QueryRAGServer', 'ChatSuggestions'],
+  },
+  {
+    id: 'mood_services',
+    name: 'Mood & Sentiment Services',
+    icon: '😊',
+    description: 'Services that analyze and generate mood insights',
+    outputCollection: 'moodEntries, moodInsights',
+    services: ['SentimentAnalysisService', 'MoodInsightService'],
   },
   {
     id: 'analysis_services',
@@ -492,6 +502,21 @@ export const PROMPT_SERVICES = [
       CONTEXT_SOURCES.voiceNotes,
     ] as ContextSource[],
     usageInfo: { dataTimeRange: 'Real-time (single item)', selectionLogic: 'always' as SelectionLogic },
+  },
+  {
+    id: 'MoodInsightService',
+    name: 'Mood Daily Insights',
+    category: 'mood_compass' as PromptCategoryId,
+    icon: '💡',
+    description: 'AI-generated personalized mood insights based on patterns and correlations',
+    trigger: 'When user views Mood Compass screen',
+    platform: 'server' as const,
+    usedBy: ['mobile'] as const,
+    example: 'Generating "Exercise boosts your mood by 30% - keep moving!"',
+    contextSources: [
+      CONTEXT_SOURCES.moodEntries,
+    ] as ContextSource[],
+    usageInfo: { dataTimeRange: 'Last 30 days', selectionLogic: 'always' as SelectionLogic },
   },
   // Memory Companion - Memory summaries & entity extraction (event-driven, not scheduled)
   {
