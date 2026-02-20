@@ -1,8 +1,9 @@
-import { ChatMessage } from '@/lib/models';
+import { ChatMessage, FeedbackRating } from '@/lib/models';
 import { TypingIndicator } from './TypingIndicator';
 
 interface MessageBubbleProps {
   message: ChatMessage;
+  onFeedback?: (messageId: string, rating: FeedbackRating | null) => void;
 }
 
 // Data type configuration for badges
@@ -41,7 +42,23 @@ function DataTypeBadge({ type }: { type: string }) {
   );
 }
 
-export function MessageBubble({ message }: MessageBubbleProps) {
+function ThumbsUpIcon({ filled }: { filled: boolean }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
+    </svg>
+  );
+}
+
+function ThumbsDownIcon({ filled }: { filled: boolean }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17" />
+    </svg>
+  );
+}
+
+export function MessageBubble({ message, onFeedback }: MessageBubbleProps) {
   // Handle typing indicator (system message with id __typing__)
   if (message.id === '__typing__') {
     return (
@@ -56,7 +73,19 @@ export function MessageBubble({ message }: MessageBubbleProps) {
   }
 
   const isUser = message.role === 'user';
+  const isAssistant = message.role === 'assistant';
   const isError = message.role === 'system' && message.content.startsWith('Error:');
+  const currentRating = message.feedback?.rating ?? null;
+
+  const handleThumbsUp = () => {
+    if (!message.id || !onFeedback) return;
+    onFeedback(message.id, currentRating === 'thumbs_up' ? null : 'thumbs_up');
+  };
+
+  const handleThumbsDown = () => {
+    if (!message.id || !onFeedback) return;
+    onFeedback(message.id, currentRating === 'thumbs_down' ? null : 'thumbs_down');
+  };
 
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`}>
@@ -94,7 +123,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
               📚 View {message.contextUsed.length} source{message.contextUsed.length !== 1 ? 's' : ''}
             </summary>
             <div className="space-y-1 mt-2">
-              {message.contextUsed.map((context, idx) => (
+              {message.contextUsed.map((context) => (
                 <div
                   key={context.id}
                   className="text-xs p-2 bg-white dark:bg-gray-700 rounded"
@@ -112,6 +141,34 @@ export function MessageBubble({ message }: MessageBubbleProps) {
               ))}
             </div>
           </details>
+        )}
+
+        {/* Feedback buttons for assistant messages */}
+        {isAssistant && !isError && message.id && onFeedback && (
+          <div className="flex items-center gap-2 mt-2 pt-2 border-t border-gray-200 dark:border-gray-600">
+            <button
+              onClick={handleThumbsUp}
+              className={`p-1 rounded transition-colors ${
+                currentRating === 'thumbs_up'
+                  ? 'text-green-600 dark:text-green-400'
+                  : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
+              }`}
+              title="Good response"
+            >
+              <ThumbsUpIcon filled={currentRating === 'thumbs_up'} />
+            </button>
+            <button
+              onClick={handleThumbsDown}
+              className={`p-1 rounded transition-colors ${
+                currentRating === 'thumbs_down'
+                  ? 'text-red-600 dark:text-red-400'
+                  : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
+              }`}
+              title="Bad response"
+            >
+              <ThumbsDownIcon filled={currentRating === 'thumbs_down'} />
+            </button>
+          </div>
         )}
 
         <p className="text-xs opacity-60 mt-2">

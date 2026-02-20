@@ -1,13 +1,14 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { useAppDispatch, useAppSelector } from '@/lib/store/hooks';
-import { sendMessage, clearMessages } from '@/lib/store/slices/chatSlice';
+import { sendMessage, clearMessages, submitFeedback, updateMessageFeedback } from '@/lib/store/slices/chatSlice';
 import { MessageBubble } from '@/components/chat/MessageBubble';
 import { ChatInput } from '@/components/chat/ChatInput';
 import { EmptyState } from '@/components/chat/EmptyState';
 import { useTrackPage, useTrackFeature } from '@/lib/hooks/useTrackPage';
 import { TRACKED_SCREENS, TRACKED_FEATURES } from '@/lib/models/BehaviorEvent';
+import { FeedbackRating } from '@/lib/models';
 
 export default function ChatPage() {
   // Track page view
@@ -39,6 +40,17 @@ export default function ChatPage() {
       dispatch(clearMessages());
     }
   };
+
+  const handleFeedback = useCallback((messageId: string, rating: FeedbackRating | null) => {
+    // Optimistic update
+    dispatch(updateMessageFeedback({
+      messageId,
+      feedback: rating ? { rating, timestamp: new Date().toISOString() } : null,
+    }));
+
+    // Send to server
+    dispatch(submitFeedback({ messageId, rating }));
+  }, [dispatch]);
 
   return (
     <div className="flex flex-col h-[calc(100vh-64px)]">
@@ -77,7 +89,11 @@ export default function ChatPage() {
         ) : (
           <div className="max-w-4xl mx-auto p-6">
             {messages.map((message, index) => (
-              <MessageBubble key={index} message={message} />
+              <MessageBubble
+                key={message.id || index}
+                message={message}
+                onFeedback={message.role === 'assistant' ? handleFeedback : undefined}
+              />
             ))}
 
             {/* Loading indicator */}

@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { apiGet } from '@/lib/api/client';
 import { useTrackPage } from '@/lib/hooks/useTrackPage';
 import { TRACKED_SCREENS } from '@/lib/models/BehaviorEvent';
+import RAGAlgorithmReference from '@/components/admin/chat/RAGAlgorithmReference';
 
 // ============================================================================
 // Types
@@ -16,6 +17,12 @@ interface ContextReference {
   snippet?: string;
 }
 
+interface MessageFeedback {
+  rating: 'thumbs_up' | 'thumbs_down';
+  timestamp: string;
+  comment?: string;
+}
+
 interface ChatMessage {
   id?: string;
   role: 'user' | 'assistant' | 'system';
@@ -23,6 +30,16 @@ interface ChatMessage {
   timestamp: string;
   voiceInput?: boolean;
   contextUsed?: ContextReference[];
+  // Provider tracking fields
+  provider?: string;
+  model?: string;
+  inputTokens?: number;
+  outputTokens?: number;
+  latencyMs?: number;
+  estimatedCostUSD?: number;
+  promptExecutionId?: string;
+  // Feedback
+  feedback?: MessageFeedback | null;
 }
 
 interface ChatConversation {
@@ -37,6 +54,14 @@ interface ChatConversation {
   createdAt: string;
   updatedAt: string;
   preview: string | null;
+  // Provider tracking stats
+  providerBreakdown?: Record<string, number>;
+  totalCost?: number;
+  totalTokens?: number;
+  avgLatencyMs?: number;
+  // Feedback stats
+  thumbsUpCount?: number;
+  thumbsDownCount?: number;
 }
 
 interface UserWithChats {
@@ -70,6 +95,14 @@ const DATE_PRESETS = [
   { value: '90', label: 'Last 90 days' },
 ];
 
+const FEEDBACK_FILTERS = [
+  { value: '', label: 'All Conversations' },
+  { value: 'has_negative', label: 'Has Negative Feedback' },
+  { value: 'has_positive', label: 'Has Positive Feedback' },
+  { value: 'has_any', label: 'Has Any Feedback' },
+  { value: 'no_feedback', label: 'No Feedback' },
+];
+
 const CONTEXT_TYPE_ICONS: Record<string, string> = {
   health: '❤️',
   location: '📍',
@@ -84,6 +117,13 @@ const CONTEXT_TYPE_COLORS: Record<string, string> = {
   voice: 'bg-purple-100 text-purple-800',
   photo: 'bg-green-100 text-green-800',
   text: 'bg-amber-100 text-amber-800',
+};
+
+const PROVIDER_COLORS: Record<string, string> = {
+  openai: 'bg-green-100 text-green-800',
+  google: 'bg-blue-100 text-blue-800',
+  anthropic: 'bg-orange-100 text-orange-800',
+  ollama: 'bg-gray-100 text-gray-800',
 };
 
 // ============================================================================
@@ -105,6 +145,7 @@ export default function AdminChatHistoryPage() {
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [dateRange, setDateRange] = useState<string>('');
   const [userSearch, setUserSearch] = useState('');
+  const [feedbackFilter, setFeedbackFilter] = useState<string>('');
 
   // Detail modal
   const [selectedConversation, setSelectedConversation] = useState<ChatConversation | null>(null);
@@ -178,6 +219,33 @@ export default function AdminChatHistoryPage() {
   // Get selected user info
   const selectedUser = users.find((u) => u.id === selectedUserId);
 
+  // Apply feedback filter (client-side)
+  const filteredConversations = useMemo(() => {
+    if (!feedbackFilter) return conversations;
+    return conversations.filter((c) => {
+      const up = c.thumbsUpCount || 0;
+      const down = c.thumbsDownCount || 0;
+      switch (feedbackFilter) {
+        case 'has_negative': return down > 0;
+        case 'has_positive': return up > 0;
+        case 'has_any': return up > 0 || down > 0;
+        case 'no_feedback': return up === 0 && down === 0;
+        default: return true;
+      }
+    });
+  }, [conversations, feedbackFilter]);
+
+  // Calculate aggregate feedback stats
+  const feedbackStats = useMemo(() => {
+    let totalUp = 0;
+    let totalDown = 0;
+    conversations.forEach((c) => {
+      totalUp += c.thumbsUpCount || 0;
+      totalDown += c.thumbsDownCount || 0;
+    });
+    return { totalUp, totalDown };
+  }, [conversations]);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -197,9 +265,12 @@ export default function AdminChatHistoryPage() {
         </button>
       </div>
 
+      {/* RAG Algorithm Reference */}
+      <RAGAlgorithmReference />
+
       {/* Filters */}
       <div className="bg-white border border-gray-200 rounded-lg p-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* User Selector */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">User</label>
@@ -242,6 +313,22 @@ export default function AdminChatHistoryPage() {
             </select>
           </div>
 
+          {/* Feedback Filter */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Feedback</label>
+            <select
+              value={feedbackFilter}
+              onChange={(e) => setFeedbackFilter(e.target.value)}
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+            >
+              {FEEDBACK_FILTERS.map((filter) => (
+                <option key={filter.value} value={filter.value}>
+                  {filter.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
           {/* Stats */}
           <div className="flex items-end">
             {selectedUser && (
@@ -265,28 +352,90 @@ export default function AdminChatHistoryPage() {
 
       {/* Stats Summary */}
       {selectedUserId && !loading && (
-        <div className="grid grid-cols-4 gap-4">
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <div className="text-2xl font-bold text-gray-900">{totalCount}</div>
-            <div className="text-sm text-gray-500">Total Conversations</div>
-          </div>
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <div className="text-2xl font-bold text-blue-600">
-              {conversations.reduce((sum, c) => sum + c.userMessageCount, 0)}
+        <div className="space-y-4">
+          <div className="grid grid-cols-6 gap-4">
+            <div className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="text-2xl font-bold text-gray-900">{totalCount}</div>
+              <div className="text-sm text-gray-500">Total Conversations</div>
             </div>
-            <div className="text-sm text-gray-500">User Messages</div>
-          </div>
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <div className="text-2xl font-bold text-green-600">
-              {conversations.reduce((sum, c) => sum + c.assistantMessageCount, 0)}
+            <div className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="text-2xl font-bold text-blue-600">
+                {conversations.reduce((sum, c) => sum + c.userMessageCount, 0)}
+              </div>
+              <div className="text-sm text-gray-500">User Messages</div>
             </div>
-            <div className="text-sm text-gray-500">AI Responses</div>
-          </div>
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <div className="text-2xl font-bold text-purple-600">
-              {conversations.reduce((sum, c) => sum + c.messagesWithContextCount, 0)}
+            <div className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="text-2xl font-bold text-green-600">
+                {conversations.reduce((sum, c) => sum + c.assistantMessageCount, 0)}
+              </div>
+              <div className="text-sm text-gray-500">AI Responses</div>
             </div>
-            <div className="text-sm text-gray-500">With RAG Context</div>
+            <div className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="text-2xl font-bold text-purple-600">
+                {conversations.reduce((sum, c) => sum + c.messagesWithContextCount, 0)}
+              </div>
+              <div className="text-sm text-gray-500">With RAG Context</div>
+            </div>
+            <div className="bg-white border border-green-200 rounded-lg p-4">
+              <div className="text-2xl font-bold text-green-600">{feedbackStats.totalUp}</div>
+              <div className="text-sm text-gray-500">Thumbs Up</div>
+            </div>
+            <div className="bg-white border border-red-200 rounded-lg p-4">
+              <div className="text-2xl font-bold text-red-600">{feedbackStats.totalDown}</div>
+              <div className="text-sm text-gray-500">Thumbs Down</div>
+            </div>
+          </div>
+
+          {/* Provider Stats */}
+          <div className="grid grid-cols-5 gap-4">
+            {(() => {
+              // Calculate aggregated provider stats
+              const providerCounts: Record<string, number> = {};
+              const providerCosts: Record<string, number> = {};
+              let totalCost = 0;
+              let totalTokens = 0;
+              conversations.forEach(c => {
+                if (c.providerBreakdown) {
+                  Object.entries(c.providerBreakdown).forEach(([provider, count]) => {
+                    providerCounts[provider] = (providerCounts[provider] || 0) + count;
+                  });
+                }
+                if (c.totalCost) totalCost += c.totalCost;
+                if (c.totalTokens) totalTokens += c.totalTokens;
+                c.messages.forEach(m => {
+                  if (m.role === 'assistant' && m.provider && m.estimatedCostUSD) {
+                    providerCosts[m.provider] = (providerCosts[m.provider] || 0) + m.estimatedCostUSD;
+                  }
+                });
+              });
+              return (
+                <>
+                  {['openai', 'google', 'anthropic', 'ollama'].map(provider => {
+                    const count = providerCounts[provider] || 0;
+                    const cost = providerCosts[provider] || 0;
+                    return (
+                      <div key={provider} className="bg-white border border-gray-200 rounded-lg p-3">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={`px-2 py-0.5 text-xs rounded-full ${PROVIDER_COLORS[provider]}`}>
+                            {provider}
+                          </span>
+                        </div>
+                        <div className="text-xl font-bold text-gray-900">{count}</div>
+                        <div className="text-xs text-gray-500">responses</div>
+                        {cost > 0 && (
+                          <div className="text-xs text-green-600 mt-1">${cost.toFixed(4)}</div>
+                        )}
+                      </div>
+                    );
+                  })}
+                  <div className="bg-white border border-gray-200 rounded-lg p-3">
+                    <div className="text-xs text-gray-500 mb-1">Total Cost</div>
+                    <div className="text-xl font-bold text-green-600">${totalCost.toFixed(4)}</div>
+                    <div className="text-xs text-gray-500 mt-1">{totalTokens.toLocaleString()} tokens</div>
+                  </div>
+                </>
+              );
+            })()}
           </div>
         </div>
       )}
@@ -309,15 +458,21 @@ export default function AdminChatHistoryPage() {
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
         </div>
-      ) : conversations.length === 0 ? (
+      ) : filteredConversations.length === 0 ? (
         <div className="text-center py-12 bg-gray-50 rounded-lg">
           <div className="text-4xl mb-4">💬</div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No Chat History</h3>
-          <p className="text-gray-500">This user hasn&apos;t had any chat conversations yet.</p>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            {feedbackFilter ? 'No Matching Conversations' : 'No Chat History'}
+          </h3>
+          <p className="text-gray-500">
+            {feedbackFilter
+              ? 'No conversations match the selected feedback filter.'
+              : "This user hasn't had any chat conversations yet."}
+          </p>
         </div>
       ) : (
         <div className="space-y-4">
-          {conversations.map((conversation) => (
+          {filteredConversations.map((conversation) => (
             <div
               key={conversation.id}
               className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
@@ -335,6 +490,17 @@ export default function AdminChatHistoryPage() {
                     <span className="text-sm text-gray-500">
                       {conversation.userMessageCount} user, {conversation.assistantMessageCount} AI
                     </span>
+                    {/* Feedback indicators */}
+                    {(conversation.thumbsUpCount || 0) > 0 && (
+                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs rounded-full bg-green-100 text-green-700">
+                        👍 {conversation.thumbsUpCount}
+                      </span>
+                    )}
+                    {(conversation.thumbsDownCount || 0) > 0 && (
+                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs rounded-full bg-red-100 text-red-700">
+                        👎 {conversation.thumbsDownCount}
+                      </span>
+                    )}
                   </div>
                   {conversation.preview && (
                     <p className="text-sm text-gray-600 mt-1 line-clamp-2">
@@ -386,7 +552,7 @@ export default function AdminChatHistoryPage() {
           {hasMore && (
             <div className="text-center py-4">
               <span className="text-sm text-gray-500">
-                Showing {conversations.length} of {totalCount} conversations
+                Showing {filteredConversations.length} of {totalCount} conversations
               </span>
             </div>
           )}
@@ -415,6 +581,11 @@ export default function AdminChatHistoryPage() {
                 <p className="text-sm text-gray-500">
                   {selectedConversation.messageCount} messages |{' '}
                   {new Date(selectedConversation.createdAt).toLocaleString()}
+                  {((selectedConversation.thumbsUpCount || 0) > 0 || (selectedConversation.thumbsDownCount || 0) > 0) && (
+                    <span className="ml-2">
+                      | 👍 {selectedConversation.thumbsUpCount || 0} 👎 {selectedConversation.thumbsDownCount || 0}
+                    </span>
+                  )}
                 </p>
               </div>
               <button
@@ -463,11 +634,67 @@ export default function AdminChatHistoryPage() {
                           🎙️ Voice Input
                         </span>
                       )}
+                      {/* Feedback badge */}
+                      {message.feedback && (
+                        <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${
+                          message.feedback.rating === 'thumbs_up'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {message.feedback.rating === 'thumbs_up' ? '👍 Positive' : '👎 Negative'}
+                          <span className="ml-1 opacity-60">
+                            {new Date(message.feedback.timestamp).toLocaleTimeString()}
+                          </span>
+                        </span>
+                      )}
                     </div>
                     <span className="text-xs text-gray-500">
                       {new Date(message.timestamp).toLocaleTimeString()}
                     </span>
                   </div>
+
+                  {/* Feedback comment */}
+                  {message.feedback?.comment && (
+                    <div className="mb-2 px-3 py-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800">
+                      💬 {message.feedback.comment}
+                    </div>
+                  )}
+
+                  {/* Provider/Model Info (for assistant messages) */}
+                  {message.role === 'assistant' && (
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
+                      {message.provider && (
+                        <span className={`px-2 py-0.5 text-xs rounded-full ${PROVIDER_COLORS[message.provider] || 'bg-gray-100 text-gray-800'}`}>
+                          {message.provider}
+                        </span>
+                      )}
+                      {message.model && (
+                        <span className="px-2 py-0.5 text-xs bg-gray-100 text-gray-700 rounded-full font-mono">
+                          {message.model}
+                        </span>
+                      )}
+                      {(message.inputTokens != null || message.outputTokens != null) && (
+                        <span className="text-xs text-gray-500">
+                          {(message.inputTokens || 0) + (message.outputTokens || 0)} tokens
+                        </span>
+                      )}
+                      {message.latencyMs != null && (
+                        <span className="text-xs text-gray-500">
+                          {message.latencyMs}ms
+                        </span>
+                      )}
+                      {message.estimatedCostUSD != null && (
+                        <span className="text-xs text-green-600 font-medium">
+                          ${message.estimatedCostUSD.toFixed(4)}
+                        </span>
+                      )}
+                      {!message.provider && (
+                        <span className="text-xs text-gray-400 italic">
+                          (not tracked)
+                        </span>
+                      )}
+                    </div>
+                  )}
 
                   {/* Message Content */}
                   <div className="text-sm text-gray-900 whitespace-pre-wrap">
