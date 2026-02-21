@@ -105,11 +105,13 @@ export default function AppStoreReleasesPage() {
     } finally {
       setLoading(false);
     }
-  }, [getIdToken]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (user) loadReleases();
-  }, [user, loadReleases]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const handleStatusChange = async (id: string, newStatus: string) => {
     try {
