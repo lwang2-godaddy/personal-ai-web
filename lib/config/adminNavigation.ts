@@ -27,6 +27,7 @@ export const STANDALONE_NAV_ITEMS: NavItem[] = [
   { href: '/admin/alerts', label: 'Alerts', icon: '🚨' },
   { href: '/admin/features', label: 'Features', icon: '🧩' },
   { href: '/admin/release-notes', label: 'Release Notes', icon: '📋' },
+  { href: '/admin/app-store-releases', label: 'App Store Releases', icon: '🚀' },
 ];
 
 /**

@@ -55,6 +55,14 @@ const DEFAULT_CONFIGS = [
     gradientFrom: '#F97316',
     gradientTo: '#E11D48',
   },
+  {
+    inputFile: 'ChatWithAIAboutMyself.png',
+    outputName: '06_chat_ai.png',
+    title: 'Ask Your AI Anything',
+    subtitle: 'Get instant answers about your health, habits & activities',
+    gradientFrom: '#3B82F6',
+    gradientTo: '#1D4ED8',
+  },
 ];
 
 // Get screenshots directory path - works in both dev and when running from different locations

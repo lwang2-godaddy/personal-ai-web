@@ -88,6 +88,14 @@ const SCREENSHOTS: ScreenshotConfig[] = [
     gradientFrom: '#F97316',
     gradientTo: '#E11D48',
   },
+  {
+    inputFile: 'ChatWithAIAboutMyself.png',
+    outputName: '06_chat_ai.png',
+    title: 'Ask Your AI Anything',
+    subtitle: 'Get instant answers about your health, habits & activities',
+    gradientFrom: '#3B82F6',
+    gradientTo: '#1D4ED8',
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -175,24 +183,25 @@ async function generateScreenshot(config: ScreenshotConfig): Promise<void> {
   const rawW = rawMeta.width!;
   const rawH = rawMeta.height!;
 
-  // 2. Scale the screenshot to fit the screenshot area (below the banner)
-  //    Maintain aspect ratio, fit within SCREENSHOT_AREA_HEIGHT x PRIMARY.width
-  const screenshotScale = Math.min(
-    PRIMARY.width / rawW,
-    SCREENSHOT_AREA_HEIGHT / rawH,
-  );
-  const scaledW = Math.round(rawW * screenshotScale);
-  const scaledH = Math.round(rawH * screenshotScale);
+  // 2. Scale the screenshot to fit ENTIRELY within the screenshot area (below the banner).
+  //    Preserves aspect ratio — circles stay as circles, full screenshot visible.
+  //    If the screenshot is narrower than the canvas, it's centered horizontally
+  //    with gradient showing on the sides.
+  const scaleW = PRIMARY.width / rawW;
+  const scaleH = SCREENSHOT_AREA_HEIGHT / rawH;
+  const scale = Math.min(scaleW, scaleH); // fit inside the area
+  const scaledW = Math.round(rawW * scale);
+  const scaledH = Math.round(rawH * scale);
 
   const resizedScreenshot = await sharp(inputPath)
-    .resize(scaledW, scaledH, { fit: 'inside' })
+    .resize(scaledW, scaledH, { fit: 'fill' })
     .toBuffer();
 
   // 3. Build banner SVG (full canvas size)
   const bannerSvg = buildBannerSvg(config);
   const bannerBuffer = Buffer.from(bannerSvg);
 
-  // 4. Composite: banner background + screenshot placed below banner
+  // 4. Composite: banner background + screenshot centered below banner (full screenshot visible)
   const xOffset = Math.round((PRIMARY.width - scaledW) / 2);
   const yOffset = BANNER_HEIGHT; // screenshot starts right below the banner
 
@@ -208,7 +217,7 @@ async function generateScreenshot(config: ScreenshotConfig): Promise<void> {
     .png()
     .toBuffer();
 
-  // 5. Output for each device size
+  // 5. Output for each device size (use 'cover' + center crop to preserve aspect ratio)
   for (const size of DEVICE_SIZES) {
     const outDir = path.join(OUTPUT_BASE, size.label);
     fs.mkdirSync(outDir, { recursive: true });
@@ -219,9 +228,9 @@ async function generateScreenshot(config: ScreenshotConfig): Promise<void> {
       // Primary size — write directly
       await sharp(primaryBuffer).toFile(outPath);
     } else {
-      // Resize from primary
+      // Resize preserving aspect ratio, then crop to exact size (no stretching)
       await sharp(primaryBuffer)
-        .resize(size.width, size.height, { fit: 'fill' })
+        .resize(size.width, size.height, { fit: 'cover', position: 'top' })
         .png()
         .toFile(outPath);
     }

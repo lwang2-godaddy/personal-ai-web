@@ -435,6 +435,12 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // APP STORE RELEASES: Admin-only collection for tracking App Store submissions
+    match /appStoreReleases/{releaseId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+
     // Deny all other requests by default
     match /{document=**} {
       allow read, write: if false;

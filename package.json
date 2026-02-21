@@ -23,6 +23,7 @@
     "check:ingestion": "tsx scripts/diagnostics/check-voice-ingestion.ts",
     "check:firestore": "tsx scripts/diagnostics/check-firestore.ts",
     "screenshots:generate": "tsx scripts/generate-app-store-screenshots.ts",
+    "generate-release-notes": "tsx scripts/release/generate-release-notes.ts",
     "deploy": "./scripts/deploy.sh",
     "deploy:prod": "./scripts/deploy.sh --prod",
     "deploy:quick": "./scripts/deploy.sh --skip-lint --skip-build"
